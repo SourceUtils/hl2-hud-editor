@@ -1,8 +1,4 @@
-/*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
- */
-package com.timepath.tf2;
+package com.timepath.tf2.hudedit.properties;
 
 import java.io.File;
 
@@ -10,14 +6,14 @@ import java.io.File;
  *
  * @author andrew
  */
-class MyTreeObject {
-    
+public class HudFile {
+
     public final Object obj;
 
-    public MyTreeObject(Object obj) {
+    public HudFile(Object obj) {
         this.obj = obj;
     }
-    
+
     @Override
     public String toString() {
         if(obj instanceof File) {
@@ -25,5 +21,5 @@ class MyTreeObject {
         }
         return obj.getClass() + ":" + (String) obj;
     }
-    
+
 }

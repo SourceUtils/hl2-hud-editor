@@ -1,11 +1,13 @@
-package com.timepath.tf2;
+package com.timepath.tf2.hudedit.util;
 
 /**
- * 
+ *
+ * @param <key>
+ * @param <value>
  * @author andrew
  */
 public class KVPair<key, value> {
-    
+
     private String key;
     private String value;
 

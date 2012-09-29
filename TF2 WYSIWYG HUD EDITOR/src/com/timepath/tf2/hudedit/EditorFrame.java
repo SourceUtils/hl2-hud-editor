@@ -1,12 +1,16 @@
-package com.timepath.tf2;
+package com.timepath.tf2.hudedit;
 
+import com.timepath.tf2.hudedit.loaders.ResLoader;
+import com.timepath.tf2.hudedit.util.Element;
+import com.timepath.tf2.hudedit.util.KVPair;
+import com.timepath.tf2.hudedit.display.HudCanvas;
+import com.timepath.tf2.hudedit.properties.PropertiesTable;
 import java.awt.Container;
 import java.awt.Dimension;
 import java.awt.DisplayMode;
 import java.awt.FileDialog;
 import java.awt.GraphicsEnvironment;
 import java.awt.Rectangle;
-import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
@@ -69,9 +73,9 @@ import net.tomahawk.XFileDialog;
 public class EditorFrame extends JFrame implements ActionListener {
 
     public static void main(String... args) {
-        boolean overrideLAF = false;
+        boolean overrideSystemLAF = true;
         try {
-            if(overrideLAF) {
+            if(overrideSystemLAF) {
                 for (UIManager.LookAndFeelInfo info : UIManager.getInstalledLookAndFeels()) {
                     if ("Nimbus".equals(info.getName())) {
                         UIManager.setLookAndFeel(info.getClassName());
@@ -155,7 +159,7 @@ public class EditorFrame extends JFrame implements ActionListener {
 
         createTree(browser);
         createProperties(browser);
-        
+
         browser.setResizeWeight(0.5);
 
         JSplitPane splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, createCanvas(), browser);
@@ -176,13 +180,13 @@ public class EditorFrame extends JFrame implements ActionListener {
         return b == 0 ? a : gcm(b, a % b);
     }
 
-    private HudCanvas canvas;
+    public HudCanvas canvas;
     private ResLoader resloader;
 
-    private JTree fileTree;
+    private JTree fileSystem;
 
     private DefaultMutableTreeNode hudFilesRoot;
-    private MyJTable propTable;
+    private PropertiesTable propTable;
 
     public void start() {
         this.setVisible(true);
@@ -246,17 +250,17 @@ public class EditorFrame extends JFrame implements ActionListener {
     private void createTree(Container p) {
         hudFilesRoot = new DefaultMutableTreeNode("HUD");
 
-        fileTree = new JTree(hudFilesRoot);
-        fileTree.getSelectionModel().setSelectionMode(TreeSelectionModel.SINGLE_TREE_SELECTION);
+        fileSystem = new JTree(hudFilesRoot);
+        fileSystem.getSelectionModel().setSelectionMode(TreeSelectionModel.SINGLE_TREE_SELECTION);
 
-        fileTree.addTreeSelectionListener(new TreeSelectionListener() {
+        fileSystem.addTreeSelectionListener(new TreeSelectionListener() {
             @Override
             public void valueChanged(TreeSelectionEvent e) {
                 DefaultTableModel model = (DefaultTableModel) propTable.getModel();
                 model.getDataVector().removeAllElements();
                 propTable.scrollRectToVisible(new Rectangle(0, 0, 0, 0));
 
-                DefaultMutableTreeNode node = (DefaultMutableTreeNode) fileTree.getLastSelectedPathComponent();
+                DefaultMutableTreeNode node = (DefaultMutableTreeNode) fileSystem.getLastSelectedPathComponent();
                 if (node == null) {
                     return;
                 }
@@ -284,46 +288,28 @@ public class EditorFrame extends JFrame implements ActionListener {
             }
         });
 
-        JScrollPane treeView = new JScrollPane(fileTree);
-        treeView.setPreferredSize(new Dimension(400, 400));
+        JScrollPane scrollFileSystem = new JScrollPane(fileSystem);
+        scrollFileSystem.setPreferredSize(new Dimension(400, 400));
 
-//        GridBagConstraints c = new GridBagConstraints();
-//        c.gridx = 2;
-//        c.gridy = 0;
-//        c.gridwidth = 1;
-//        c.gridheight = 1;
-//        c.fill = GridBagConstraints.BOTH;
-//        c.weightx = 0.25;
-//        c.weighty = 1;
-//
-        p.add(treeView);//, c);
+        p.add(scrollFileSystem);
     }
 
     private void createProperties(Container p) {
-        DefaultMutableTreeNode top = new DefaultMutableTreeNode("Properties");
-
-        MyJTableModel model = new MyJTableModel();
+        DefaultTableModel model = new DefaultTableModel();
         model.addColumn("Key");
         model.addColumn("Value");
         model.addColumn("Info");
-        propTable = new MyJTable(model);
+
+        propTable = new PropertiesTable(model);
         propTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         propTable.setColumnSelectionAllowed(false);
         propTable.setRowSelectionAllowed(true);
         propTable.getTableHeader().setReorderingAllowed(false);
 
-        JScrollPane treeView = new JScrollPane(propTable);
-        treeView.setPreferredSize(new Dimension(400, 400));
+        JScrollPane scrollPropTable = new JScrollPane(propTable);
+        scrollPropTable.setPreferredSize(new Dimension(400, 400));
 
-//        GridBagConstraints c = new GridBagConstraints();
-//        c.gridx = 2;
-//        c.gridy = 1;
-//        c.gridwidth = 1;
-//        c.gridheight = 1;
-//        c.fill = GridBagConstraints.BOTH;
-//        c.weightx = 0.25;
-//        c.weighty = 1;
-        p.add(treeView);//, c);
+        p.add(scrollPropTable);
     }
 
     /**
@@ -339,7 +325,7 @@ public class EditorFrame extends JFrame implements ActionListener {
             dlg.setTitle("Open HUD");
             selection = dlg.getFolder();
             dlg.dispose();
-        } else if(os == OS.Mac) { // Pretty close on linux too, though files are selectable and not just directories.
+        } else if(os == OS.Mac) {
             System.setProperty("apple.awt.fileDialogForDirectories", "true");
             System.setProperty("com.apple.macos.use-file-dialog-packages", "true");
             FileDialog fd = new FileDialog(this, "Open HUD");
@@ -348,11 +334,11 @@ public class EditorFrame extends JFrame implements ActionListener {
             selection = fd.getFile();
             System.setProperty("apple.awt.fileDialogForDirectories", "false");
             System.setProperty("com.apple.macos.use-file-dialog-packages", "false");
-        } else if(os == OS.Linux) {
-            FileDialog fd = new FileDialog(this, "Open HUD");
-            fd.setMultipleMode(false); // specific to java 7 - the default on anything lower
-            fd.setVisible(true);
-            selection = fd.getFile();
+//        } else if(os == OS.Linux) {
+//            FileDialog fd = new FileDialog(this, "Open HUD");
+//            fd.setMultipleMode(false); // specific to java 7 - the default on anything lower
+//            fd.setVisible(true);
+//            selection = fd.getFile();
         } else { // Fallback to swing
             JFileChooser fc = new JFileChooser();
             fc.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
@@ -380,10 +366,10 @@ public class EditorFrame extends JFrame implements ActionListener {
                     return;
                 }
                 resloader = new ResLoader(file.getPath());
-                hudFilesRoot.setUserObject(new MyTreeObject(file));
+                hudFilesRoot.setUserObject(file.getName());//new MyTreeObject(file));
                 resloader.populate(hudFilesRoot);
 
-                DefaultTreeModel model = (DefaultTreeModel) fileTree.getModel();
+                DefaultTreeModel model = (DefaultTreeModel) fileSystem.getModel();
                 model.reload();
             } else {
                 // Throw error or load archive
