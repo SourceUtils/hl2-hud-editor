@@ -2,6 +2,7 @@ package com.timepath.tf2;
 
 import java.awt.Container;
 import java.awt.Dimension;
+import java.awt.FileDialog;
 import java.awt.Rectangle;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -15,6 +16,7 @@ import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.JDialog;
+import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 import javax.swing.JMenu;
 import javax.swing.JMenuBar;
@@ -57,7 +59,7 @@ import net.tomahawk.XFileDialog;
 
 public class EditorFrame extends JFrame implements ActionListener {
     
-    public final static OS os;
+    private final static OS os;
     private final static int shortcutKey;
     
     private enum OS {
@@ -75,6 +77,7 @@ public class EditorFrame extends JFrame implements ActionListener {
         
         if(os == OS.Windows) {
             shortcutKey = ActionEvent.CTRL_MASK;
+            XFileDialog.setTraceLevel(0);
         } else if(os == OS.Mac) {
             shortcutKey = ActionEvent.META_MASK;
             System.setProperty("com.apple.macos.useScreenMenuBar", "true");
@@ -83,9 +86,7 @@ public class EditorFrame extends JFrame implements ActionListener {
             shortcutKey = ActionEvent.CTRL_MASK;
         }
         
-        final JOptionPane optionPane = new JOptionPane(os, JOptionPane.QUESTION_MESSAGE, JOptionPane.YES_NO_OPTION);
-
-        
+//        final JOptionPane optionPane = new JOptionPane(os, JOptionPane.QUESTION_MESSAGE, JOptionPane.YES_NO_OPTION);
     }
     
     private static void systemLAF() {
@@ -122,22 +123,12 @@ public class EditorFrame extends JFrame implements ActionListener {
     }
     
     public static void main(String... args) {
-        
-        JFrame f = new JFrame();
-        f.setVisible(true);
-        XFileDialog dlg = new XFileDialog(f);    
-        dlg.setTitle("Open HUD");
-//            ArrayList<String> ext0= new ArrayList<String>(); ext0.add("*"); 
-//            ExtensionsFilter filter = new ExtensionsFilter("All Files", ext0);
-//            dlg.addFilters(filter); 
-            String t = dlg.getFolder();
-            dlg.dispose();
-
         programLAF();
         SwingUtilities.invokeLater(new Runnable() {
             @Override
             public void run() {
-                new EditorFrame().start();
+                EditorFrame e = new EditorFrame();
+                e.start();
             }
         });
     }
@@ -149,16 +140,15 @@ public class EditorFrame extends JFrame implements ActionListener {
     
     private DefaultMutableTreeNode hudFilesRoot;
     private MyJTable propTable;
-
-    public void start() {        
-        JFrame f = new EditorFrame();
-        f.setTitle("TimePath's WYSIWYG TF2 HUD Editor");
-        f.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        f.setMinimumSize(new Dimension(600, 400));
-        f.setPreferredSize(new Dimension(600, 400));
-        f.setLocationRelativeTo(null);
+    
+    public EditorFrame() {
+        this.setTitle("TimePath's WYSIWYG TF2 HUD Editor");
+        this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        this.setMinimumSize(new Dimension(600, 400));
+        this.setPreferredSize(new Dimension(600, 400));
+        this.setLocationRelativeTo(null);
         
-        createMenu(f);
+        createMenu(this);
         
 //        JPanel browser = new JPanel(new GridBagLayout());
         JSplitPane browser = new JSplitPane(JSplitPane.VERTICAL_SPLIT);
@@ -170,11 +160,14 @@ public class EditorFrame extends JFrame implements ActionListener {
         JSplitPane splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, createCanvas(), browser);
 //        splitPane.setDividerLocation(f.getPreferredSize().width-350);
         splitPane.setResizeWeight(0.8);
-        f.add(splitPane);
+        this.add(splitPane);
         
-        f.pack();
-        f.setVisible(true);
-        f.createBufferStrategy(2);
+        this.pack();
+    }
+
+    public void start() {        
+        this.setVisible(true);
+        this.createBufferStrategy(2);
     }
     
     private void createMenu(JFrame f) {
@@ -334,31 +327,32 @@ public class EditorFrame extends JFrame implements ActionListener {
 //    System.out.println("APP>>: current Dir: " + folder ); 
 //
 //    dlg.dispose(); 
-//        if(os == OS.Windows) {
-            XFileDialog dlg = new XFileDialog(this);    
+        if(os == OS.Windows) {
+            XFileDialog dlg = new XFileDialog(EditorFrame.this);    
             dlg.setTitle("Open HUD");
 //            ArrayList<String> ext0= new ArrayList<String>(); ext0.add("*"); 
 //            ExtensionsFilter filter = new ExtensionsFilter("All Files", ext0);
 //            dlg.addFilters(filter); 
             selection = dlg.getFolder();
-            System.out.println("APP>>: current Dir: " + dlg.getDirectory() );
             dlg.dispose();
-//        } else if(os == OS.Mac) {
-//            System.setProperty("apple.awt.fileDialogForDirectories", "true");
-//            System.setProperty("com.apple.macos.use-file-dialog-packages", "true");
-//            FileDialog fd = new FileDialog(this, "File Dialog");
+        } else if(os == OS.Mac) {
+            System.setProperty("apple.awt.fileDialogForDirectories", "true");
+            System.setProperty("com.apple.macos.use-file-dialog-packages", "true");
+            FileDialog fd = new FileDialog(this, "File Dialog");
+            java.awt.FileDialog d = new java.awt.FileDialog();
+//            d.setm
 //            fd.setMultipleMode(false);
-//            fd.setVisible(true);
-//            selection = fd.getFile();
-//            System.setProperty("apple.awt.fileDialogForDirectories", "false");
-//            System.setProperty("com.apple.macos.use-file-dialog-packages", "false");
-//        } else {
-//            final JFileChooser fc = new JFileChooser();
-//            fc.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
-//            if(fc.showOpenDialog(EditorFrame.this) == JFileChooser.APPROVE_OPTION) {
-//                selection = fc.getSelectedFile().getPath();
-//            }
-//        }
+            fd.setVisible(true);
+            selection = fd.getFile();
+            System.setProperty("apple.awt.fileDialogForDirectories", "false");
+            System.setProperty("com.apple.macos.use-file-dialog-packages", "false");
+        } else {
+            final JFileChooser fc = new JFileChooser();
+            fc.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+            if(fc.showOpenDialog(EditorFrame.this) == JFileChooser.APPROVE_OPTION) {
+                selection = fc.getSelectedFile().getPath();
+            }
+        }
         
         if(selection != null) {
             File file = new File(selection);
