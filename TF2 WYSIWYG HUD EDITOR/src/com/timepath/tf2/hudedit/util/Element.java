@@ -104,22 +104,30 @@ public class Element {
 
     private int xPos;
 
-    public int getX() {
+    public int getLocalX() {
         return xPos;
     }
 
-    public void setX(int x) {
+    public void setLocalX(int x) {
         this.xPos = x;
+    }
+    
+    public int getX() {
+        return xPos + (getParent() != null ? getParent().getX() : 0);
     }
 
     private int yPos;
 
-    public int getY() {
+    public int getLocalY() {
         return yPos;
     }
 
-    public void setY(int y) {
+    public void setLocalY(int y) {
         this.yPos = y;
+    }
+    
+    public int getY() {
+        return yPos + (getParent() != null ? getParent().getY() : 0);
     }
 
     private int zPos;
@@ -226,7 +234,7 @@ public class Element {
                 } else {
                     this.setXAlignment(Alignment.Left);
                 }
-                this.setX(Integer.parseInt(v));
+                this.setLocalX(Integer.parseInt(v));
             } else
             if("ypos".equalsIgnoreCase(k)) {
                 if(v.startsWith("c")) {
@@ -239,7 +247,7 @@ public class Element {
                 } else {
                     this.setYAlignment(Alignment.Left);
                 }
-                this.setY(Integer.parseInt(v));
+                this.setLocalY(Integer.parseInt(v));
             } else
             if("wide".equalsIgnoreCase(k)) {
                 if(v.startsWith("f")) {

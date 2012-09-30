@@ -1,10 +1,10 @@
 package com.timepath.tf2.hudedit;
 
+import com.timepath.tf2.hudedit.display.HudCanvas;
 import com.timepath.tf2.hudedit.loaders.ResLoader;
+import com.timepath.tf2.hudedit.properties.PropertiesTable;
 import com.timepath.tf2.hudedit.util.Element;
 import com.timepath.tf2.hudedit.util.KVPair;
-import com.timepath.tf2.hudedit.display.HudCanvas;
-import com.timepath.tf2.hudedit.properties.PropertiesTable;
 import java.awt.Container;
 import java.awt.Cursor;
 import java.awt.Dimension;
@@ -24,7 +24,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import javax.swing.ImageIcon;
+import javax.swing.AbstractAction;
 import javax.swing.JDialog;
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
@@ -51,6 +51,7 @@ import net.tomahawk.XFileDialog;
 
 /**
  * Keep logic to a minimum, just interact and bridge components.
+ * Current bug: the file choose dialog on windows 'paints' over the frame.
  *
  * Links of interest:
  *
@@ -164,8 +165,11 @@ public class EditorFrame extends JFrame implements ActionListener {
         });
         this.setMinimumSize(new Dimension(600, 400));
         this.setPreferredSize(new Dimension((int)(d.getWidth() / 1.5), (int)(d.getHeight() / 1.5)));
-        this.setLocationRelativeTo(null);
+        this.setLocationByPlatform(true);
+//        this.setLocationRelativeTo(null);
 
+        JScrollPane p = createCanvas();
+        
         createMenu();
 
         JSplitPane browser = new JSplitPane(JSplitPane.VERTICAL_SPLIT);
@@ -175,12 +179,13 @@ public class EditorFrame extends JFrame implements ActionListener {
 
         browser.setResizeWeight(0.5);
 
-        JSplitPane splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, createCanvas(), browser);
+        JSplitPane splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, p, browser);
 //        splitPane.setDividerLocation(f.getPreferredSize().width-350);
         splitPane.setResizeWeight(0.8);
         this.add(splitPane);
 
         this.pack();
+        this.setFocusableWindowState(true);
     }
 
     /**
@@ -218,6 +223,12 @@ public class EditorFrame extends JFrame implements ActionListener {
         openItem.getAccessibleContext().setAccessibleDescription("This doesn't really do anything");
         openItem.addActionListener(this);
         fileMenu.add(openItem);
+        
+        JMenuItem closeItem = new JMenuItem("Close HUD", KeyEvent.VK_C);
+        closeItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_C, shortcutKey));
+        closeItem.getAccessibleContext().setAccessibleDescription("This doesn't really do anything");
+        closeItem.addActionListener(this);
+        fileMenu.add(closeItem);
 
         fileMenu.addSeparator();
 
@@ -232,9 +243,27 @@ public class EditorFrame extends JFrame implements ActionListener {
         editMenu.setMnemonic(KeyEvent.VK_E);
         editMenu.getAccessibleContext().setAccessibleDescription("The only menu in this program that has menu items");
         menuBar.add(editMenu);
+        
+        JMenuItem deleteItem = new JMenuItem("Delete", KeyEvent.VK_DELETE);
+        deleteItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_DELETE, 0));
+        deleteItem.getAccessibleContext().setAccessibleDescription("This doesn't really do anything");
+        deleteItem.addActionListener(this);
+        editMenu.add(deleteItem);
 
         JMenuItem selectAllItem = new JMenuItem("Select All", KeyEvent.VK_A);
         selectAllItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_A, shortcutKey));
+        
+        canvas.getActionMap().put("Select All", new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                System.out.println("WORK");
+                for(int i = 0; i < canvas.getElements().size(); i++) {
+                    canvas.select(canvas.getElements().get(i));
+                }
+            }
+        });
+        
+        canvas.getInputMap().put(KeyStroke.getKeyStroke(KeyEvent.VK_A, shortcutKey), "Select All");
         selectAllItem.getAccessibleContext().setAccessibleDescription("This doesn't really do anything");
         selectAllItem.addActionListener(this);
         editMenu.add(selectAllItem);
@@ -327,18 +356,20 @@ public class EditorFrame extends JFrame implements ActionListener {
 
     /**
      * Start in the home directory
+     * System.getProperty("user.home")
      * linux = ~
      * windows = %userprofile%
      * mac = ?
      */
     private void locateHudDirectory() {
         String selection = null;
-        if(os == OS.Windows) {
-            XFileDialog fd = new XFileDialog(EditorFrame.this);
-            fd.setTitle("Open HUD");
-            selection = fd.getFolder();
-            fd.dispose();
-        } else if(os == OS.Mac) {
+//        if(os == OS.Windows) {
+//            XFileDialog fd = new XFileDialog(EditorFrame.this);
+//            fd.setTitle("Open HUD");
+//            selection = fd.getFolder();
+//            fd.dispose();
+//        } else 
+        if(os == OS.Mac) {
             System.setProperty("apple.awt.fileDialogForDirectories", "true");
             System.setProperty("com.apple.macos.use-file-dialog-packages", "true");
             FileDialog fd = new FileDialog(this, "Open HUD");
@@ -347,12 +378,13 @@ public class EditorFrame extends JFrame implements ActionListener {
             selection = fd.getFile();
             System.setProperty("apple.awt.fileDialogForDirectories", "false");
             System.setProperty("com.apple.macos.use-file-dialog-packages", "false");
-//        } else if(os == OS.Linux) {
+//        } else
+//        if(os == OS.Linux) {
 //            FileDialog fd = new FileDialog(this, "Open HUD");
-//            fd.setMultipleMode(false); // specific to java 7 - the default on anything lower
+////            fd.setMultipleMode(false); // specific to java 7 - the default on anything lower
 //            fd.setVisible(true);
 //            selection = fd.getFile();
-        } else { // Fallback to swing
+        } else { // Fall back to swing
             JFileChooser fd = new JFileChooser();
             fd.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
             if(fd.showOpenDialog(EditorFrame.this) == JFileChooser.APPROVE_OPTION) {
@@ -371,6 +403,19 @@ public class EditorFrame extends JFrame implements ActionListener {
         } else {
             // Throw error or load archive
         }
+    }
+    
+    private void closeHud() {
+        canvas.removeAllElements();
+        
+        hudFilesRoot.removeAllChildren();
+        hudFilesRoot.setUserObject("HUD");
+        DefaultTreeModel model1 = (DefaultTreeModel) fileSystem.getModel();
+        model1.reload();
+        
+        DefaultTableModel model2 = (DefaultTableModel) propTable.getModel();
+        model2.setRowCount(0);
+        propTable.repaint();
     }
 
     private void loadHud(final File file) {
@@ -410,7 +455,7 @@ public class EditorFrame extends JFrame implements ActionListener {
                 }
             };
 
-            worker.execute();
+//            worker.execute();
 
             this.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
 
@@ -430,13 +475,18 @@ public class EditorFrame extends JFrame implements ActionListener {
         String cmd = e.getActionCommand();
         if("Open...".equalsIgnoreCase(cmd)) {
             locateHudDirectory();
+        } else if("Close HUD".equalsIgnoreCase(cmd)) {
+            closeHud();
         } else if("Exit".equalsIgnoreCase(cmd)) {
             System.exit(0);
+        } else if("Delete".equalsIgnoreCase(cmd)) {
+            canvas.removeElements(canvas.getSelected());
         } else if("Change Resolution".equalsIgnoreCase(cmd)) {
             changeResolution();
         } else if("Select All".equalsIgnoreCase(cmd)) {
-            for(int i = 0; i < canvas.getElements().size(); i++)
-            canvas.select(canvas.getElements().get(i));
+            for(int i = 0; i < canvas.getElements().size(); i++) {
+                canvas.select(canvas.getElements().get(i));
+            }
         } else {
             System.out.println(e.getActionCommand());
         }

@@ -9,11 +9,6 @@ import java.awt.Image;
 import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.Toolkit;
-import java.awt.event.MouseEvent;
-import java.awt.event.MouseListener;
-import java.awt.event.MouseMotionListener;
-import java.awt.event.MouseWheelEvent;
-import java.awt.event.MouseWheelListener;
 import java.net.URL;
 import java.util.ArrayList;
 import javax.swing.JPanel;
@@ -31,44 +26,6 @@ public class HudCanvas extends JPanel {
     public HudCanvas() {
         new InputManager(this, this).init();
         loadBackground();
-//        test();
-    }
-
-    void test() {
-//        for(int i = 0; i < 8; i++) {
-//            Element rect = new Element(this);
-//            rect.setX((int) (10 + (Math.random() * 500)));
-//            rect.setY((int) (10 + (Math.random() * 500)));
-//            rect.setWidth((int) (10 + (Math.random() * 500)));
-//            rect.setHeight((int) (10 + (Math.random() * 500)));
-//
-//            this.addElement(rect);
-//        }
-
-        // dragging same size objects
-        Element rect1 = new Element(this);
-        rect1.setLabelText("parent");
-        rect1.setX(10);
-        rect1.setY(10);
-        rect1.setWidth(200);
-        rect1.setHeight(200);
-        this.addElement(rect1);
-
-        Element rect2 = new Element(this);
-        rect2.setLabelText("other");
-        rect2.setX(10);
-        rect2.setY(10);
-        rect2.setWidth(25);
-        rect2.setHeight(25);
-        this.addElement(rect2);
-
-        Element rect3 = new Element(this);
-        rect3.setLabelText("child");
-        rect3.setX(10);
-        rect3.setY(10);
-        rect3.setWidth(50);
-        rect3.setHeight(50);
-        rect1.addElement(rect3);
     }
 
     // List of elements
@@ -89,7 +46,7 @@ public class HudCanvas extends JPanel {
             } else if(e.getXAlignment() == Element.Alignment.Right) {
                 x = (this.getPreferredSize().width) - e.getX();
             }
-            e.setX(x);
+            e.setLocalX(x); // wrong
 
             int y = 0;
             if(e.getXAlignment() == Element.Alignment.Left) {
@@ -99,17 +56,23 @@ public class HudCanvas extends JPanel {
             } else if(e.getXAlignment() == Element.Alignment.Right) {
                 y = (this.getPreferredSize().height) - e.getY();
             }
-            e.setY(y);
+            e.setLocalY(y); // wrong
 
             elements.add(e);
             this.doRepaint(e.getBounds());
         }
     }
-
+    
     public void removeElement(Element e) {
         if(elements.contains(e)) {
             elements.remove(e);
             this.doRepaint(e.getBounds());
+        }
+    }
+
+    public void removeElements(ArrayList<Element> e) {
+        for(int i = 0; i < e.size(); i++) {
+            removeElement(e.get(i));
         }
     }
 
@@ -222,14 +185,6 @@ public class HudCanvas extends JPanel {
     }
 
     private void paintElement(Element e, Graphics2D g) {
-        int offX = 0;
-        int offY = 0;
-
-        if(e.getParent() != null) {
-            offX = e.getParent().getX();
-            offY = e.getParent().getY();
-        }
-
         g.setColor(Color.CYAN.darker());
         g.drawRect(e.getBounds().x - 1, e.getBounds().y - 1, e.getBounds().width + 1, e.getBounds().height + 1);
 
@@ -247,10 +202,10 @@ public class HudCanvas extends JPanel {
             g.setColor(g.getColor().darker());
         }
 
-        g.drawRect(e.getX() + offX, e.getY() + offY, e.getWidth(), e.getHeight());
+        g.drawRect(e.getX(), e.getY(), e.getWidth(), e.getHeight());
 
         if(e.getLabelText() != null && !e.getLabelText().isEmpty()) {
-            g.drawString(e.getLabelText(), e.getX() + offX, e.getY() + offY);
+            g.drawString(e.getLabelText(), e.getX(), e.getY());
         }
 
         for(int i = 0; i < e.children.size(); i++) {
@@ -259,8 +214,8 @@ public class HudCanvas extends JPanel {
     }
 
     public void doRepaint(Rectangle bounds) { // override method
-        this.repaint(bounds);
-//        this.repaint();
+//        this.repaint(bounds);
+        this.repaint();
     }
 
     // Checks if poing p is inside the bounds of any element
@@ -324,10 +279,16 @@ public class HudCanvas extends JPanel {
 
     public void translate(Element get, int diffX, int diffY) {
         Rectangle originalBounds = get.getBounds();
-        get.setX(get.getX() + diffX);
-        get.setY(get.getY() + diffY);
+        get.setLocalX(get.getLocalX() + diffX);
+        get.setLocalY(get.getLocalY() + diffY);
         this.doRepaint(originalBounds);
         this.doRepaint(get.getBounds());
         this.repaint(); // help
+    }
+
+    public void removeAllElements() {
+        for(int i = 0; i < elements.size(); i++) {
+            elements.remove(i);
+        }
     }
 }
