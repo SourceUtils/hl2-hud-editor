@@ -6,6 +6,7 @@ import com.timepath.tf2.hudedit.util.KVPair;
 import com.timepath.tf2.hudedit.display.HudCanvas;
 import com.timepath.tf2.hudedit.properties.PropertiesTable;
 import java.awt.Container;
+import java.awt.Cursor;
 import java.awt.Dimension;
 import java.awt.DisplayMode;
 import java.awt.FileDialog;
@@ -19,9 +20,11 @@ import java.awt.event.WindowEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.File;
+import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import javax.swing.ImageIcon;
 import javax.swing.JDialog;
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
@@ -36,6 +39,7 @@ import javax.swing.KeyStroke;
 import javax.swing.ListSelectionModel;
 import javax.swing.ScrollPaneConstants;
 import javax.swing.SwingUtilities;
+import javax.swing.SwingWorker;
 import javax.swing.UIManager;
 import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
@@ -46,12 +50,15 @@ import javax.swing.tree.TreeSelectionModel;
 import net.tomahawk.XFileDialog;
 
 /**
+ * Keep logic to a minimum, just interact and bridge components.
+ *
  * Links of interest:
  *
  * UI principles:
  * http://developer.apple.com/legacy/mac/library/#technotes/tn/tn2042.html
  * http://developer.apple.com/library/mac/#technotes/tn2002/tn2110.html#//apple_ref/doc/uid/DTS10003202
  *
+ * http://www.kdgregory.com/index.php?page=swing.async
  *
  * http://java.dzone.com/news/native-dialogs-swing-little
  * http://code.google.com/p/xfiledialog/
@@ -62,6 +69,7 @@ import net.tomahawk.XFileDialog;
  * http://www.horstmann.com/articles/Taming_the_GridBagLayout.html
  *
  * Reference editors:
+ * https://developers.google.com/java-dev-tools/wbpro/
  * http://visualhud.pk69.com/
  * http://gamebanana.com/css/tools/4483
  * http://img13.imageshack.us/img13/210/hudmanagerss.png
@@ -148,7 +156,12 @@ public class EditorFrame extends JFrame implements ActionListener {
 //        System.out.println((screenRes.width / gcm) + ":" + (screenRes.height / gcm));
 
         this.setTitle("TimePath's WYSIWYG TF2 HUD Editor");
-        this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        this.addWindowListener(new WindowAdapter() {
+            @Override
+            public void windowClosing(WindowEvent e) {
+                System.exit(0);
+            }
+        });
         this.setMinimumSize(new Dimension(600, 400));
         this.setPreferredSize(new Dimension((int)(d.getWidth() / 1.5), (int)(d.getHeight() / 1.5)));
         this.setLocationRelativeTo(null);
@@ -321,10 +334,10 @@ public class EditorFrame extends JFrame implements ActionListener {
     private void locateHudDirectory() {
         String selection = null;
         if(os == OS.Windows) {
-            XFileDialog dlg = new XFileDialog(EditorFrame.this);
-            dlg.setTitle("Open HUD");
-            selection = dlg.getFolder();
-            dlg.dispose();
+            XFileDialog fd = new XFileDialog(EditorFrame.this);
+            fd.setTitle("Open HUD");
+            selection = fd.getFolder();
+            fd.dispose();
         } else if(os == OS.Mac) {
             System.setProperty("apple.awt.fileDialogForDirectories", "true");
             System.setProperty("com.apple.macos.use-file-dialog-packages", "true");
@@ -340,40 +353,75 @@ public class EditorFrame extends JFrame implements ActionListener {
 //            fd.setVisible(true);
 //            selection = fd.getFile();
         } else { // Fallback to swing
-            JFileChooser fc = new JFileChooser();
-            fc.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
-            if(fc.showOpenDialog(EditorFrame.this) == JFileChooser.APPROVE_OPTION) {
-                selection = fc.getSelectedFile().getPath();
+            JFileChooser fd = new JFileChooser();
+            fd.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+            if(fd.showOpenDialog(EditorFrame.this) == JFileChooser.APPROVE_OPTION) {
+                selection = fd.getSelectedFile().getPath();
             }
         }
 
         if(selection != null) {
-            File file = new File(selection);
-
-            System.out.println("You have selected: " + file);
-
-            if(file.isDirectory()) {
-                File[] folders = file.listFiles();
-                boolean valid = false;
-                for(int i = 0; i < folders.length; i++) {
-                    if(folders[i].isDirectory() && ("resource".equalsIgnoreCase(folders[i].getName()) || "scripts".equalsIgnoreCase(folders[i].getName()))) {
-                        valid = true;
-                        break;
-                    }
+            final File f = new File(selection);
+            new Thread() {
+                @Override
+                public void run() {
+                    loadHud(f);
                 }
-                if(!valid) {
-                    // throw error
-                    return;
-                }
-                resloader = new ResLoader(file.getPath());
-                hudFilesRoot.setUserObject(file.getName());//new MyTreeObject(file));
-                resloader.populate(hudFilesRoot);
+            }.start();
+        } else {
+            // Throw error or load archive
+        }
+    }
 
-                DefaultTreeModel model = (DefaultTreeModel) fileSystem.getModel();
-                model.reload();
-            } else {
-                // Throw error or load archive
+    private void loadHud(final File file) {
+        System.out.println("You have selected: " + file);
+
+        if(file.isDirectory()) {
+            File[] folders = file.listFiles();
+            boolean valid = false;
+            for(int i = 0; i < folders.length; i++) {
+                if(folders[i].isDirectory() && ("resource".equalsIgnoreCase(folders[i].getName()) || "scripts".equalsIgnoreCase(folders[i].getName()))) {
+                    valid = true;
+                    break;
+                }
             }
+            if(!valid) {
+                // throw error
+                return;
+            }
+
+            SwingWorker worker = new SwingWorker<Void, Void>() {
+                @Override
+                public Void doInBackground() {
+                    while(!isCancelled()) {
+
+                    }
+                    return null;
+                }
+
+                @Override
+                public void done() {
+
+                }
+
+                @Override
+                protected void process(List<Void> chunks) {
+
+                }
+            };
+
+            worker.execute();
+
+            this.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
+
+            resloader = new ResLoader(file.getPath());
+            hudFilesRoot.setUserObject(file.getName());//new MyTreeObject(file));
+            resloader.populate(hudFilesRoot);
+
+            DefaultTreeModel model = (DefaultTreeModel) fileSystem.getModel();
+            model.reload();
+
+            this.setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
         }
     }
 
