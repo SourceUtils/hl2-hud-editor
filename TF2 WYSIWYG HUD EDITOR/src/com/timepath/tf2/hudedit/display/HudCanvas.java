@@ -30,7 +30,7 @@ public class HudCanvas extends JPanel {
 
     public HudCanvas() {
         new InputManager(this, this).init();
-        loadBackground();
+//        loadBackground();
     }
 
     // List of elements
@@ -158,20 +158,20 @@ public class HudCanvas extends JPanel {
         }
     }
 
-    private void loadBackground() {
-        URL url = getClass().getResource("/images/bg.png");
-        background = Toolkit.getDefaultToolkit().getImage(url);
-        this.prepareImage(background, this); // this is handy
-    }
+//    private void loadBackground() {
+//        URL url = getClass().getResource("/images/bg.png");
+//        background = Toolkit.getDefaultToolkit().getImage(url);
+//        this.prepareImage(background, this); // this is handy
+//    }
 
     @Override
     protected void paintComponent(Graphics graphics) {
         super.paintComponent(graphics);
         Graphics2D g = (Graphics2D) graphics;
 
-        if(background == null) {
-            loadBackground();
-        }
+//        if(background == null) {
+//            loadBackground();
+//        }
 
 //        g.drawImage(background, 0, 0, null);
         g.setColor(Color.GRAY);
