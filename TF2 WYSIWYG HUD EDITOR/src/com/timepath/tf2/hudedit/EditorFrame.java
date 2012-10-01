@@ -85,8 +85,8 @@ public class EditorFrame extends JFrame implements ActionListener {
         boolean overrideSystemLAF = true;
         try {
             if(overrideSystemLAF) {
-                for (UIManager.LookAndFeelInfo info : UIManager.getInstalledLookAndFeels()) {
-                    if ("Nimbus".equals(info.getName())) {
+                for(UIManager.LookAndFeelInfo info : UIManager.getInstalledLookAndFeels()) {
+                    if("Nimbus".equals(info.getName())) {
                         UIManager.setLookAndFeel(info.getClassName());
                         break;
                     }
@@ -94,31 +94,36 @@ public class EditorFrame extends JFrame implements ActionListener {
             } else {
                 UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
             }
-        } catch (ClassNotFoundException ex) {
+        } catch(ClassNotFoundException ex) {
             Logger.getLogger(EditorFrame.class.getName()).log(Level.SEVERE, null, ex);
-        } catch (InstantiationException ex) {
+        } catch(InstantiationException ex) {
             Logger.getLogger(EditorFrame.class.getName()).log(Level.SEVERE, null, ex);
-        } catch (IllegalAccessException ex) {
+        } catch(IllegalAccessException ex) {
             Logger.getLogger(EditorFrame.class.getName()).log(Level.SEVERE, null, ex);
-        } catch (javax.swing.UnsupportedLookAndFeelException ex) {
+        } catch(javax.swing.UnsupportedLookAndFeelException ex) {
             Logger.getLogger(EditorFrame.class.getName()).log(Level.SEVERE, null, ex);
         }
 
         SwingUtilities.invokeLater(new Runnable() {
+
             @Override
             public void run() {
                 EditorFrame e = new EditorFrame();
                 e.start();
             }
+
         });
     }
 
     //<editor-fold defaultstate="collapsed" desc="OS specific code">
     private final static OS os;
+
     private final static int shortcutKey;
 
     private enum OS {
+
         Windows, Mac, Linux, Other
+
     }
 
     static {
@@ -158,18 +163,20 @@ public class EditorFrame extends JFrame implements ActionListener {
 
         this.setTitle("TimePath's WYSIWYG TF2 HUD Editor");
         this.addWindowListener(new WindowAdapter() {
+
             @Override
             public void windowClosing(WindowEvent e) {
                 System.exit(0);
             }
+
         });
         this.setMinimumSize(new Dimension(600, 400));
-        this.setPreferredSize(new Dimension((int)(d.getWidth() / 1.5), (int)(d.getHeight() / 1.5)));
+        this.setPreferredSize(new Dimension((int) (d.getWidth() / 1.5), (int) (d.getHeight() / 1.5)));
         this.setLocationByPlatform(true);
 //        this.setLocationRelativeTo(null);
 
         JScrollPane p = createCanvas();
-        
+
         createMenu();
 
         JSplitPane browser = new JSplitPane(JSplitPane.VERTICAL_SPLIT);
@@ -199,11 +206,13 @@ public class EditorFrame extends JFrame implements ActionListener {
     }
 
     public HudCanvas canvas;
+
     private ResLoader resloader;
 
     private JTree fileSystem;
 
     private DefaultMutableTreeNode hudFilesRoot;
+
     private PropertiesTable propTable;
 
     public void start() {
@@ -223,7 +232,7 @@ public class EditorFrame extends JFrame implements ActionListener {
         openItem.getAccessibleContext().setAccessibleDescription("This doesn't really do anything");
         openItem.addActionListener(this);
         fileMenu.add(openItem);
-        
+
         JMenuItem closeItem = new JMenuItem("Close HUD", KeyEvent.VK_C);
         closeItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_C, shortcutKey));
         closeItem.getAccessibleContext().setAccessibleDescription("This doesn't really do anything");
@@ -243,7 +252,7 @@ public class EditorFrame extends JFrame implements ActionListener {
         editMenu.setMnemonic(KeyEvent.VK_E);
         editMenu.getAccessibleContext().setAccessibleDescription("The only menu in this program that has menu items");
         menuBar.add(editMenu);
-        
+
         JMenuItem deleteItem = new JMenuItem("Delete", KeyEvent.VK_DELETE);
         deleteItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_DELETE, 0));
         deleteItem.getAccessibleContext().setAccessibleDescription("This doesn't really do anything");
@@ -252,8 +261,9 @@ public class EditorFrame extends JFrame implements ActionListener {
 
         JMenuItem selectAllItem = new JMenuItem("Select All", KeyEvent.VK_A);
         selectAllItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_A, shortcutKey));
-        
+
         canvas.getActionMap().put("Select All", new AbstractAction() {
+
             @Override
             public void actionPerformed(ActionEvent e) {
                 System.out.println("WORK");
@@ -261,8 +271,9 @@ public class EditorFrame extends JFrame implements ActionListener {
                     canvas.select(canvas.getElements().get(i));
                 }
             }
+
         });
-        
+
         canvas.getInputMap().put(KeyStroke.getKeyStroke(KeyEvent.VK_A, shortcutKey), "Select All");
         selectAllItem.getAccessibleContext().setAccessibleDescription("This doesn't really do anything");
         selectAllItem.addActionListener(this);
@@ -296,6 +307,7 @@ public class EditorFrame extends JFrame implements ActionListener {
         fileSystem.getSelectionModel().setSelectionMode(TreeSelectionModel.SINGLE_TREE_SELECTION);
 
         fileSystem.addTreeSelectionListener(new TreeSelectionListener() {
+
             @Override
             public void valueChanged(TreeSelectionEvent e) {
                 DefaultTableModel model = (DefaultTableModel) propTable.getModel();
@@ -303,7 +315,7 @@ public class EditorFrame extends JFrame implements ActionListener {
                 propTable.scrollRectToVisible(new Rectangle(0, 0, 0, 0));
 
                 DefaultMutableTreeNode node = (DefaultMutableTreeNode) fileSystem.getLastSelectedPathComponent();
-                if (node == null) {
+                if(node == null) {
                     return;
                 }
 
@@ -311,7 +323,7 @@ public class EditorFrame extends JFrame implements ActionListener {
                 if(nodeInfo instanceof Element) {
                     Element element = (Element) nodeInfo;
 
-                    for(Map.Entry<KVPair<String,String>,String> entry : element.getProps().entrySet()) {
+                    for(Map.Entry<KVPair<String, String>, String> entry : element.getProps().entrySet()) {
                         model.insertRow(model.getRowCount(), new Object[] {entry.getKey().getKey(), entry.getKey().getValue(), entry.getValue()});
                     }
 
@@ -328,6 +340,7 @@ public class EditorFrame extends JFrame implements ActionListener {
 
                 }
             }
+
         });
 
         JScrollPane scrollFileSystem = new JScrollPane(fileSystem);
@@ -368,7 +381,7 @@ public class EditorFrame extends JFrame implements ActionListener {
 //            fd.setTitle("Open HUD");
 //            selection = fd.getFolder();
 //            fd.dispose();
-//        } else 
+//        } else
         if(os == OS.Mac) {
             System.setProperty("apple.awt.fileDialogForDirectories", "true");
             System.setProperty("com.apple.macos.use-file-dialog-packages", "true");
@@ -395,24 +408,26 @@ public class EditorFrame extends JFrame implements ActionListener {
         if(selection != null) {
             final File f = new File(selection);
             new Thread() {
+
                 @Override
                 public void run() {
                     loadHud(f);
                 }
+
             }.start();
         } else {
             // Throw error or load archive
         }
     }
-    
+
     private void closeHud() {
         canvas.removeAllElements();
-        
+
         hudFilesRoot.removeAllChildren();
         hudFilesRoot.setUserObject("HUD");
         DefaultTreeModel model1 = (DefaultTreeModel) fileSystem.getModel();
         model1.reload();
-        
+
         DefaultTableModel model2 = (DefaultTableModel) propTable.getModel();
         model2.setRowCount(0);
         propTable.repaint();
@@ -436,23 +451,22 @@ public class EditorFrame extends JFrame implements ActionListener {
             }
 
             SwingWorker worker = new SwingWorker<Void, Void>() {
+
                 @Override
                 public Void doInBackground() {
                     while(!isCancelled()) {
-
                     }
                     return null;
                 }
 
                 @Override
                 public void done() {
-
                 }
 
                 @Override
                 protected void process(List<Void> chunks) {
-
                 }
+
             };
 
 //            worker.execute();
@@ -481,6 +495,7 @@ public class EditorFrame extends JFrame implements ActionListener {
             System.exit(0);
         } else if("Delete".equalsIgnoreCase(cmd)) {
             canvas.removeElements(canvas.getSelected());
+            canvas.deselectAll();
         } else if("Change Resolution".equalsIgnoreCase(cmd)) {
             changeResolution();
         } else if("Select All".equalsIgnoreCase(cmd)) {
@@ -498,39 +513,43 @@ public class EditorFrame extends JFrame implements ActionListener {
         final JDialog dialog = new JDialog(this, "Click a button", true);
         dialog.setContentPane(optionPane);
         dialog.setDefaultCloseOperation(
-        JDialog.DO_NOTHING_ON_CLOSE);
+            JDialog.DO_NOTHING_ON_CLOSE);
         dialog.addWindowListener(new WindowAdapter() {
+
             @Override
-        public void windowClosing(WindowEvent we) {
-        System.out.println("Thwarted user attempt to close window.");
-        }
+            public void windowClosing(WindowEvent we) {
+                System.out.println("Thwarted user attempt to close window.");
+            }
+
         });
         optionPane.addPropertyChangeListener(
-        new PropertyChangeListener() {
-            @Override
-        public void propertyChange(PropertyChangeEvent e) {
-        String prop = e.getPropertyName();
+            new PropertyChangeListener() {
 
-        if (dialog.isVisible()
-        && (e.getSource() == optionPane)
-        && (prop.equals(JOptionPane.VALUE_PROPERTY))) {
-        //If you were going to check something
-        //before closing the window, you'd do
-        //it here.
-        dialog.setVisible(false);
-        }
-        }
-        });
+                @Override
+                public void propertyChange(PropertyChangeEvent e) {
+                    String prop = e.getPropertyName();
+
+                    if(dialog.isVisible()
+                        && (e.getSource() == optionPane)
+                        && (prop.equals(JOptionPane.VALUE_PROPERTY))) {
+                        //If you were going to check something
+                        //before closing the window, you'd do
+                        //it here.
+                        dialog.setVisible(false);
+                    }
+                }
+
+            });
         dialog.pack();
         dialog.setVisible(true);
 
-        int value = ((Integer)optionPane.getValue()).intValue();
-        if (value == JOptionPane.YES_OPTION) {
-        System.out.println("Good.");
-        } else if (value == JOptionPane.NO_OPTION) {
-        System.out.println("Try using the window decorations "
-        + "to close the non-auto-closing dialog. "
-        + "You can't!");
+        int value = ((Integer) optionPane.getValue()).intValue();
+        if(value == JOptionPane.YES_OPTION) {
+            System.out.println("Good.");
+        } else if(value == JOptionPane.NO_OPTION) {
+            System.out.println("Try using the window decorations "
+                + "to close the non-auto-closing dialog. "
+                + "You can't!");
         }
 
         canvas.setPreferredSize(new Dimension(1920, 1080));

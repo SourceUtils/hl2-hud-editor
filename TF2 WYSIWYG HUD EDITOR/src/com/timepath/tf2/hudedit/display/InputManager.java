@@ -15,10 +15,15 @@ import java.util.ArrayList;
  * @author andrew
  */
 class InputManager implements MouseListener, MouseMotionListener, MouseWheelListener {
+
     private HudCanvas canvas;
+
     private boolean isDragSelecting;
+
     private boolean isDragMoving;
+
     HudCanvas outer;
+
     private Point dragStart;
 
     InputManager(final HudCanvas canvas, HudCanvas outer) {
@@ -49,14 +54,14 @@ class InputManager implements MouseListener, MouseMotionListener, MouseWheelList
     public void mouseWheelMoved(MouseWheelEvent event) {
     } // TODO: zooming
     //</editor-fold>
-    //</editor-fold>
 
     @Override
     public void mouseMoved(MouseEvent event) {
         Point p = event.getPoint();
+        p.translate(outer.offX, outer.offY);
         ArrayList<Element> elements = outer.getElements(); // TODO: recursion - the nth child where n is infinite
-        for (int i = 0; i < elements.size(); i++) {
-            if (!elements.get(i).children.isEmpty()) {
+        for(int i = 0; i < elements.size(); i++) {
+            if(!elements.get(i).children.isEmpty()) {
                 elements.addAll(elements.get(i).children);
             }
         }
@@ -67,14 +72,15 @@ class InputManager implements MouseListener, MouseMotionListener, MouseWheelList
     @Override
     public void mousePressed(MouseEvent event) {
         Point p = event.getPoint();
+        p.translate(outer.offX, outer.offY);
         dragStart = new Point(p.x, p.y);
         outer.selectRect.x = p.x;
         outer.selectRect.y = p.y;
         int button = event.getButton();
-        if (button == MouseEvent.BUTTON1) {
-            if (outer.getHovered() == null) {
+        if(button == MouseEvent.BUTTON1) {
+            if(outer.getHovered() == null) {
                 // clicked nothing
-                if (!event.isControlDown()) {
+                if(!event.isControlDown()) {
                     outer.deselectAll();
                 }
                 isDragSelecting = true;
@@ -82,21 +88,21 @@ class InputManager implements MouseListener, MouseMotionListener, MouseWheelList
             } else {
                 isDragSelecting = false;
                 isDragMoving = true;
-                if (event.isControlDown()) {
+                if(event.isControlDown()) {
                     // always select
-                    if (outer.isSelected(outer.getHovered())) {
+                    if(outer.isSelected(outer.getHovered())) {
                         outer.deselect(outer.getHovered());
                     } else {
                         outer.select(outer.getHovered());
                     }
                 } else {
-                    if (!outer.isSelected(outer.getHovered())) {
+                    if(!outer.isSelected(outer.getHovered())) {
                         // If the thing I'm hovering isn't selected already
                         outer.deselectAll();
                     }
                     outer.select(outer.getHovered());
                     ArrayList<Element> potentials = outer.getHovered().children;
-                    for (int i = 0; i < potentials.size(); i++) {
+                    for(int i = 0; i < potentials.size(); i++) {
                         outer.select(potentials.get(i));
                     }
                 }
@@ -118,16 +124,17 @@ class InputManager implements MouseListener, MouseMotionListener, MouseWheelList
     @Override
     public void mouseDragged(MouseEvent event) {
         Point p = event.getPoint();
-        if (isDragSelecting) {
+        p.translate(outer.offX, outer.offY);
+        if(isDragSelecting) {
             outer.select(dragStart, p, event.isControlDown());
-        } else if (isDragMoving) {
-            if (dragStart == null) {
+        } else if(isDragMoving) {
+            if(dragStart == null) {
                 dragStart = new Point();
             }
             Point v = new Point(p.x - dragStart.x, p.y - dragStart.y);
             ArrayList<Element> elements = outer.getSelected();
-            for (int i = 0; i < elements.size(); i++) {
-                if (!(elements.get(i).getParent() != null && outer.getSelected().contains(elements.get(i).getParent()))) {
+            for(int i = 0; i < elements.size(); i++) {
+                if(!(elements.get(i).getParent() != null && outer.getSelected().contains(elements.get(i).getParent()))) {
                     // if child of parent is not selected, move it anyway
                     outer.translate(elements.get(i), v.x, v.y);
                 }

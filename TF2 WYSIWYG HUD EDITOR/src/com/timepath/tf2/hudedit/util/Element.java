@@ -24,8 +24,11 @@ public class Element {
     HudCanvas canvas;
 
     private String key;
+
     private String info;
+
     public ArrayList<Element> children = new ArrayList<Element>();
+
     private Element parent;
 
     public Element(HudCanvas canvas) {
@@ -64,20 +67,19 @@ public class Element {
         }
     }
 
-    private Map<KVPair<String,String>,String> propMap = new HashMap<KVPair<String,String>,String>();
+    private Map<KVPair<String, String>, String> propMap = new HashMap<KVPair<String, String>, String>();
 
     public void addProp(String key, String val, String info) {
         propMap.put(new KVPair<String, String>(key, val), info);
     }
 
-    public Map<KVPair<String,String>,String> getProps() {
+    public Map<KVPair<String, String>, String> getProps() {
         return propMap;
     }
 
     // Extras
-
     public int getSize() { // works well unless they are exactly the same size
-        return wide*tall;
+        return wide * tall;
     }
 
     public Rectangle getBounds() {
@@ -111,7 +113,7 @@ public class Element {
     public void setLocalX(int x) {
         this.xPos = x;
     }
-    
+
     public int getX() {
         return xPos + (getParent() != null ? getParent().getX() : 0);
     }
@@ -125,7 +127,7 @@ public class Element {
     public void setLocalY(int y) {
         this.yPos = y;
     }
-    
+
     public int getY() {
         return yPos + (getParent() != null ? getParent().getY() : 0);
     }
@@ -187,7 +189,7 @@ public class Element {
     }
 
     public void setFont(Font font) {
-       this.font = font;
+        this.font = font;
     }
 
     private Color fgColor;
@@ -202,7 +204,7 @@ public class Element {
 
     public void validate() {
 //        System.out.println("validate()");
-        for(Map.Entry<KVPair<String,String>,String> entry : this.getProps().entrySet()) {
+        for(Map.Entry<KVPair<String, String>, String> entry : this.getProps().entrySet()) {
             String k = entry.getKey().getKey();
             if(k != null && k.contains("\"")) {
                 k = k.substring(1, k.length() - 1);
@@ -219,49 +221,41 @@ public class Element {
 
             if("enabled".equalsIgnoreCase(k)) {
                 this.setEnabled(Integer.parseInt(v) == 1);
-            } else
-            if("visible".equalsIgnoreCase(k)) {
+            } else if("visible".equalsIgnoreCase(k)) {
                 this.setVisible(Integer.parseInt(v) == 1);
-            } else
-            if("xpos".equalsIgnoreCase(k)) {
+            } else if("xpos".equalsIgnoreCase(k)) {
                 if(v.startsWith("c")) {
                     this.setXAlignment(Alignment.Center);
                     v = v.substring(1);
-                } else
-                if(v.startsWith("r")) {
+                } else if(v.startsWith("r")) {
                     this.setXAlignment(Alignment.Right);
                     v = v.substring(1);
                 } else {
                     this.setXAlignment(Alignment.Left);
                 }
                 this.setLocalX(Integer.parseInt(v));
-            } else
-            if("ypos".equalsIgnoreCase(k)) {
+            } else if("ypos".equalsIgnoreCase(k)) {
                 if(v.startsWith("c")) {
                     this.setYAlignment(Alignment.Center);
                     v = v.substring(1);
-                } else
-                if(v.startsWith("r")) {
+                } else if(v.startsWith("r")) {
                     this.setYAlignment(Alignment.Right);
                     v = v.substring(1);
                 } else {
                     this.setYAlignment(Alignment.Left);
                 }
                 this.setLocalY(Integer.parseInt(v));
-            } else
-            if("wide".equalsIgnoreCase(k)) {
+            } else if("wide".equalsIgnoreCase(k)) {
                 if(v.startsWith("f")) {
                     v = v.substring(1);
                 }
                 this.setWidth(Integer.parseInt(v));
-            } else
-            if("tall".equalsIgnoreCase(k)) {
+            } else if("tall".equalsIgnoreCase(k)) {
                 if(v.startsWith("f")) {
                     v = v.substring(1);
                 }
                 this.setHeight(Integer.parseInt(v));
-            } else
-            if("labelText".equalsIgnoreCase(k)) {
+            } else if("labelText".equalsIgnoreCase(k)) {
                 this.setLabelText(v);
             }
         }
@@ -284,7 +278,9 @@ public class Element {
     }
 
     public enum Alignment {
+
         Left, Center, Right
+
     }
 
     private Alignment _xAlignment = Alignment.Left;
@@ -328,6 +324,7 @@ public class Element {
     }
 
     private boolean scaleImage;
+
     private boolean pinCorner;
 
 }

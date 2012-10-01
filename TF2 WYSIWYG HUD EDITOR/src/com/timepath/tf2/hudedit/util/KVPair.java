@@ -9,6 +9,7 @@ package com.timepath.tf2.hudedit.util;
 public class KVPair<key, value> {
 
     private String key;
+
     private String value;
 
     public KVPair(String key, String value) {

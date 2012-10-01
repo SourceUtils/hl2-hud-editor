@@ -21,7 +21,12 @@ import javax.swing.JPanel;
 public class HudCanvas extends JPanel {
 
     Rectangle selectRect = new Rectangle();
+
     Image background;
+
+    int offY = -10; // top
+
+    int offX = -10; // left
 
     public HudCanvas() {
         new InputManager(this, this).init();
@@ -29,7 +34,6 @@ public class HudCanvas extends JPanel {
     }
 
     // List of elements
-
     private ArrayList<Element> elements = new ArrayList<Element>();
 
     public ArrayList<Element> getElements() {
@@ -62,7 +66,7 @@ public class HudCanvas extends JPanel {
             this.doRepaint(e.getBounds());
         }
     }
-    
+
     public void removeElement(Element e) {
         if(elements.contains(e)) {
             elements.remove(e);
@@ -92,7 +96,6 @@ public class HudCanvas extends JPanel {
     }
 
     // List of currently selected elements
-
     private ArrayList<Element> selectedElements = new ArrayList<Element>();
 
     public ArrayList<Element> getSelected() {
@@ -117,21 +120,22 @@ public class HudCanvas extends JPanel {
         }
     }
 
-    void deselect(Element e) {
-        if(selectedElements.contains(e) && e != null && !selectedElements.contains(e.getParent())) {
+    public void deselect(Element e) {
+        if(selectedElements.contains(e)) { // && e != null && !selectedElements.contains(e.getParent())) {
             selectedElements.remove(e);
             this.doRepaint(e.getBounds());
         }
     }
 
-    void deselectAll() {
-        for(int i = 0; i < elements.size(); i++) {
-            deselect(elements.get(i));
+    public void deselectAll() {
+        for(int i = 0; i < selectedElements.size(); i++) {
+            Element e = selectedElements.get(i);
+            selectedElements.remove(i);
+            this.doRepaint(e.getBounds());
         }
     }
 
     // List of currently selected elements
-
     private Element hoveredElement;
 
     public Element getHovered() {
@@ -171,12 +175,12 @@ public class HudCanvas extends JPanel {
 
 //        g.drawImage(background, 0, 0, null);
         g.setColor(Color.GRAY);
-        g.fillRect(0, 0, this.getPreferredSize().width, this.getPreferredSize().height);
+        g.fillRect(-offX, -offY, this.getPreferredSize().width, this.getPreferredSize().height);
 
         for(int i = 0; i < elements.size(); i++) {
             paintElement(elements.get(i), g);
         }
-        AlphaComposite ac =  AlphaComposite.getInstance(AlphaComposite.SRC_OVER,0.25f);
+        AlphaComposite ac = AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.25f);
         g.setComposite(ac);
         g.setColor(Color.CYAN.darker());
         g.fillRect(selectRect.x, selectRect.y, selectRect.width, selectRect.height);
@@ -185,27 +189,22 @@ public class HudCanvas extends JPanel {
     }
 
     private void paintElement(Element e, Graphics2D g) {
-        g.setColor(Color.CYAN.darker());
-        g.drawRect(e.getBounds().x - 1, e.getBounds().y - 1, e.getBounds().width + 1, e.getBounds().height + 1);
 
         if(selectedElements.contains(e)) {
-            g.setColor(Color.RED);
-        } else if(hoveredElement == e) {
-            g.setColor(Color.YELLOW);
+            g.setColor(Color.CYAN);
         } else {
             g.setColor(Color.GREEN);
         }
 
-        if(e.getParent() != null) {
-            g.setColor(g.getColor().brighter());
-        } else {
-            g.setColor(g.getColor().darker());
+        g.drawRect(e.getX() - offX, e.getY() - offY, e.getWidth(), e.getHeight());
+
+        if(hoveredElement == e) {
+            g.setColor(Color.YELLOW.darker());
+            g.drawRect(e.getX() - offX + 1, e.getY() - offY + 1, e.getWidth() - 2, e.getHeight() - 2);
         }
 
-        g.drawRect(e.getX(), e.getY(), e.getWidth(), e.getHeight());
-
         if(e.getLabelText() != null && !e.getLabelText().isEmpty()) {
-            g.drawString(e.getLabelText(), e.getX(), e.getY());
+            g.drawString(e.getLabelText(), e.getX() - offX, e.getY() - offY);
         }
 
         for(int i = 0; i < e.children.size(); i++) {
@@ -291,4 +290,5 @@ public class HudCanvas extends JPanel {
             elements.remove(i);
         }
     }
+
 }
