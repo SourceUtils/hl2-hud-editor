@@ -15,6 +15,8 @@ import javax.swing.JPanel;
 
 /**
  *
+ * TODO: Investigate why 'deleting' elements doesn't deselect them
+ *
  * @author andrew
  */
 @SuppressWarnings("serial")
