@@ -71,11 +71,11 @@ public class Element {
         }
     }
 
-    private ArrayList<Property> propMap2 = new ArrayList<Property>();
+    private ArrayList<Property> propMap = new ArrayList<Property>();
 
     public void addProp(Property p) {
         logger.log(ResLoader.loaderLevel, "Adding prop: {0} to: {1}", new Object[] {p, this});
-        propMap2.add(p);
+        propMap.add(p);
     }
 
     public void addProps(ArrayList<Property> p) {
@@ -85,8 +85,8 @@ public class Element {
         p.clear();
     }
 
-    public ArrayList<Property> getProps2() {
-        return propMap2;
+    public ArrayList<Property> getProps() {
+        return propMap;
     }
 
     // Extras
@@ -215,8 +215,8 @@ public class Element {
     }
 
     public void validate() { // TODO: remove duplicate keys (remove the earliest first, or let the user know or something)
-        for(int n = 0; n < this.getProps2().size(); n++) {
-            Property entry = this.getProps2().get(n);
+        for(int n = 0; n < this.getProps().size(); n++) {
+            Property entry = this.getProps().get(n);
             String k = entry.getKey();
             if(k != null && k.contains("\"")) {
                 k = k.substring(1, k.length() - 1);

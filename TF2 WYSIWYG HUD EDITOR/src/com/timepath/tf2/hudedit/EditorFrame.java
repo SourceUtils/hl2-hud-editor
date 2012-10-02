@@ -334,8 +334,8 @@ public class EditorFrame extends JFrame implements ActionListener {
                 if(nodeInfo instanceof Element) {
                     Element element = (Element) nodeInfo;
 
-                    for(int i = 0; i < element.getProps2().size(); i++) {
-                        Property entry = element.getProps2().get(i);
+                    for(int i = 0; i < element.getProps().size(); i++) {
+                        Property entry = element.getProps().get(i);
                         model.insertRow(model.getRowCount(), new Object[] {entry.getKey(), entry.getValue(), entry.getInfo()});
                     }
 
