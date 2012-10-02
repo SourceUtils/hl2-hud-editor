@@ -71,11 +71,11 @@ public class Element {
         }
     }
 
-    private Map<KVPair<String, String>, String> propMap = new HashMap<KVPair<String, String>, String>();
+    private ArrayList<Property> propMap2 = new ArrayList<Property>();
 
     public void addProp(Property p) {
         logger.log(ResLoader.loaderLevel, "Adding prop: {0} to: {1}", new Object[] {p, this});
-        propMap.put(new KVPair<String, String>(p.getKey(), p.getValue()), p.getInfo());
+        propMap2.add(p);
     }
 
     public void addProps(ArrayList<Property> p) {
@@ -85,8 +85,8 @@ public class Element {
         p.clear();
     }
 
-    public Map<KVPair<String, String>, String> getProps() {
-        return propMap;
+    public ArrayList<Property> getProps2() {
+        return propMap2;
     }
 
     // Extras
@@ -214,17 +214,18 @@ public class Element {
         this.fgColor = fgColor;
     }
 
-    public void validate() {
-        for(Map.Entry<KVPair<String, String>, String> entry : this.getProps().entrySet()) {
-            String k = entry.getKey().getKey();
+    public void validate() { // TODO: remove duplicate keys (remove the earliest first, or let the user know or something)
+        for(int n = 0; n < this.getProps2().size(); n++) {
+            Property entry = this.getProps2().get(n);
+            String k = entry.getKey();
             if(k != null && k.contains("\"")) {
                 k = k.substring(1, k.length() - 1);
             }
-            String v = entry.getKey().getValue();
+            String v = entry.getValue();
             if(v != null && v.contains("\"")) {
                 v = v.substring(1, v.length() - 1);
             }
-            String i = entry.getValue();
+            String i = entry.getInfo();
             if(i != null && i.contains("\"")) {
                 i = i.substring(1, i.length() - 1);
             }

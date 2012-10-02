@@ -4,7 +4,7 @@ import com.timepath.tf2.hudedit.display.HudCanvas;
 import com.timepath.tf2.hudedit.loaders.ResLoader;
 import com.timepath.tf2.hudedit.properties.PropertiesTable;
 import com.timepath.tf2.hudedit.util.Element;
-import com.timepath.tf2.hudedit.util.KVPair;
+import com.timepath.tf2.hudedit.util.Property;
 import java.awt.Container;
 import java.awt.Cursor;
 import java.awt.Dimension;
@@ -21,7 +21,6 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.File;
 import java.util.List;
-import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.AbstractAction;
@@ -335,21 +334,12 @@ public class EditorFrame extends JFrame implements ActionListener {
                 if(nodeInfo instanceof Element) {
                     Element element = (Element) nodeInfo;
 
-                    for(Map.Entry<KVPair<String, String>, String> entry : element.getProps().entrySet()) {
-                        model.insertRow(model.getRowCount(), new Object[] {entry.getKey().getKey(), entry.getKey().getValue(), entry.getValue()});
+                    for(int i = 0; i < element.getProps2().size(); i++) {
+                        Property entry = element.getProps2().get(i);
+                        model.insertRow(model.getRowCount(), new Object[] {entry.getKey(), entry.getValue(), entry.getInfo()});
                     }
 
                     canvas.load(element);
-
-//                    ColumnsAutoSizer.sizeColumnsToFit(propTable);
-//
-//                    for(int i = 0; i < propTable.getColumnCount(); i++) {
-//                        propTable.getColumnModel().getColumn(i).setMinWidth(propTable.getColumnModel().getColumn(i).getMaxWidth());
-//                    }
-//
-//                    propTable.getColumnModel().getColumn(propTable.getColumnCount() - 1).setMinWidth(1000);
-//                    propTable.getColumnModel().getColumn(propTable.getColumnCount() - 1).setMaxWidth(1000);
-
                 }
             }
 
@@ -493,6 +483,8 @@ public class EditorFrame extends JFrame implements ActionListener {
             model.reload();
 
             this.setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
+
+            System.out.println("loaded hud");
         }
     }
 
