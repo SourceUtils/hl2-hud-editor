@@ -17,17 +17,20 @@ import javax.swing.tree.DefaultMutableTreeNode;
 
 /**
  *
- * TODO: everything above the root node is not read into anything.
+ * TODO: Do something nicer with entirely commented elements
+ * TODO: Differentiate between location of coments - headers and content
+ *          Carry comments and only add when actual content appears and location can be determined?
  *
  * @author andrew
  */
 public class ResLoader {
 
     static final Logger logger = Logger.getLogger(ResLoader.class.getName());
+    public static final Level loaderLevel = Level.FINE;
 
     public static void main(String... args) {
         DefaultMutableTreeNode child = new DefaultMutableTreeNode();
-        analyze("/home/andrew/pvhud_v124_2011-01-25/resource/SourceScheme.res", child);
+        analyze("/home/andrew/pvhud_v124_2011-01-25/resource/ClientScheme.res", child);
     }
 
     private String hudFolder;
@@ -99,7 +102,7 @@ public class ResLoader {
             String info = null;
 
             if(line.equals("}")) { // for returning out of recursion: analyze: processAnalyze > processAnalyze < break < break
-                logger.info("Returning");
+                logger.log(loaderLevel, "Returning");
                 break;
             }
 
@@ -126,36 +129,38 @@ public class ResLoader {
                     p.setValue(line.substring(line.indexOf("//") + 2)); // display this with .trim()
                     p.setInfo("");
 
-                    logger.log(Level.INFO, "Carrying: {0}", line);
+                    logger.log(loaderLevel, "Carrying: {0}", line);
 
                     carried.add(p);
                 } else if(p.getValue().equals("")) { // very good assumption
                     p.setValue("{");
                 }
 
-                if(p.getValue().equals("{")) { // make new sub
-                    Element childElement = new Element(p.getKey(), p.getInfo());
-                    logger.log(Level.INFO, "Subbing: {0}", childElement);
-                    childElement.addProps(carried);
+                if(!p.getKey().equals("//")) {
+                    if(p.getValue().equals("{")) { // make new sub
+                        Element childElement = new Element(p.getKey(), p.getInfo());
+                        logger.log(loaderLevel, "Subbing: {0}", childElement);
+                        childElement.addProps(carried);
 
-                    Object obj = parent.getUserObject();
-                    if(obj instanceof Element) {
-                        Element e = (Element) obj;
-                        e.addElement(childElement);
-//                        childElement.setParent(e);
-                    }
+                        Object obj = parent.getUserObject();
+                        if(obj instanceof Element) {
+                            Element e = (Element) obj;
+                            e.addElement(childElement);
+    //                        childElement.setParent(e);
+                        }
 
-                    DefaultMutableTreeNode child = new DefaultMutableTreeNode();
-                    child.setUserObject(childElement);
-                    parent.add(child);
+                        DefaultMutableTreeNode child = new DefaultMutableTreeNode();
+                        child.setUserObject(childElement);
+                        parent.add(child);
 
-                    processAnalyze(scanner, child, carried);
-                } else if(!p.getKey().equals("//")) { // properties
-                    Object obj = parent.getUserObject();
-                    if(obj instanceof Element) {
-                        Element e = (Element) obj;
-                            e.addProps(carried);
-                            e.addProp(p);
+                        processAnalyze(scanner, child, carried);
+                    } else { // properties
+                        Object obj = parent.getUserObject();
+                        if(obj instanceof Element) {
+                            Element e = (Element) obj;
+                                e.addProps(carried);
+                                e.addProp(p);
+                        }
                     }
                 }
             }

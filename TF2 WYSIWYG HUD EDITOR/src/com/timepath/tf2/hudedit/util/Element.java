@@ -1,6 +1,7 @@
 package com.timepath.tf2.hudedit.util;
 
 import com.timepath.tf2.hudedit.display.HudCanvas;
+import com.timepath.tf2.hudedit.loaders.ResLoader;
 import java.awt.Color;
 import java.awt.Font;
 import java.awt.Image;
@@ -73,7 +74,7 @@ public class Element {
     private Map<KVPair<String, String>, String> propMap = new HashMap<KVPair<String, String>, String>();
 
     public void addProp(Property p) {
-        logger.log(Level.INFO, "Adding prop: {0} to: {1}", new Object[] {p, this});
+        logger.log(ResLoader.loaderLevel, "Adding prop: {0} to: {1}", new Object[] {p, this});
         propMap.put(new KVPair<String, String>(p.getKey(), p.getValue()), p.getInfo());
     }
 
