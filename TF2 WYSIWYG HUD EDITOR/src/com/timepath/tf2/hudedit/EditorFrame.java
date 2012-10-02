@@ -53,6 +53,9 @@ import net.tomahawk.XFileDialog;
  * Keep logic to a minimum, just interact and bridge components.
  * Current bug: the file choose dialog on windows 'paints' over the frame.
  *
+ * TODO:
+ * http://code.google.com/p/xfiledialog/ - more JNI bindings
+ *
  * Links of interest:
  *
  * UI principles:
@@ -127,6 +130,12 @@ public class EditorFrame extends JFrame implements ActionListener {
     }
 
     static {
+        try {
+            UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+        } catch(Exception ex) {
+            Logger.getLogger(EditorFrame.class.getName()).log(Level.SEVERE, null, ex);
+        }
+
         String osVer = System.getProperty("os.name").toLowerCase();
         if(osVer.indexOf("windows") != -1) {
             os = OS.Windows;
@@ -134,6 +143,9 @@ public class EditorFrame extends JFrame implements ActionListener {
             os = OS.Mac;
         } else if(osVer.indexOf("linux") != -1) {
             os = OS.Linux;
+//            if ("GTK look and feel".equals(UIManager.getLookAndFeel().getName())) {
+//                UIManager.put("FileChooserUI", "eu.kostia.gtkjfilechooser.ui.GtkFileChooserUI");
+//            }
         } else {
             os = OS.Other;
             System.out.println("Unrecognised OS: " + osVer);
@@ -376,12 +388,12 @@ public class EditorFrame extends JFrame implements ActionListener {
      */
     private void locateHudDirectory() {
         String selection = null;
-//        if(os == OS.Windows) {
-//            XFileDialog fd = new XFileDialog(EditorFrame.this);
-//            fd.setTitle("Open HUD");
-//            selection = fd.getFolder();
-//            fd.dispose();
-//        } else
+        if(os == OS.Windows) {
+            XFileDialog fd = new XFileDialog(EditorFrame.this);
+            fd.setTitle("Open HUD");
+            selection = fd.getFolder();
+            fd.dispose();
+        } else
         if(os == OS.Mac) {
             System.setProperty("apple.awt.fileDialogForDirectories", "true");
             System.setProperty("com.apple.macos.use-file-dialog-packages", "true");
@@ -393,10 +405,10 @@ public class EditorFrame extends JFrame implements ActionListener {
             System.setProperty("com.apple.macos.use-file-dialog-packages", "false");
 //        } else
 //        if(os == OS.Linux) {
-//            FileDialog fd = new FileDialog(this, "Open HUD");
-////            fd.setMultipleMode(false); // specific to java 7 - the default on anything lower
-//            fd.setVisible(true);
-//            selection = fd.getFile();
+////            FileDialog fd = new FileDialog(this, "Open HUD");
+//////            fd.setMultipleMode(false); // specific to java 7 - the default on anything lower
+////            fd.setVisible(true);
+////            selection = fd.getFile();
         } else { // Fall back to swing
             JFileChooser fd = new JFileChooser();
             fd.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);

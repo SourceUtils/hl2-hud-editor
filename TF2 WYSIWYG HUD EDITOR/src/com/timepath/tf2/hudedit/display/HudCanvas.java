@@ -86,9 +86,7 @@ public class HudCanvas extends JPanel {
         }
     }
 
-    public void load(Element element) {
-//        System.out.println(element + " - " + element.getParent());
-        element.validate();
+    public void load(Element element) {        element.validate();
         if(element.isEnabled() || element.isVisible()) {
             element.setCanvas(this);
             this.addElement(element);

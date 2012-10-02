@@ -8,6 +8,8 @@ import java.awt.Rectangle;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  *
@@ -30,6 +32,7 @@ public class Element {
     public ArrayList<Element> children = new ArrayList<Element>();
 
     private Element parent;
+    static final Logger logger = Logger.getLogger(Element.class.getName());
 
     public Element(HudCanvas canvas) {
         this.canvas = canvas;
@@ -69,8 +72,16 @@ public class Element {
 
     private Map<KVPair<String, String>, String> propMap = new HashMap<KVPair<String, String>, String>();
 
-    public void addProp(String key, String val, String info) {
-        propMap.put(new KVPair<String, String>(key, val), info);
+    public void addProp(Property p) {
+        logger.log(Level.INFO, "Adding prop: {0} to: {1}", new Object[] {p, this});
+        propMap.put(new KVPair<String, String>(p.getKey(), p.getValue()), p.getInfo());
+    }
+
+    public void addProps(ArrayList<Property> p) {
+        for(int i = 0; i < p.size(); i++) {
+            addProp(p.get(i));
+        }
+        p.clear();
     }
 
     public Map<KVPair<String, String>, String> getProps() {
@@ -96,7 +107,7 @@ public class Element {
 
     @Override
     public String toString() {
-        String displayInfo = (info != null ? (" ~ " + info) : "");
+        String displayInfo = (info != null ? (" ~ " + info) : ""); // elements cannot have a value, only info
         return key + displayInfo;
     }
 
@@ -203,7 +214,6 @@ public class Element {
     }
 
     public void validate() {
-//        System.out.println("validate()");
         for(Map.Entry<KVPair<String, String>, String> entry : this.getProps().entrySet()) {
             String k = entry.getKey().getKey();
             if(k != null && k.contains("\"")) {
