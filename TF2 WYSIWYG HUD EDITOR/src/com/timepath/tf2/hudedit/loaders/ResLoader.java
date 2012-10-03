@@ -107,60 +107,60 @@ public class ResLoader {
             }
 
             if(line.equals("") || key.equals("{")) {
-                // goto next... I'm sure there's a better way to do this
-            } else {
-                // not the best
-                int idx = val.contains("//") ? val.indexOf("//") : (val.contains("[") ? val.indexOf("[") : -1);
-                if(idx >= 0) {
-                    info = val.substring(idx).trim();
-                    val = val.substring(0, idx).trim();
-                }
+                continue;
+            }
 
-                Property p = new Property(key, val, info);
+            // not the best
+            int idx = val.contains("//") ? val.indexOf("//") : (val.contains("[") ? val.indexOf("[") : -1);
+            if(idx >= 0) {
+                info = val.substring(idx).trim();
+                val = val.substring(0, idx).trim();
+            }
 
-                if(line.startsWith("#")) {
-                    p.setKey("#");
-                    p.setValue(line.substring(line.indexOf("#") + 1).trim());
-                    p.setInfo("");
+            Property p = new Property(key, val, info);
+
+            if(line.startsWith("#")) {
+                p.setKey("#");
+                p.setValue(line.substring(line.indexOf("#") + 1).trim());
+                p.setInfo("");
 
 //                    logger.log(Level.INFO, "Carrying: {0}", line);
-                } else if(line.startsWith("//")) {
-                    p.setKey("//");
-                    p.setValue(line.substring(line.indexOf("//") + 2)); // display this with .trim()
-                    p.setInfo("");
+            } else if(line.startsWith("//")) {
+                p.setKey("//");
+                p.setValue(line.substring(line.indexOf("//") + 2)); // display this with .trim()
+                p.setInfo("");
 
-                    logger.log(loaderLevel, "Carrying: {0}", line);
+                logger.log(loaderLevel, "Carrying: {0}", line);
 
-                    carried.add(p);
-                } else if(p.getValue().equals("")) { // very good assumption
-                    p.setValue("{");
-                }
+                carried.add(p);
+            } else if(p.getValue().equals("")) { // very good assumption
+                p.setValue("{");
+            }
 
-                if(!p.getKey().equals("//")) {
-                    if(p.getValue().equals("{")) { // make new sub
-                        Element childElement = new Element(p.getKey(), p.getInfo());
-                        logger.log(loaderLevel, "Subbing: {0}", childElement);
-                        childElement.addProps(carried);
+            if(!p.getKey().equals("//")) {
+                if(p.getValue().equals("{")) { // make new sub
+                    Element childElement = new Element(p.getKey(), p.getInfo());
+                    logger.log(loaderLevel, "Subbing: {0}", childElement);
+                    childElement.addProps(carried);
 
-                        Object obj = parent.getUserObject();
-                        if(obj instanceof Element) {
-                            Element e = (Element) obj;
-                            e.addElement(childElement);
-    //                        childElement.setParent(e);
-                        }
+                    Object obj = parent.getUserObject();
+                    if(obj instanceof Element) {
+                        Element e = (Element) obj;
+                        e.addElement(childElement);
+//                        childElement.setParent(e);
+                    }
 
-                        DefaultMutableTreeNode child = new DefaultMutableTreeNode();
-                        child.setUserObject(childElement);
-                        parent.add(child);
+                    DefaultMutableTreeNode child = new DefaultMutableTreeNode();
+                    child.setUserObject(childElement);
+                    parent.add(child);
 
-                        processAnalyze(scanner, child, carried);
-                    } else { // properties
-                        Object obj = parent.getUserObject();
-                        if(obj instanceof Element) {
-                            Element e = (Element) obj;
-                                e.addProps(carried);
-                                e.addProp(p);
-                        }
+                    processAnalyze(scanner, child, carried);
+                } else { // properties
+                    Object obj = parent.getUserObject();
+                    if(obj instanceof Element) {
+                        Element e = (Element) obj;
+                            e.addProps(carried);
+                            e.addProp(p);
                     }
                 }
             }

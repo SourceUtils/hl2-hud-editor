@@ -12,6 +12,7 @@ import java.awt.DisplayMode;
 import java.awt.FileDialog;
 import java.awt.GraphicsEnvironment;
 import java.awt.Rectangle;
+import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
@@ -168,9 +169,13 @@ public class EditorFrame extends JFrame implements ActionListener {
 
     public EditorFrame() {
         DisplayMode d = GraphicsEnvironment.getLocalGraphicsEnvironment().getDefaultScreenDevice().getDisplayMode();
-//        Dimension screenRes = Toolkit.getDefaultToolkit().getScreenSize();
-//        long gcm = gcm(screenRes.width, screenRes.height);
-//        System.out.println((screenRes.width / gcm) + ":" + (screenRes.height / gcm));
+        Dimension screenRes = Toolkit.getDefaultToolkit().getScreenSize();
+        long gcm = gcm(screenRes.width, screenRes.height);
+        long resX = screenRes.width;
+        long resY = screenRes.height;
+        double m = (double)resX / (double)resY;
+        System.out.println(resX + "/" + resY + "=" + m);
+        System.out.println((resX / gcm) + ":" + (resY / gcm) + " = " + Math.round(m) * 480 + "x" + 480);
 
         this.setTitle("TimePath's WYSIWYG TF2 HUD Editor");
         this.addWindowListener(new WindowAdapter() {
@@ -183,7 +188,8 @@ public class EditorFrame extends JFrame implements ActionListener {
         });
         this.setMinimumSize(new Dimension(600, 400));
         this.setPreferredSize(new Dimension((int) (d.getWidth() / 1.5), (int) (d.getHeight() / 1.5)));
-        this.setLocationByPlatform(true);
+        this.setLocation((d.getWidth() / 2) - (this.getPreferredSize().width / 2), (d.getHeight() / 2) - (this.getPreferredSize().height / 2));
+//        this.setLocationByPlatform(true);
 //        this.setLocationRelativeTo(null);
 
         JScrollPane p = createCanvas();
