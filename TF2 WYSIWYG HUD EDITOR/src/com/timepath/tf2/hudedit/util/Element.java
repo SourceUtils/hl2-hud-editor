@@ -156,7 +156,15 @@ public class Element {
     }
     
     public int getWidth() {
-        return (this.getWidthMode() == DimensionMode.Mode2 ? (this.parent != null ? this.parent.getWidth() - wide: EditorFrame.hudRes.width - wide) : wide);
+        if(this.getWidthMode() == DimensionMode.Mode2) {
+//            if(this.parent != null) {
+//                return this.parent.getWidth() - wide;
+//            } else {
+                return EditorFrame.hudRes.width - wide;
+//            }
+        } else {
+            return wide;
+        }
     }
     
     private DimensionMode _wideMode = DimensionMode.Mode1;

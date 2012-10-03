@@ -25,9 +25,9 @@ public class HudCanvas extends JPanel {
 
     Image background;
 
-    public static int offY = 10; // top
+    public static int offY = 0; // top
 
-    public static int offX = 10; // left
+    public static int offX = 0; // left
     
     private Rectangle repainted;
 
