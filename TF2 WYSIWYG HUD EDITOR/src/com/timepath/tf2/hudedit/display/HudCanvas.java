@@ -1,5 +1,6 @@
 package com.timepath.tf2.hudedit.display;
 
+import com.timepath.tf2.hudedit.EditorFrame;
 import com.timepath.tf2.hudedit.util.Element;
 import java.awt.AlphaComposite;
 import java.awt.Color;
@@ -8,8 +9,6 @@ import java.awt.Graphics2D;
 import java.awt.Image;
 import java.awt.Point;
 import java.awt.Rectangle;
-import java.awt.Toolkit;
-import java.net.URL;
 import java.util.ArrayList;
 import javax.swing.JPanel;
 
@@ -26,9 +25,11 @@ public class HudCanvas extends JPanel {
 
     Image background;
 
-    int offY = -10; // top
+    public static int offY = 10; // top
 
-    int offX = -10; // left
+    public static int offX = 10; // left
+    
+    private Rectangle repainted;
 
     public HudCanvas() {
         new InputManager(this, this).init();
@@ -44,26 +45,7 @@ public class HudCanvas extends JPanel {
 
     public void addElement(Element e) {
         if(!elements.contains(e)) {
-            int x = 0;
-            if(e.getXAlignment() == Element.Alignment.Left) {
-                x = e.getX();
-            } else if(e.getXAlignment() == Element.Alignment.Center) {
-                x = (this.getPreferredSize().width / 2) + e.getX();
-            } else if(e.getXAlignment() == Element.Alignment.Right) {
-                x = (this.getPreferredSize().width) - e.getX();
-            }
-            e.setLocalX(x); // wrong
-
-            int y = 0;
-            if(e.getXAlignment() == Element.Alignment.Left) {
-                y = e.getY();
-            } else if(e.getXAlignment() == Element.Alignment.Center) {
-                y = (this.getPreferredSize().height / 2) + e.getY();
-            } else if(e.getXAlignment() == Element.Alignment.Right) {
-                y = (this.getPreferredSize().height) - e.getY();
-            }
-            e.setLocalY(y); // wrong
-
+            e.setCanvas(this);
             elements.add(e);
             this.doRepaint(e.getBounds());
         }
@@ -88,11 +70,11 @@ public class HudCanvas extends JPanel {
         }
     }
 
-    public void load(Element element) {        element.validate();
-        if(element.isEnabled() || element.isVisible()) {
-            element.setCanvas(this);
+    public void load(Element element) {
+        element.validate();
+//        if(element.isEnabled() || element.isVisible()) {
             this.addElement(element);
-        }
+//        }
     }
 
     // List of currently selected elements
@@ -175,7 +157,7 @@ public class HudCanvas extends JPanel {
 
 //        g.drawImage(background, 0, 0, null);
         g.setColor(Color.GRAY);
-        g.fillRect(-offX, -offY, this.getPreferredSize().width, this.getPreferredSize().height);
+        g.fillRect(offX, offY, EditorFrame.hudRes.width, EditorFrame.hudRes.height);
 
         for(int i = 0; i < elements.size(); i++) {
             paintElement(elements.get(i), g);
@@ -183,9 +165,16 @@ public class HudCanvas extends JPanel {
         AlphaComposite ac = AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.25f);
         g.setComposite(ac);
         g.setColor(Color.CYAN.darker());
-        g.fillRect(selectRect.x, selectRect.y, selectRect.width, selectRect.height);
+        g.fillRect(offX + selectRect.x, offY + selectRect.y, selectRect.width + 1, selectRect.height + 1);
         g.setColor(Color.BLUE);
-        g.drawRect(selectRect.x, selectRect.y, selectRect.width, selectRect.height);
+        g.drawRect(offX + selectRect.x, offY + selectRect.y, selectRect.width + 1, selectRect.height + 1);
+        
+//        if(repainted != null) {
+//            g.setColor(Color.PINK.darker());
+//            g.fillRect(offX + repainted.x, offY + repainted.y, repainted.width, repainted.height);
+//            g.setColor(Color.RED);
+//            g.drawRect(offX + repainted.x, offY + repainted.y, repainted.width, repainted.height);
+//        }
     }
 
     private void paintElement(Element e, Graphics2D g) {
@@ -196,15 +185,19 @@ public class HudCanvas extends JPanel {
             g.setColor(Color.GREEN);
         }
 
-        g.drawRect(e.getX() - offX, e.getY() - offY, e.getWidth(), e.getHeight());
-
+        g.drawRect(e.getX() + offX, e.getY() + offY, e.getWidth(), e.getHeight());
+        
+//        g.setColor(Color.PINK);
+//        g.drawRect(e.getBounds().x, e.getBounds().y, e.getBounds().width, e.getBounds().height);
+        
         if(hoveredElement == e) {
-            g.setColor(Color.YELLOW.darker());
-            g.drawRect(e.getX() - offX + 1, e.getY() - offY + 1, e.getWidth() - 2, e.getHeight() - 2);
+            g.setColor(new Color(255-g.getColor().getRed(), 255-g.getColor().getGreen(), 255-g.getColor().getBlue()));
+            g.drawRect(e.getX() + offX + 1, e.getY() + offY + 1, e.getWidth() - 2, e.getHeight() - 2);
+            g.drawRect(e.getX() + offX - 1, e.getY() + offY - 1, e.getWidth() + 2, e.getHeight() + 2);
         }
 
         if(e.getLabelText() != null && !e.getLabelText().isEmpty()) {
-            g.drawString(e.getLabelText(), e.getX() - offX, e.getY() - offY);
+            g.drawString(e.getLabelText(), e.getX() + offX, e.getY() + offY);
         }
 
         for(int i = 0; i < e.children.size(); i++) {
@@ -213,8 +206,9 @@ public class HudCanvas extends JPanel {
     }
 
     public void doRepaint(Rectangle bounds) { // override method
-//        this.repaint(bounds);
-        this.repaint();
+        this.repainted = bounds;
+        this.repaint(bounds.x + offX, bounds.y + offX, bounds.width, bounds.height);
+//        this.repaint();
     }
 
     // Checks if poing p is inside the bounds of any element
@@ -222,8 +216,7 @@ public class HudCanvas extends JPanel {
         ArrayList<Element> potential = new ArrayList<Element>();
         for(int i = 0; i < elements.size(); i++) {
             Element e = elements.get(i);
-            Point p2 = new Point(p);
-            if(e.getBounds().contains(p2)) {
+            if(e.getBounds().contains(p)) {
                 potential.add(e);
             }
         }
@@ -262,13 +255,13 @@ public class HudCanvas extends JPanel {
                     }
                 }
             }
-            this.doRepaint(new Rectangle(originalSelectRect.x, originalSelectRect.y, originalSelectRect.width + 1, originalSelectRect.height + 1)); // TODO: optimize further - doRepaint 3 segments : overlapping, original, changed
-            this.doRepaint(new Rectangle(this.selectRect.x, this.selectRect.y, this.selectRect.width + 1, this.selectRect.height + 1));
+            this.doRepaint(new Rectangle(originalSelectRect.x, originalSelectRect.y, originalSelectRect.width + 2, originalSelectRect.height + 2)); // TODO: optimize further - doRepaint 3 segments : overlapping, original, changed
+            this.doRepaint(new Rectangle(this.selectRect.x, this.selectRect.y, this.selectRect.width + 2, this.selectRect.height + 2)); // why are these +2?
         }
     }
 
     private Rectangle fitRect(Point p1, Point p2, Rectangle r) {
-        Rectangle result = r;
+        Rectangle result = new Rectangle(r);
         result.x = Math.min(p1.x, p2.x);
         result.y = Math.min(p1.y, p2.y);
         result.width = Math.abs(p2.x - p1.x);

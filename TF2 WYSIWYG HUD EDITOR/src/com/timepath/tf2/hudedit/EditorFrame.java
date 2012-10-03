@@ -166,6 +166,8 @@ public class EditorFrame extends JFrame implements ActionListener {
         }
     }
     //</editor-fold>
+    
+    public static Dimension hudRes;
 
     public EditorFrame() {
         DisplayMode d = GraphicsEnvironment.getLocalGraphicsEnvironment().getDefaultScreenDevice().getDisplayMode();
@@ -175,8 +177,10 @@ public class EditorFrame extends JFrame implements ActionListener {
         long resY = screenRes.height;
         double m = (double)resX / (double)resY;
         System.out.println(resX + "/" + resY + "=" + m);
-        System.out.println((resX / gcm) + ":" + (resY / gcm) + " = " + Math.round(m) * 480 + "x" + 480);
+        System.out.println((resX / gcm) + ":" + (resY / gcm) + " = " + Math.round(m * 480) + "x" + 480);
 
+        hudRes = new Dimension((int)Math.round(m * 480), 480);
+        
         this.setTitle("TimePath's WYSIWYG TF2 HUD Editor");
         this.addWindowListener(new WindowAdapter() {
 

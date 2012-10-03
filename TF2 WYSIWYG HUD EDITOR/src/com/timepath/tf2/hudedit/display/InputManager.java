@@ -16,19 +16,16 @@ import java.util.ArrayList;
  */
 class InputManager implements MouseListener, MouseMotionListener, MouseWheelListener {
 
-    private HudCanvas canvas;
-
     private boolean isDragSelecting;
 
     private boolean isDragMoving;
 
-    HudCanvas outer;
+    HudCanvas canvas;
 
     private Point dragStart;
 
     InputManager(final HudCanvas canvas, HudCanvas outer) {
-        this.outer = outer;
-        this.canvas = canvas;
+        this.canvas = outer;
     }
 
     void init() {
@@ -57,31 +54,31 @@ class InputManager implements MouseListener, MouseMotionListener, MouseWheelList
 
     @Override
     public void mouseMoved(MouseEvent event) {
-        Point p = event.getPoint();
-        p.translate(outer.offX, outer.offY);
-        ArrayList<Element> elements = outer.getElements(); // TODO: recursion - the nth child where n is infinite
+        Point p = new Point(event.getPoint());
+        p.translate(-HudCanvas.offX, -HudCanvas.offY);
+        ArrayList<Element> elements = canvas.getElements(); // TODO: recursion - the nth child where n is infinite
         for(int i = 0; i < elements.size(); i++) {
             if(!elements.get(i).children.isEmpty()) {
                 elements.addAll(elements.get(i).children);
             }
         }
-        ArrayList<Element> potentials = outer.pick(p, elements);
-        outer.hover(outer.smallest(potentials));
+        ArrayList<Element> potentials = canvas.pick(p, elements);
+        canvas.hover(canvas.smallest(potentials));
     }
 
     @Override
     public void mousePressed(MouseEvent event) {
-        Point p = event.getPoint();
-        p.translate(outer.offX, outer.offY);
+        Point p = new Point(event.getPoint());
+        p.translate(-HudCanvas.offX, -HudCanvas.offY);
         dragStart = new Point(p.x, p.y);
-        outer.selectRect.x = p.x;
-        outer.selectRect.y = p.y;
+        canvas.selectRect.x = p.x;
+        canvas.selectRect.y = p.y;
         int button = event.getButton();
         if(button == MouseEvent.BUTTON1) {
-            if(outer.getHovered() == null) {
+            if(canvas.getHovered() == null) {
                 // clicked nothing
                 if(!event.isControlDown()) {
-                    outer.deselectAll();
+                    canvas.deselectAll();
                 }
                 isDragSelecting = true;
                 isDragMoving = false;
@@ -90,20 +87,20 @@ class InputManager implements MouseListener, MouseMotionListener, MouseWheelList
                 isDragMoving = true;
                 if(event.isControlDown()) {
                     // always select
-                    if(outer.isSelected(outer.getHovered())) {
-                        outer.deselect(outer.getHovered());
+                    if(canvas.isSelected(canvas.getHovered())) {
+                        canvas.deselect(canvas.getHovered());
                     } else {
-                        outer.select(outer.getHovered());
+                        canvas.select(canvas.getHovered());
                     }
                 } else {
-                    if(!outer.isSelected(outer.getHovered())) {
+                    if(!canvas.isSelected(canvas.getHovered())) {
                         // If the thing I'm hovering isn't selected already
-                        outer.deselectAll();
+                        canvas.deselectAll();
                     }
-                    outer.select(outer.getHovered());
-                    ArrayList<Element> potentials = outer.getHovered().children;
+                    canvas.select(canvas.getHovered());
+                    ArrayList<Element> potentials = canvas.getHovered().children;
                     for(int i = 0; i < potentials.size(); i++) {
-                        outer.select(potentials.get(i));
+                        canvas.select(potentials.get(i));
                     }
                 }
             }
@@ -115,28 +112,28 @@ class InputManager implements MouseListener, MouseMotionListener, MouseWheelList
         isDragSelecting = false;
         isDragMoving = false;
         dragStart = null;
-        Rectangle original = new Rectangle(outer.selectRect);
-        outer.selectRect.width = 0;
-        outer.selectRect.height = 0;
-        outer.doRepaint(new Rectangle(original.x, original.y, original.width + 1, original.height + 1));
+        Rectangle original = new Rectangle(canvas.selectRect);
+        canvas.selectRect.width = 0;
+        canvas.selectRect.height = 0;
+        canvas.doRepaint(new Rectangle(original.x, original.y, original.width + 1, original.height + 1));
     }
 
     @Override
     public void mouseDragged(MouseEvent event) {
-        Point p = event.getPoint();
-        p.translate(outer.offX, outer.offY);
+        Point p = new Point(event.getPoint());
+        p.translate(-HudCanvas.offX, -HudCanvas.offY);
         if(isDragSelecting) {
-            outer.select(dragStart, p, event.isControlDown());
+            canvas.select(dragStart, p, event.isControlDown());
         } else if(isDragMoving) {
             if(dragStart == null) {
                 dragStart = new Point();
             }
             Point v = new Point(p.x - dragStart.x, p.y - dragStart.y);
-            ArrayList<Element> elements = outer.getSelected();
+            ArrayList<Element> elements = canvas.getSelected();
             for(int i = 0; i < elements.size(); i++) {
-                if(!(elements.get(i).getParent() != null && outer.getSelected().contains(elements.get(i).getParent()))) {
+                if(!(elements.get(i).getParent() != null && canvas.getSelected().contains(elements.get(i).getParent()))) {
                     // if child of parent is not selected, move it anyway
-                    outer.translate(elements.get(i), v.x, v.y);
+                    canvas.translate(elements.get(i), v.x, v.y);
                 }
             }
             dragStart = p;

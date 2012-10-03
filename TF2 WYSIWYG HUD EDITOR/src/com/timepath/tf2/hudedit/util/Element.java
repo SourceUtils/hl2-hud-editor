@@ -1,5 +1,6 @@
 package com.timepath.tf2.hudedit.util;
 
+import com.timepath.tf2.hudedit.EditorFrame;
 import com.timepath.tf2.hudedit.display.HudCanvas;
 import com.timepath.tf2.hudedit.loaders.ResLoader;
 import java.awt.Color;
@@ -7,9 +8,6 @@ import java.awt.Font;
 import java.awt.Image;
 import java.awt.Rectangle;
 import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
@@ -46,26 +44,6 @@ public class Element {
 
     public void addElement(Element e) { // TODO: check for child = parent and child already has parent
         if(!children.contains(e)) {
-            int absX = 0;
-            if(e.getXAlignment() == Element.Alignment.Left) {
-                absX = e.getX();
-            } else if(e.getXAlignment() == Element.Alignment.Center) {
-                absX = (this.getWidth() / 2) + e.getX();
-            } else if(e.getXAlignment() == Element.Alignment.Right) {
-                absX = (this.getWidth()) - e.getX();
-            }
-//            e.setX(absX);
-
-            int absY = 0;
-            if(e.getXAlignment() == Element.Alignment.Left) {
-                absY = e.getY();
-            } else if(e.getXAlignment() == Element.Alignment.Center) {
-                absY = (this.getHeight() / 2) + e.getY();
-            } else if(e.getXAlignment() == Element.Alignment.Right) {
-                absY = (this.getHeight()) - e.getY();
-            }
-//            e.setY(absY);
-
             children.add(e);
             e.setParent(this);
         }
@@ -99,10 +77,6 @@ public class Element {
         int minY = this.getY();
         int maxX = this.getWidth();
         int maxY = this.getHeight();
-        if(parent != null) {
-            minX += parent.getX();
-            minY += parent.getY();
-        }
         return new Rectangle(minX, minY, maxX + 1, maxY + 1);
     }
 
@@ -127,7 +101,16 @@ public class Element {
     }
 
     public int getX() {
-        return xPos + (getParent() != null ? getParent().getX() : 0);
+        int x = 0;
+        if(this.getXAlignment() == Element.Alignment.Left) {
+            x = xPos;
+        } else if(this.getXAlignment() == Element.Alignment.Center) {
+            x = (EditorFrame.hudRes.width / 2) + xPos;
+        } else if(this.getXAlignment() == Element.Alignment.Right) {
+            x = (EditorFrame.hudRes.width) - xPos;
+        }
+        
+        return x + (getParent() != null ? getParent().getX() : 0);
     }
 
     private int yPos;
@@ -141,7 +124,15 @@ public class Element {
     }
 
     public int getY() {
-        return yPos + (getParent() != null ? getParent().getY() : 0);
+        int y = 0;
+        if(this.getYAlignment() == Element.Alignment.Left) {
+            y = yPos;
+        } else if(this.getYAlignment() == Element.Alignment.Center) {
+            y = (EditorFrame.hudRes.height / 2) + yPos;
+        } else if(this.getYAlignment() == Element.Alignment.Right) {
+            y = (EditorFrame.hudRes.height) - yPos;
+        }
+        return y + (getParent() != null ? getParent().getY() : 0);
     }
 
     private int zPos;
@@ -155,23 +146,51 @@ public class Element {
     }
 
     private int wide;
-
-    public int getWidth() {
+    
+    public int getLocalWidth() {
         return wide;
     }
 
-    public void setWidth(int wide) {
+    public void setLocalWidth(int wide) {
         this.wide = wide;
     }
+    
+    public int getWidth() {
+        return (this.getWidthMode() == DimensionMode.Mode2 ? (this.parent != null ? this.parent.getWidth() - wide: EditorFrame.hudRes.width - wide) : wide);
+    }
+    
+    private DimensionMode _wideMode = DimensionMode.Mode1;
+    
+    public DimensionMode getWidthMode() {
+        return _wideMode;
+    }
 
+    public void setWidthMode(DimensionMode mode) {
+        this._wideMode = mode;
+    }
+        
     private int tall;
 
-    public int getHeight() {
+    public int getLocalHeight() {
         return tall;
     }
 
-    public void setHeight(int tall) {
+    public void setLocalHeight(int tall) {
         this.tall = tall;
+    }
+    
+    public int getHeight() {
+        return (this.getHeightMode() == DimensionMode.Mode2 ? (this.parent != null ? this.parent.getHeight() - tall: EditorFrame.hudRes.height - tall) : tall);
+    }
+    
+    private DimensionMode _tallMode = DimensionMode.Mode1;
+    
+    public DimensionMode getHeightMode() {
+        return _tallMode;
+    }
+
+    public void setHeightMode(DimensionMode mode) {
+        this._tallMode = mode;
     }
 
     private boolean visible;
@@ -230,7 +249,6 @@ public class Element {
                 i = i.substring(1, i.length() - 1);
             }
 
-
             if("enabled".equalsIgnoreCase(k)) {
                 this.setEnabled(Integer.parseInt(v) == 1);
             } else if("visible".equalsIgnoreCase(k)) {
@@ -260,13 +278,15 @@ public class Element {
             } else if("wide".equalsIgnoreCase(k)) {
                 if(v.startsWith("f")) {
                     v = v.substring(1);
+                    this.setWidthMode(DimensionMode.Mode2);
                 }
-                this.setWidth(Integer.parseInt(v));
+                this.setLocalWidth(Integer.parseInt(v));
             } else if("tall".equalsIgnoreCase(k)) {
                 if(v.startsWith("f")) {
                     v = v.substring(1);
+                    this.setHeightMode(DimensionMode.Mode2);
                 }
-                this.setHeight(Integer.parseInt(v));
+                this.setLocalHeight(Integer.parseInt(v));
             } else if("labelText".equalsIgnoreCase(k)) {
                 this.setLabelText(v);
             }
@@ -292,6 +312,12 @@ public class Element {
     public enum Alignment {
 
         Left, Center, Right
+
+    }
+    
+    public enum DimensionMode {
+
+        Mode1, Mode2
 
     }
 
