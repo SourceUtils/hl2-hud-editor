@@ -1,7 +1,7 @@
 package com.timepath.tf2.hudedit.loaders;
 
-import com.timepath.tf2.hudedit.util.Element;
 import com.timepath.tf2.hudedit.properties.HudFile;
+import com.timepath.tf2.hudedit.util.Element;
 import com.timepath.tf2.hudedit.util.Property;
 import java.io.BufferedReader;
 import java.io.File;
@@ -18,8 +18,6 @@ import javax.swing.tree.DefaultMutableTreeNode;
 /**
  *
  * TODO: Do something nicer with entirely commented elements
- * TODO: Differentiate between location of coments - headers and content
- *          Carry comments and only add when actual content appears and location can be determined?
  *
  * @author andrew
  */
@@ -28,9 +26,9 @@ public class ResLoader {
     static final Logger logger = Logger.getLogger(ResLoader.class.getName());
     public static final Level loaderLevel = Level.FINE;
 
-    public static void main(String... args) {
+    public static void main(String... args) {    
         DefaultMutableTreeNode child = new DefaultMutableTreeNode();
-        analyze("/home/andrew/pvhud_v124_2011-01-25/resource/ClientScheme.res", child);
+        analyze("C:/Program Files (x86)/Steam/steamapps/timepath/team fortress 2/tf/resource/ClientScheme.res", child);
     }
 
     private String hudFolder;
@@ -102,6 +100,11 @@ public class ResLoader {
             String info = null;
 
             if(line.equals("}")) { // for returning out of recursion: analyze: processAnalyze > processAnalyze < break < break
+                Object obj = parent.getUserObject();
+                if(obj instanceof Element) {
+                    Element e = (Element) obj;
+                    e.addProps(carried);
+                }
                 logger.log(loaderLevel, "Returning");
                 break;
             }
@@ -127,8 +130,8 @@ public class ResLoader {
 //                    logger.log(Level.INFO, "Carrying: {0}", line);
             } else if(line.startsWith("//")) {
                 p.setKey("//");
-                p.setValue(line.substring(line.indexOf("//") + 2)); // display this with .trim()
-                p.setInfo("");
+                p.setValue("");
+                p.setInfo(line.substring(line.indexOf("//") + 2)); // display this with .trim()
 
                 logger.log(loaderLevel, "Carrying: {0}", line);
 
@@ -141,6 +144,11 @@ public class ResLoader {
                 if(p.getValue().equals("{")) { // make new sub
                     Element childElement = new Element(p.getKey(), p.getInfo());
                     logger.log(loaderLevel, "Subbing: {0}", childElement);
+                    for(int i = 0; i < carried.size(); i++) {
+                        Property prop = carried.get(i);
+                        prop.setInfo(prop.getValue());
+                        prop.setValue("");
+                    }
                     childElement.addProps(carried);
 
                     Object obj = parent.getUserObject();
@@ -159,8 +167,8 @@ public class ResLoader {
                     Object obj = parent.getUserObject();
                     if(obj instanceof Element) {
                         Element e = (Element) obj;
-                            e.addProps(carried);
-                            e.addProp(p);
+                        e.addProps(carried);
+                        e.addProp(p);
                     }
                 }
             }
