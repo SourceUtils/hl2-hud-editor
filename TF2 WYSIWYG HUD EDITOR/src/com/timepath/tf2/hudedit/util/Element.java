@@ -12,44 +12,32 @@ import java.util.logging.Logger;
 
 /**
  *
- * _minmode
- * [blue/red]_active_[x/y]pos
- * _ [$WIN32]
- * _ [$X360]
- * _ [$OSX]
- *
  * @author andrew
  */
 public class Element {
 
     HudCanvas canvas;
-
-    private String key;
-
-    private String info;
-
-    public ArrayList<Element> children = new ArrayList<Element>();
-
-    private Element parent;
-    static final Logger logger = Logger.getLogger(Element.class.getName());
-
+    
     public Element(HudCanvas canvas) {
         this.canvas = canvas;
     }
 
-    public Element(String key, String info) {
-        this.key = key;
+    static final Logger logger = Logger.getLogger(Element.class.getName());
+    
+    public Element(String name, String info) {
+        this.name = name;
         this.info = info;
     }
 
-    public void addElement(Element e) { // TODO: check for child = parent and child already has parent
-        if(!children.contains(e)) {
-            children.add(e);
-            e.setParent(this);
-        }
-    }
+    private String name;
+
+    private String info;
 
     private ArrayList<Property> propMap = new ArrayList<Property>();
+
+    public ArrayList<Property> getProps() {
+        return propMap;
+    }
 
     public void addProp(Property p) {
         logger.log(ResLoader.loaderLevel, "Adding prop: {0} to: {1}", new Object[] {p, this});
@@ -63,11 +51,19 @@ public class Element {
         p.clear();
     }
 
-    public ArrayList<Property> getProps() {
-        return propMap;
+    private Element parent;
+
+    public ArrayList<Element> children = new ArrayList<Element>();
+
+    public void addElement(Element e) { // TODO: check for child = parent and child already has parent
+        if(!children.contains(e)) {
+            children.add(e);
+            e.setParent(this);
+        }
     }
 
-    // Extras
+    // Extra stuff
+    
     public int getSize() { // works well unless they are exactly the same size
         return wide * tall;
     }
@@ -83,12 +79,10 @@ public class Element {
     @Override
     public String toString() {
         String displayInfo = (info != null ? (" ~ " + info) : ""); // elements cannot have a value, only info
-        return key + displayInfo;
+        return name + displayInfo;
     }
-
-    private String controlName;
-
-    private String fieldName;
+    
+    // Properties
 
     private int xPos;
 
@@ -105,12 +99,11 @@ public class Element {
         if(this.getXAlignment() == Element.Alignment.Left) {
             x = xPos;
         } else if(this.getXAlignment() == Element.Alignment.Center) {
-            x = (EditorFrame.hudRes.width / 2) + xPos;
+            x = (parent.getWidth() / 2) + xPos;
         } else if(this.getXAlignment() == Element.Alignment.Right) {
-            x = (EditorFrame.hudRes.width) - xPos;
+            x = (parent.getWidth()) - xPos;
         }
-        
-        return x + (getParent() != null ? getParent().getX() : 0);
+        return x + parent.getX();
     }
 
     private int yPos;
@@ -128,13 +121,14 @@ public class Element {
         if(this.getYAlignment() == Element.Alignment.Left) {
             y = yPos;
         } else if(this.getYAlignment() == Element.Alignment.Center) {
-            y = (EditorFrame.hudRes.height / 2) + yPos;
+            y = (parent.getHeight() / 2) + yPos;
         } else if(this.getYAlignment() == Element.Alignment.Right) {
-            y = (EditorFrame.hudRes.height) - yPos;
+            y = parent.getHeight() - yPos;
         }
-        return y + (getParent() != null ? getParent().getY() : 0);
+        return y + parent.getY();
     }
 
+    // > 0 = out of screen
     private int zPos;
 
     public int getLayer() {
