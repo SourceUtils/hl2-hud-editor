@@ -53,7 +53,7 @@ import net.tomahawk.XFileDialog;
  * Keep logic to a minimum, just interact and bridge components.
  * Current bug: the file choose dialog on windows 'paints' over the frame.
  *
- * TODO:
+ * TODO: something
  * http://code.google.com/p/xfiledialog/ - more JNI bindings
  *
  * Links of interest:
@@ -561,9 +561,7 @@ public class EditorFrame extends JFrame implements ActionListener {
         if(value == JOptionPane.YES_OPTION) {
             System.out.println("Good.");
         } else if(value == JOptionPane.NO_OPTION) {
-            System.out.println("Try using the window decorations "
-                + "to close the non-auto-closing dialog. "
-                + "You can't!");
+        	
         }
 
         canvas.setPreferredSize(new Dimension(1920, 1080));
