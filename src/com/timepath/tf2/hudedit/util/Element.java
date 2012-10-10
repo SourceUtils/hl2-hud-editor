@@ -95,6 +95,9 @@ public class Element {
     }
 
     public int getX() {
+    	if(parent == null) {
+    		return xPos; // oops, this is still relative to something...
+    	}
         int x = 0;
         if(this.getXAlignment() == Element.Alignment.Left) {
             x = xPos;
@@ -117,6 +120,9 @@ public class Element {
     }
 
     public int getY() {
+    	if(parent == null) {
+    		return yPos; // oops, this is still relative to something...
+    	}
         int y = 0;
         if(this.getYAlignment() == Element.Alignment.Left) {
             y = yPos;
@@ -363,8 +369,8 @@ public class Element {
         this.image = image;
     }
 
-    private boolean scaleImage;
+//    private boolean scaleImage;
 
-    private boolean pinCorner;
+//    private boolean pinCorner;
 
 }

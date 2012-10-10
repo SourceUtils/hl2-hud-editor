@@ -29,7 +29,7 @@ public class HudCanvas extends JPanel {
 
     public static int offX = 0; // left
     
-    private Rectangle repainted;
+//    private Rectangle repainted;
 
     public HudCanvas() {
         new InputManager(this, this).init();
@@ -206,7 +206,7 @@ public class HudCanvas extends JPanel {
     }
 
     public void doRepaint(Rectangle bounds) { // override method
-        this.repainted = bounds;
+//        this.repainted = bounds;
         this.repaint(bounds.x + offX, bounds.y + offX, bounds.width, bounds.height);
 //        this.repaint();
     }

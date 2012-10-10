@@ -1,10 +1,5 @@
 package com.timepath.tf2.hudedit;
 
-import com.timepath.tf2.hudedit.display.HudCanvas;
-import com.timepath.tf2.hudedit.loaders.ResLoader;
-import com.timepath.tf2.hudedit.properties.PropertiesTable;
-import com.timepath.tf2.hudedit.util.Element;
-import com.timepath.tf2.hudedit.util.Property;
 import java.awt.Container;
 import java.awt.Cursor;
 import java.awt.Dimension;
@@ -24,6 +19,7 @@ import java.io.File;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+
 import javax.swing.AbstractAction;
 import javax.swing.JDialog;
 import javax.swing.JFileChooser;
@@ -47,13 +43,20 @@ import javax.swing.table.DefaultTableModel;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreeSelectionModel;
+
 import net.tomahawk.XFileDialog;
+
+import com.timepath.tf2.hudedit.display.HudCanvas;
+import com.timepath.tf2.hudedit.loaders.ResLoader;
+import com.timepath.tf2.hudedit.properties.PropertiesTable;
+import com.timepath.tf2.hudedit.util.Element;
+import com.timepath.tf2.hudedit.util.Property;
 
 /**
  * Keep logic to a minimum, just interact and bridge components.
  * Current bug: the file choose dialog on windows 'paints' over the frame.
  *
- * TODO: something
+ * TODO:
  * http://code.google.com/p/xfiledialog/ - more JNI bindings
  *
  * Links of interest:

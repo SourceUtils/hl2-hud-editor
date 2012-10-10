@@ -10,7 +10,7 @@ public class HudFile {
 
     public final Object obj;
 
-    public HudFile(Object obj) {
+    public HudFile(File obj) {
         this.obj = obj;
     }
 

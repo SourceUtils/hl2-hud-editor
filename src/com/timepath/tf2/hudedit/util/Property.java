@@ -13,6 +13,10 @@ public class Property {
     private String key;
     private String value;
     private String info;
+    
+    public Property() {
+    	
+    }
 
     public Property(String key, String value, String info) {
         this.key = key;
