@@ -16,7 +16,6 @@ import java.awt.event.WindowEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.File;
-import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -35,7 +34,6 @@ import javax.swing.KeyStroke;
 import javax.swing.ListSelectionModel;
 import javax.swing.ScrollPaneConstants;
 import javax.swing.SwingUtilities;
-import javax.swing.SwingWorker;
 import javax.swing.UIManager;
 import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
@@ -465,25 +463,24 @@ public class EditorFrame extends JFrame implements ActionListener {
                 return;
             }
 
-            SwingWorker worker = new SwingWorker<Void, Void>() {
-
-                @Override
-                public Void doInBackground() {
-                    while(!isCancelled()) {
-                    }
-                    return null;
-                }
-
-                @Override
-                public void done() {
-                }
-
-                @Override
-                protected void process(List<Void> chunks) {
-                }
-
-            };
-
+//            SwingWorker<Void, Void> worker = new SwingWorker<Void, Void>() {
+//
+//                @Override
+//                public Void doInBackground() {
+//                    while(!isCancelled()) {
+//                    }
+//                    return null;
+//                }
+//
+//                @Override
+//                public void done() {
+//                }
+//
+//                @Override
+//                protected void process(List<Void> chunks) {
+//                }
+//
+//            };
 //            worker.execute();
 
             this.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
