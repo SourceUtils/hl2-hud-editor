@@ -26,7 +26,7 @@ public class ResLoader {
     static final Logger logger = Logger.getLogger(ResLoader.class.getName());
     public static final Level loaderLevel = Level.FINE;
 
-    public static void main(String... args) {    
+    public static void main(String... args) {
         DefaultMutableTreeNode child = new DefaultMutableTreeNode();
         analyze("C:/Program Files (x86)/Steam/steamapps/timepath/team fortress 2/tf/resource/ClientScheme.res", child);
     }
@@ -88,14 +88,8 @@ public class ResLoader {
 
     private static void processAnalyze(Scanner scanner, DefaultMutableTreeNode parent, ArrayList<Property> carried) {
         while(scanner.hasNext()) {
-//            try {
-//                Thread.sleep(100);
-//            } catch(InterruptedException ex) {
-//                Logger.getLogger(ResLoader.class.getName()).log(Level.SEVERE, null, ex);
-//            }
-
             String line = scanner.nextLine().trim();
-            String key = line.split("[ \t]+")[0]; // is \r\n needed?
+            String key = line.split("[ \t]+")[0];
             String val = line.substring(key.length()).trim();
             String info = null;
 

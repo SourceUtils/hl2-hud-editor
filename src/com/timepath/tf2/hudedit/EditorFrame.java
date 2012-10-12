@@ -1,5 +1,10 @@
 package com.timepath.tf2.hudedit;
 
+import com.timepath.tf2.hudedit.display.HudCanvas;
+import com.timepath.tf2.hudedit.loaders.ResLoader;
+import com.timepath.tf2.hudedit.properties.PropertiesTable;
+import com.timepath.tf2.hudedit.util.Element;
+import com.timepath.tf2.hudedit.util.Property;
 import java.awt.Container;
 import java.awt.Cursor;
 import java.awt.Dimension;
@@ -18,7 +23,6 @@ import java.beans.PropertyChangeListener;
 import java.io.File;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-
 import javax.swing.AbstractAction;
 import javax.swing.JDialog;
 import javax.swing.JFileChooser;
@@ -41,17 +45,11 @@ import javax.swing.table.DefaultTableModel;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreeSelectionModel;
-
 import net.tomahawk.XFileDialog;
-
-import com.timepath.tf2.hudedit.display.HudCanvas;
-import com.timepath.tf2.hudedit.loaders.ResLoader;
-import com.timepath.tf2.hudedit.properties.PropertiesTable;
-import com.timepath.tf2.hudedit.util.Element;
-import com.timepath.tf2.hudedit.util.Property;
 
 /**
  * Keep logic to a minimum, just interact and bridge components.
+ *
  * Current bug: the file choose dialog on windows 'paints' over the frame.
  *
  * TODO:
@@ -87,6 +85,7 @@ public class EditorFrame extends JFrame implements ActionListener {
 
     public static void main(String... args) {
         boolean overrideSystemLAF = true;
+        //<editor-fold defaultstate="collapsed" desc="Try and get nimbus look and feel, if it is instaled.">
         try {
             if(overrideSystemLAF) {
                 for(UIManager.LookAndFeelInfo info : UIManager.getInstalledLookAndFeels()) {
@@ -98,16 +97,12 @@ public class EditorFrame extends JFrame implements ActionListener {
             } else {
                 UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
             }
-        } catch(ClassNotFoundException ex) {
-            Logger.getLogger(EditorFrame.class.getName()).log(Level.SEVERE, null, ex);
-        } catch(InstantiationException ex) {
-            Logger.getLogger(EditorFrame.class.getName()).log(Level.SEVERE, null, ex);
-        } catch(IllegalAccessException ex) {
-            Logger.getLogger(EditorFrame.class.getName()).log(Level.SEVERE, null, ex);
-        } catch(javax.swing.UnsupportedLookAndFeelException ex) {
+        } catch(Exception ex) {
             Logger.getLogger(EditorFrame.class.getName()).log(Level.SEVERE, null, ex);
         }
+        //</editor-fold>
 
+        //<editor-fold defaultstate="collapsed" desc="Display the editor">
         SwingUtilities.invokeLater(new Runnable() {
 
             @Override
@@ -117,6 +112,7 @@ public class EditorFrame extends JFrame implements ActionListener {
             }
 
         });
+        //</editor-fold>
     }
 
     //<editor-fold defaultstate="collapsed" desc="OS specific code">
@@ -167,7 +163,7 @@ public class EditorFrame extends JFrame implements ActionListener {
         }
     }
     //</editor-fold>
-    
+
     public static Dimension hudRes;
 
     public EditorFrame() {
@@ -181,7 +177,7 @@ public class EditorFrame extends JFrame implements ActionListener {
         System.out.println((resX / gcm) + ":" + (resY / gcm) + " = " + Math.round(m * 480) + "x" + 480);
 
         hudRes = new Dimension((int)Math.round(m * 480), 480);
-        
+
         this.setTitle("TimePath's WYSIWYG TF2 HUD Editor");
         this.addWindowListener(new WindowAdapter() {
 
@@ -561,7 +557,7 @@ public class EditorFrame extends JFrame implements ActionListener {
         if(value == JOptionPane.YES_OPTION) {
             System.out.println("Good.");
         } else if(value == JOptionPane.NO_OPTION) {
-        	
+
         }
 
         canvas.setPreferredSize(new Dimension(1920, 1080));
