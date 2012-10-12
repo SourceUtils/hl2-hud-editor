@@ -503,9 +503,6 @@ public class EditorFrame extends JFrame implements ActionListener {
             closeHud();
         } else if("Exit".equalsIgnoreCase(cmd)) {
             System.exit(0);
-        } else if("Delete".equalsIgnoreCase(cmd)) {
-            canvas.removeElements(canvas.getSelected());
-            canvas.deselectAll();
         } else if("Change Resolution".equalsIgnoreCase(cmd)) {
             changeResolution();
         } else if("Select All".equalsIgnoreCase(cmd)) {
