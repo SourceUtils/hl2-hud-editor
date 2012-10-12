@@ -4,14 +4,19 @@ import com.timepath.tf2.hudedit.EditorFrame;
 import com.timepath.tf2.hudedit.util.Element;
 import java.awt.AlphaComposite;
 import java.awt.Color;
+import java.awt.Dimension;
+import java.awt.DisplayMode;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
+import java.awt.GraphicsEnvironment;
 import java.awt.Image;
 import java.awt.Point;
 import java.awt.Rectangle;
+import java.awt.Toolkit;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
+import java.net.URL;
 import java.util.ArrayList;
 import javax.swing.JPanel;
 
@@ -31,10 +36,16 @@ public class HudCanvas extends JPanel implements MouseListener, MouseMotionListe
     private void init() {
         this.addMouseListener(this);
         this.addMouseMotionListener(this);
-//        loadBackground();
+        loadBackground();
     }
 
     private Image background;
+
+    private void loadBackground() {
+        URL url = getClass().getResource("/com/timepath/tf2/hudedit/images/bg.png");
+        background = Toolkit.getDefaultToolkit().getImage(url);
+        this.prepareImage(background, this);
+    }
 
     private Color BG_COLOR = Color.GRAY;
 
@@ -51,9 +62,9 @@ public class HudCanvas extends JPanel implements MouseListener, MouseMotionListe
         g.setColor(BG_COLOR);
         g.fillRect(offX, offY, EditorFrame.hudRes.width, EditorFrame.hudRes.height);
 
-//        g.drawImage(background, 0, 0, null);
+        g.drawImage(background, 0, 0, null);
 
-//        drawGrid(g);
+        drawGrid(g);
 
         for(int i = 0; i < elements.size(); i++) {
             paintElement(elements.get(i), g);
@@ -63,10 +74,21 @@ public class HudCanvas extends JPanel implements MouseListener, MouseMotionListe
         AlphaComposite ac = AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.25f);
         g.setComposite(ac);
         g.setColor(Color.CYAN.darker());
-        g.fillRect(offX + selectRect.x, offY + selectRect.y, selectRect.width + 1, selectRect.height + 1);
+        g.fillRect(offX + selectRect.x + 1, offY + selectRect.y + 1, selectRect.width - 2, selectRect.height - 2);
         g.setColor(Color.BLUE);
-        g.drawRect(offX + selectRect.x, offY + selectRect.y, selectRect.width + 1, selectRect.height + 1);
+        g.drawRect(offX + selectRect.x, offY + selectRect.y, selectRect.width - 1, selectRect.height - 1);
         //</editor-fold>
+    }
+
+    private void drawGrid(Graphics2D g) {
+//        DisplayMode d = GraphicsEnvironment.getLocalGraphicsEnvironment().getDefaultScreenDevice().getDisplayMode();
+//        Dimension screenRes = Toolkit.getDefaultToolkit().getScreenSize();
+//        long gcm = EditorFrame.gcm(screenRes.width, screenRes.height);
+//        long resX = screenRes.width;
+//        long resY = screenRes.height;
+//        double m = (double)resX / (double)resY;
+//        int x = (int)Math.round(m * 480);
+//        int y = 480;
     }
 
     private void paintElement(Element e, Graphics2D g) {
@@ -77,28 +99,27 @@ public class HudCanvas extends JPanel implements MouseListener, MouseMotionListe
             g.setColor(Color.GREEN);
         }
 
-        g.drawRect(e.getX() + offX, e.getY() + offY, e.getWidth(), e.getHeight());
-
-//        g.setColor(Color.PINK);
-//        g.drawRect(e.getBounds().x, e.getBounds().y, e.getBounds().width, e.getBounds().height);
+        if(e.getWidth() > 0 && e.getHeight() > 0) {
+            g.drawRect(e.getX() + offX, e.getY() + offY, e.getWidth() - 1, e.getHeight() - 1);
+        }
 
         if(hoveredElement == e) {
             g.setColor(new Color(255-g.getColor().getRed(), 255-g.getColor().getGreen(), 255-g.getColor().getBlue()));
-            g.drawRect(e.getX() + offX + 1, e.getY() + offY + 1, e.getWidth() - 2, e.getHeight() - 2);
-            g.drawRect(e.getX() + offX - 1, e.getY() + offY - 1, e.getWidth() + 2, e.getHeight() + 2);
+            g.drawRect(e.getX() + offX - 1, e.getY() + offY - 1, e.getWidth() + 1, e.getHeight() + 1);
+            g.drawRect(e.getX() + offX + 1, e.getY() + offY + 1, e.getWidth() - 3, e.getHeight() - 3);
         }
 
         if(e.getLabelText() != null && !e.getLabelText().isEmpty()) {
             g.drawString(e.getLabelText(), e.getX() + offX, e.getY() + offY);
         }
 
-        for(int i = 0; i < e.children.size(); i++) {
-            paintElement(e.children.get(i), g);
-        }
+//        for(int i = 0; i < e.children.size(); i++) {
+//            paintElement(e.children.get(i), g);
+//        }
     }
 
     public void doRepaint(Rectangle bounds) {
-        this.repaint(bounds.x + offX, bounds.y + offX, bounds.width, bounds.height);
+        this.repaint(bounds.x + offX, bounds.y + offX, bounds.width - 1, bounds.height - 1); // bare minimum
 //        this.repaint();
     }
 
@@ -107,8 +128,7 @@ public class HudCanvas extends JPanel implements MouseListener, MouseMotionListe
         Point p = new Point(event.getPoint());
         p.translate(-HudCanvas.offX, -HudCanvas.offY);
 
-        ArrayList<Element> potentials = pick(p, elements);
-        hover(chooseBest(potentials));
+        hover(chooseBest(pick(p, elements)));
     }
 
     @Override
@@ -117,11 +137,10 @@ public class HudCanvas extends JPanel implements MouseListener, MouseMotionListe
         p.translate(-HudCanvas.offX, -HudCanvas.offY);
         int button = event.getButton();
 
-        dragStart = new Point(p.x, p.y);
-        selectRect.x = p.x;
-        selectRect.y = p.y;
-
         if(button == MouseEvent.BUTTON1) {
+            dragStart = new Point(p.x, p.y);
+            selectRect.x = p.x;
+            selectRect.y = p.y;
             if(getHovered() == null) { // clicked nothing
                 if(!event.isControlDown()) {
                     deselectAll();
@@ -147,18 +166,13 @@ public class HudCanvas extends JPanel implements MouseListener, MouseMotionListe
         }
     }
 
-        private boolean isDragSelecting;
+    @Override
+    public void mouseReleased(MouseEvent event) {
+        Point p = new Point(event.getPoint());
+        p.translate(-HudCanvas.offX, -HudCanvas.offY);
+        int button = event.getButton();
 
-        private boolean isDragMoving;
-
-        private Point dragStart;
-
-
-
-
-
-        @Override
-        public void mouseReleased(MouseEvent event) {
+        if(button == MouseEvent.BUTTON1) {
             isDragSelecting = false;
             isDragMoving = false;
             dragStart = null;
@@ -167,28 +181,34 @@ public class HudCanvas extends JPanel implements MouseListener, MouseMotionListe
             selectRect.height = 0;
             doRepaint(new Rectangle(original.x, original.y, original.width + 1, original.height + 1));
         }
+    }
 
-        @Override
-        public void mouseDragged(MouseEvent event) {
-            Point p = new Point(event.getPoint());
-            p.translate(-HudCanvas.offX, -HudCanvas.offY);
-            if(isDragSelecting) {
-                select(dragStart, p, event.isControlDown());
-            } else if(isDragMoving) {
-                if(dragStart == null) {
-                    dragStart = new Point();
-                }
-                Point v = new Point(p.x - dragStart.x, p.y - dragStart.y);
-//                ArrayList<Element> elements = getSelected();
-                for(int i = 0; i < elements.size(); i++) {
-                    if(!(elements.get(i).getParent() != null && getSelected().contains(elements.get(i).getParent()))) {
-                        // if child of parent is not selected, move it anyway
-                        translate(elements.get(i), v.x, v.y);
-                    }
-                }
-                dragStart = p;
+    @Override
+    public void mouseDragged(MouseEvent event) {
+        Point p = new Point(event.getPoint());
+        p.translate(-HudCanvas.offX, -HudCanvas.offY);
+        if(isDragSelecting) {
+            select(dragStart, p, event.isControlDown());
+        } else if(isDragMoving) {
+            if(dragStart == null) {
+                dragStart = new Point();
             }
+            Point v = new Point(p.x - dragStart.x, p.y - dragStart.y);
+            for(int i = 0; i < selectedElements.size(); i++) {
+//                if(selectedElements.get(i).getParent() == chooseBest(pick(p, elements))) { // this will cause problems later
+                    // if child of parent is not selected, move it anyway
+                    translate(selectedElements.get(i), v.x, v.y);
+//                }
+            }
+            dragStart = p;
         }
+    }
+
+    private boolean isDragSelecting;
+
+    private boolean isDragMoving;
+
+    private Point dragStart;
 
     // List of elements
     private ArrayList<Element> elements = new ArrayList<Element>();
@@ -294,12 +314,6 @@ public class HudCanvas extends JPanel implements MouseListener, MouseMotionListe
         }
     }
 
-//    private void loadBackground() {
-//        URL url = getClass().getResource("/com/timepath/tf2/hudedit/images/bg.png");
-//        background = Toolkit.getDefaultToolkit().getImage(url);
-//        this.prepareImage(background, this);
-//    }
-
     // Checks if poing p is inside the bounds of any element
     public ArrayList<Element> pick(Point p, ArrayList<Element> elements) {
         ArrayList<Element> potential = new ArrayList<Element>();
@@ -362,12 +376,18 @@ public class HudCanvas extends JPanel implements MouseListener, MouseMotionListe
         return result;
     }
 
-    public void translate(Element get, int diffX, int diffY) {
-        Rectangle originalBounds = get.getBounds();
-        get.setLocalX(get.getLocalX() + diffX);
-        get.setLocalY(get.getLocalY() + diffY);
+    public void translate(Element e, int dx, int dy) {
+        Rectangle originalBounds = e.getBounds();
+        if(e.getXAlignment() == Element.Alignment.Right) {
+            dx *= -1;
+        }
+        if(e.getYAlignment() == Element.Alignment.Right) {
+            dy *= -1;
+        }
+        e.setLocalX(e.getLocalX() + dx);
+        e.setLocalY(e.getLocalY() + dy);
         this.doRepaint(originalBounds);
-        this.doRepaint(get.getBounds());
+        this.doRepaint(e.getBounds());
         this.repaint(); // help
     }
 
