@@ -17,13 +17,13 @@ import java.util.logging.Logger;
 public class Element {
 
     HudCanvas canvas;
-    
+
     public Element(HudCanvas canvas) {
         this.canvas = canvas;
     }
 
     static final Logger logger = Logger.getLogger(Element.class.getName());
-    
+
     public Element(String name, String info) {
         this.name = name;
         this.info = info;
@@ -63,7 +63,7 @@ public class Element {
     }
 
     // Extra stuff
-    
+
     public int getSize() { // works well unless they are exactly the same size
         return wide * tall;
     }
@@ -81,7 +81,7 @@ public class Element {
         String displayInfo = (info != null ? (" ~ " + info) : ""); // elements cannot have a value, only info
         return name + displayInfo;
     }
-    
+
     // Properties
 
     private int xPos;
@@ -96,17 +96,24 @@ public class Element {
 
     public int getX() {
     	if(parent == null) {
-    		return xPos; // oops, this is still relative to something...
-    	}
-        int x = 0;
-        if(this.getXAlignment() == Element.Alignment.Left) {
-            x = xPos;
-        } else if(this.getXAlignment() == Element.Alignment.Center) {
-            x = (parent.getWidth() / 2) + xPos;
-        } else if(this.getXAlignment() == Element.Alignment.Right) {
-            x = (parent.getWidth()) - xPos;
+            if(this.getXAlignment() == Element.Alignment.Center) {
+                return (xPos + Math.round(853 / 2));
+            } else if(this.getXAlignment() == Element.Alignment.Right) {
+                return (853 - xPos);
+            } else {
+                return xPos;
+            }
+    	} else {
+            int x;
+            if(this.getXAlignment() == Element.Alignment.Center) {
+                x = (parent.getWidth() / 2) + xPos;
+            } else if(this.getXAlignment() == Element.Alignment.Right) {
+                x = (parent.getWidth()) - xPos;
+            } else {
+                x = xPos;
+            }
+            return x + parent.getX();
         }
-        return x + parent.getX();
     }
 
     private int yPos;
@@ -121,15 +128,21 @@ public class Element {
 
     public int getY() {
     	if(parent == null) {
-    		return yPos; // oops, this is still relative to something...
+            if(this.getYAlignment() == Element.Alignment.Center) {
+                return (yPos + Math.round(480 / 2));
+            } else if(this.getXAlignment() == Element.Alignment.Right) {
+                return (480 - yPos);
+            } else {
+                return yPos;
+            }
     	}
-        int y = 0;
-        if(this.getYAlignment() == Element.Alignment.Left) {
-            y = yPos;
-        } else if(this.getYAlignment() == Element.Alignment.Center) {
+        int y;
+        if(this.getYAlignment() == Element.Alignment.Center) {
             y = (parent.getHeight() / 2) + yPos;
         } else if(this.getYAlignment() == Element.Alignment.Right) {
             y = parent.getHeight() - yPos;
+        } else {
+            y = yPos;
         }
         return y + parent.getY();
     }
@@ -146,7 +159,7 @@ public class Element {
     }
 
     private int wide;
-    
+
     public int getLocalWidth() {
         return wide;
     }
@@ -154,7 +167,7 @@ public class Element {
     public void setLocalWidth(int wide) {
         this.wide = wide;
     }
-    
+
     public int getWidth() {
         if(this.getWidthMode() == DimensionMode.Mode2) {
 //            if(this.parent != null) {
@@ -166,9 +179,9 @@ public class Element {
             return wide;
         }
     }
-    
+
     private DimensionMode _wideMode = DimensionMode.Mode1;
-    
+
     public DimensionMode getWidthMode() {
         return _wideMode;
     }
@@ -176,7 +189,7 @@ public class Element {
     public void setWidthMode(DimensionMode mode) {
         this._wideMode = mode;
     }
-        
+
     private int tall;
 
     public int getLocalHeight() {
@@ -186,13 +199,13 @@ public class Element {
     public void setLocalHeight(int tall) {
         this.tall = tall;
     }
-    
+
     public int getHeight() {
         return (this.getHeightMode() == DimensionMode.Mode2 ? (this.parent != null ? this.parent.getHeight() - tall: EditorFrame.hudRes.height - tall) : tall);
     }
-    
+
     private DimensionMode _tallMode = DimensionMode.Mode1;
-    
+
     public DimensionMode getHeightMode() {
         return _tallMode;
     }
@@ -284,7 +297,7 @@ public class Element {
                 }
                 this.setLocalY(Integer.parseInt(v));
             } else if("wide".equalsIgnoreCase(k)) {
-                if(v.startsWith("f")) {
+                if(v.startsWith("f")) { // f means full hud internal width/height. The value is taken from it
                     v = v.substring(1);
                     this.setWidthMode(DimensionMode.Mode2);
                 }
@@ -322,7 +335,7 @@ public class Element {
         Left, Center, Right
 
     }
-    
+
     public enum DimensionMode {
 
         Mode1, Mode2

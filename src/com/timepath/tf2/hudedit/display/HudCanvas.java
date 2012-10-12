@@ -99,18 +99,21 @@ public class HudCanvas extends JPanel implements MouseListener, MouseMotionListe
             g.setColor(Color.GREEN);
         }
 
-        if(e.getWidth() > 0 && e.getHeight() > 0) {
-            g.drawRect(e.getX() + offX, e.getY() + offY, e.getWidth() - 1, e.getHeight() - 1);
-        }
+        if(e.getWidth() > 0 && e.getHeight() > 0) { // invisible? don't waste time
+            int elementX = e.getX();
+            int elementY = e.getY();
 
-        if(hoveredElement == e) {
-            g.setColor(new Color(255-g.getColor().getRed(), 255-g.getColor().getGreen(), 255-g.getColor().getBlue()));
-            g.drawRect(e.getX() + offX - 1, e.getY() + offY - 1, e.getWidth() + 1, e.getHeight() + 1);
-            g.drawRect(e.getX() + offX + 1, e.getY() + offY + 1, e.getWidth() - 3, e.getHeight() - 3);
-        }
+            g.drawRect(elementX + offX, elementY + offY, e.getWidth() - 1, e.getHeight() - 1);
 
-        if(e.getLabelText() != null && !e.getLabelText().isEmpty()) {
-            g.drawString(e.getLabelText(), e.getX() + offX, e.getY() + offY);
+            if(hoveredElement == e) {
+                g.setColor(new Color(255-g.getColor().getRed(), 255-g.getColor().getGreen(), 255-g.getColor().getBlue()));
+                g.drawRect(elementX + offX - 1, elementY + offY - 1, e.getWidth() + 1, e.getHeight() + 1);
+                g.drawRect(elementX + offX + 1, elementY + offY + 1, e.getWidth() - 3, e.getHeight() - 3);
+            }
+
+            if(e.getLabelText() != null && !e.getLabelText().isEmpty()) {
+                g.drawString(e.getLabelText(), elementX + offX, elementY + offY);
+            }
         }
 
 //        for(int i = 0; i < e.children.size(); i++) {
