@@ -22,8 +22,6 @@ import javax.swing.JPanel;
 
 /**
  *
- * TODO: Investigate why 'deleting' elements doesn't deselect them
- *
  * @author andrew
  */
 @SuppressWarnings("serial")
@@ -62,12 +60,13 @@ public class HudCanvas extends JPanel implements MouseListener, MouseMotionListe
         g.setColor(BG_COLOR);
         g.fillRect(offX, offY, EditorFrame.hudRes.width, EditorFrame.hudRes.height);
 
-        g.drawImage(background, 0, 0, null);
+//        g.drawImage(background, 0, 0, null);
 
         drawGrid(g);
 
         for(int i = 0; i < elements.size(); i++) {
             paintElement(elements.get(i), g);
+//            System.out.println(elements.get(i).getParent());
         }
 
         //<editor-fold defaultstate="collapsed" desc="Selection rectangle">
@@ -107,8 +106,8 @@ public class HudCanvas extends JPanel implements MouseListener, MouseMotionListe
 
             if(hoveredElement == e) {
                 g.setColor(new Color(255-g.getColor().getRed(), 255-g.getColor().getGreen(), 255-g.getColor().getBlue()));
-                g.drawRect(elementX + offX - 1, elementY + offY - 1, e.getWidth() + 1, e.getHeight() + 1);
-                g.drawRect(elementX + offX + 1, elementY + offY + 1, e.getWidth() - 3, e.getHeight() - 3);
+                g.drawRect(elementX + offX + 1, elementY + offY + 1, e.getWidth() - 3, e.getHeight() - 3); // inner
+//                g.drawRect(elementX + offX - 1, elementY + offY - 1, e.getWidth() + 1, e.getHeight() + 1); // outer
             }
 
             if(e.getLabelText() != null && !e.getLabelText().isEmpty()) {

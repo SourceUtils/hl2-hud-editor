@@ -24,15 +24,15 @@ import javax.swing.tree.DefaultMutableTreeNode;
 public class ResLoader {
 
     static final Logger logger = Logger.getLogger(ResLoader.class.getName());
-    public static final Level loaderLevel = Level.FINE;
+    public static Level loaderLevel = Level.FINE;
 
     public static void main(String... args) {
         DefaultMutableTreeNode child = new DefaultMutableTreeNode();
-        analyze("C:/Program Files (x86)/Steam/steamapps/timepath/team fortress 2/tf/resource/ClientScheme.res", child);
+        loaderLevel = Level.INFO;
+        analyze("/home/andrew/TF2 HUDS/frankenhudr47/resource/ClientScheme.res", child);
     }
 
     private String hudFolder;
-//    private static String[] platforms = {"WIN32", "X360", "OSX"};
 
     public ResLoader(String hudFolder) {
         this.hudFolder = hudFolder;
@@ -121,11 +121,11 @@ public class ResLoader {
                 p.setValue(line.substring(line.indexOf("#") + 1).trim());
                 p.setInfo("");
 
-//                    logger.log(Level.INFO, "Carrying: {0}", line);
+//                logger.log(Level.INFO, "Carrying: {0}", line);
             } else if(line.startsWith("//")) {
                 p.setKey("//");
-                p.setValue("");
-                p.setInfo(line.substring(line.indexOf("//") + 2)); // display this with .trim()
+                p.setValue(line.substring(line.indexOf("//") + 2)); // display this with .trim()
+                p.setInfo("");
 
                 logger.log(loaderLevel, "Carrying: {0}", line);
 

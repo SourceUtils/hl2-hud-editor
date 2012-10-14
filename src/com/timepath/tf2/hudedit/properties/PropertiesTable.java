@@ -12,9 +12,9 @@ import javax.swing.table.TableModel;
 @SuppressWarnings("serial")
 public class PropertiesTable extends JTable {
 	
-	public PropertiesTable() {
-		super();
-	}
+    public PropertiesTable() {
+        super();
+    }
 
     public PropertiesTable(TableModel model) {
         super(model);

@@ -11,7 +11,7 @@ import java.util.ArrayList;
 import java.util.logging.Logger;
 
 /**
- *
+ * TODO: edge cases. I think elements without x and y coordinates default to the centre (c0)
  * @author andrew
  */
 public class Element {
@@ -95,7 +95,7 @@ public class Element {
     }
 
     public int getX() {
-    	if(parent == null) {
+    	if(parent == null || parent.name.replaceAll("\"", "").endsWith(".res")) {
             if(this.getXAlignment() == Element.Alignment.Center) {
                 return (xPos + Math.round(853 / 2));
             } else if(this.getXAlignment() == Element.Alignment.Right) {
@@ -127,10 +127,10 @@ public class Element {
     }
 
     public int getY() {
-    	if(parent == null) {
+    	if(parent == null || parent.name.replaceAll("\"", "").endsWith(".res")) {
             if(this.getYAlignment() == Element.Alignment.Center) {
                 return (yPos + Math.round(480 / 2));
-            } else if(this.getXAlignment() == Element.Alignment.Right) {
+            } else if(this.getYAlignment() == Element.Alignment.Right) {
                 return (480 - yPos);
             } else {
                 return yPos;
