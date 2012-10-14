@@ -33,7 +33,7 @@ public class HudCanvas extends JPanel implements MouseListener, MouseMotionListe
     private void init() {
         this.addMouseListener(this);
         this.addMouseMotionListener(this);
-        this.setPreferredSize(new Dimension(1920, 1080));
+        this.setPreferredSize(new Dimension(853, 480));
         loadBackground();
         Element e = new Element("Test", "Does nothing");
         e.setLocalWidth(427);
@@ -69,6 +69,7 @@ public class HudCanvas extends JPanel implements MouseListener, MouseMotionListe
 //        System.out.println((resX / gcm) + ":" + (resY / gcm) + " = " + Math.round(m * 480) + "x" + 480);
 
         internalRes = new Dimension((int)Math.round(m * 480), 480);
+        this.repaint();
     }
     
 //    /**
@@ -99,7 +100,7 @@ public class HudCanvas extends JPanel implements MouseListener, MouseMotionListe
 
 //        g.drawImage(background, 0, 0, null);
 
-        drawGrid(g);
+//        drawGrid(g);
 
         Collections.sort(elements, new Comparator<Element>() {
             @Override
@@ -245,19 +246,19 @@ public class HudCanvas extends JPanel implements MouseListener, MouseMotionListe
         p.translate(-HudCanvas.offX, -HudCanvas.offY);
         int button = event.getButton();
         
-        if(button == MouseEvent.BUTTON1) {
+//        if(button == MouseEvent.BUTTON1) {
             if(isDragSelecting) {
                 select(dragStart, p, event.isControlDown());
             } else if(isDragMoving) {
                 for(int i = 0; i < selectedElements.size(); i++) {
 //                    if(selectedElements.get(i).getParent() == chooseBest(pick(p, elements))) { // this will cause problems later
 //                         if child of parent is not selected, move it anyway
-                        translate(selectedElements.get(i), p.x, p.y);
+                        translate(selectedElements.get(i), p.x - dragStart.x, p.y - dragStart.y);
 //                    }
                 }
-//                dragStart = p;
+                dragStart = p; // hacky
             }
-        }
+//        }
     }
 
     private boolean isDragSelecting;
@@ -447,11 +448,8 @@ public class HudCanvas extends JPanel implements MouseListener, MouseMotionListe
         return result;
     }
 
-    public void translate(Element e, int cx, int cy) { // todo: scaling (scale 5 = 5 pixels to move 1 x/y co-ord)
-        int dx = cx-dragStart.x;
-        int dy = cy-dragStart.y;
-        System.err.println("dy:"+dy+", dx:"+dx);
-        Rectangle originalBounds = e.getBounds();
+    public void translate(Element e, int dx, int dy) { // todo: scaling (scale 5 = 5 pixels to move 1 x/y co-ord)
+//        Rectangle originalBounds = new Rectangle(e.getBounds());
         if(e.getXAlignment() == Element.Alignment.Right) {
             dx *= -1;
         }
@@ -460,9 +458,9 @@ public class HudCanvas extends JPanel implements MouseListener, MouseMotionListe
         }
         e.setLocalX(e.getLocalX() + (int)(dx / scale));
         e.setLocalY(e.getLocalY() + (int)(dy / scale));
-        this.doRepaint(originalBounds);
-        this.doRepaint(e.getBounds());
-        this.repaint(); // help
+//        this.doRepaint(originalBounds);
+//        this.doRepaint(e.getBounds());
+        this.repaint(); // helps
     }
 
     public void removeAllElements() {

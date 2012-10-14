@@ -12,7 +12,6 @@ import java.awt.DisplayMode;
 import java.awt.FileDialog;
 import java.awt.GraphicsEnvironment;
 import java.awt.Rectangle;
-import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
@@ -23,7 +22,6 @@ import java.beans.PropertyChangeListener;
 import java.io.File;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import javax.swing.AbstractAction;
 import javax.swing.JDialog;
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
@@ -108,8 +106,8 @@ public class EditorFrame extends JFrame implements ActionListener {
 
             @Override
             public void run() {
-                EditorFrame e = new EditorFrame();
-                e.start();
+                EditorFrame frame = new EditorFrame();
+                frame.start();
             }
 
         });
@@ -120,6 +118,7 @@ public class EditorFrame extends JFrame implements ActionListener {
     private final static OS os;
 
     private final static int shortcutKey;
+    private JScrollPane canvasPane;
 
     private enum OS {
 
@@ -254,7 +253,6 @@ public class EditorFrame extends JFrame implements ActionListener {
         editMenu.add(selectAllItem);
 
         JMenuItem resolutionItem = new JMenuItem("Change Resolution", KeyEvent.VK_R);
-        resolutionItem.setEnabled(false);
         resolutionItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_R, shortcutKey));
         resolutionItem.addActionListener(this);
         editMenu.add(resolutionItem);
@@ -264,12 +262,12 @@ public class EditorFrame extends JFrame implements ActionListener {
 
     private JScrollPane createCanvas() {
         canvas = new HudCanvas();
-        JScrollPane p = new JScrollPane(canvas);
+        canvasPane = new JScrollPane(canvas);
 //        p.getHorizontalScrollBar().setUnitIncrement(16);
 //        p.getVerticalScrollBar().setUnitIncrement(16);
-        p.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED);
-        p.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
-        return p;
+        canvasPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
+        canvasPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_ALWAYS);
+        return canvasPane;
     }
 
     private void createTree(Container p) {
@@ -480,15 +478,11 @@ public class EditorFrame extends JFrame implements ActionListener {
 
         final JDialog dialog = new JDialog(this, "Click a button", true);
         dialog.setContentPane(optionPane);
-        dialog.setDefaultCloseOperation(
-            JDialog.DO_NOTHING_ON_CLOSE);
+        dialog.setDefaultCloseOperation(JDialog.DO_NOTHING_ON_CLOSE);
         dialog.addWindowListener(new WindowAdapter() {
-
             @Override
             public void windowClosing(WindowEvent we) {
-                System.out.println("Thwarted user attempt to close window.");
             }
-
         });
         optionPane.addPropertyChangeListener(
             new PropertyChangeListener() {
@@ -513,12 +507,10 @@ public class EditorFrame extends JFrame implements ActionListener {
 
         int value = ((Integer) optionPane.getValue()).intValue();
         if(value == JOptionPane.YES_OPTION) {
-            System.out.println("Good.");
+            canvas.setPreferredSize(new Dimension(1920, 1080));
         } else if(value == JOptionPane.NO_OPTION) {
 
         }
-
-        canvas.setPreferredSize(new Dimension(1920, 1080));
     }
 
 }
