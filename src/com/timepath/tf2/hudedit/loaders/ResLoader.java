@@ -17,7 +17,7 @@ import javax.swing.tree.DefaultMutableTreeNode;
 
 /**
  *
- * TODO: Do something nicer with entirely commented elements
+ * TODO: Do something nicer with entirely commented elements, hard to detect
  *
  * @author andrew
  */
@@ -25,12 +25,6 @@ public class ResLoader {
 
     static final Logger logger = Logger.getLogger(ResLoader.class.getName());
     public static Level loaderLevel = Level.FINE;
-
-    public static void main(String... args) {
-        DefaultMutableTreeNode child = new DefaultMutableTreeNode();
-        loaderLevel = Level.INFO;
-        analyze("/home/andrew/TF2 HUDS/frankenhudr47/resource/ClientScheme.res", child);
-    }
 
     private String hudFolder;
 
@@ -42,8 +36,9 @@ public class ResLoader {
         processPopulate(new File(hudFolder), -1, top);
     }
 
-    public static void analyze(final String fileName, final DefaultMutableTreeNode top) {
-        if(new File(fileName).isDirectory()) {
+    // TODO: Special exceptions for *scheme.res, hudlayout.res, 
+    public static void analyze(final File file, final DefaultMutableTreeNode top) {
+        if(file.isDirectory()) {
             return;
         }
         new Thread() { // threading this cuts loading times in half
@@ -51,8 +46,9 @@ public class ResLoader {
             public void run() {
                 Scanner s = null;
                 try {
-                    s = new Scanner(new BufferedReader(new FileReader(fileName)));
-                    processAnalyze(s, top, new ArrayList<Property>());
+                    s = new Scanner(new BufferedReader(new FileReader(file.getPath())));
+                    // analyzing fileName
+                    processAnalyze(s, top, new ArrayList<Property>(), file);
                 } catch(FileNotFoundException ex) {
                     logger.log(Level.SEVERE, null, ex);
                 } finally {
@@ -85,13 +81,13 @@ public class ResLoader {
                 processPopulate(fileList[i], depth - 1, child);
                 top.add(child);
             } else if(fileList[i].getName().endsWith(".res")) {
-                analyze(fileList[i].getPath(), child);
+                analyze(fileList[i], child);
                 top.add(child);
             }
         }
     }
 
-    private static void processAnalyze(Scanner scanner, DefaultMutableTreeNode parent, ArrayList<Property> carried) {
+    private static void processAnalyze(Scanner scanner, DefaultMutableTreeNode parent, ArrayList<Property> carried, File file) {
         while(scanner.hasNext()) {
             String line = scanner.nextLine().trim();
             String key = line.split("[ \t]+")[0];
@@ -103,6 +99,7 @@ public class ResLoader {
                 if(obj instanceof Element) {
                     Element e = (Element) obj;
                     e.addProps(carried);
+//                    e.validate();
                 }
                 logger.log(loaderLevel, "Returning");
                 break;
@@ -142,6 +139,7 @@ public class ResLoader {
             if(!p.getKey().equals("//")) {
                 if(p.getValue().equals("{")) { // make new sub
                     Element childElement = new Element(p.getKey(), p.getInfo());
+                    childElement.setParentFile(file);
                     logger.log(loaderLevel, "Subbing: {0}", childElement);
                     for(int i = 0; i < carried.size(); i++) {
                         Property prop = carried.get(i);
@@ -161,7 +159,7 @@ public class ResLoader {
                     child.setUserObject(childElement);
                     parent.add(child);
 
-                    processAnalyze(scanner, child, carried);
+                    processAnalyze(scanner, child, carried, file);
                 } else { // properties
                     Object obj = parent.getUserObject();
                     if(obj instanceof Element) {

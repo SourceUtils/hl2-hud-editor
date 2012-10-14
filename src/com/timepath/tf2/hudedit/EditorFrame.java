@@ -408,7 +408,7 @@ public class EditorFrame extends JFrame implements ActionListener {
                 }
             }
             if(!valid) {
-                // throw error
+                JOptionPane.showMessageDialog(this, "Selection not valid. Please choose a folder containing \'resources\' or \'scripts\'.", "Error", JOptionPane.ERROR_MESSAGE);
                 return;
             }
 

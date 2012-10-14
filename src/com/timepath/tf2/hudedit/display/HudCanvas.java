@@ -17,6 +17,7 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.Iterator;
 import javax.swing.JPanel;
 
 /**
@@ -34,13 +35,13 @@ public class HudCanvas extends JPanel implements MouseListener, MouseMotionListe
         this.addMouseListener(this);
         this.addMouseMotionListener(this);
         this.setPreferredSize(new Dimension(853, 480));
-        loadBackground();
-        Element e = new Element("Test", "Does nothing");
-        e.setLocalWidth(427);
-        e.setLocalHeight(240);
-        e.setLocalX(0); // 427
-        e.setLocalY(0); // 240
-        this.addElement(e);
+//        loadBackground();
+//        Element e = new Element("Test", "Does nothing");
+//        e.setLocalWidth(427);
+//        e.setLocalHeight(240);
+//        e.setLocalX(0); // 427
+//        e.setLocalY(0); // 240
+//        this.addElement(e);
     }
     
     public Dimension internalRes;
@@ -241,7 +242,7 @@ public class HudCanvas extends JPanel implements MouseListener, MouseMotionListe
     }
 
     @Override
-    public void mouseDragged(MouseEvent event) {
+    public void mouseDragged(MouseEvent event) { // TODO: If something has a parent, and that parent is also selected, deselect it.
         Point p = new Point(event.getPoint());
         p.translate(-HudCanvas.offX, -HudCanvas.offY);
         int button = event.getButton();
@@ -276,6 +277,7 @@ public class HudCanvas extends JPanel implements MouseListener, MouseMotionListe
 
     public void addElement(Element e) {
         if(!elements.contains(e)) {
+            e.validate();
             e.setCanvas(this);
             elements.add(e);
             this.doRepaint(e.getBounds());
@@ -302,8 +304,11 @@ public class HudCanvas extends JPanel implements MouseListener, MouseMotionListe
     }
 
     public void load(Element element) {
-        element.validate();
-//        if(element.isEnabled() || element.isVisible()) {
+        if(Element.areas.containsKey(element.getFile())) {
+            Element p = Element.areas.get(element.getFile());
+            this.addElement(p);
+            p.addElement(element);
+        }// else {
             this.addElement(element);
 //        }
     }
@@ -327,11 +332,11 @@ public class HudCanvas extends JPanel implements MouseListener, MouseMotionListe
             
             selectedElements.add(e);
 
-            if(e.children != null) {
-                for(int i = 0; i < e.children.size(); i++) {
-                    select(e.children.get(i));
-                }
-            }
+//            if(e.children != null) {
+//                for(int i = 0; i < e.children.size(); i++) {
+//                    select(e.children.get(i));
+//                }
+//            }
 
             this.doRepaint(e.getBounds());
         }
@@ -345,11 +350,11 @@ public class HudCanvas extends JPanel implements MouseListener, MouseMotionListe
             
             selectedElements.remove(e);
             
-            if(e.children != null) {
-                for(int i = 0; i < e.children.size(); i++) {
-                    deselect(e.children.get(i));
-                }
-            }
+//            if(e.children != null) {
+//                for(int i = 0; i < e.children.size(); i++) {
+//                    deselect(e.children.get(i));
+//                }
+//            }
             
             this.doRepaint(e.getBounds());
         }

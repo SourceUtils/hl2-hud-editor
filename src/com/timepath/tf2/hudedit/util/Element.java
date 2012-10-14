@@ -4,11 +4,13 @@ import com.timepath.tf2.hudedit.EditorFrame;
 import com.timepath.tf2.hudedit.display.HudCanvas;
 import com.timepath.tf2.hudedit.loaders.ResLoader;
 import java.awt.Color;
-import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.Image;
 import java.awt.Rectangle;
+import java.io.File;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.logging.Logger;
 
 /**
@@ -16,6 +18,8 @@ import java.util.logging.Logger;
  * @author andrew
  */
 public class Element {
+    
+    public static Map<String, Element> areas = new HashMap<String, Element>();
 
     HudCanvas canvas = EditorFrame.canvas;
 
@@ -52,6 +56,7 @@ public class Element {
 
     public void addElement(Element e) { // TODO: check for child = parent and child already has parent
         if (!children.contains(e)) {
+            e.validate();
             children.add(e);
             e.setParent(this);
         }
@@ -283,7 +288,7 @@ public class Element {
                 }
                 this.setLocalY(Integer.parseInt(v));
             } else if ("wide".equalsIgnoreCase(k)) {
-                if (v.startsWith("f")) { // f means full hud internal width/height. The value is taken from it
+                if (v.startsWith("f")) {
                     v = v.substring(1);
                     this.setWidthMode(DimensionMode.Mode2);
                 }
@@ -296,9 +301,17 @@ public class Element {
                 this.setLocalHeight(Integer.parseInt(v));
             } else if ("labelText".equalsIgnoreCase(k)) {
                 this.setLabelText(v);
-            } else if ("ControlName".equalsIgnoreCase(k)) {
-                this.setFgColor(new Color((int) (Math.random() * 255), (int) (Math.random() * 255), (int) (Math.random() * 255)));
+            } else if ("ControlName".equalsIgnoreCase(k)) { // others are areas
+                this.setControlName(v);
             }
+        }
+        
+        if(this.getControlName() != null) { // temp
+            if(this.getFgColor() == null)
+                this.setFgColor(new Color((int) (Math.random() * 255), (int) (Math.random() * 255), (int) (Math.random() * 255)));
+        } else if(this.getFile().equalsIgnoreCase("hudlayout")){
+            areas.put(this.name, this);
+//            System.out.println("adding " + this.name + " to areas");
         }
     }
 
@@ -317,7 +330,31 @@ public class Element {
     public void setParent(Element newParent) {
         this.parent = newParent;
     }
+    
+    private String controlName;
 
+    public void setControlName(String controlName) {
+        this.controlName = controlName;
+    }
+
+    public String getControlName() {
+        return controlName;
+    }
+
+    private String fileName;
+    
+    public void setParentFile(File file) { // todo: case insensitivity
+        if(file.getName().contains(".")) {
+            this.fileName = file.getName().split("\\.")[0];
+        } else {
+            this.fileName = file.getName();
+        }
+    }
+    
+    public String getFile() {
+        return fileName;
+    }
+    
     public enum Alignment {
 
         Left, Center, Right
