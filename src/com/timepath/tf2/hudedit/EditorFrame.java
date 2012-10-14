@@ -52,8 +52,9 @@ import net.tomahawk.XFileDialog;
  *
  * Current bug: the file choose dialog on windows 'paints' over the frame.
  *
- * TODO:
- * http://code.google.com/p/xfiledialog/ - more JNI bindings
+ * libs:
+ * http://code.google.com/p/xfiledialog/ - windows "open folder" dialog
+ * http://code.google.com/p/java-swing-ayatana/ - ubuntu global appmenu/hud support
  *
  * Links of interest:
  *
@@ -85,7 +86,7 @@ public class EditorFrame extends JFrame implements ActionListener {
 
     public static void main(String... args) {
         boolean overrideSystemLAF = true;
-        //<editor-fold defaultstate="collapsed" desc="Try and get nimbus look and feel, if it is instaled.">
+        //<editor-fold defaultstate="collapsed" desc="Try and get nimbus look and feel, if it is installed.">
         try {
             if(overrideSystemLAF) {
                 for(UIManager.LookAndFeelInfo info : UIManager.getInstalledLookAndFeels()) {
@@ -147,7 +148,7 @@ public class EditorFrame extends JFrame implements ActionListener {
             os = OS.Other;
             System.out.println("Unrecognised OS: " + osVer);
         }
-
+        
         if(os == OS.Windows) {
             shortcutKey = ActionEvent.CTRL_MASK;
             XFileDialog.setTraceLevel(0);
@@ -164,20 +165,7 @@ public class EditorFrame extends JFrame implements ActionListener {
     }
     //</editor-fold>
 
-    public static Dimension hudRes;
-
     public EditorFrame() {
-        DisplayMode d = GraphicsEnvironment.getLocalGraphicsEnvironment().getDefaultScreenDevice().getDisplayMode();
-        Dimension screenRes = Toolkit.getDefaultToolkit().getScreenSize();
-        long gcm = gcm(screenRes.width, screenRes.height);
-        long resX = screenRes.width;
-        long resY = screenRes.height;
-        double m = (double)resX / (double)resY;
-        System.out.println(resX + "/" + resY + "=" + m);
-        System.out.println((resX / gcm) + ":" + (resY / gcm) + " = " + Math.round(m * 480) + "x" + 480);
-
-        hudRes = new Dimension((int)Math.round(m * 480), 480);
-
         this.setTitle("TimePath's WYSIWYG TF2 HUD Editor");
         this.addWindowListener(new WindowAdapter() {
 
@@ -187,7 +175,8 @@ public class EditorFrame extends JFrame implements ActionListener {
             }
 
         });
-        this.setMinimumSize(new Dimension(600, 400));
+        this.setMinimumSize(new Dimension(640, 480));
+        DisplayMode d = GraphicsEnvironment.getLocalGraphicsEnvironment().getDefaultScreenDevice().getDisplayMode();
         this.setPreferredSize(new Dimension((int) (d.getWidth() / 1.5), (int) (d.getHeight() / 1.5)));
         this.setLocation((d.getWidth() / 2) - (this.getPreferredSize().width / 2), (d.getHeight() / 2) - (this.getPreferredSize().height / 2));
 //        this.setLocationByPlatform(true);
@@ -213,17 +202,7 @@ public class EditorFrame extends JFrame implements ActionListener {
         this.setFocusableWindowState(true);
     }
 
-    /**
-     * Finds the greatest common multiple
-     * @param a
-     * @param b
-     * @return
-     */
-    public static long gcm(long a, long b) {
-        return b == 0 ? a : gcm(b, a % b);
-    }
-
-    public HudCanvas canvas;
+    public static HudCanvas canvas;
 
     private ResLoader resloader;
 
@@ -242,65 +221,41 @@ public class EditorFrame extends JFrame implements ActionListener {
         JMenuBar menuBar = new JMenuBar();
         JMenu fileMenu = new JMenu("File");
         fileMenu.setMnemonic(KeyEvent.VK_F);
-        fileMenu.getAccessibleContext().setAccessibleDescription("The only menu in this program that has menu items");
         menuBar.add(fileMenu);
 
         JMenuItem openItem = new JMenuItem("Open...", KeyEvent.VK_O);
         openItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_O, shortcutKey));
-        openItem.getAccessibleContext().setAccessibleDescription("This doesn't really do anything");
         openItem.addActionListener(this);
         fileMenu.add(openItem);
 
         JMenuItem closeItem = new JMenuItem("Close HUD", KeyEvent.VK_C);
         closeItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_C, shortcutKey));
-        closeItem.getAccessibleContext().setAccessibleDescription("This doesn't really do anything");
         closeItem.addActionListener(this);
         fileMenu.add(closeItem);
 
         fileMenu.addSeparator();
 
         JMenuItem exitItem = new JMenuItem("Exit", KeyEvent.VK_X);
-        exitItem.getAccessibleContext().setAccessibleDescription("This doesn't really do anything");
         exitItem.addActionListener(this);
         fileMenu.add(exitItem);
 
-
-
         JMenu editMenu = new JMenu("Edit");
         editMenu.setMnemonic(KeyEvent.VK_E);
-        editMenu.getAccessibleContext().setAccessibleDescription("The only menu in this program that has menu items");
         menuBar.add(editMenu);
 
         JMenuItem deleteItem = new JMenuItem("Delete", KeyEvent.VK_DELETE);
         deleteItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_DELETE, 0));
-        deleteItem.getAccessibleContext().setAccessibleDescription("This doesn't really do anything");
         deleteItem.addActionListener(this);
         editMenu.add(deleteItem);
 
         JMenuItem selectAllItem = new JMenuItem("Select All", KeyEvent.VK_A);
         selectAllItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_A, shortcutKey));
-
-        canvas.getActionMap().put("Select All", new AbstractAction() {
-
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                System.out.println("WORK");
-                for(int i = 0; i < canvas.getElements().size(); i++) {
-                    canvas.select(canvas.getElements().get(i));
-                }
-            }
-
-        });
-
-        canvas.getInputMap().put(KeyStroke.getKeyStroke(KeyEvent.VK_A, shortcutKey), "Select All");
-        selectAllItem.getAccessibleContext().setAccessibleDescription("This doesn't really do anything");
         selectAllItem.addActionListener(this);
         editMenu.add(selectAllItem);
 
         JMenuItem resolutionItem = new JMenuItem("Change Resolution", KeyEvent.VK_R);
         resolutionItem.setEnabled(false);
         resolutionItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_R, shortcutKey));
-        resolutionItem.getAccessibleContext().setAccessibleDescription("This doesn't really do anything");
         resolutionItem.addActionListener(this);
         editMenu.add(resolutionItem);
 
@@ -309,10 +264,9 @@ public class EditorFrame extends JFrame implements ActionListener {
 
     private JScrollPane createCanvas() {
         canvas = new HudCanvas();
-        canvas.setPreferredSize(new Dimension(800, 600));
         JScrollPane p = new JScrollPane(canvas);
-        p.getHorizontalScrollBar().setUnitIncrement(16);
-        p.getVerticalScrollBar().setUnitIncrement(16);
+//        p.getHorizontalScrollBar().setUnitIncrement(16);
+//        p.getVerticalScrollBar().setUnitIncrement(16);
         p.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED);
         p.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
         return p;
@@ -340,10 +294,13 @@ public class EditorFrame extends JFrame implements ActionListener {
                 Object nodeInfo = node.getUserObject();
                 if(nodeInfo instanceof Element) {
                     Element element = (Element) nodeInfo;
-
-                    for(int i = 0; i < element.getProps().size(); i++) {
-                        Property entry = element.getProps().get(i);
-                        model.insertRow(model.getRowCount(), new Object[] {entry.getKey(), entry.getValue(), entry.getInfo()});
+                    if(element.getProps().isEmpty()) {
+                        model.insertRow(0, new Object[] {"", "", ""});
+                    } else {
+                        for(int i = 0; i < element.getProps().size(); i++) {
+                            Property entry = element.getProps().get(i);
+                            model.insertRow(model.getRowCount(), new Object[] {entry.getKey(), entry.getValue(), entry.getInfo()});
+                        }
                     }
 
                     canvas.load(element);
@@ -417,12 +374,10 @@ public class EditorFrame extends JFrame implements ActionListener {
         if(selection != null) {
             final File f = new File(selection);
             new Thread() {
-
                 @Override
                 public void run() {
                     loadHud(f);
                 }
-
             }.start();
         } else {
             // Throw error or load archive
@@ -480,6 +435,7 @@ public class EditorFrame extends JFrame implements ActionListener {
 //            worker.execute();
 
             this.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
+            final long start = System.currentTimeMillis();
 
             resloader = new ResLoader(file.getPath());
             hudFilesRoot.setUserObject(file.getName());//new MyTreeObject(file));
@@ -487,10 +443,15 @@ public class EditorFrame extends JFrame implements ActionListener {
 
             DefaultTreeModel model = (DefaultTreeModel) fileSystem.getModel();
             model.reload();
-
-            this.setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
-
-            System.out.println("loaded hud");
+            
+            SwingUtilities.invokeLater(new Runnable() {
+                @Override
+                public void run() {
+                    System.out.println(System.currentTimeMillis()-start);
+                    setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
+                    System.out.println("loaded hud");
+                }
+            });
         }
     }
 

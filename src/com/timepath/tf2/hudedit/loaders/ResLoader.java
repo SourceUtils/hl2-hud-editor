@@ -42,21 +42,26 @@ public class ResLoader {
         processPopulate(new File(hudFolder), -1, top);
     }
 
-    public static void analyze(String fileName, DefaultMutableTreeNode top) {
+    public static void analyze(final String fileName, final DefaultMutableTreeNode top) {
         if(new File(fileName).isDirectory()) {
             return;
         }
-        Scanner s = null;
-        try {
-            s = new Scanner(new BufferedReader(new FileReader(fileName)));
-            processAnalyze(s, top, new ArrayList<Property>());
-        } catch(FileNotFoundException ex) {
-            logger.log(Level.SEVERE, null, ex);
-        } finally {
-            if(s != null) {
-                s.close();
+        new Thread() { // threading this cuts loading times in half
+            @Override
+            public void run() {
+                Scanner s = null;
+                try {
+                    s = new Scanner(new BufferedReader(new FileReader(fileName)));
+                    processAnalyze(s, top, new ArrayList<Property>());
+                } catch(FileNotFoundException ex) {
+                    logger.log(Level.SEVERE, null, ex);
+                } finally {
+                    if(s != null) {
+                        s.close();
+                    }
+                }
             }
-        }
+        }.start();
     }
 
     /**
