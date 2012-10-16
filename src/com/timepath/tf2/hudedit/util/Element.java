@@ -244,7 +244,7 @@ public class Element {
     public void setFgColor(Color fgColor) {
         this.fgColor = fgColor;
     }
-
+    
     public void validate() { // TODO: remove duplicate keys (remove the earliest first, or let the user know or something)
         for (int n = 0; n < this.getProps().size(); n++) {
             Property entry = this.getProps().get(n);
@@ -307,11 +307,188 @@ public class Element {
         }
         
         if(this.getControlName() != null) { // temp
-            if(this.getFgColor() == null)
+            if("CExLabel".equalsIgnoreCase(controlName)) {
+            } else if("CIconPanel".equalsIgnoreCase(controlName)) {
+            } else if("CTeamMenu".equalsIgnoreCase(controlName)) {
+            } else if("CTFClassInfoPanel".equalsIgnoreCase(controlName)) {
+            } else if("CTFArrowPanel".equalsIgnoreCase(controlName)) {
+            } else if("CTFImagePanel".equalsIgnoreCase(controlName)) {
+            } else if("CEmbeddedItemModelPanel".equalsIgnoreCase(controlName)) { // ooh, fancy
+            } else if("CTFHudTimeStatus".equalsIgnoreCase(controlName)) {
+            } else if("CWaveStatusPanel".equalsIgnoreCase(controlName)) { // MvM?
+            } else if("CControlPointCountdown".equalsIgnoreCase(controlName)) { // control points
+            } else if("CWaveCompleteSummaryPanel".equalsIgnoreCase(controlName)) { // MvM?
+            } else if("CTFTextWindow".equalsIgnoreCase(controlName)) { // text motd?
+            } else if("CTFRichText".equalsIgnoreCase(controlName)) {
+            } else if("CTankStatusPanel".equalsIgnoreCase(controlName)) {
+            } else if("CExImageButton".equalsIgnoreCase(controlName)) {
+            } else if("CEngyDestroyMenuItem".equalsIgnoreCase(controlName)) {
+            } else if("CCurrencyStatusPanel".equalsIgnoreCase(controlName)) {
+            } else if("CTFClassImage".equalsIgnoreCase(controlName)) {
+            } else if("CInWorldCurrencyStatus".equalsIgnoreCase(controlName)) { // MvM in world currency
+            } else if("CTFClientScoreBoardDialog".equalsIgnoreCase(controlName)) { // scoreboard
+            } else if("CTFHudEscort".equalsIgnoreCase(controlName)) { // payload?
+            } else if("CWarningSwoop".equalsIgnoreCase(controlName)) {
+            } else if("CItemModelPanel".equalsIgnoreCase(controlName)) {
+            } else if("CStoreItemControlsPanel".equalsIgnoreCase(controlName)) {
+            } else if("CExButton".equalsIgnoreCase(controlName)) {
+            } else if("CStorePreviewItemPanel".equalsIgnoreCase(controlName)) {
+            } else if("CStorePricePanel".equalsIgnoreCase(controlName)) {
+            } else if("CRichTextWithScrollbarBorders".equalsIgnoreCase(controlName)) {
+            } else if("CTFPlayerModelPanel".equalsIgnoreCase(controlName)) {
+            } else if("CArmoryPanel".equalsIgnoreCase(controlName)) {
+            } else if("CNotificationsPresentPanel".equalsIgnoreCase(controlName)) {
+            } else if("CEconItemDetailsRichText".equalsIgnoreCase(controlName)) {
+            } else if("CTFMapStampsInfoDialog".equalsIgnoreCase(controlName)) {
+            } else if("CStorePreviewItemIcon".equalsIgnoreCase(controlName)) {
+            } else if("CMouseMessageForwardingPanel".equalsIgnoreCase(controlName)) {
+            } else if("CGenericNotificationToast".equalsIgnoreCase(controlName)) {
+            } else if("CStorePreviewClassIcon".equalsIgnoreCase(controlName)) {
+            } else if("CNavigationPanel".equalsIgnoreCase(controlName)) {
+            } else if("CAvatarImagePanel".equalsIgnoreCase(controlName)) {
+            } else if("CNotificationQueuePanel".equalsIgnoreCase(controlName)) {
+            } else if("CPreviewRotButton".equalsIgnoreCase(controlName)) {
+            } else if("CNotificationToastControl".equalsIgnoreCase(controlName)) {
+            } else if("CItemMaterialCustomizationIconPanel".equalsIgnoreCase(controlName)) {
+            } else if("CImagePanel".equalsIgnoreCase(controlName)) {
+            } else if("CExplanationPopup".equalsIgnoreCase(controlName)) {
+            } else if("CRGBAImagePanel".equalsIgnoreCase(controlName)) {
+            } else if("CBackpackPanel".equalsIgnoreCase(controlName)) {
+            } else if("CModePanel".equalsIgnoreCase(controlName)) {
+            } else if("CTrainingDialog".equalsIgnoreCase(controlName)) {
+            } else if("CAchievementsDialog".equalsIgnoreCase(controlName)) {
+            } else if("CClassMenu".equalsIgnoreCase(controlName)) {
+            } else if("CBitmapPanel".equalsIgnoreCase(controlName)) {
+            } else if("CModeSelectionPanel".equalsIgnoreCase(controlName)) {
+            } else if("CCustomTextureImagePanel".equalsIgnoreCase(controlName)) {
+            } else if("CTFClassTipsItemPanel".equalsIgnoreCase(controlName)) {
+            } else if("CBasicTraining_ClassSelectionPanel".equalsIgnoreCase(controlName)) {
+            } else if("CBasicTraining_ClassDetailsPanel".equalsIgnoreCase(controlName)) {
+            } else if("COfflinePractice_ModeSelectionPanel".equalsIgnoreCase(controlName)) {
+            } else if("COfflinePractice_MapSelectionPanel".equalsIgnoreCase(controlName)) {
+            } else if("CLoadoutPresetPanel".equalsIgnoreCase(controlName)) {
+            } else if("CClassLoadoutPanel".equalsIgnoreCase(controlName)) {
+            } else if("CBuildingHealthBar".equalsIgnoreCase(controlName)) {
+            } else if("CBuildingStatusAlertTray".equalsIgnoreCase(controlName)) {
+            } else if("CTFFreezePanelHealth".equalsIgnoreCase(controlName)) {
+            } else if("CTFTeamButton".equalsIgnoreCase(controlName)) {
+            } else if("CModelPanel".equalsIgnoreCase(controlName)) {
+            } else if("CTFFooter".equalsIgnoreCase(controlName)) {
+            } else if("CMvMBombCarrierProgress".equalsIgnoreCase(controlName)) {
+            } else if("CTFProgressBar".equalsIgnoreCase(controlName)) {
+            } else if("CVictorySplash".equalsIgnoreCase(controlName)) {
+            } else if("CMvMVictoryPanelContainer".equalsIgnoreCase(controlName)) {
+            } else if("CMvMWaveLossPanel".equalsIgnoreCase(controlName)) {
+            } else if("CExRichText".equalsIgnoreCase(controlName)) {
+            } else if("CTFIntroMenu".equalsIgnoreCase(controlName)) {
+            } else if("CTFVideoPanel".equalsIgnoreCase(controlName)) {
+            } else if("CTFLayeredMapItemPanel".equalsIgnoreCase(controlName)) {
+            } else if("CTFClassTipsPanel".equalsIgnoreCase(controlName)) {
+            } else if("CBaseModelPanel".equalsIgnoreCase(controlName)) {
+            } else if("CCreditDisplayPanel".equalsIgnoreCase(controlName)) {
+            } else if("CCreditSpendPanel".equalsIgnoreCase(controlName)) {
+            } else if("CVictoryPanel".equalsIgnoreCase(controlName)) {
+            } else if("CMvMVictoryMannUpPanel".equalsIgnoreCase(controlName)) {
+            } else if("CMvMVictoryMannUpEntry".equalsIgnoreCase(controlName)) {
+            } else if("CTFHudEscortProgressBar".equalsIgnoreCase(controlName)) {
+            } else if("CPublishFileDialog".equalsIgnoreCase(controlName)) {
+            } else if("CPublishedFileBrowserDialog".equalsIgnoreCase(controlName)) {
+            } else if("CQuickPlayBusyDialog".equalsIgnoreCase(controlName)) {
+            } else if("CQuickplayDialog".equalsIgnoreCase(controlName)) {
+            } else if("CMainMenuNotificationsControl".equalsIgnoreCase(controlName)) {
+            } else if("CSteamWorkshopDialog".equalsIgnoreCase(controlName)) {
+            } else if("CSteamWorkshopItemPanel".equalsIgnoreCase(controlName)) {
+            } else if("CTankProgressBar".equalsIgnoreCase(controlName)) {
+            } else if("CPanelListPanel".equalsIgnoreCase(controlName)) {
+            } else if("CTrainingItemPanel".equalsIgnoreCase(controlName)) {
+            } else if("CTFTrainingComplete".equalsIgnoreCase(controlName)) {
+            } else if("CImageButton".equalsIgnoreCase(controlName)) {
+            } else if("CCommentaryExplanationDialog".equalsIgnoreCase(controlName)) {
+            } else if("CCommentaryItemPanel".equalsIgnoreCase(controlName)) {
+            } else if("CTGAImagePanel".equalsIgnoreCase(controlName)) {
+            } else if("COfflinePracticeServerPanel".equalsIgnoreCase(controlName)) {
+            } else if("CLoadGameDialog".equalsIgnoreCase(controlName)) {
+            } else if("CNewGameDialog".equalsIgnoreCase(controlName)) {
+            } else if("COptionsSubMultiplayer".equalsIgnoreCase(controlName)) {
+            } else if("CPlayerListDialog".equalsIgnoreCase(controlName)) {
+            } else if("CVoteSetupDialog".equalsIgnoreCase(controlName)) {
+            } else if("CCvarSlider".equalsIgnoreCase(controlName)) {
+            } else if("CControllerMap".equalsIgnoreCase(controlName)) {
+            } else if("CScenarioInfoPanel".equalsIgnoreCase(controlName)) {
+                
+                
+            } else if("CircularProgressBar".equalsIgnoreCase(controlName)) { // what the hell is this?
+            } else if("PanelListPanel".equalsIgnoreCase(controlName)) {
+            } else if("ImageButton".equalsIgnoreCase(controlName)) {
+            } else if("RichText".equalsIgnoreCase(controlName)) {
+            } else if("SectionedListPanel".equalsIgnoreCase(controlName)) {
+            } else if("ListPanel".equalsIgnoreCase(controlName)) {
+            } else if("RoundInfoOverlay".equalsIgnoreCase(controlName)) {
+            } else if("ProgressBar".equalsIgnoreCase(controlName)) {
+            } else if("Slider".equalsIgnoreCase(controlName)) {
+            } else if("Divider".equalsIgnoreCase(controlName)) {
+            } else if("AnalogBar".equalsIgnoreCase(controlName)) {
+            } else if("FooterPanel".equalsIgnoreCase(controlName)) {
+            } else if("AnimatingImagePanel".equalsIgnoreCase(controlName)) {
+            } else if("RotatingProgressBar".equalsIgnoreCase(controlName)) {
+            } else if("MaterialButton".equalsIgnoreCase(controlName)) {
+            } else if("CustomTextureStencilGradientMapWidget".equalsIgnoreCase(controlName)) {
+            } else if("RadioButton".equalsIgnoreCase(controlName)) {
+            } else if("ScrollableEditablePanel".equalsIgnoreCase(controlName)) {
+            } else if("CheckButton".equalsIgnoreCase(controlName)) {
+            } else if("ComboBox".equalsIgnoreCase(controlName)) {
+            } else if("ScrollBar".equalsIgnoreCase(controlName)) {
+            } else if("Button".equalsIgnoreCase(controlName)) {
+            } else if("Panel".equalsIgnoreCase(controlName)) {
+            } else if("ImagePanel".equalsIgnoreCase(controlName)) {
+            } else if("ContinuousProgressBar".equalsIgnoreCase(controlName)) {
+            } else if("Menu".equalsIgnoreCase(controlName)) {
+            } else if("EditablePanel".equalsIgnoreCase(controlName)) {
+            } else if("Frame".equalsIgnoreCase(controlName)) {
+            } else if("ScalableImagePanel".equalsIgnoreCase(controlName)) {
+            } else if("Label".equalsIgnoreCase(controlName)) {
+            } else if("HTML".equalsIgnoreCase(controlName)) {
+            } else if("TextEntry".equalsIgnoreCase(controlName)) {
+            } else {
+                System.out.println(controlName);
+            }
+            if(this.getFgColor() == null) {
                 this.setFgColor(new Color((int) (Math.random() * 255), (int) (Math.random() * 255), (int) (Math.random() * 255)));
+            }
         } else if(this.getFile().equalsIgnoreCase("hudlayout")){
             areas.put(this.name, this);
 //            System.out.println("adding " + this.name + " to areas");
+        }
+    }
+    
+    public void validate2() { // TODO: remove duplicate keys (remove the earliest first, or let the user know or something)
+        for (int n = 0; n < propMap.size(); n++) {
+            Property entry = propMap.get(n);
+            String k = entry.getKey();
+            if(k == null) {
+                continue;
+            }
+            if (k.contains("\"")) { // assumes one set of quotes
+                k = k.substring(1, k.length() - 1);
+            }
+
+            if ("enabled".equalsIgnoreCase(k)) {
+                entry.setValue(this.isEnabled() ? 1 : 0);
+            } else if ("visible".equalsIgnoreCase(k)) {
+                entry.setValue(this.isVisible() ? 1 : 0);
+            } else if ("xpos".equalsIgnoreCase(k)) {
+                entry.setValue(this.getXAlignment().name().substring(0, 1).toLowerCase().replaceFirst("l", "") + this.getLocalX());
+            } else if ("ypos".equalsIgnoreCase(k)) {
+                entry.setValue(this.getYAlignment().name().substring(0, 1).toLowerCase().replaceFirst("l", "") + this.getLocalY());
+            } else if ("wide".equalsIgnoreCase(k)) {
+                entry.setValue((this.getWidthMode() == DimensionMode.Mode2 ? "f" : "") + this.getLocalWidth());
+            } else if ("tall".equalsIgnoreCase(k)) {
+                entry.setValue((this.getHeightMode() == DimensionMode.Mode2 ? "f" : "") + this.getLocalHeight());
+            } else if ("labelText".equalsIgnoreCase(k)) {
+                entry.setValue(this.getLabelText());
+            } else if ("ControlName".equalsIgnoreCase(k)) {
+                entry.setValue(this.getControlName());
+            }
         }
     }
 
@@ -355,12 +532,12 @@ public class Element {
         return fileName;
     }
     
-    public enum Alignment {
+    public static enum Alignment {
 
         Left, Center, Right
     }
 
-    public enum DimensionMode {
+    public static enum DimensionMode {
 
         Mode1, Mode2
     }

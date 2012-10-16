@@ -228,13 +228,14 @@ public class EditorFrame extends JFrame implements ActionListener {
         fileMenu.add(openItem);
 
         JMenuItem closeItem = new JMenuItem("Close HUD", KeyEvent.VK_C);
-        closeItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_C, shortcutKey));
+        closeItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_W, shortcutKey));
         closeItem.addActionListener(this);
         fileMenu.add(closeItem);
 
         fileMenu.addSeparator();
 
         JMenuItem exitItem = new JMenuItem("Exit", KeyEvent.VK_X);
+        exitItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_Q, shortcutKey));
         exitItem.addActionListener(this);
         fileMenu.add(exitItem);
 
@@ -251,11 +252,15 @@ public class EditorFrame extends JFrame implements ActionListener {
         selectAllItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_A, shortcutKey));
         selectAllItem.addActionListener(this);
         editMenu.add(selectAllItem);
+        
+        JMenu viewMenu = new JMenu("View");
+        viewMenu.setMnemonic(KeyEvent.VK_V);
+        menuBar.add(viewMenu);
 
         JMenuItem resolutionItem = new JMenuItem("Change Resolution", KeyEvent.VK_R);
         resolutionItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_R, shortcutKey));
         resolutionItem.addActionListener(this);
-        editMenu.add(resolutionItem);
+        viewMenu.add(resolutionItem);
 
         this.setJMenuBar(menuBar);
     }
@@ -292,16 +297,16 @@ public class EditorFrame extends JFrame implements ActionListener {
                 Object nodeInfo = node.getUserObject();
                 if(nodeInfo instanceof Element) {
                     Element element = (Element) nodeInfo;
+                    canvas.load(element);
                     if(element.getProps().isEmpty()) {
                         model.insertRow(0, new Object[] {"", "", ""});
                     } else {
+                        element.validate2();
                         for(int i = 0; i < element.getProps().size(); i++) {
                             Property entry = element.getProps().get(i);
                             model.insertRow(model.getRowCount(), new Object[] {entry.getKey(), entry.getValue(), entry.getInfo()});
                         }
                     }
-
-                    canvas.load(element);
                 }
             }
 
@@ -474,7 +479,7 @@ public class EditorFrame extends JFrame implements ActionListener {
     }
 
     private void changeResolution() {
-        final JOptionPane optionPane = new JOptionPane("Please enter a valid resolution", JOptionPane.QUESTION_MESSAGE, JOptionPane.YES_NO_OPTION);
+        final JOptionPane optionPane = new JOptionPane("Change resoluton to 1920 * 1080? (There will be a way to put actual numbers in here soon)", JOptionPane.QUESTION_MESSAGE, JOptionPane.YES_NO_OPTION);
 
         final JDialog dialog = new JDialog(this, "Click a button", true);
         dialog.setContentPane(optionPane);

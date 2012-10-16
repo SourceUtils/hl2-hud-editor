@@ -7,6 +7,7 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
+import java.io.RandomAccessFile;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
@@ -46,8 +47,8 @@ public class ResLoader {
             public void run() {
                 Scanner s = null;
                 try {
-                    s = new Scanner(new BufferedReader(new FileReader(file.getPath())));
-                    // analyzing fileName
+                    RandomAccessFile rf = new RandomAccessFile(file.getPath(), "r");
+                    s = new Scanner(rf.getChannel());
                     processAnalyze(s, top, new ArrayList<Property>(), file);
                 } catch(FileNotFoundException ex) {
                     logger.log(Level.SEVERE, null, ex);
@@ -99,7 +100,7 @@ public class ResLoader {
                 if(obj instanceof Element) {
                     Element e = (Element) obj;
                     e.addProps(carried);
-//                    e.validate();
+                    e.validate();
                 }
                 logger.log(loaderLevel, "Returning");
                 break;

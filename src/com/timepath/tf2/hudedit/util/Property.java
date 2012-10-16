@@ -35,6 +35,10 @@ public class Property {
     public void setValue(String value) {
         this.value = value;
     }
+    
+    public void setValue(Object value) {
+        this.setValue(value.toString());
+    }
 
     public String getInfo() {
         return info;
