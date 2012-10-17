@@ -287,6 +287,8 @@ public class Element {
                     this.setYAlignment(Alignment.Left);
                 }
                 this.setLocalY(Integer.parseInt(v));
+            } else if ("zpos".equalsIgnoreCase(k)) {
+                this.setLayer(Integer.parseInt(v));
             } else if ("wide".equalsIgnoreCase(k)) {
                 if (v.startsWith("f")) {
                     v = v.substring(1);
@@ -303,6 +305,15 @@ public class Element {
                 this.setLabelText(v);
             } else if ("ControlName".equalsIgnoreCase(k)) { // others are areas
                 this.setControlName(v);
+            } else if ("fgcolor".equalsIgnoreCase(k)) {
+                String[] c = v.split(" ");
+                try {
+                    this.setFgColor(new Color(Integer.parseInt(c[0]), Integer.parseInt(c[1]), Integer.parseInt(c[2]), Integer.parseInt(c[3])));
+                } catch(NumberFormatException e) {
+                    
+                }
+            } else {
+//                System.out.println("Other property: " + k);
             }
         }
         
@@ -415,6 +426,11 @@ public class Element {
             } else if("CCvarSlider".equalsIgnoreCase(controlName)) {
             } else if("CControllerMap".equalsIgnoreCase(controlName)) {
             } else if("CScenarioInfoPanel".equalsIgnoreCase(controlName)) {
+            } else if("CTFButton".equalsIgnoreCase(controlName)) {
+            } else if("CTFImageButton".equalsIgnoreCase(controlName)) {
+            } else if("CTFFlagStatus".equalsIgnoreCase(controlName)) {
+            } else if("CTFHudMannVsMachineScoreboard".equalsIgnoreCase(controlName)) {
+            } else if("CReplayReminderPanel".equalsIgnoreCase(controlName)) {
                 
                 
             } else if("CircularProgressBar".equalsIgnoreCase(controlName)) { // what the hell is this?
@@ -453,9 +469,9 @@ public class Element {
                 System.out.println(controlName);
             }
             if(this.getFgColor() == null) {
-                this.setFgColor(new Color((int) (Math.random() * 255), (int) (Math.random() * 255), (int) (Math.random() * 255)));
+                this.setFgColor(new Color((int) (Math.random() * 255), (int) (Math.random() * 255), (int) (Math.random() * 255), 32));
             }
-        } else if(this.getFile().equalsIgnoreCase("hudlayout")){
+        } else if(this.getFile().equalsIgnoreCase("hudlayout")) {
             areas.put(this.name, this);
 //            System.out.println("adding " + this.name + " to areas");
         }

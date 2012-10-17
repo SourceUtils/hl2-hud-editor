@@ -19,6 +19,7 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.Iterator;
 import javax.swing.JPanel;
+import javax.swing.UIManager;
 
 /**
  *
@@ -91,6 +92,8 @@ public class HudCanvas extends JPanel implements MouseListener, MouseMotionListe
 
     private Rectangle selectRect = new Rectangle();
 
+    AlphaComposite ac = AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.25f);
+    
     @Override
     protected void paintComponent(Graphics graphics) {
         super.paintComponent(graphics);
@@ -116,7 +119,6 @@ public class HudCanvas extends JPanel implements MouseListener, MouseMotionListe
         }
 
         //<editor-fold defaultstate="collapsed" desc="Selection rectangle">
-        AlphaComposite ac = AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.25f);
         g.setComposite(ac);
         g.setColor(Color.CYAN.darker());
         g.fillRect(offX + selectRect.x + 1, offY + selectRect.y + 1, selectRect.width - 2, selectRect.height - 2);

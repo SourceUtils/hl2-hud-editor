@@ -5,8 +5,10 @@ import com.timepath.tf2.hudedit.loaders.ResLoader;
 import com.timepath.tf2.hudedit.properties.PropertiesTable;
 import com.timepath.tf2.hudedit.util.Element;
 import com.timepath.tf2.hudedit.util.Property;
+import java.awt.Component;
 import java.awt.Container;
 import java.awt.Cursor;
+import java.awt.Desktop;
 import java.awt.Dimension;
 import java.awt.DisplayMode;
 import java.awt.FileDialog;
@@ -22,7 +24,9 @@ import java.beans.PropertyChangeListener;
 import java.io.File;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import javax.swing.Icon;
 import javax.swing.JDialog;
+import javax.swing.JEditorPane;
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 import javax.swing.JMenu;
@@ -37,10 +41,13 @@ import javax.swing.ListSelectionModel;
 import javax.swing.ScrollPaneConstants;
 import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
+import javax.swing.event.HyperlinkEvent;
+import javax.swing.event.HyperlinkListener;
 import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.tree.DefaultMutableTreeNode;
+import javax.swing.tree.DefaultTreeCellRenderer;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreeSelectionModel;
 import net.tomahawk.XFileDialog;
@@ -83,10 +90,11 @@ import net.tomahawk.XFileDialog;
 public class EditorFrame extends JFrame implements ActionListener {
 
     public static void main(String... args) {
-        boolean overrideSystemLAF = true;
+        boolean metal = false;
+        boolean nimbus = true; // takes precedence
         //<editor-fold defaultstate="collapsed" desc="Try and get nimbus look and feel, if it is installed.">
         try {
-            if(overrideSystemLAF) {
+            if(nimbus) {
                 for(UIManager.LookAndFeelInfo info : UIManager.getInstalledLookAndFeels()) {
                     if("Nimbus".equals(info.getName())) {
                         UIManager.setLookAndFeel(info.getClassName());
@@ -94,7 +102,11 @@ public class EditorFrame extends JFrame implements ActionListener {
                     }
                 }
             } else {
-                UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+                if(!metal) {
+                    UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+                } else {
+                    UIManager.setLookAndFeel(UIManager.getCrossPlatformLookAndFeelClassName());
+                }
             }
         } catch(Exception ex) {
             Logger.getLogger(EditorFrame.class.getName()).log(Level.SEVERE, null, ex);
@@ -153,6 +165,7 @@ public class EditorFrame extends JFrame implements ActionListener {
             XFileDialog.setTraceLevel(0);
         } else if(os == OS.Mac) {
             shortcutKey = ActionEvent.META_MASK;
+            System.setProperty("apple.awt.showGrowBox", "true");
             System.setProperty("apple.laf.useScreenMenuBar", "true");
             System.setProperty("com.apple.macos.useScreenMenuBar", "true");
             System.setProperty("com.apple.mrj.application.apple.menu.about.name application property", "TF2 HUD Editor");
@@ -217,7 +230,7 @@ public class EditorFrame extends JFrame implements ActionListener {
     }
 
     private void createMenu() {
-        JMenuBar menuBar = new JMenuBar();
+        final JMenuBar menuBar = new JMenuBar();
         JMenu fileMenu = new JMenu("File");
         fileMenu.setMnemonic(KeyEvent.VK_F);
         menuBar.add(fileMenu);
@@ -261,9 +274,120 @@ public class EditorFrame extends JFrame implements ActionListener {
         resolutionItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_R, shortcutKey));
         resolutionItem.addActionListener(this);
         viewMenu.add(resolutionItem);
+        
+        JMenu helpMenu = new JMenu("Help");
+        helpMenu.setMnemonic(KeyEvent.VK_H);
+        menuBar.add(helpMenu);
+
+        JMenuItem aboutItem = new JMenuItem("About", KeyEvent.VK_A);
+        aboutItem.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(final ActionEvent e) {
+                String aboutText = "<html><h2>This is a WYSIWYG HUD Editor for TF2.</h2>";
+                aboutText += "<p>You can graphically edit TF2 HUDs with it!<br>";
+                aboutText += "<p>It was written by <a href=\"http://www.reddit.com/user/TimePath/\">TimePath</a></p>";
+                aboutText += "<p>Please give feedback or suggestions on my Reddit profile</p>";
+                aboutText += "</html>";
+                final JEditorPane panel = new JEditorPane("text/html", aboutText);
+                panel.setEditable(false);
+                panel.setOpaque(false);
+                panel.addHyperlinkListener(new HyperlinkListener() {
+
+                    @Override
+                    public void hyperlinkUpdate(HyperlinkEvent he) {
+                        if (he.getEventType().equals(HyperlinkEvent.EventType.ACTIVATED)) {
+                            try {
+                                Desktop.getDesktop().browse(he.getURL().toURI()); // http://stackoverflow.com/questions/5116473/linux-command-to-open-url-in-default-browser
+                            } catch(Exception e) {
+//                                e.printStackTrace();
+                            }
+                        }
+                    }
+                    
+                });
+                JOptionPane.showMessageDialog(menuBar.getParent(), panel, "About", JOptionPane.INFORMATION_MESSAGE);
+            }
+        });
+        helpMenu.add(aboutItem);
 
         this.setJMenuBar(menuBar);
     }
+    
+//    private void selectSteamLocation() {
+//        boolean installPathValid = false;
+//            File steamFolder = new File("");
+//        File installDir;
+//            if (installDir != null && installDir.exists()) {
+//                    steamFolder = installDir.getParentFile().getParentFile().getParentFile().getParentFile();
+//            }
+//            final JFileChooser chooser = new JFileChooser(steamFolder);
+//            chooser.setDialogTitle("Select Steam\\ folder");
+//            chooser.setToolTipText("Please select you Steam\\ folder! Not any subfolders of it.");
+//            chooser.setDialogType(JFileChooser.OPEN_DIALOG);
+//            chooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+//
+//            final int returnVal = chooser.showOpenDialog(this);
+//        File zipFile = null;
+//            if (returnVal == JFileChooser.APPROVE_OPTION) {
+//                    final File steamappsFolder = new File(chooser.getSelectedFile(), "SteamApps");
+//                    if (!steamappsFolder.exists()) {
+//                            showErrorDialog("Invalid path to ...\\Steam\\SteamApps\\: " + steamappsFolder.getAbsolutePath(), "No SteamApps\\ Folder");
+//                    }
+//                    else if (!steamappsFolder.isDirectory()) {
+//                            showErrorDialog("The entered path is not a folder: " + steamappsFolder.getAbsolutePath(), "This is not a Folder");
+//                    }
+//                    else {
+//                            // Steam-User ausw�hlen lassen
+//                            // DropDown erstellen
+//                            final JComboBox dropDown = new JComboBox();
+//                            final File[] userFolders = steamappsFolder.listFiles();
+//                            for (int i = 0; i < userFolders.length; i++) {
+//                                    if (userFolders[i].isDirectory() && !userFolders[i].getName().equalsIgnoreCase("common")
+//                                                    && !userFolders[i].getName().equalsIgnoreCase("sourcemods")) {
+//                                            // �berpr�fen, ob in dem User-Ordner ein tf2 Ordner
+//                                            // vorhanden ist
+//                                            final Collection<String> gameFolders = Arrays.asList(userFolders[i].list());
+//                                            if (gameFolders.contains("team fortress 2")) {
+//                                                    dropDown.addItem(userFolders[i].getName());
+//                                            }
+//                                    }
+//                            }
+//
+//                            // �berpr�fen ob dropdown elemente hat und dialog anzeigen
+//                            if (dropDown.getItemCount() > 0) {
+//                                    final JPanel dialogPanel = new JPanel();
+//                                    dialogPanel.setLayout(new BoxLayout(dialogPanel, BoxLayout.Y_AXIS));
+//                                    dialogPanel.add(new JLabel("Please choose for which user you want to install the HUD"));
+//                                    dialogPanel.add(dropDown);
+//                                    JOptionPane.showMessageDialog(this, dialogPanel, "Select user", JOptionPane.QUESTION_MESSAGE);
+//                            }
+//                            else {
+//                                    showErrorDialog("No users have TF2 installed!", "No TF2 found");
+//                                    return;
+//                            }
+//
+//                            installDir = new File(steamappsFolder, dropDown.getSelectedItem() + File.separator + "team fortress 2" + File.separator + "tf");
+//                            if (installDir.isDirectory() && installDir.exists()) {
+//                                    installPathValid = true;
+//                                    steamInput.setText(installDir.getAbsolutePath());
+//                                    try {
+//                                            String zipFilePath = "";
+//                                            if (zipFile != null && zipFileValid) {
+//                                                    zipFilePath = zipFile.getAbsolutePath();
+//                                            }
+//                                            saveInstallPath(installDir.getAbsolutePath(), zipFilePath);
+//                                    }
+//                                    catch (final IOException e1) {
+//                                            showErrorDialog(e1.getMessage(), "Could not save installpath");
+//                                            e1.printStackTrace();
+//                                    }
+//                            }
+//                            else {
+//                                    showErrorDialog("This is not a valid install location for broeselhud", "No valid installpath");
+//                            }
+//                    }
+//            }
+//    }
 
     private JScrollPane createCanvas() {
         canvas = new HudCanvas();
@@ -274,13 +398,70 @@ public class EditorFrame extends JFrame implements ActionListener {
         canvasPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_ALWAYS);
         return canvasPane;
     }
+    
+    class CustomTreeCellRenderer extends DefaultTreeCellRenderer {
+        
+        private void setIcons(JTree tree, Icon ico) {
+            if(tree.isEnabled()) {
+                this.setIcon(ico);
+            } else {
+                this.setDisabledIcon(ico);
+            }
+        }
+        
+        JFileChooser iconFinder = new JFileChooser();
+        
+        /**
+          * Configures the renderer based on the passed in components.
+          * The value is set from messaging the tree with
+          * <code>convertValueToText</code>, which ultimately invokes
+          * <code>toString</code> on <code>value</code>.
+          * The foreground color is set based on the selection and the icon
+          * is set based on on leaf and expanded.
+          */
+        @Override
+        public Component getTreeCellRendererComponent(JTree tree, Object value, boolean sel, boolean expanded, boolean leaf, int row, boolean hasFocus) {
+            Object valueText = value;
+            
+            if(value instanceof DefaultMutableTreeNode) {
+                Object nodeValue = ((DefaultMutableTreeNode) value).getUserObject();
+                if(nodeValue instanceof String) {
+                    setIcons(tree, UIManager.getIcon("FileView.computerIcon"));
+                } else if(nodeValue instanceof File) { // this will either be an actual file on the system (directories included), or an element within a file
+                    File f = ((File) nodeValue);
+                    valueText = f.getName();
+                    setIcons(tree, iconFinder.getIcon(f));
+                } else if(nodeValue instanceof Element) {
+                    Element e = (Element) nodeValue;
+                    if(e.getProps().isEmpty() && leaf) { // If no properties, warn because irrelevant. Only care if leaves are empty
+                        setIcons(tree, UIManager.getIcon("FileChooser.detailsViewIcon"));
+                    } else {
+                        setIcons(tree, UIManager.getIcon("FileChooser.listViewIcon"));
+                    }
+                } else {
+                    if(nodeValue != null) {
+                        System.out.println(nodeValue.getClass());
+                    }
+                    setIcons(tree, null);
+                }
+            }
+            String stringValue = tree.convertValueToText(valueText, sel, expanded, leaf, row, hasFocus);
+            this.hasFocus = hasFocus;
+            this.setText(stringValue);
+            this.setForeground(sel ? getTextSelectionColor() : getTextNonSelectionColor());
+            this.setEnabled(tree.isEnabled());
+            this.setComponentOrientation(tree.getComponentOrientation());
+            this.selected = sel;
+            return this;
+        }
+    }
 
     private void createTree(Container p) {
-        hudFilesRoot = new DefaultMutableTreeNode("HUD");
+        hudFilesRoot = new DefaultMutableTreeNode(null);
 
         fileSystem = new JTree(hudFilesRoot);
         fileSystem.getSelectionModel().setSelectionMode(TreeSelectionModel.SINGLE_TREE_SELECTION);
-
+        fileSystem.setCellRenderer(new CustomTreeCellRenderer());
         fileSystem.addTreeSelectionListener(new TreeSelectionListener() {
 
             @Override
@@ -391,7 +572,7 @@ public class EditorFrame extends JFrame implements ActionListener {
         canvas.removeAllElements();
 
         hudFilesRoot.removeAllChildren();
-        hudFilesRoot.setUserObject("HUD");
+        hudFilesRoot.setUserObject(null);
         DefaultTreeModel model1 = (DefaultTreeModel) fileSystem.getModel();
         model1.reload();
 

@@ -1,12 +1,9 @@
 package com.timepath.tf2.hudedit.loaders;
 
-import com.timepath.tf2.hudedit.properties.HudFile;
 import com.timepath.tf2.hudedit.util.Element;
 import com.timepath.tf2.hudedit.util.Property;
-import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileNotFoundException;
-import java.io.FileReader;
 import java.io.RandomAccessFile;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -75,12 +72,13 @@ public class ResLoader {
         Arrays.sort(fileList, dirAlphaComparator);
 
         for(int i = 0; i < fileList.length; i++) {
-            boolean isDir = fileList[i].isDirectory();
             DefaultMutableTreeNode child = new DefaultMutableTreeNode();
-            child.setUserObject(new HudFile(fileList[i]));
-            if(isDir) {
+            child.setUserObject(fileList[i]);
+            if(fileList[i].isDirectory()) {
                 processPopulate(fileList[i], depth - 1, child);
-                top.add(child);
+                if(child.getChildCount() > 0) { // got sick of seeing empty folders
+                    top.add(child);
+                }
             } else if(fileList[i].getName().endsWith(".res")) {
                 analyze(fileList[i], child);
                 top.add(child);
@@ -90,7 +88,7 @@ public class ResLoader {
 
     private static void processAnalyze(Scanner scanner, DefaultMutableTreeNode parent, ArrayList<Property> carried, File file) {
         while(scanner.hasNext()) {
-            String line = scanner.nextLine().trim();
+            String line = scanner.nextLine().trim(); // TODO: What if the line looks like "Scheme{Colors{"? Damn you Broesel...
             String key = line.split("[ \t]+")[0];
             String val = line.substring(key.length()).trim();
             String info = null;
@@ -100,7 +98,7 @@ public class ResLoader {
                 if(obj instanceof Element) {
                     Element e = (Element) obj;
                     e.addProps(carried);
-                    e.validate();
+//                    e.validate(); // TODO: Thread safety. oops
                 }
                 logger.log(loaderLevel, "Returning");
                 break;
