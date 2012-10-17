@@ -35,7 +35,6 @@ import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
 import javax.swing.JScrollPane;
 import javax.swing.JSplitPane;
-import javax.swing.JTable;
 import javax.swing.JTree;
 import javax.swing.KeyStroke;
 import javax.swing.ListSelectionModel;
@@ -104,7 +103,6 @@ public class EditorFrame extends JFrame {
     private final static OS os;
 
     private final static int shortcutKey;
-    private JScrollPane canvasPane;
 
     private enum OS {
 
@@ -152,6 +150,8 @@ public class EditorFrame extends JFrame {
     //</editor-fold>
 
     public EditorFrame() {
+        super();
+        
         this.setTitle("TimePath's WYSIWYG TF2 HUD Editor");
         this.addWindowListener(new WindowAdapter() {
 
@@ -171,7 +171,7 @@ public class EditorFrame extends JFrame {
 
         this.setJMenuBar(new EditorMenuBar());
         
-        JSplitPane splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT);
+        final JSplitPane splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT);
         splitPane.setResizeWeight(0.8);
         
         canvas = new HudCanvas();
@@ -195,7 +195,10 @@ public class EditorFrame extends JFrame {
         this.createBufferStrategy(3); // Triple buffered, any more sees minimal gain.
     }
     
-    public static HudCanvas canvas;
+    
+    private JScrollPane canvasPane;
+    
+    public static HudCanvas canvas; // should not be static
 
     private ResLoader resloader;
 
@@ -438,6 +441,7 @@ public class EditorFrame extends JFrame {
     }
     
     private class EditorPropertiesTable extends JScrollPane {
+        
         public EditorPropertiesTable() {
             super();
             
@@ -455,11 +459,12 @@ public class EditorFrame extends JFrame {
             this.setViewportView(propTable);
             this.setPreferredSize(new Dimension(400, 400));
         }
+        
     }
     
     private class EditorFileTree extends JScrollPane {
 
-        public EditorFileTree() {
+        EditorFileTree() {
             super();
             
             hudFilesRoot = new DefaultMutableTreeNode(null);
@@ -504,6 +509,10 @@ public class EditorFrame extends JFrame {
         
         private class CustomTreeCellRenderer extends DefaultTreeCellRenderer {
         
+            CustomTreeCellRenderer() {
+                super();
+            }
+            
             private void setIcons(JTree tree, Icon ico) {
                 if(tree.isEnabled()) {
                     this.setIcon(ico);
@@ -572,29 +581,33 @@ public class EditorFrame extends JFrame {
         }
     }
     
-    private class EditorMenuBar extends JMenuBar implements ActionListener {
+    private class EditorMenuBar extends JMenuBar {
 
-        public EditorMenuBar() {
+        EditorMenuBar() {
             super();
+            
+            EditorActionListener al = new EditorActionListener();
+            
             JMenu fileMenu = new JMenu("File");
             fileMenu.setMnemonic(KeyEvent.VK_F);
             this.add(fileMenu);
+            
 
             JMenuItem openItem = new JMenuItem("Open...", KeyEvent.VK_O);
             openItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_O, shortcutKey));
-            openItem.addActionListener(this);
+            openItem.addActionListener(al);
             fileMenu.add(openItem);
 
             JMenuItem closeItem = new JMenuItem("Close HUD", KeyEvent.VK_C);
             closeItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_W, shortcutKey));
-            closeItem.addActionListener(this);
+            closeItem.addActionListener(al);
             fileMenu.add(closeItem);
 
             fileMenu.addSeparator();
 
             JMenuItem exitItem = new JMenuItem("Exit", KeyEvent.VK_X);
             exitItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_Q, shortcutKey));
-            exitItem.addActionListener(this);
+            exitItem.addActionListener(al);
             fileMenu.add(exitItem);
 
             JMenu editMenu = new JMenu("Edit");
@@ -603,12 +616,12 @@ public class EditorFrame extends JFrame {
 
             JMenuItem deleteItem = new JMenuItem("Delete", KeyEvent.VK_DELETE);
             deleteItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_DELETE, 0));
-            deleteItem.addActionListener(this);
+            deleteItem.addActionListener(al);
             editMenu.add(deleteItem);
 
             JMenuItem selectAllItem = new JMenuItem("Select All", KeyEvent.VK_A);
             selectAllItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_A, shortcutKey));
-            selectAllItem.addActionListener(this);
+            selectAllItem.addActionListener(al);
             editMenu.add(selectAllItem);
 
             JMenu viewMenu = new JMenu("View");
@@ -617,7 +630,7 @@ public class EditorFrame extends JFrame {
 
             JMenuItem resolutionItem = new JMenuItem("Change Resolution", KeyEvent.VK_R);
             resolutionItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_R, shortcutKey));
-            resolutionItem.addActionListener(this);
+            resolutionItem.addActionListener(al);
             viewMenu.add(resolutionItem);
 
             JMenu helpMenu = new JMenu("Help");
@@ -625,13 +638,16 @@ public class EditorFrame extends JFrame {
             this.add(helpMenu);
 
             JMenuItem aboutItem = new JMenuItem("About", KeyEvent.VK_A);
-            aboutItem.addActionListener(new ActionListener() {
-                @Override
-                public void actionPerformed(final ActionEvent e) {
-
-                }
-            });
+            aboutItem.addActionListener(al);
             helpMenu.add(aboutItem);
+        }
+        
+    }
+    
+    private class EditorActionListener implements ActionListener {
+        
+        EditorActionListener() {
+            
         }
 
         @Override

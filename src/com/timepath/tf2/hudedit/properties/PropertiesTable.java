@@ -22,7 +22,7 @@ public class PropertiesTable extends JTable {
 
     @Override
     public boolean isCellEditable(int row, int column) {
-        return (column != 0);
+        return (column != 0); // deny editing of key
     }
 
     @Override

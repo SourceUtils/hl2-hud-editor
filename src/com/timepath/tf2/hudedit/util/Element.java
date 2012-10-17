@@ -11,6 +11,7 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
@@ -19,6 +20,8 @@ import java.util.logging.Logger;
  */
 public class Element {
     
+    static final Logger logger = Logger.getLogger(Element.class.getName());
+    
     public static Map<String, Element> areas = new HashMap<String, Element>();
 
     HudCanvas canvas = EditorFrame.canvas;
@@ -26,7 +29,6 @@ public class Element {
     public Element(HudCanvas canvas) {
         this.canvas = canvas;
     }
-    static final Logger logger = Logger.getLogger(Element.class.getName());
 
     public Element(String name, String info) {
         this.name = name;
@@ -41,7 +43,7 @@ public class Element {
     }
 
     public void addProp(Property p) {
-        logger.log(ResLoader.loaderLevel, "Adding prop: {0} to: {1}", new Object[]{p, this});
+        logger.log(Level.FINE, "Adding prop: {0} to: {1}", new Object[]{p, this});
         propMap.add(p);
     }
 

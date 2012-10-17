@@ -14,15 +14,14 @@ import java.util.logging.Logger;
 import javax.swing.tree.DefaultMutableTreeNode;
 
 /**
- *
- * TODO: Do something nicer with entirely commented elements, hard to detect
- *
+ * 
+ * TODO: Threading. This class can probably be executed as a thread.
+ * 
  * @author andrew
  */
 public class ResLoader {
 
     static final Logger logger = Logger.getLogger(ResLoader.class.getName());
-    public static Level loaderLevel = Level.FINE;
 
     private String hudFolder;
 
@@ -40,7 +39,7 @@ public class ResLoader {
      * @param depth recursive: -1 = infinite, 0 = nothing, 1 = immediate
      * @param top
      */
-    private static void processPopulate(File f, int depth, DefaultMutableTreeNode top) {
+    private void processPopulate(File f, int depth, DefaultMutableTreeNode top) {
         if(depth == 0) {
             return;
         }
@@ -63,7 +62,7 @@ public class ResLoader {
     }
 
     // TODO: Special exceptions for *scheme.res, hudlayout.res, 
-    public static void analyze(final File file, final DefaultMutableTreeNode top) {
+    public void analyze(final File file, final DefaultMutableTreeNode top) {
         if(file.isDirectory()) {
             return;
         }
@@ -86,7 +85,7 @@ public class ResLoader {
         }.start();
     }
 
-    private static void processAnalyze(Scanner scanner, DefaultMutableTreeNode parent, ArrayList<Property> carried, File file) {
+    private void processAnalyze(Scanner scanner, DefaultMutableTreeNode parent, ArrayList<Property> carried, File file) {
         while(scanner.hasNext()) {
             String line = scanner.nextLine().trim(); // TODO: What if the line looks like "Scheme{Colors{"? Damn you Broesel...
             String key = line.split("[ \t]+")[0];
@@ -100,7 +99,7 @@ public class ResLoader {
                     e.addProps(carried);
 //                    e.validate(); // TODO: Thread safety. oops
                 }
-                logger.log(loaderLevel, "Returning");
+                logger.log(Level.FINE, "Returning");
                 break;
             }
 
@@ -128,7 +127,7 @@ public class ResLoader {
                 p.setValue(line.substring(line.indexOf("//") + 2)); // display this with .trim()
                 p.setInfo("");
 
-                logger.log(loaderLevel, "Carrying: {0}", line);
+                logger.log(Level.FINE, "Carrying: {0}", line);
 
                 carried.add(p);
             } else if(p.getValue().equals("")) { // very good assumption
@@ -139,7 +138,7 @@ public class ResLoader {
                 if(p.getValue().equals("{")) { // make new sub
                     Element childElement = new Element(p.getKey(), p.getInfo());
                     childElement.setParentFile(file);
-                    logger.log(loaderLevel, "Subbing: {0}", childElement);
+                    logger.log(Level.FINE, "Subbing: {0}", childElement);
                     for(int i = 0; i < carried.size(); i++) {
                         Property prop = carried.get(i);
                         prop.setInfo(prop.getValue());
@@ -171,26 +170,22 @@ public class ResLoader {
         }
     }
 
-    private static DirAlphaComparator dirAlphaComparator = new DirAlphaComparator();
-
-    private static class DirAlphaComparator implements Comparator<File> {
-
-        // Comparator interface requires defining compare method.
+    private static Comparator dirAlphaComparator = new Comparator<File>() {
+        
+        /**
+         * Alphabetically sorts directories before files ignoring case.
+         */
         @Override
-        public int compare(File filea, File fileb) {
-            //... Sort directories before files,
-            //    otherwise alphabetical ignoring case.
-            if(filea.isDirectory() && !fileb.isDirectory()) {
+        public int compare(File a, File b) {
+            if(a.isDirectory() && !b.isDirectory()) {
                 return -1;
-
-            } else if(!filea.isDirectory() && fileb.isDirectory()) {
+            } else if(!a.isDirectory() && b.isDirectory()) {
                 return 1;
-
             } else {
-                return filea.getName().compareToIgnoreCase(fileb.getName());
+                return a.getName().compareToIgnoreCase(b.getName());
             }
         }
 
-    }
+    };
 
 }
