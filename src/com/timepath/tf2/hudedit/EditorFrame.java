@@ -2,7 +2,6 @@ package com.timepath.tf2.hudedit;
 
 import com.timepath.tf2.hudedit.display.HudCanvas;
 import com.timepath.tf2.hudedit.loaders.ResLoader;
-import com.timepath.tf2.hudedit.properties.PropertiesTable;
 import com.timepath.tf2.hudedit.util.Element;
 import com.timepath.tf2.hudedit.util.Property;
 import java.awt.Color;
@@ -22,6 +21,7 @@ import java.awt.event.WindowEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.File;
+import java.util.ResourceBundle;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.Icon;
@@ -35,6 +35,7 @@ import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
 import javax.swing.JScrollPane;
 import javax.swing.JSplitPane;
+import javax.swing.JTable;
 import javax.swing.JTree;
 import javax.swing.KeyStroke;
 import javax.swing.ListSelectionModel;
@@ -45,6 +46,9 @@ import javax.swing.event.HyperlinkListener;
 import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
 import javax.swing.table.DefaultTableModel;
+import javax.swing.table.TableCellEditor;
+import javax.swing.table.TableCellRenderer;
+import javax.swing.table.TableModel;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeCellRenderer;
 import javax.swing.tree.DefaultTreeModel;
@@ -111,12 +115,6 @@ public class EditorFrame extends JFrame {
     }
 
     static {
-        try {
-            UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
-        } catch(Exception ex) {
-            Logger.getLogger(EditorFrame.class.getName()).log(Level.SEVERE, null, ex);
-        }
-
         String osVer = System.getProperty("os.name").toLowerCase();
         if(osVer.indexOf("windows") != -1) {
             os = OS.Windows;
@@ -152,7 +150,7 @@ public class EditorFrame extends JFrame {
     public EditorFrame() {
         super();
         
-        this.setTitle("TimePath's WYSIWYG TF2 HUD Editor");
+        this.setTitle(ResourceBundle.getBundle("com/timepath/tf2/hudedit/lang").getString("Title"));
         this.addWindowListener(new WindowAdapter() {
 
             @Override
@@ -440,6 +438,33 @@ public class EditorFrame extends JFrame {
         }
     }
     
+    private class PropertiesTable extends JTable {
+
+        PropertiesTable() {
+            super();
+        }
+
+        PropertiesTable(TableModel model) {
+            super(model);
+        }
+
+        @Override
+        public boolean isCellEditable(int row, int column) {
+            return (column != 0); // deny editing of key
+        }
+
+        @Override
+        public TableCellEditor getCellEditor(int row, int column) {
+            return super.getCellEditor(row, column);
+        }
+
+        @Override
+        public TableCellRenderer getCellRenderer(int row, int column) {
+            return super.getCellRenderer(row, column);
+        }
+
+    }
+    
     private class EditorPropertiesTable extends JScrollPane {
         
         public EditorPropertiesTable() {
@@ -460,6 +485,79 @@ public class EditorFrame extends JFrame {
             this.setPreferredSize(new Dimension(400, 400));
         }
         
+    }
+    
+    private class CustomTreeCellRenderer extends DefaultTreeCellRenderer {
+
+        CustomTreeCellRenderer() {
+            super();
+        }
+
+        private void setIcons(JTree tree, Icon ico) {
+            if(tree.isEnabled()) {
+                this.setIcon(ico);
+            } else {
+                this.setDisabledIcon(ico);
+            }
+        }
+
+        JFileChooser iconFinder = new JFileChooser();
+        Color sameColor = Color.BLACK;
+        Color diffColor = Color.BLUE;
+        Color newColor = Color.GREEN.darker(); 
+
+        /**
+          * Configures the renderer based on the passed in components.
+          * The value is set from messaging the tree with
+          * <code>convertValueToText</code>, which ultimately invokes
+          * <code>toString</code> on <code>value</code>.
+          * The foreground color is set based on the selection and the icon
+          * is set based on on leaf and expanded.
+          */
+        @Override
+        public Component getTreeCellRendererComponent(JTree tree, Object value, boolean sel, boolean expanded, boolean leaf, int row, boolean hasFocus) {
+            String valueText = value.toString();
+
+            Color tColor = null;
+
+            if(value instanceof DefaultMutableTreeNode) {
+                Object nodeValue = ((DefaultMutableTreeNode) value).getUserObject();
+                if(nodeValue instanceof String) {
+                    tColor = sameColor;
+                    setIcons(tree, UIManager.getIcon("FileView.computerIcon"));
+                } else if(nodeValue instanceof File) { // this will either be an actual file on the system (directories included), or an element within a file
+                    tColor = diffColor;
+                    File f = ((File) nodeValue);
+                    valueText = f.getName();
+                    setIcons(tree, iconFinder.getIcon(f));
+                } else if(nodeValue instanceof Element) {
+                    tColor = newColor;
+                    Element e = (Element) nodeValue;
+                    if(e.getProps().isEmpty() && leaf) { // If no properties, warn because irrelevant. Only care if leaves are empty
+                        setIcons(tree, UIManager.getIcon("FileChooser.detailsViewIcon"));
+                    } else {
+                        setIcons(tree, UIManager.getIcon("FileChooser.listViewIcon"));
+                    }
+                } else {
+                    if(nodeValue != null) {
+                        System.out.println(nodeValue.getClass());
+                    }
+                    setIcons(tree, null);
+                }
+            }
+            String stringValue = tree.convertValueToText(valueText, sel, expanded, leaf, row, hasFocus);
+            this.hasFocus = hasFocus;
+            this.setText(stringValue);
+            if(tColor != null) {
+                this.setForeground(sel ? tColor != newColor ? new Color(-tColor.getRed() + 255, -tColor.getGreen() + 255, -tColor.getBlue() + 255) : tColor.brighter() : tColor);
+            } else {
+                this.setForeground(sel ? getTextSelectionColor() : getTextNonSelectionColor());
+            }
+            this.setEnabled(tree.isEnabled());
+            this.setComponentOrientation(tree.getComponentOrientation());
+            this.selected = sel;
+            return this;
+        }
     }
     
     private class EditorFileTree extends JScrollPane {
@@ -505,79 +603,6 @@ public class EditorFrame extends JFrame {
             
             this.setViewportView(fileSystem);
             this.setPreferredSize(new Dimension(400, 400));
-        }
-        
-        private class CustomTreeCellRenderer extends DefaultTreeCellRenderer {
-        
-            CustomTreeCellRenderer() {
-                super();
-            }
-            
-            private void setIcons(JTree tree, Icon ico) {
-                if(tree.isEnabled()) {
-                    this.setIcon(ico);
-                } else {
-                    this.setDisabledIcon(ico);
-                }
-            }
-
-            JFileChooser iconFinder = new JFileChooser();
-            Color sameColor = Color.BLACK;
-            Color diffColor = Color.BLUE;
-            Color newColor = Color.GREEN.darker(); 
-
-            /**
-              * Configures the renderer based on the passed in components.
-              * The value is set from messaging the tree with
-              * <code>convertValueToText</code>, which ultimately invokes
-              * <code>toString</code> on <code>value</code>.
-              * The foreground color is set based on the selection and the icon
-              * is set based on on leaf and expanded.
-              */
-            @Override
-            public Component getTreeCellRendererComponent(JTree tree, Object value, boolean sel, boolean expanded, boolean leaf, int row, boolean hasFocus) {
-                String valueText = value.toString();
-
-                Color tColor = null;
-
-                if(value instanceof DefaultMutableTreeNode) {
-                    Object nodeValue = ((DefaultMutableTreeNode) value).getUserObject();
-                    if(nodeValue instanceof String) {
-                        tColor = sameColor;
-                        setIcons(tree, UIManager.getIcon("FileView.computerIcon"));
-                    } else if(nodeValue instanceof File) { // this will either be an actual file on the system (directories included), or an element within a file
-                        tColor = diffColor;
-                        File f = ((File) nodeValue);
-                        valueText = f.getName();
-                        setIcons(tree, iconFinder.getIcon(f));
-                    } else if(nodeValue instanceof Element) {
-                        tColor = newColor;
-                        Element e = (Element) nodeValue;
-                        if(e.getProps().isEmpty() && leaf) { // If no properties, warn because irrelevant. Only care if leaves are empty
-                            setIcons(tree, UIManager.getIcon("FileChooser.detailsViewIcon"));
-                        } else {
-                            setIcons(tree, UIManager.getIcon("FileChooser.listViewIcon"));
-                        }
-                    } else {
-                        if(nodeValue != null) {
-                            System.out.println(nodeValue.getClass());
-                        }
-                        setIcons(tree, null);
-                    }
-                }
-                String stringValue = tree.convertValueToText(valueText, sel, expanded, leaf, row, hasFocus);
-                this.hasFocus = hasFocus;
-                this.setText(stringValue);
-                if(tColor != null) {
-                    this.setForeground(sel ? tColor != newColor ? new Color(-tColor.getRed() + 255, -tColor.getGreen() + 255, -tColor.getBlue() + 255) : tColor.brighter() : tColor);
-                } else {
-                    this.setForeground(sel ? getTextSelectionColor() : getTextNonSelectionColor());
-                }
-                this.setEnabled(tree.isEnabled());
-                this.setComponentOrientation(tree.getComponentOrientation());
-                this.selected = sel;
-                return this;
-            }
         }
     }
     
