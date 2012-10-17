@@ -33,31 +33,7 @@ public class ResLoader {
     public void populate(DefaultMutableTreeNode top) {
         processPopulate(new File(hudFolder), -1, top);
     }
-
-    // TODO: Special exceptions for *scheme.res, hudlayout.res, 
-    public static void analyze(final File file, final DefaultMutableTreeNode top) {
-        if(file.isDirectory()) {
-            return;
-        }
-        new Thread() { // threading this cuts loading times in half
-            @Override
-            public void run() {
-                Scanner s = null;
-                try {
-                    RandomAccessFile rf = new RandomAccessFile(file.getPath(), "r");
-                    s = new Scanner(rf.getChannel());
-                    processAnalyze(s, top, new ArrayList<Property>(), file);
-                } catch(FileNotFoundException ex) {
-                    logger.log(Level.SEVERE, null, ex);
-                } finally {
-                    if(s != null) {
-                        s.close();
-                    }
-                }
-            }
-        }.start();
-    }
-
+    
     /**
      * @todo Sort alphabetically and by directory. directories first, files second
      * @param f
@@ -84,6 +60,30 @@ public class ResLoader {
                 top.add(child);
             }
         }
+    }
+
+    // TODO: Special exceptions for *scheme.res, hudlayout.res, 
+    public static void analyze(final File file, final DefaultMutableTreeNode top) {
+        if(file.isDirectory()) {
+            return;
+        }
+        new Thread() { // threading this cuts loading times in half
+            @Override
+            public void run() {
+                Scanner s = null;
+                try {
+                    RandomAccessFile rf = new RandomAccessFile(file.getPath(), "r");
+                    s = new Scanner(rf.getChannel());
+                    processAnalyze(s, top, new ArrayList<Property>(), file);
+                } catch(FileNotFoundException ex) {
+                    logger.log(Level.SEVERE, null, ex);
+                } finally {
+                    if(s != null) {
+                        s.close();
+                    }
+                }
+            }
+        }.start();
     }
 
     private static void processAnalyze(Scanner scanner, DefaultMutableTreeNode parent, ArrayList<Property> carried, File file) {
