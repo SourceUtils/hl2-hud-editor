@@ -292,35 +292,37 @@ public class EditorFrame extends JFrame {
      * mac = ?
      */
     private void locateHudDirectory() {
-        String selection = null;
-        if(os == OS.Windows) {
-            XFileDialog fd = new XFileDialog(this); // was EditorFrame.this
-            fd.setTitle("Open a HUD folder");
-            selection = fd.getFolder();
-            fd.dispose();
-        } else
-        if(os == OS.Mac) {
-            System.setProperty("apple.awt.fileDialogForDirectories", "true");
-            System.setProperty("com.apple.macos.use-file-dialog-packages", "true");
-            FileDialog fd = new FileDialog(this, "Open a HUD folder");
-            fd.setVisible(true);
-            selection = fd.getFile();
-            System.setProperty("apple.awt.fileDialogForDirectories", "false");
-            System.setProperty("com.apple.macos.use-file-dialog-packages", "false");
-//        } else if(os == OS.Linux) {
-//            FileDialog fd = new FileDialog(this, "Open a HUD folder");
-//            fd.setVisible(true);
-//            selection = fd.getFile();
-        } else { // Fall back to swing
-            JFileChooser fd = new JFileChooser();
-            fd.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
-            if(fd.showOpenDialog(EditorFrame.this) == JFileChooser.APPROVE_OPTION) {
-                selection = fd.getSelectedFile().getPath();
+        if(hudSelection == null) {
+            if(os == OS.Mac) {
+                System.setProperty("apple.awt.fileDialogForDirectories", "true");
+                System.setProperty("com.apple.macos.use-file-dialog-packages", "true");
+                FileDialog fd = new FileDialog(this, "Open a HUD folder");
+                fd.setVisible(true);
+                hudSelection = fd.getFile();
+                System.setProperty("apple.awt.fileDialogForDirectories", "false");
+                System.setProperty("com.apple.macos.use-file-dialog-packages", "false");
+            } else
+            if(os == OS.Windows) {
+                XFileDialog fd = new XFileDialog(this); // was EditorFrame.this
+                fd.setTitle("Open a HUD folder");
+                hudSelection = fd.getFolder();
+                fd.dispose();
+//            } else
+//            if(os == OS.Linux) {
+//                FileDialog fd = new FileDialog(this, "Open a HUD folder");
+//                fd.setVisible(true);
+//                selection = fd.getFile();
+            } else { // Fall back to swing
+                JFileChooser fd = new JFileChooser();
+                fd.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+                if(fd.showOpenDialog(EditorFrame.this) == JFileChooser.APPROVE_OPTION) {
+                    hudSelection = fd.getSelectedFile().getPath();
+                }
             }
         }
 
-        if(selection != null) {
-            final File f = new File(selection);
+        if(hudSelection != null) {
+            final File f = new File(hudSelection);
             new Thread() {
                 @Override
                 public void run() {
@@ -437,6 +439,63 @@ public class EditorFrame extends JFrame {
         } else if(value == JOptionPane.NO_OPTION) {
 
         }
+    }
+    
+    String hudSelection;
+    
+    private class EditorActionListener implements ActionListener {
+        
+        EditorActionListener() {
+            
+        }
+
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            String cmd = e.getActionCommand();
+            if("Open...".equalsIgnoreCase(cmd)) {
+                hudSelection = null;
+                locateHudDirectory();
+            } else if("Close".equalsIgnoreCase(cmd)) {
+                closeHud();
+            } else if("Revert".equalsIgnoreCase(cmd)) {
+                locateHudDirectory();
+            } else if("Exit".equalsIgnoreCase(cmd)) {
+                System.exit(0);
+            } else if("Change Resolution".equalsIgnoreCase(cmd)) {
+                changeResolution();
+            } else if("Select All".equalsIgnoreCase(cmd)) {
+                for(int i = 0; i < canvas.getElements().size(); i++) {
+                    canvas.select(canvas.getElements().get(i));
+                }
+            } else if("About".equalsIgnoreCase(cmd)) {
+                String aboutText = "<html><h2>This is a <u>W</u>hat <u>Y</u>ou <u>S</u>ee <u>I</u>s <u>W</u>hat <u>Y</u>ou <u>G</u>et HUD Editor for TF2.</h2>";
+                aboutText += "<p>You can graphically edit TF2 HUDs with it!<br>";
+                aboutText += "<p>It was written by <a href=\"http://www.reddit.com/user/TimePath/\">TimePath</a></p>";
+                aboutText += "<p>Please give feedback or suggestions on my Reddit profile</p>";
+                aboutText += "</html>";
+                final JEditorPane panel = new JEditorPane("text/html", aboutText);
+                panel.setEditable(false);
+                panel.setOpaque(false);
+                panel.addHyperlinkListener(new HyperlinkListener() {
+
+                    @Override
+                    public void hyperlinkUpdate(HyperlinkEvent he) {
+                        if (he.getEventType().equals(HyperlinkEvent.EventType.ACTIVATED)) {
+                            try {
+                                Desktop.getDesktop().browse(he.getURL().toURI()); // http://stackoverflow.com/questions/5116473/linux-command-to-open-url-in-default-browser
+                            } catch(Exception e) {
+//                                e.printStackTrace();
+                            }
+                        }
+                    }
+
+                });
+                JOptionPane.showMessageDialog(new JFrame(), panel, "About", JOptionPane.INFORMATION_MESSAGE); // this.getParent()
+            } else {
+                System.out.println(e.getActionCommand());
+            }
+        }
+
     }
     
     private class PropertiesTable extends JTable {
@@ -646,7 +705,6 @@ public class EditorFrame extends JFrame {
             fileMenu.add(saveAsItem);
             
             JMenuItem revertItem = new JMenuItem("Revert", KeyEvent.VK_R);
-            revertItem.setEnabled(false);
             revertItem.addActionListener(al);
             fileMenu.add(revertItem);
             
@@ -738,58 +796,6 @@ public class EditorFrame extends JFrame {
             helpMenu.add(aboutItem);
         }
         
-    }
-    
-    private class EditorActionListener implements ActionListener {
-        
-        EditorActionListener() {
-            
-        }
-
-        @Override
-        public void actionPerformed(ActionEvent e) {
-            String cmd = e.getActionCommand();
-            if("Open...".equalsIgnoreCase(cmd)) {
-                locateHudDirectory();
-            } else if("Close".equalsIgnoreCase(cmd)) {
-                closeHud();
-            } else if("Exit".equalsIgnoreCase(cmd)) {
-                System.exit(0);
-            } else if("Change Resolution".equalsIgnoreCase(cmd)) {
-                changeResolution();
-            } else if("Select All".equalsIgnoreCase(cmd)) {
-                for(int i = 0; i < canvas.getElements().size(); i++) {
-                    canvas.select(canvas.getElements().get(i));
-                }
-            } else if("About".equalsIgnoreCase(cmd)) {
-                String aboutText = "<html><h2>This is a <u>W</u>hat <u>Y</u>ou <u>S</u>ee <u>I</u>s <u>W</u>hat <u>Y</u>ou <u>G</u>et HUD Editor for TF2.</h2>";
-                aboutText += "<p>You can graphically edit TF2 HUDs with it!<br>";
-                aboutText += "<p>It was written by <a href=\"http://www.reddit.com/user/TimePath/\">TimePath</a></p>";
-                aboutText += "<p>Please give feedback or suggestions on my Reddit profile</p>";
-                aboutText += "</html>";
-                final JEditorPane panel = new JEditorPane("text/html", aboutText);
-                panel.setEditable(false);
-                panel.setOpaque(false);
-                panel.addHyperlinkListener(new HyperlinkListener() {
-
-                    @Override
-                    public void hyperlinkUpdate(HyperlinkEvent he) {
-                        if (he.getEventType().equals(HyperlinkEvent.EventType.ACTIVATED)) {
-                            try {
-                                Desktop.getDesktop().browse(he.getURL().toURI()); // http://stackoverflow.com/questions/5116473/linux-command-to-open-url-in-default-browser
-                            } catch(Exception e) {
-    //                                e.printStackTrace();
-                            }
-                        }
-                    }
-
-                });
-                JOptionPane.showMessageDialog(new JFrame(), panel, "About", JOptionPane.INFORMATION_MESSAGE); // this.getParent()
-            } else {
-                System.out.println(e.getActionCommand());
-            }
-        }
-
     }
 
 }
