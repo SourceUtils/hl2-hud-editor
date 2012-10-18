@@ -91,7 +91,7 @@ public class HudCanvas extends JPanel implements MouseListener, MouseMotionListe
     //</editor-fold>
 
     private Color BG_COLOR = Color.GRAY;
-    private Color GRID_COLOR = Color.GRAY.darker();
+    private Color GRID_COLOR = Color.GRAY.brighter();
 
     private static int offX = 0; // left
     private static int offY = 0; // top
@@ -111,7 +111,7 @@ public class HudCanvas extends JPanel implements MouseListener, MouseMotionListe
         
         //        g.drawImage(background, 0, 0, null);
         
-        //        drawGrid(g);
+        drawGrid(g);
         
         Collections.sort(elements, layerSort);
         
@@ -136,17 +136,34 @@ public class HudCanvas extends JPanel implements MouseListener, MouseMotionListe
         }
     };
     
+    private int minGridSpacing = 10;
+    
     private void drawGrid(Graphics2D g) {
-        g.setColor(GRID_COLOR);
-        double stepX = ((double)hudRes.width / (double)internalRes.width) * scale; // due to rounding, this does not work 100%. don't pre-calc
-        double stepY = ((double)hudRes.height / (double)internalRes.height) * scale;
-        for(int x = 0; x < internalRes.width + 1; x++) { // vertical lines
-            g.drawLine((int)Math.round(stepX * x) + offX, offY, (int)Math.round(stepX * x) + offX, (int)Math.round(hudRes.height * scale) + offY);
-            //            g.drawLine(stepX * x - 1 + offX, offY, stepX * x - 1 + offX, (int)Math.round(hudRes.height * scale) + offY);
+        g.setColor(GRID_COLOR);       
+//        g.setColor(Color.GREEN);
+        
+        int w = internalRes.width;
+        int h = internalRes.height;
+        int i = minGridSpacing; 
+        if(i < 0) {
+            return;
         }
-        for(int y = 0; y < internalRes.height + 1; y++) { // horizontal lines
-            g.drawLine(offX, (int)Math.round(stepY * y) + offY, (int)Math.round(hudRes.width * scale) + offX, (int)Math.round(stepY * y) + offY);
-            //            g.drawLine(offX, stepY * y - 1 + offY, (int)Math.round(hudRes.width * scale) + offX, stepY * y - 1 + offY);
+        if(i < 2) { // optimize for small numbers, stop division by zero
+            g.fillRect(offX, offY, hudRes.width, hudRes.height);
+            return;
+        }
+        int cross = 0;
+        int maxX = w - (w % i);
+        int maxY = h - (h % i);
+        double multX = (hudRes.width / internalRes.width);
+        double multY = (hudRes.height / internalRes.height);
+        for(int y = 0; y <= (maxY / i); y++) {
+            for(int x = 0; x <= (maxX / i); x++) {
+                int dx = (int) Math.round(((maxX * x * i * multX) / maxX) + offX);
+                int dy = (int) Math.round(((maxY * y * i * multY) / maxY) + offY);
+                g.drawLine(dx + cross, dy + cross, dx - (1 + cross), dy - (1 + cross));
+                g.drawLine(dx - (1 + cross), dy + cross, dx + cross, dy - (1 + cross));
+            }
         }
     }
     
@@ -206,7 +223,7 @@ public class HudCanvas extends JPanel implements MouseListener, MouseMotionListe
     public void mousePressed(MouseEvent event) {
         Point p = new Point(event.getPoint());
         p.translate(-HudCanvas.offX, -HudCanvas.offY);
-        int button = event.getButton();
+        int button = event.getButton(); // Button2 is middle click on linux. How odd.
         
         if(button == MouseEvent.BUTTON1) {
             dragStart = new Point(p.x, p.y);
@@ -337,11 +354,16 @@ public class HudCanvas extends JPanel implements MouseListener, MouseMotionListe
     public void load(Element element) {
         if(Element.areas.containsKey(element.getFile())) {
             Element p = Element.areas.get(element.getFile());
-            this.addElement(p);
             p.addElement(element);
-        }// else {
-        this.addElement(element);
-        //        }
+            this.addElement(p);
+        }
+        else if(element.getFile().equalsIgnoreCase("HudPlayerHealth")) { // better, but still not perfect
+            // move by "CHealthAccountPanel" delta_item_x" and "delta_item_start_y"
+            Element p = Element.areas.get("CHealthAccountPanel");
+            p.addElement(element);
+            this.addElement(p);
+        }
+        this.addElement(element); // weird but it has to be done
     }
     
     // List of currently selected elements

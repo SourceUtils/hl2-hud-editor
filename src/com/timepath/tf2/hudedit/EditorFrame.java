@@ -337,6 +337,7 @@ public class EditorFrame extends JFrame {
 
         hudFilesRoot.removeAllChildren();
         hudFilesRoot.setUserObject(null);
+        fileSystem.setSelectionRow(0);
         DefaultTreeModel model1 = (DefaultTreeModel) fileSystem.getModel();
         model1.reload();
 
@@ -568,6 +569,8 @@ public class EditorFrame extends JFrame {
             hudFilesRoot = new DefaultMutableTreeNode(null);
 
             fileSystem = new JTree(hudFilesRoot);
+            fileSystem.setShowsRootHandles(true);
+            fileSystem.setSelectionRow(0);
             fileSystem.getSelectionModel().setSelectionMode(TreeSelectionModel.SINGLE_TREE_SELECTION);
             fileSystem.setCellRenderer(new CustomTreeCellRenderer());
             fileSystem.addTreeSelectionListener(new TreeSelectionListener() {
