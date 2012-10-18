@@ -3,4 +3,3 @@
 \.chg\..*$
 \.rej$
 \.conflict\~$
-^store$
