@@ -620,13 +620,39 @@ public class EditorFrame extends JFrame {
             fileMenu.setMnemonic(KeyEvent.VK_F);
             this.add(fileMenu);
             
-
+            JMenuItem newItem = new JMenuItem("New", KeyEvent.VK_N);
+            newItem.setEnabled(false);
+            newItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_N, shortcutKey));
+            newItem.addActionListener(al);
+            fileMenu.add(newItem);
+            
             JMenuItem openItem = new JMenuItem("Open...", KeyEvent.VK_O);
             openItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_O, shortcutKey));
             openItem.addActionListener(al);
             fileMenu.add(openItem);
+            
+            fileMenu.addSeparator();
+            
+            JMenuItem saveItem = new JMenuItem("Save", KeyEvent.VK_S);
+            saveItem.setEnabled(false);
+            saveItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_S, shortcutKey));
+            saveItem.addActionListener(al);
+            fileMenu.add(saveItem);
+            
+            JMenuItem saveAsItem = new JMenuItem("Save As...", KeyEvent.VK_A);
+            saveAsItem.setEnabled(false);
+            saveAsItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_S, shortcutKey + ActionEvent.SHIFT_MASK));
+            saveAsItem.addActionListener(al);
+            fileMenu.add(saveAsItem);
+            
+            JMenuItem revertItem = new JMenuItem("Revert", KeyEvent.VK_R);
+            revertItem.setEnabled(false);
+            revertItem.addActionListener(al);
+            fileMenu.add(revertItem);
+            
+            fileMenu.addSeparator();
 
-            JMenuItem closeItem = new JMenuItem("Close HUD", KeyEvent.VK_C);
+            JMenuItem closeItem = new JMenuItem("Close", KeyEvent.VK_C);
             closeItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_W, shortcutKey));
             closeItem.addActionListener(al);
             fileMenu.add(closeItem);
@@ -641,16 +667,58 @@ public class EditorFrame extends JFrame {
             JMenu editMenu = new JMenu("Edit");
             editMenu.setMnemonic(KeyEvent.VK_E);
             this.add(editMenu);
-
-            JMenuItem deleteItem = new JMenuItem("Delete", KeyEvent.VK_DELETE);
+            
+            JMenuItem undoItem = new JMenuItem("Undo", KeyEvent.VK_U);
+            undoItem.setEnabled(false);
+            undoItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_Z, ActionEvent.CTRL_MASK));
+            undoItem.addActionListener(al);
+            editMenu.add(undoItem);
+            
+            JMenuItem redoItem = new JMenuItem("Redo", KeyEvent.VK_R);
+            redoItem.setEnabled(false);
+            redoItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_Z, ActionEvent.CTRL_MASK + ActionEvent.SHIFT_MASK));
+            redoItem.addActionListener(al);
+            editMenu.add(redoItem);
+            
+            editMenu.addSeparator();
+            
+            JMenuItem cutItem = new JMenuItem("Cut", KeyEvent.VK_T);
+            cutItem.setEnabled(false);
+            cutItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_X, shortcutKey));
+            cutItem.addActionListener(al);
+            editMenu.add(cutItem);
+            
+            JMenuItem copyItem = new JMenuItem("Copy", KeyEvent.VK_C);
+            copyItem.setEnabled(false);
+            copyItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_C, shortcutKey));
+            copyItem.addActionListener(al);
+            editMenu.add(copyItem);
+            
+            JMenuItem pasteItem = new JMenuItem("Paste", KeyEvent.VK_P);
+            pasteItem.setEnabled(false);
+            pasteItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_V, shortcutKey));
+            pasteItem.addActionListener(al);
+            editMenu.add(pasteItem);
+            
+            JMenuItem deleteItem = new JMenuItem("Delete");
+            deleteItem.setEnabled(false);
             deleteItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_DELETE, 0));
             deleteItem.addActionListener(al);
             editMenu.add(deleteItem);
+            
+            editMenu.addSeparator();
 
             JMenuItem selectAllItem = new JMenuItem("Select All", KeyEvent.VK_A);
             selectAllItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_A, shortcutKey));
             selectAllItem.addActionListener(al);
             editMenu.add(selectAllItem);
+            
+            editMenu.addSeparator();
+
+            JMenuItem preferencesItem = new JMenuItem("Preferences", KeyEvent.VK_E);
+            preferencesItem.setEnabled(false);
+            preferencesItem.addActionListener(al);
+            editMenu.add(preferencesItem);
 
             JMenu viewMenu = new JMenu("View");
             viewMenu.setMnemonic(KeyEvent.VK_V);
@@ -683,7 +751,7 @@ public class EditorFrame extends JFrame {
             String cmd = e.getActionCommand();
             if("Open...".equalsIgnoreCase(cmd)) {
                 locateHudDirectory();
-            } else if("Close HUD".equalsIgnoreCase(cmd)) {
+            } else if("Close".equalsIgnoreCase(cmd)) {
                 closeHud();
             } else if("Exit".equalsIgnoreCase(cmd)) {
                 System.exit(0);
@@ -694,7 +762,7 @@ public class EditorFrame extends JFrame {
                     canvas.select(canvas.getElements().get(i));
                 }
             } else if("About".equalsIgnoreCase(cmd)) {
-                String aboutText = "<html><h2>This is a WYSIWYG HUD Editor for TF2.</h2>";
+                String aboutText = "<html><h2>This is a <u>W</u>hat <u>Y</u>ou <u>S</u>ee <u>I</u>s <u>W</u>hat <u>Y</u>ou <u>G</u>et HUD Editor for TF2.</h2>";
                 aboutText += "<p>You can graphically edit TF2 HUDs with it!<br>";
                 aboutText += "<p>It was written by <a href=\"http://www.reddit.com/user/TimePath/\">TimePath</a></p>";
                 aboutText += "<p>Please give feedback or suggestions on my Reddit profile</p>";
