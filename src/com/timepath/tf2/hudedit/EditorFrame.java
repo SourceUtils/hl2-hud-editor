@@ -76,8 +76,26 @@ import net.tomahawk.XFileDialog;
 @SuppressWarnings("serial")
 public class EditorFrame extends JFrame {
 
+    //<editor-fold defaultstate="collapsed" desc="Display">
     public static void main(String... args) {
         //<editor-fold defaultstate="collapsed" desc="Try and get nimbus look and feel, if it is installed.">
+        initialLaf();
+        //</editor-fold>
+        
+        //<editor-fold defaultstate="collapsed" desc="Display the editor">
+        SwingUtilities.invokeLater(new Runnable() {
+            
+            @Override
+            public void run() {
+                EditorFrame frame = new EditorFrame();
+                frame.start();
+            }
+            
+        });
+        //</editor-fold>
+    }
+    
+    private static void initialLaf() {
         try {
             for(UIManager.LookAndFeelInfo info : UIManager.getInstalledLookAndFeels()) {
                 if("Nimbus".equals(info.getName())) {
@@ -88,20 +106,16 @@ public class EditorFrame extends JFrame {
         } catch(Exception ex) {
             Logger.getLogger(EditorFrame.class.getName()).log(Level.WARNING, null, ex);
         }
-        //</editor-fold>
-
-        //<editor-fold defaultstate="collapsed" desc="Display the editor">
-        SwingUtilities.invokeLater(new Runnable() {
-
-            @Override
-            public void run() {
-                EditorFrame frame = new EditorFrame();
-                frame.start();
-            }
-
-        });
-        //</editor-fold>
     }
+    
+    private static void systemLaf() {
+        try {
+            UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+        } catch(Exception ex) {
+            Logger.getLogger(EditorFrame.class.getName()).log(Level.WARNING, null, ex);
+        }
+    }
+    //</editor-fold>
 
     //<editor-fold defaultstate="collapsed" desc="OS specific code">
     private final static OS os;
@@ -113,6 +127,8 @@ public class EditorFrame extends JFrame {
         Windows, Mac, Linux, Other
 
     }
+    
+    private static Object initFCUILinux;
 
     static {
         String osVer = System.getProperty("os.name").toLowerCase();
@@ -122,7 +138,8 @@ public class EditorFrame extends JFrame {
             os = OS.Mac;
         } else if(osVer.indexOf("linux") != -1) {
             os = OS.Linux;
-//            if ("GTK look and feel".equals(UIManager.getLookAndFeel().getName())) {
+            initFCUILinux = UIManager.get("FileChooserUI");
+//            if("GTK look and feel".equals(UIManager.getLookAndFeel().getName())) {
 //                UIManager.put("FileChooserUI", "eu.kostia.gtkjfilechooser.ui.GtkFileChooserUI");
 //            }
         } else {
@@ -307,11 +324,17 @@ public class EditorFrame extends JFrame {
                 fd.setTitle("Open a HUD folder");
                 hudSelection = fd.getFolder();
                 fd.dispose();
-//            } else
-//            if(os == OS.Linux) {
-//                FileDialog fd = new FileDialog(this, "Open a HUD folder");
-//                fd.setVisible(true);
-//                selection = fd.getFile();
+            } else
+            if(os == OS.Linux) {
+                EditorFrame.systemLaf();
+                UIManager.put("FileChooserUI", "eu.kostia.gtkjfilechooser.ui.GtkFileChooserUI");
+                JFileChooser fd = new JFileChooser();
+                fd.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+                if(fd.showOpenDialog(EditorFrame.this) == JFileChooser.APPROVE_OPTION) {
+                    hudSelection = fd.getSelectedFile().getPath();
+                }
+                EditorFrame.initialLaf();
+                UIManager.put("FileChooserUI", initFCUILinux);
             } else { // Fall back to swing
                 JFileChooser fd = new JFileChooser();
                 fd.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
