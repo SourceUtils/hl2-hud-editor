@@ -62,7 +62,8 @@ import net.tomahawk.XFileDialog;
  *
  * libs:
  * http://code.google.com/p/xfiledialog/ - windows "open folder" dialog
- * http://java.dzone.com/news/native-dialogs-swing-little - native file dialogs
+ * http://java.dzone.com/news/native-dialogs-swing-little - more native file dialogs on linux
+ * http://java-gnome.sourceforge.net/get/
  *
  * Reference editors:
  * https://developers.google.com/java-dev-tools/wbpro/
@@ -97,12 +98,13 @@ public class EditorFrame extends JFrame {
     
     private static void initialLaf() {
         try {
-            for(UIManager.LookAndFeelInfo info : UIManager.getInstalledLookAndFeels()) {
-                if("Nimbus".equals(info.getName())) {
-                    UIManager.setLookAndFeel(info.getClassName());
-                    break;
-                }
-            }
+//            for(UIManager.LookAndFeelInfo info : UIManager.getInstalledLookAndFeels()) {
+//                if("Nimbus".equals(info.getName())) {
+//                    UIManager.setLookAndFeel(info.getClassName());
+//                    break;
+//                }
+//            }
+            UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
         } catch(Exception ex) {
             Logger.getLogger(EditorFrame.class.getName()).log(Level.WARNING, null, ex);
         }
