@@ -20,6 +20,7 @@
         <echo message="Packaging ${application.title} into a single JAR at ${store.jar.dated}"/>
         <mkdir dir="${store.dir}"/>
         <delete file="${store.jar.dated}"/>
+        <mkdir dir="dist/lib"/> <!-- Just in case no external libraries are in use and we don't want the packagint ot fail -->
         <jar destfile="${store.dir}/temp_final.jar" filesetmanifest="skip">
             <zipgroupfileset dir="dist" includes="*.jar"/>
             <zipgroupfileset dir="dist/lib" includes="*.jar"/>
@@ -32,6 +33,8 @@
         </zip>
         <delete file="${store.dir}/temp_final.jar"/>
         <copy file="${store.jar.dated}" tofile="${store.jar}"/>
+        <chmod file="${store.jar.dated}" perm="777"/>
+        <chmod file="${store.jar}" perm="777"/>
     </target>
     
 </project>

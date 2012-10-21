@@ -151,7 +151,7 @@ public class EditorFrame extends JFrame {
         
         if(os == OS.Windows) {
             shortcutKey = ActionEvent.CTRL_MASK;
-            XFileDialog.setTraceLevel(0);
+//            XFileDialog.setTraceLevel(0);
         } else if(os == OS.Mac) {
             shortcutKey = ActionEvent.META_MASK;
             System.setProperty("apple.awt.showGrowBox", "true");
@@ -364,12 +364,13 @@ public class EditorFrame extends JFrame {
 
         hudFilesRoot.removeAllChildren();
         hudFilesRoot.setUserObject(null);
-        fileSystem.setSelectionRow(0);
         DefaultTreeModel model1 = (DefaultTreeModel) fileSystem.getModel();
         model1.reload();
+        fileSystem.setSelectionRow(0);
 
         DefaultTableModel model2 = (DefaultTableModel) propTable.getModel();
         model2.setRowCount(0);
+        model2.insertRow(0, new String[]{"", "", ""});
         propTable.repaint();
     }
 
@@ -560,7 +561,7 @@ public class EditorFrame extends JFrame {
             model.addColumn("Value");
             model.addColumn("Info");
             
-            model.addRow(new String[]{"", "", ""});
+            model.insertRow(0, new String[]{"", "", ""});
 
             propTable = new PropertiesTable(model);
             propTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
@@ -665,7 +666,7 @@ public class EditorFrame extends JFrame {
                 public void valueChanged(TreeSelectionEvent e) {
                     DefaultTableModel model = (DefaultTableModel) propTable.getModel();
                     model.getDataVector().removeAllElements();
-                    model.insertRow(0, new Object[] {"", "", ""});
+                    model.insertRow(0, new String[]{"", "", ""});
                     propTable.scrollRectToVisible(new Rectangle(0, 0, 0, 0));
 
                     DefaultMutableTreeNode node = (DefaultMutableTreeNode) fileSystem.getLastSelectedPathComponent();
