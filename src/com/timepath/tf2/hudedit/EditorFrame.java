@@ -53,7 +53,7 @@ import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeCellRenderer;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreeSelectionModel;
-import net.tomahawk.XFileDialog;
+//import net.tomahawk.XFileDialog;
 
 /**
  * Keep logic to a minimum, just interact and bridge components.
@@ -98,13 +98,13 @@ public class EditorFrame extends JFrame {
     
     private static void initialLaf() {
         try {
-//            for(UIManager.LookAndFeelInfo info : UIManager.getInstalledLookAndFeels()) {
-//                if("Nimbus".equals(info.getName())) {
-//                    UIManager.setLookAndFeel(info.getClassName());
-//                    break;
-//                }
-//            }
-            UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+//            UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+            for(UIManager.LookAndFeelInfo info : UIManager.getInstalledLookAndFeels()) {
+                if("Nimbus".equals(info.getName())) {
+                    UIManager.setLookAndFeel(info.getClassName());
+                    break;
+                }
+            }
         } catch(Exception ex) {
             Logger.getLogger(EditorFrame.class.getName()).log(Level.WARNING, null, ex);
         }
@@ -320,23 +320,23 @@ public class EditorFrame extends JFrame {
                 hudSelection = fd.getFile();
                 System.setProperty("apple.awt.fileDialogForDirectories", "false");
                 System.setProperty("com.apple.macos.use-file-dialog-packages", "false");
-            } else
-            if(os == OS.Windows) {
-                XFileDialog fd = new XFileDialog(this); // was EditorFrame.this
-                fd.setTitle("Open a HUD folder");
-                hudSelection = fd.getFolder();
-                fd.dispose();
-            } else
-            if(os == OS.Linux) {
-                EditorFrame.systemLaf();
-                UIManager.put("FileChooserUI", "eu.kostia.gtkjfilechooser.ui.GtkFileChooserUI");
-                JFileChooser fd = new JFileChooser();
-                fd.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
-                if(fd.showOpenDialog(EditorFrame.this) == JFileChooser.APPROVE_OPTION) {
-                    hudSelection = fd.getSelectedFile().getPath();
-                }
-                EditorFrame.initialLaf();
-                UIManager.put("FileChooserUI", initFCUILinux);
+//            } else
+//            if(os == OS.Windows) {
+//                XFileDialog fd = new XFileDialog(this); // was EditorFrame.this
+//                fd.setTitle("Open a HUD folder");
+//                hudSelection = fd.getFolder();
+//                fd.dispose();
+//            } else
+//            if(os == OS.Linux) {
+//                EditorFrame.systemLaf();
+//                UIManager.put("FileChooserUI", "eu.kostia.gtkjfilechooser.ui.GtkFileChooserUI");
+//                JFileChooser fd = new JFileChooser();
+//                fd.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+//                if(fd.showOpenDialog(EditorFrame.this) == JFileChooser.APPROVE_OPTION) {
+//                    hudSelection = fd.getSelectedFile().getPath();
+//                }
+//                EditorFrame.initialLaf();
+//                UIManager.put("FileChooserUI", initFCUILinux);
             } else { // Fall back to swing
                 JFileChooser fd = new JFileChooser();
                 fd.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
@@ -559,6 +559,8 @@ public class EditorFrame extends JFrame {
             model.addColumn("Key");
             model.addColumn("Value");
             model.addColumn("Info");
+            
+            model.addRow(new String[]{"", "", ""});
 
             propTable = new PropertiesTable(model);
             propTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
@@ -663,6 +665,7 @@ public class EditorFrame extends JFrame {
                 public void valueChanged(TreeSelectionEvent e) {
                     DefaultTableModel model = (DefaultTableModel) propTable.getModel();
                     model.getDataVector().removeAllElements();
+                    model.insertRow(0, new Object[] {"", "", ""});
                     propTable.scrollRectToVisible(new Rectangle(0, 0, 0, 0));
 
                     DefaultMutableTreeNode node = (DefaultMutableTreeNode) fileSystem.getLastSelectedPathComponent();
@@ -674,10 +677,9 @@ public class EditorFrame extends JFrame {
                     if(nodeInfo instanceof Element) {
                         Element element = (Element) nodeInfo;
                         canvas.load(element);
-                        if(element.getProps().isEmpty()) {
-                            model.insertRow(0, new Object[] {"", "", ""});
-                        } else {
-                            element.validate2();
+                        if(!element.getProps().isEmpty()) {
+                            model.getDataVector().removeAllElements();
+                            element.validateDisplay();
                             for(int i = 0; i < element.getProps().size(); i++) {
                                 Property entry = element.getProps().get(i);
                                 model.insertRow(model.getRowCount(), new Object[] {entry.getKey(), entry.getValue(), entry.getInfo()});

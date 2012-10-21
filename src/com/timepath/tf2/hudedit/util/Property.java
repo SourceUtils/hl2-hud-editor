@@ -31,13 +31,9 @@ public class Property {
     public String getValue() {
         return value;
     }
-
-    public void setValue(String value) {
-        this.value = value;
-    }
     
     public void setValue(Object value) {
-        this.setValue(value.toString());
+        this.value = value.toString();
     }
 
     public String getInfo() {

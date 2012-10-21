@@ -34,7 +34,13 @@ public class Element {
         this.name = name;
         this.info = info;
     }
+    
     private String name;
+    
+    public String getName() {
+        return name;
+    }
+    
     private String info;
     private ArrayList<Property> propMap = new ArrayList<Property>();
 
@@ -56,11 +62,20 @@ public class Element {
     private Element parent;
     public ArrayList<Element> children = new ArrayList<Element>();
 
-    public void addElement(Element e) { // TODO: check for child = parent and child already has parent
+    public void addChild(Element e) {
+        if(e == this || e == this.getParent()) {
+            logger.log(Level.INFO, "Cannot add element {0} to {1}", new Object[]{e, this});
+        }
         if (!children.contains(e)) {
-            e.validate();
+            e.validateLoad();
             children.add(e);
             e.setParent(this);
+        }
+    }
+    
+    public void removeAllChildren() {
+        for(int i = 0; i < children.size(); i++) {
+            children.remove(i);
         }
     }
 
@@ -247,7 +262,8 @@ public class Element {
         this.fgColor = fgColor;
     }
     
-    public void validate() { // TODO: remove duplicate keys (remove the earliest first, or let the user know or something)
+    // TODO: remove duplicate keys (only keep the latest, or highlight duplicates)
+    public void validateLoad() {
         for (int n = 0; n < this.getProps().size(); n++) {
             Property entry = this.getProps().get(n);
             String k = entry.getKey();
@@ -479,7 +495,8 @@ public class Element {
         }
     }
     
-    public void validate2() { // TODO: remove duplicate keys (remove the earliest first, or let the user know or something)
+    // TODO: remove duplicate keys (only keep the latest, or highlight duplicates)
+    public void validateDisplay() { 
         for (int n = 0; n < propMap.size(); n++) {
             Property entry = propMap.get(n);
             String k = entry.getKey();
@@ -498,6 +515,8 @@ public class Element {
                 entry.setValue(this.getXAlignment().name().substring(0, 1).toLowerCase().replaceFirst("l", "") + this.getLocalX());
             } else if ("ypos".equalsIgnoreCase(k)) {
                 entry.setValue(this.getYAlignment().name().substring(0, 1).toLowerCase().replaceFirst("l", "") + this.getLocalY());
+            } else if ("zpos".equalsIgnoreCase(k)) {
+                entry.setValue(this.getLayer());
             } else if ("wide".equalsIgnoreCase(k)) {
                 entry.setValue((this.getWidthMode() == DimensionMode.Mode2 ? "f" : "") + this.getLocalWidth());
             } else if ("tall".equalsIgnoreCase(k)) {
@@ -506,6 +525,9 @@ public class Element {
                 entry.setValue(this.getLabelText());
             } else if ("ControlName".equalsIgnoreCase(k)) {
                 entry.setValue(this.getControlName());
+            }
+            if(!entry.getKey().equals("//") && !entry.getKey().equals("\\n")) {
+                entry.setValue("\"" + entry.getValue() + "\"");
             }
         }
     }

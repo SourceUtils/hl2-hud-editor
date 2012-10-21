@@ -17,6 +17,7 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.Iterator;
 import javax.swing.JPanel;
 
 /**
@@ -129,7 +130,7 @@ public class HudCanvas extends JPanel implements MouseListener, MouseMotionListe
         //</editor-fold>
     }
     
-    private static Comparator layerSort = new Comparator<Element>() {
+    private static Comparator<Element> layerSort = new Comparator<Element>() {
         @Override
         public int compare(Element e1, Element e2) {
             return e1.getLayer() - e2.getLayer();
@@ -272,7 +273,7 @@ public class HudCanvas extends JPanel implements MouseListener, MouseMotionListe
     }
     
     @Override
-    public void mouseDragged(MouseEvent event) { // TODO: If something has a parent, and that parent is also selected, deselect it.
+    public void mouseDragged(MouseEvent event) { 
         Point p = new Point(event.getPoint());
         p.translate(-HudCanvas.offX, -HudCanvas.offY);
         int button = event.getButton();
@@ -282,10 +283,11 @@ public class HudCanvas extends JPanel implements MouseListener, MouseMotionListe
             select(dragStart, p, event.isControlDown());
         } else if(isDragMoving) {
             for(int i = 0; i < selectedElements.size(); i++) {
-                //                    if(selectedElements.get(i).getParent() == chooseBest(pick(p, elements))) { // this will cause problems later
-                //                         if child of parent is not selected, move it anyway
-                translate(selectedElements.get(i), p.x - dragStart.x, p.y - dragStart.y);
-                //                    }
+                Element e = selectedElements.get(i);
+                if(selectedElements.contains(e.getParent()) && !e.getParent().getName().replaceAll("\"", "").endsWith(".res")) { // XXX: hacky
+                    continue;
+                }
+                translate(e, p.x - dragStart.x, p.y - dragStart.y);
             }
             dragStart = p; // hacky
         }
@@ -325,7 +327,7 @@ public class HudCanvas extends JPanel implements MouseListener, MouseMotionListe
     
     public void addElement(Element e) {
         if(!elements.contains(e)) {
-            e.validate();
+            e.validateLoad();
             e.setCanvas(this);
             elements.add(e);
             this.doRepaint(e.getBounds());
@@ -354,13 +356,13 @@ public class HudCanvas extends JPanel implements MouseListener, MouseMotionListe
     public void load(Element element) {
         if(Element.areas.containsKey(element.getFile())) {
             Element p = Element.areas.get(element.getFile());
-            p.addElement(element);
+            p.addChild(element);
             this.addElement(p);
         }
         else if(element.getFile().equalsIgnoreCase("HudPlayerHealth")) { // better, but still not perfect
             // move by "CHealthAccountPanel" delta_item_x" and "delta_item_start_y"
             Element p = Element.areas.get("CHealthAccountPanel");
-            p.addElement(element);
+            p.addChild(element);
             this.addElement(p);
         }
         this.addElement(element); // weird but it has to be done
@@ -492,8 +494,9 @@ public class HudCanvas extends JPanel implements MouseListener, MouseMotionListe
                     }
                 }
             }
-            this.doRepaint(new Rectangle(originalSelectRect.x, originalSelectRect.y, originalSelectRect.width + 2, originalSelectRect.height + 2)); // TODO: optimize further - doRepaint 3 segments : overlapping, original, changed
-            this.doRepaint(new Rectangle(this.selectRect.x, this.selectRect.y, this.selectRect.width + 2, this.selectRect.height + 2)); // why are these +2?
+            // This repaints the overlap twice. A minor inefficiency...
+            this.doRepaint(new Rectangle(originalSelectRect.x, originalSelectRect.y, originalSelectRect.width + 1, originalSelectRect.height + 1));
+            this.doRepaint(new Rectangle(this.selectRect.x, this.selectRect.y, this.selectRect.width + 1, this.selectRect.height + 1));
         }
     }
     
@@ -513,9 +516,12 @@ public class HudCanvas extends JPanel implements MouseListener, MouseMotionListe
     }
 
     public void removeAllElements() {
-        for(int i = 0; i < elements.size(); i++) {
-            elements.remove(i);
-        }
+        ArrayList<Element> temp = new ArrayList<Element>(elements);
+        elements.removeAll(elements);
+        for(int i = 0; i < temp.size(); i++) {
+            Element e = temp.get(i);
+            this.doRepaint(e.getBounds());
+        }   
     }
     //</editor-fold>
 
