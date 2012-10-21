@@ -421,6 +421,7 @@ public class EditorFrame extends JFrame {
 
             DefaultTreeModel model = (DefaultTreeModel) fileSystem.getModel();
             model.reload();
+            fileSystem.setSelectionRow(0);
             
             SwingUtilities.invokeLater(new Runnable() {
                 @Override
