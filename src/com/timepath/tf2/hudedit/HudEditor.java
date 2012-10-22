@@ -1,10 +1,8 @@
 package com.timepath.tf2.hudedit;
 
+import com.jdotsoft.jarloader.JarClassLoader;
 import java.awt.event.ActionEvent;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-import javax.swing.SwingUtilities;
-import javax.swing.UIManager;
+import net.tomahawk.XFileDialog;
 
 /**
  *
@@ -37,7 +35,11 @@ public class HudEditor {
         
         if(os == OS.Windows) {
             shortcutKey = ActionEvent.CTRL_MASK;
-//            XFileDialog.setTraceLevel(0);
+            try {
+                XFileDialog.setTraceLevel(0);
+            } catch(UnsatisfiedLinkError e) {
+                System.out.println("java.library.path = " + System.getProperty("java.library.path"));
+            }
         } else if(os == OS.Mac) {
             shortcutKey = ActionEvent.META_MASK;
 //            System.setProperty("apple.awt.brushMetalLook", "false");
@@ -57,43 +59,11 @@ public class HudEditor {
     }
     
     public static void main(String... args) {
-        //<editor-fold defaultstate="collapsed" desc="Try and get nimbus look and feel, if it is installed.">
-//        Toolkit.getDefaultToolkit().setDynamicLayout(true);
-        initialLaf();
-        //</editor-fold>
-        
-        //<editor-fold defaultstate="collapsed" desc="Display the editor">
-        SwingUtilities.invokeLater(new Runnable() { // SwingUtilities vs EventQueue?
-            
-            @Override
-            public void run() {
-                EditorFrame frame = new EditorFrame();
-                frame.setVisible(true);
-            }
-            
-        });
-        //</editor-fold>
-    }
-    
-    private static void initialLaf() {
+        JarClassLoader jcl = new JarClassLoader();
         try {
-            for(UIManager.LookAndFeelInfo info : UIManager.getInstalledLookAndFeels()) {
-                if("Nimbus".equals(info.getName())) {
-                    UIManager.setLookAndFeel(info.getClassName());
-                    return;
-                }
-            }
-            systemLaf();
-        } catch(Exception ex) {
-            Logger.getLogger(EditorFrame.class.getName()).log(Level.WARNING, null, ex);
-        }
-    }
-    
-    private static void systemLaf() {
-        try {
-            UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
-        } catch(Exception ex) {
-            Logger.getLogger(EditorFrame.class.getName()).log(Level.WARNING, null, ex);
+            jcl.invokeMain("com.timepath.tf2.hudedit.EditorFrame", args);
+        } catch (Throwable e) {
+            e.printStackTrace();
         }
     }
     

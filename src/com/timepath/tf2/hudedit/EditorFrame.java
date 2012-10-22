@@ -1,9 +1,6 @@
 package com.timepath.tf2.hudedit;
 
 import apple.dts.samplecode.osxadapter.OSXAdapter;
-import com.apple.eawt.AppEvent.AboutEvent;
-import com.apple.eawt.AppEvent.QuitEvent;
-import com.apple.eawt.QuitResponse;
 import com.timepath.tf2.hudedit.HudEditor.OS;
 import com.timepath.tf2.hudedit.display.HudCanvas;
 import com.timepath.tf2.hudedit.loaders.ResLoader;
@@ -87,7 +84,7 @@ import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeCellRenderer;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreeSelectionModel;
-//import net.tomahawk.XFileDialog;
+import net.tomahawk.XFileDialog;
 
 /**
  *
@@ -179,14 +176,59 @@ public class EditorFrame extends JFrame {
         return str.matches("[a-fA-F0-9]{32}");
     }
     
+    public static void main(String... args) {
+    
+        //<editor-fold defaultstate="collapsed" desc="Try and get nimbus look and feel, if it is installed.">
+//        Toolkit.getDefaultToolkit().setDynamicLayout(true);
+        initialLaf();
+        //</editor-fold>
+        
+        //<editor-fold defaultstate="collapsed" desc="Display the editor">
+        SwingUtilities.invokeLater(new Runnable() { // SwingUtilities vs EventQueue?
+            
+            @Override
+            public void run() {
+                EditorFrame frame = new EditorFrame();
+                frame.setVisible(true);
+            }
+            
+        });
+        //</editor-fold>
+        
+    }
+    
+    private static void initialLaf() {
+        try {
+            for(UIManager.LookAndFeelInfo info : UIManager.getInstalledLookAndFeels()) {
+                if("Nimbus".equals(info.getName())) {
+                    UIManager.setLookAndFeel(info.getClassName());
+                    return;
+                }
+            }
+            systemLaf();
+        } catch(Exception ex) {
+            Logger.getLogger(EditorFrame.class.getName()).log(Level.WARNING, null, ex);
+        }
+    }
+    
+    private static void systemLaf() {
+        try {
+            UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+        } catch(Exception ex) {
+            Logger.getLogger(EditorFrame.class.getName()).log(Level.WARNING, null, ex);
+        }
+    }
+    
     private boolean updating;
     private void checkForUpdates() {
         if(inDev) {
             return;
         }
         new Thread() {
-            @Override
-            public void run() {
+            
+            int retries = 3;
+            
+            private void doCheckForUpdates() {
                 try {
                     String md5 = "";
                     URL url = new URL("https://dl.dropbox.com/u/42745598/tf/Hud%20Editor/TF2%20HUD%20Editor.jar.MD5");
@@ -248,9 +290,19 @@ public class EditorFrame extends JFrame {
                         info("You have the latest version.");
                     }
                 } catch (IOException ex) {
-                    Logger.getLogger(EditorFrame.class.getName()).log(Level.SEVERE, null, ex);
-                    updating = false;
+                    retries--;
+                    if(retries > 0) {
+                        doCheckForUpdates();
+                    } else {
+                        Logger.getLogger(EditorFrame.class.getName()).log(Level.SEVERE, null, ex);
+                        updating = false;
+                    }
                 }
+            }
+            
+            @Override
+            public void run() {
+                doCheckForUpdates();
             }
         }.start();
     }
@@ -324,9 +376,7 @@ public class EditorFrame extends JFrame {
         info(panel, "About");
     }
 
-    public EditorFrame() {
-        super();
-        
+    public EditorFrame() {        
         calcMD5();
         
         this.setTitle(ResourceBundle.getBundle("com/timepath/tf2/hudedit/lang").getString("Title"));
@@ -420,7 +470,7 @@ public class EditorFrame extends JFrame {
 //            createMacMenus();
         }
         
-        this.add(splitPane);
+        this.getContentPane().add(splitPane);
 
         this.pack();
         this.setFocusableWindowState(true);
@@ -454,7 +504,6 @@ public class EditorFrame extends JFrame {
 //            application.setDockIconImage(icon.getImage());
         } catch(Exception e) {
             e.printStackTrace();
-            return;
         }
     }
     
@@ -568,69 +617,73 @@ public class EditorFrame extends JFrame {
      * mac = ?
      */
     private void locateHudDirectory() {
-        String selection = null;
-        if(HudEditor.os == OS.Mac) {
-            System.setProperty("apple.awt.fileDialogForDirectories", "true");
-            FileDialog fd = new FileDialog(this, "Open a HUD folder");
-            if(hudSelectionDir != null) {
-                fd.setDirectory(hudSelectionDir);
-            }
-            fd.setFilenameFilter(new FilenameFilter() {
-                public boolean accept(File dir, String name) {
-                    return new File(dir, name).isDirectory();
+        new Thread(new Runnable() {
+            public void run() {
+                String selection = null;
+                if(HudEditor.os == OS.Mac) {
+                    System.setProperty("apple.awt.fileDialogForDirectories", "true");
+                    FileDialog fd = new FileDialog(EditorFrame.this, "Open a HUD folder");
+                    if(hudSelectionDir != null) {
+                        fd.setDirectory(hudSelectionDir);
+                    }
+                    fd.setFilenameFilter(new FilenameFilter() {
+                        public boolean accept(File dir, String name) {
+                            return new File(dir, name).isDirectory();
+                        }
+                    });
+                    fd.setMode(FileDialog.LOAD);
+                    fd.setVisible(true);
+                    String file = fd.getDirectory() + fd.getFile();
+                    if(file != null) {
+                        hudSelectionDir = new File(file).getParent();
+                        selection = file;
+                    }
+                } else
+                if(HudEditor.os == OS.Windows) {
+                    XFileDialog fd = new XFileDialog(EditorFrame.this);
+                    fd.setTitle("Open a HUD folder");
+                    selection = fd.getFolder();
+                    fd.dispose();
+        //        } else
+        //        if(HudEditor.os == OS.Linux) {
+        //            EditorFrame.systemLaf();
+        //            UIManager.put("FileChooserUI", "eu.kostia.gtkjfilechooser.ui.GtkFileChooserUI");
+        //            JFileChooser fd = new JFileChooser();
+        //            fd.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+        //            if(hudSelectionDir != null) {
+        //                fd.setCurrentDirectory(new File(hudSelectionDir));
+        //            }
+        //            if(fd.showOpenDialog(EditorFrame.this) == JFileChooser.APPROVE_OPTION) {
+        //                hudSelectionDir = fd.getSelectedFile().getParent();
+        //                selection = fd.getSelectedFile().getPath();
+        //            }
+        //            EditorFrame.initialLaf();
+        //            UIManager.put("FileChooserUI", initFCUILinux);
+                } else { // Fall back to swing
+                    JFileChooser fd = new JFileChooser();
+                    fd.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+                    if(hudSelectionDir != null) {
+                        fd.setCurrentDirectory(new File(hudSelectionDir));
+                    }
+                    if(fd.showOpenDialog(EditorFrame.this) == JFileChooser.APPROVE_OPTION) {
+                        hudSelectionDir = fd.getSelectedFile().getParent();
+                        selection = fd.getSelectedFile().getPath();
+                    }
                 }
-            });
-            fd.setMode(FileDialog.LOAD);
-            fd.setVisible(true);
-            String file = fd.getDirectory() + fd.getFile();
-            if(file != null) {
-                hudSelectionDir = new File(file).getParent();
-                selection = file;
-            }
-//        } else
-//        if(HudEditor.os == OS.Windows) {
-//            XFileDialog fd = new XFileDialog(this); // was EditorFrame.this
-//            fd.setTitle("Open a HUD folder");
-//            selection = fd.getFolder();
-//            fd.dispose();
-//        } else
-//        if(HudEditor.os == OS.Linux) {
-//            EditorFrame.systemLaf();
-//            UIManager.put("FileChooserUI", "eu.kostia.gtkjfilechooser.ui.GtkFileChooserUI");
-//            JFileChooser fd = new JFileChooser();
-//            fd.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
-//            if(hudSelectionDir != null) {
-//                fd.setCurrentDirectory(new File(hudSelectionDir));
-//            }
-//            if(fd.showOpenDialog(EditorFrame.this) == JFileChooser.APPROVE_OPTION) {
-//                hudSelectionDir = fd.getSelectedFile().getParent();
-//                selection = fd.getSelectedFile().getPath();
-//            }
-//            EditorFrame.initialLaf();
-//            UIManager.put("FileChooserUI", initFCUILinux);
-        } else { // Fall back to swing
-            JFileChooser fd = new JFileChooser();
-            fd.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
-            if(hudSelectionDir != null) {
-                fd.setCurrentDirectory(new File(hudSelectionDir));
-            }
-            if(fd.showOpenDialog(EditorFrame.this) == JFileChooser.APPROVE_OPTION) {
-                hudSelectionDir = fd.getSelectedFile().getParent();
-                selection = fd.getSelectedFile().getPath();
-            }
-        }
 
-        if(selection != null) {
-            final File f = new File(selection);
-            new Thread() {
-                @Override
-                public void run() {
-                    loadHud(f);
+                if(selection != null) {
+                    final File f = new File(selection);
+//                    new Thread() {
+//                        @Override
+//                        public void run() {
+                            loadHud(f);
+//                        }
+//                    }.start();
+                } else {
+                    // Throw error or load archive
                 }
-            }.start();
-        } else {
-            // Throw error or load archive
-        }
+            }
+        }).start();
     }
     
     private void error(Object msg) {
@@ -868,7 +921,7 @@ public class EditorFrame extends JFrame {
 
     }
     
-    private class EditorPropertiesTable extends JScrollPane {
+    class EditorPropertiesTable extends JScrollPane {
         
         public EditorPropertiesTable() {
             super();
@@ -965,7 +1018,7 @@ public class EditorFrame extends JFrame {
         }
     }
     
-    private class EditorFileTree extends JScrollPane {
+    class EditorFileTree extends JScrollPane {
 
         EditorFileTree() {
             super();
@@ -1236,8 +1289,9 @@ public class EditorFrame extends JFrame {
                 } else if(cmd == closeItem) {
                     closeHud();
                 } else if(cmd == saveItem) {
-                    if(canvas.getElements().size() > 0)
+                    if(canvas.getElements().size() > 0) {
                         error(canvas.getElements().get(canvas.getElements().size() - 1).save());
+                    }
                 } else if(cmd == reloadItem) {
                     loadHud(lastLoaded);
                 } else if(cmd == exitItem) {

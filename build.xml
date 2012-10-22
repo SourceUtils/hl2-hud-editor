@@ -4,7 +4,7 @@
     <import file="nbproject/build-impl.xml"/>
     
     <property name="store.jar.name" value="TF2 HUD Editor"/>
-    <property name="store.dir" value="/home/andrew/Dropbox/Public/tf/Hud Editor"/>
+    <property name="store.dir" value="${user.home}/Dropbox/Public/tf/Hud Editor"/>
     <tstamp prefix="build-info">
         <format property="timestamp" pattern="yyyyMMdd/Hmm" locale="en" />
     </tstamp>
