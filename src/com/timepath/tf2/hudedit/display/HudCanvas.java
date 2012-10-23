@@ -17,7 +17,6 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.Iterator;
 import javax.swing.JPanel;
 
 /**
@@ -139,12 +138,13 @@ public class HudCanvas extends JPanel implements MouseListener, MouseMotionListe
     
     private int minGridSpacing = 10;
     
+    // as soon as the height drops below 480, stops rendering
     private void drawGrid(Graphics2D g) {
         g.setColor(GRID_COLOR);       
 //        g.setColor(Color.GREEN);
         
-        int w = internalRes.width;
-        int h = internalRes.height;
+        int w = hudRes.width;
+        int h = hudRes.height;
         int i = minGridSpacing; 
         if(i < 0) {
             return;

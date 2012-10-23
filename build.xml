@@ -35,6 +35,7 @@
         <copy file="${store.jar.dated}" tofile="${store.jar}"/>
         <chmod file="${store.jar.dated}" perm="777"/>
         <chmod file="${store.jar}" perm="777"/>
+        <checksum file="${store.jar}" forceOverwrite="yes"/>
     </target>
     
 </project>

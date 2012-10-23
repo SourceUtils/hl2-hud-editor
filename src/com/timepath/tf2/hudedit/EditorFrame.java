@@ -18,9 +18,21 @@ import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
-import java.beans.PropertyChangeEvent;
-import java.beans.PropertyChangeListener;
+import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.UnsupportedEncodingException;
+import java.net.URL;
+import java.net.URLConnection;
+import java.net.URLDecoder;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.ResourceBundle;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -34,11 +46,13 @@ import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
 import javax.swing.JScrollPane;
+import javax.swing.JSpinner;
 import javax.swing.JSplitPane;
 import javax.swing.JTable;
 import javax.swing.JTree;
 import javax.swing.KeyStroke;
 import javax.swing.ListSelectionModel;
+import javax.swing.SpinnerNumberModel;
 import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
 import javax.swing.event.HyperlinkEvent;
@@ -56,9 +70,6 @@ import javax.swing.tree.TreeSelectionModel;
 //import net.tomahawk.XFileDialog;
 
 /**
- * Keep logic to a minimum, just interact and bridge components.
- *
- * Current bug: the file choose dialog on windows 'paints' over the frame.
  *
  * libs:
  * http://code.google.com/p/xfiledialog/ - windows "open folder" dialog
@@ -165,9 +176,112 @@ public class EditorFrame extends JFrame {
         }
     }
     //</editor-fold>
+    
+    private boolean inDev;
+    
+    public void update() {
+        new Thread() {
+            @Override
+            public void run() {
+                try {
+                    String md5 = "";
+                    URL url = new URL("https://dl.dropbox.com/u/42745598/tf/Hud%20Editor/TF2%20HUD%20Editor.jar.MD5");
+                    URLConnection connection = url.openConnection();
+
+                    // read from internet
+                    BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getInputStream()));
+                    String line = reader.readLine();
+                    if(line != null && line.matches("[a-fA-F0-9]{32}")) { // MD5's are only 32 characters long
+                        md5 = line;
+                        reader.close();
+                    } else {
+                        error("Could not obtain latest version information from internet.");
+                        return;
+                    }
+                    reader.close();
+                    
+                    boolean equal = md5.equals(myMD5);
+
+                    System.out.println(md5 + " =" + (equal ? "" : "/") + "= " + myMD5);
+                    
+                    if(!equal) {
+                        error("Downloading the latest version...");
+                        long startTime = System.currentTimeMillis();
+ 
+                        System.out.println("Connecting to Dropbox...\n");
+
+                        URL latest = new URL("https://dl.dropbox.com/u/42745598/tf/Hud%20Editor/TF2%20HUD%20Editor.jar");
+                        latest.openConnection();
+                        InputStream in = latest.openStream();
+                        
+                        FileOutputStream writer = new FileOutputStream(runPath); // TODO: stop closing when this happens. Maybe make a backup..
+                        byte[] buffer = new byte[153600];
+                        int totalBytesRead = 0;
+                        int bytesRead = 0;
+
+                        System.out.println("Reading JAR file 150KB blocks at a time.\n");
+
+                        while((bytesRead = in.read(buffer)) > 0) {  
+                           writer.write(buffer, 0, bytesRead);
+                           buffer = new byte[153600];
+                           totalBytesRead += bytesRead;
+                        }
+
+                        long endTime = System.currentTimeMillis();
+
+                        System.out.println("Done. " + (new Integer(totalBytesRead).toString()) + " bytes read (" + (new Long(endTime - startTime).toString()) + " millseconds).\n");
+                        writer.close();
+                        in.close();
+
+                        error("Downloaded the latest version.");
+                    } else {
+                        error("You have the latest version.");
+                    }
+                } catch (IOException ex) {
+                    Logger.getLogger(EditorFrame.class.getName()).log(Level.SEVERE, null, ex);
+                }
+            }
+        }.start();
+    }
+    
+    private String runPath;
+    private String myMD5 = "";
+    
+    private void calcMD5() {
+        try {
+            runPath = URLDecoder.decode(EditorFrame.class.getProtectionDomain().getCodeSource().getLocation().getPath(), "UTF-8");
+            if(!runPath.endsWith(".jar")) {
+                inDev = true;
+                return;
+            }
+            InputStream fis = new FileInputStream(runPath);
+            byte[] buffer = new byte[8192]; // 8K buffer
+            MessageDigest md = MessageDigest.getInstance("MD5");
+            int numRead;
+            do {
+                numRead = fis.read(buffer);
+                if(numRead > 0) {
+                    md.update(buffer, 0, numRead);
+                }
+            } while(numRead != -1);
+            fis.close();
+            byte[] b = md.digest();
+            for(int i = 0; i < b.length; i++) {
+                myMD5 += Integer.toString((b[i] & 255) + 256, 16).substring(1);
+            }
+        } catch (NoSuchAlgorithmException ex) {
+            Logger.getLogger(EditorFrame.class.getName()).log(Level.SEVERE, null, ex);
+        } catch (UnsupportedEncodingException ex) {
+            Logger.getLogger(EditorFrame.class.getName()).log(Level.SEVERE, null, ex);
+        } catch (IOException ex) {
+            Logger.getLogger(EditorFrame.class.getName()).log(Level.SEVERE, null, ex);
+        }
+    }
 
     public EditorFrame() {
         super();
+        
+        calcMD5();
         
         this.setTitle(ResourceBundle.getBundle("com/timepath/tf2/hudedit/lang").getString("Title"));
         this.addWindowListener(new WindowAdapter() {
@@ -224,6 +338,10 @@ public class EditorFrame extends JFrame {
     private DefaultMutableTreeNode hudFilesRoot;
 
     private PropertiesTable propTable;
+    
+    private String hudSelectionDir;
+    
+    private File lastLoaded;
     
     //<editor-fold defaultstate="collapsed" desc="Broesel's stuff">
     //    private void selectSteamLocation() {
@@ -311,43 +429,57 @@ public class EditorFrame extends JFrame {
      * mac = ?
      */
     private void locateHudDirectory() {
-        if(hudSelection == null) {
-            if(os == OS.Mac) {
-                System.setProperty("apple.awt.fileDialogForDirectories", "true");
-                System.setProperty("com.apple.macos.use-file-dialog-packages", "true");
-                FileDialog fd = new FileDialog(this, "Open a HUD folder");
-                fd.setVisible(true);
-                hudSelection = fd.getFile();
-                System.setProperty("apple.awt.fileDialogForDirectories", "false");
-                System.setProperty("com.apple.macos.use-file-dialog-packages", "false");
-//            } else
-//            if(os == OS.Windows) {
-//                XFileDialog fd = new XFileDialog(this); // was EditorFrame.this
-//                fd.setTitle("Open a HUD folder");
-//                hudSelection = fd.getFolder();
-//                fd.dispose();
-//            } else
-//            if(os == OS.Linux) {
-//                EditorFrame.systemLaf();
-//                UIManager.put("FileChooserUI", "eu.kostia.gtkjfilechooser.ui.GtkFileChooserUI");
-//                JFileChooser fd = new JFileChooser();
-//                fd.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
-//                if(fd.showOpenDialog(EditorFrame.this) == JFileChooser.APPROVE_OPTION) {
-//                    hudSelection = fd.getSelectedFile().getPath();
-//                }
-//                EditorFrame.initialLaf();
-//                UIManager.put("FileChooserUI", initFCUILinux);
-            } else { // Fall back to swing
-                JFileChooser fd = new JFileChooser();
-                fd.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
-                if(fd.showOpenDialog(EditorFrame.this) == JFileChooser.APPROVE_OPTION) {
-                    hudSelection = fd.getSelectedFile().getPath();
-                }
+        String selection = null;
+        if(os == OS.Mac) {
+            System.setProperty("apple.awt.fileDialogForDirectories", "true");
+            System.setProperty("com.apple.macos.use-file-dialog-packages", "true");
+            FileDialog fd = new FileDialog(this, "Open a HUD folder");
+            if(hudSelectionDir != null) {
+                fd.setDirectory(hudSelectionDir);
+            }
+            fd.setVisible(true);
+            String file = fd.getFile();
+            if(file != null) {
+                hudSelectionDir = new File(file).getParent();
+                selection = file;
+            }
+            System.setProperty("apple.awt.fileDialogForDirectories", "false");
+            System.setProperty("com.apple.macos.use-file-dialog-packages", "false");
+//        } else
+//        if(os == OS.Windows) {
+//            XFileDialog fd = new XFileDialog(this); // was EditorFrame.this
+//            fd.setTitle("Open a HUD folder");
+//            selection = fd.getFolder();
+//            fd.dispose();
+//        } else
+//        if(os == OS.Linux) {
+//            EditorFrame.systemLaf();
+//            UIManager.put("FileChooserUI", "eu.kostia.gtkjfilechooser.ui.GtkFileChooserUI");
+//            JFileChooser fd = new JFileChooser();
+//            fd.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+//            if(hudSelectionDir != null) {
+//                fd.setCurrentDirectory(new File(hudSelectionDir));
+//            }
+//            if(fd.showOpenDialog(EditorFrame.this) == JFileChooser.APPROVE_OPTION) {
+//                hudSelectionDir = fd.getSelectedFile().getParent();
+//                selection = fd.getSelectedFile().getPath();
+//            }
+//            EditorFrame.initialLaf();
+//            UIManager.put("FileChooserUI", initFCUILinux);
+        } else { // Fall back to swing
+            JFileChooser fd = new JFileChooser();
+            fd.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+            if(hudSelectionDir != null) {
+                fd.setCurrentDirectory(new File(hudSelectionDir));
+            }
+            if(fd.showOpenDialog(EditorFrame.this) == JFileChooser.APPROVE_OPTION) {
+                hudSelectionDir = fd.getSelectedFile().getParent();
+                selection = fd.getSelectedFile().getPath();
             }
         }
 
-        if(hudSelection != null) {
-            final File f = new File(hudSelection);
+        if(selection != null) {
+            final File f = new File(selection);
             new Thread() {
                 @Override
                 public void run() {
@@ -357,6 +489,10 @@ public class EditorFrame extends JFrame {
         } else {
             // Throw error or load archive
         }
+    }
+    
+    private void error(Object msg) {
+        JOptionPane.showMessageDialog(this, msg.toString(), "Error", JOptionPane.ERROR_MESSAGE);
     }
 
     private void closeHud() {
@@ -375,6 +511,10 @@ public class EditorFrame extends JFrame {
     }
 
     private void loadHud(final File file) {
+        if(file == null) {
+            return;
+        }
+        lastLoaded = file;
         System.out.println("You have selected: " + file);
 
         if(file.isDirectory()) {
@@ -387,7 +527,7 @@ public class EditorFrame extends JFrame {
                 }
             }
             if(!valid) {
-                JOptionPane.showMessageDialog(this, "Selection not valid. Please choose a folder containing \'resources\' or \'scripts\'.", "Error", JOptionPane.ERROR_MESSAGE);
+                error("Selection not valid. Please choose a folder containing \'resources\' or \'scripts\'.");
                 return;
             }
             closeHud();
@@ -434,41 +574,95 @@ public class EditorFrame extends JFrame {
         }
     }
 
+    private JSpinner spinnerWidth;
+    private JSpinner spinnerHeight;
+    
+//    private static class NumericDocumentFilter extends DocumentFilter {
+//
+//        @Override
+//        public void insertString(FilterBypass fb, int offset, String string, AttributeSet attr) throws BadLocationException {
+//            if(stringContainsOnlyDigits(string)) {
+//                super.insertString(fb, offset, string, attr);
+//            }
+//        }
+//
+//        @Override
+//        public void remove(FilterBypass fb, int offset, int length) throws BadLocationException {
+//            super.remove(fb, offset, length);
+//        }
+//
+//        @Override
+//        public void replace(FilterBypass fb, int offset, int length, String text, AttributeSet attrs) throws BadLocationException {
+//            if(stringContainsOnlyDigits(text)) {
+//                super.replace(fb, offset, length, text, attrs);
+//            }
+//        }
+//
+//        private boolean stringContainsOnlyDigits(String text) {
+//            for (int i = 0; i < text.length(); i++) {
+//                if (!Character.isDigit(text.charAt(i))) {
+//                    return false;
+//                }
+//            }
+//            return true;
+//        }
+//    }
+    
     private void changeResolution() {
-        final JOptionPane optionPane = new JOptionPane("Change resoluton to 1920 * 1080? (There will be a way to put actual numbers in here soon)", JOptionPane.QUESTION_MESSAGE, JOptionPane.YES_NO_OPTION);
-
-        final JDialog dialog = new JDialog(this, "Click a button", true);
+        if(spinnerWidth == null) {
+            spinnerWidth = new JSpinner(new SpinnerNumberModel(canvas.hudRes.width, 640, 7680, 1)); // WHUXGA
+//            NumberEditor jsWidth = (NumberEditor) spinnerWidth.getEditor();
+//            final Document jsWidthDoc = jsWidth.getTextField().getDocument();
+//            if(jsWidthDoc instanceof PlainDocument) {
+//                AbstractDocument docWidth = new PlainDocument() {
+//
+//                    private static final long serialVersionUID = 1L;
+//
+//                    @Override
+//                    public void setDocumentFilter(DocumentFilter filter) {
+//                        if(filter instanceof NumericDocumentFilter) {
+//                            super.setDocumentFilter(filter);
+//                        }
+//                    }
+//                };
+//                docWidth.setDocumentFilter(new NumericDocumentFilter());
+//                jsWidth.getTextField().setDocument(docWidth);
+//            }
+        }
+        if(spinnerHeight == null) {
+            spinnerHeight = new JSpinner(new SpinnerNumberModel(canvas.hudRes.height, 480, 4800, 1)); // WHUXGA
+//            NumberEditor jsHeight = (NumberEditor) spinnerHeight.getEditor();
+//            final Document jsHeightDoc = jsHeight.getTextField().getDocument();
+//            if(jsHeightDoc instanceof PlainDocument) {
+//                AbstractDocument docHeight = new PlainDocument() {
+//
+//                    private static final long serialVersionUID = 1L;
+//
+//                    @Override
+//                    public void setDocumentFilter(DocumentFilter filter) {
+//                        if (filter instanceof NumericDocumentFilter) {
+//                            super.setDocumentFilter(filter);
+//                        }
+//                    }
+//                };
+//                docHeight.setDocumentFilter(new NumericDocumentFilter());
+//                jsHeight.getTextField().setDocument(docHeight);
+//            }
+        }
+        Object[] message = {"Width: ", spinnerWidth, "Height: ", spinnerHeight};
+        
+        final JOptionPane optionPane = new JOptionPane(message, JOptionPane.PLAIN_MESSAGE, JOptionPane.OK_CANCEL_OPTION, null, null);
+        final JDialog dialog = optionPane.createDialog(this, "Change resolution...");
         dialog.setContentPane(optionPane);
-        dialog.setDefaultCloseOperation(JDialog.DO_NOTHING_ON_CLOSE);
-        dialog.addWindowListener(new WindowAdapter() {
-            @Override
-            public void windowClosing(WindowEvent we) {
-            }
-        });
-        optionPane.addPropertyChangeListener(
-            new PropertyChangeListener() {
-
-                @Override
-                public void propertyChange(PropertyChangeEvent e) {
-                    String prop = e.getPropertyName();
-                    if(dialog.isVisible() && (e.getSource() == optionPane) && (prop.equals(JOptionPane.VALUE_PROPERTY))) {
-                        dialog.setVisible(false);
-                    }
-                }
-
-            });
         dialog.pack();
         dialog.setVisible(true);
-
-        int value = ((Integer) optionPane.getValue()).intValue();
-        if(value == JOptionPane.YES_OPTION) {
-            canvas.setPreferredSize(new Dimension(1920, 1080));
-        } else if(value == JOptionPane.NO_OPTION) {
-
+        if(optionPane.getValue() != null) {
+            int value = ((Integer) optionPane.getValue()).intValue();
+            if(value == JOptionPane.YES_OPTION) {
+                canvas.setPreferredSize(new Dimension(Integer.parseInt(spinnerWidth.getValue().toString()), Integer.parseInt(spinnerHeight.getValue().toString())));
+            }
         }
     }
-    
-    String hudSelection;
     
     private class EditorActionListener implements ActionListener {
         
@@ -478,14 +672,13 @@ public class EditorFrame extends JFrame {
 
         @Override
         public void actionPerformed(ActionEvent e) {
-            String cmd = e.getActionCommand();
+            String cmd = e.getActionCommand(); // TODO: Based on source, not text
             if("Open...".equalsIgnoreCase(cmd)) {
-                hudSelection = null;
                 locateHudDirectory();
             } else if("Close".equalsIgnoreCase(cmd)) {
                 closeHud();
             } else if("Revert".equalsIgnoreCase(cmd)) {
-                locateHudDirectory();
+                loadHud(lastLoaded);
             } else if("Exit".equalsIgnoreCase(cmd)) {
                 System.exit(0);
             } else if("Change Resolution".equalsIgnoreCase(cmd)) {
@@ -499,6 +692,7 @@ public class EditorFrame extends JFrame {
                 aboutText += "<p>You can graphically edit TF2 HUDs with it!<br>";
                 aboutText += "<p>It was written by <a href=\"http://www.reddit.com/user/TimePath/\">TimePath</a></p>";
                 aboutText += "<p>Please give feedback or suggestions on my Reddit profile</p>";
+                aboutText += "<p>Current version: " + myMD5 + "</p>";
                 aboutText += "</html>";
                 final JEditorPane panel = new JEditorPane("text/html", aboutText);
                 panel.setEditable(false);
@@ -518,6 +712,8 @@ public class EditorFrame extends JFrame {
 
                 });
                 JOptionPane.showMessageDialog(new JFrame(), panel, "About", JOptionPane.INFORMATION_MESSAGE); // this.getParent()
+            } else if("Check for Updates".equalsIgnoreCase(cmd)) {
+                update();
             } else {
                 System.out.println(e.getActionCommand());
             }
@@ -819,6 +1015,11 @@ public class EditorFrame extends JFrame {
             JMenu helpMenu = new JMenu("Help");
             helpMenu.setMnemonic(KeyEvent.VK_H);
             this.add(helpMenu);
+            
+            JMenuItem updateItem = new JMenuItem("Check for Updates", KeyEvent.VK_U);
+            updateItem.setEnabled(!inDev);
+            updateItem.addActionListener(al);
+            helpMenu.add(updateItem);
 
             JMenuItem aboutItem = new JMenuItem("About", KeyEvent.VK_A);
             aboutItem.addActionListener(al);
