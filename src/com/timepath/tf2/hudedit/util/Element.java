@@ -35,6 +35,36 @@ public class Element {
         this.info = info;
     }
     
+    public String save() {
+        String str = "";
+        // preceding header
+        for(int i = 0; i < this.propMap.size(); i++) {
+            Property p = this.propMap.get(i);
+            if(p.getValue().equals("")) {
+                if(p.getKey().equals("\\n")) {
+                    str += "\n";
+                }
+                if(p.getKey().equals("//")) {
+                    str += "//" + p.getInfo() + "\n";
+                }
+            }
+        }
+        str += this.name + "\n";
+        str += "{\n";
+        for(int i = 0; i < this.propMap.size(); i++) {
+            Property p = this.propMap.get(i);
+            if(!p.getValue().equals("")) {
+                if(p.getKey().equals("\\n")) {
+                    str += "\t    \n";
+                } else {
+                    str += "\t    " + p.getKey() + "\t    " + p.getValue() + (p.getInfo() != null ? " " + p.getInfo() : "") + "\n";
+                }
+            }
+        }
+        str += "}\n";
+        return str;
+    }
+    
     private String name;
     
     public String getName() {

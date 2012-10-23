@@ -18,8 +18,6 @@ import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
-import java.io.BufferedInputStream;
-import java.io.BufferedOutputStream;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
@@ -52,6 +50,7 @@ import javax.swing.JTable;
 import javax.swing.JTree;
 import javax.swing.KeyStroke;
 import javax.swing.ListSelectionModel;
+import javax.swing.ScrollPaneConstants;
 import javax.swing.SpinnerNumberModel;
 import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
@@ -307,8 +306,8 @@ public class EditorFrame extends JFrame {
         
         canvas = new HudCanvas();
         canvasPane = new JScrollPane(canvas);
-//        canvasPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
-//        canvasPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_ALWAYS);
+        canvasPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
+        canvasPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_ALWAYS);
         splitPane.setLeftComponent(canvasPane);
         
         JSplitPane browser = new JSplitPane(JSplitPane.VERTICAL_SPLIT, new EditorFileTree(), new EditorPropertiesTable());
@@ -677,6 +676,9 @@ public class EditorFrame extends JFrame {
                 locateHudDirectory();
             } else if("Close".equalsIgnoreCase(cmd)) {
                 closeHud();
+            } else if("Save".equalsIgnoreCase(cmd)) {
+                if(canvas.getElements().size() > 0)
+                    error(canvas.getElements().get(canvas.getElements().size() - 1).save());
             } else if("Revert".equalsIgnoreCase(cmd)) {
                 loadHud(lastLoaded);
             } else if("Exit".equalsIgnoreCase(cmd)) {
@@ -918,7 +920,6 @@ public class EditorFrame extends JFrame {
             fileMenu.addSeparator();
             
             JMenuItem saveItem = new JMenuItem("Save", KeyEvent.VK_S);
-            saveItem.setEnabled(false);
             saveItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_S, shortcutKey));
             saveItem.addActionListener(al);
             fileMenu.add(saveItem);
