@@ -3,16 +3,19 @@ package com.timepath.tf2.hudedit.display;
 import com.timepath.tf2.hudedit.util.Element;
 import java.awt.AlphaComposite;
 import java.awt.Color;
+import java.awt.Composite;
 import java.awt.Dimension;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Image;
 import java.awt.Point;
 import java.awt.Rectangle;
+import java.awt.RenderingHints;
 import java.awt.Toolkit;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
+import java.awt.image.BufferedImage;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -35,7 +38,7 @@ public class HudCanvas extends JPanel implements MouseListener, MouseMotionListe
         this.addMouseListener(this);
         this.addMouseMotionListener(this);
         this.setPreferredSize(new Dimension(853, 480));
-//        loadBackground();
+        loadBackground();
     }
     
     public Dimension internalRes;
@@ -46,7 +49,7 @@ public class HudCanvas extends JPanel implements MouseListener, MouseMotionListe
     private Image background;
     
     private void loadBackground() {
-        URL url = getClass().getResource("/com/timepath/tf2/hudedit/images/bg.png");
+        URL url = getClass().getResource("/bg/Badlands1.png");
         background = Toolkit.getDefaultToolkit().getImage(url);
         this.prepareImage(background, this);
     }
@@ -56,6 +59,8 @@ public class HudCanvas extends JPanel implements MouseListener, MouseMotionListe
     public void setPreferredSize(Dimension preferredSize) {
         super.setPreferredSize(preferredSize);
         
+        currentbg = null;
+        gridbg = null;
         hudRes = preferredSize;
         
 //        long gcm = gcm(hudRes.width, hudRes.height);
@@ -97,6 +102,9 @@ public class HudCanvas extends JPanel implements MouseListener, MouseMotionListe
     private static int offY = 0; // top
 
     private Rectangle selectRect = new Rectangle();
+    
+    private Image currentbg;
+    private Image gridbg;
 
     AlphaComposite ac = AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.25f);
     
@@ -106,12 +114,21 @@ public class HudCanvas extends JPanel implements MouseListener, MouseMotionListe
         super.paintComponent(graphics);
         Graphics2D g = (Graphics2D) graphics;
         
-        g.setColor(BG_COLOR);
-        g.fillRect(offX, offY, (int)Math.round(hudRes.width * scale), (int)Math.round(hudRes.height * scale));
-        
-        //        g.drawImage(background, 0, 0, null);
-        
-        drawGrid(g);
+        if(background != null) {
+            if(currentbg == null) {
+                currentbg = resizeImage(background);
+            }
+            g.drawImage(currentbg, offX, offY, this);
+        } else {
+            g.setColor(BG_COLOR);
+            g.fillRect(offX, offY, (int)Math.round(hudRes.width * scale), (int)Math.round(hudRes.height * scale));
+        }
+        if(true) {
+            if(gridbg == null) {
+                gridbg = drawGrid();
+            }
+            g.drawImage(gridbg, offX, offY, this);
+        }
         
         Collections.sort(elements, layerSort);
         
@@ -136,22 +153,49 @@ public class HudCanvas extends JPanel implements MouseListener, MouseMotionListe
         }
     };
     
+    private Image resizeImage(Image i) { // TODO: aspect ratio tuning
+        int w = hudRes.width;
+        int h = hudRes.height;        
+        int type = BufferedImage.TYPE_INT_ARGB;
+
+        BufferedImage resizedImage = new BufferedImage(w, h, type);
+        Graphics2D g = resizedImage.createGraphics();
+
+        g.setComposite(AlphaComposite.Src);
+        g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR);
+        g.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
+        g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+
+        int proposedWidth = Math.round((float)h / (float)i.getHeight(null) * (float)i.getWidth(null));
+        int excess = Math.abs(proposedWidth - w) / 2;
+        g.drawImage(i, -excess, 0, w + (2 * excess), h, this); // should scale most images correctly
+        g.dispose();
+
+        return resizedImage;
+    }
+    
     private int minGridSpacing = 10;
     
     // as soon as the height drops below 480, stops rendering
-    private void drawGrid(Graphics2D g) {
-        g.setColor(GRID_COLOR);       
-//        g.setColor(Color.GREEN);
+    private Image drawGrid() {
+        BufferedImage img = new BufferedImage(hudRes.width, hudRes.height, BufferedImage.TYPE_INT_ARGB);
+        Graphics2D g = img.createGraphics();
+
+//        g.setComposite(AlphaComposite.Src);
+        g.setComposite(ac);
+        g.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_SPEED);
+        
+        g.setColor(GRID_COLOR);
         
         int w = hudRes.width;
         int h = hudRes.height;
         int i = minGridSpacing; 
         if(i < 0) {
-            return;
+            return img;
         }
         if(i < 2) { // optimize for small numbers, stop division by zero
             g.fillRect(offX, offY, hudRes.width, hudRes.height);
-            return;
+            return img;
         }
         int cross = 0;
         int maxX = w - (w % i);
@@ -166,6 +210,8 @@ public class HudCanvas extends JPanel implements MouseListener, MouseMotionListe
                 g.drawLine(dx - (1 + cross), dy + cross, dx + cross, dy - (1 + cross));
             }
         }
+        g.dispose();
+        return img;
     }
     
     private void paintElement(Element e, Graphics2D g) {

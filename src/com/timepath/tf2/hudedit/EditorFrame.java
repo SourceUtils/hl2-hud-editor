@@ -13,6 +13,15 @@ import java.awt.DisplayMode;
 import java.awt.FileDialog;
 import java.awt.GraphicsEnvironment;
 import java.awt.Rectangle;
+import java.awt.Toolkit;
+import java.awt.datatransfer.DataFlavor;
+import java.awt.datatransfer.Transferable;
+import java.awt.datatransfer.UnsupportedFlavorException;
+import java.awt.dnd.DnDConstants;
+import java.awt.dnd.DropTarget;
+import java.awt.dnd.DropTargetContext;
+import java.awt.dnd.DropTargetDropEvent;
+import java.awt.dnd.InvalidDnDOperationException;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
@@ -26,14 +35,20 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.UnsupportedEncodingException;
+import java.net.URI;
 import java.net.URL;
 import java.net.URLConnection;
 import java.net.URLDecoder;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.Iterator;
+import java.util.List;
 import java.util.ResourceBundle;
+import java.util.StringTokenizer;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipInputStream;
 import javax.swing.Icon;
 import javax.swing.JDialog;
 import javax.swing.JEditorPane;
@@ -90,6 +105,7 @@ public class EditorFrame extends JFrame {
     //<editor-fold defaultstate="collapsed" desc="Display">
     public static void main(String... args) {
         //<editor-fold defaultstate="collapsed" desc="Try and get nimbus look and feel, if it is installed.">
+//        Toolkit.getDefaultToolkit().setDynamicLayout(true);
         initialLaf();
         //</editor-fold>
         
@@ -178,7 +194,65 @@ public class EditorFrame extends JFrame {
     
     private boolean inDev;
     
-    public void update() {
+    private void changelog() {
+        new Thread() {
+            @Override
+            public void run() {
+                try {
+                    URL url = new URL("https://dl.dropbox.com/u/42745598/tf/Hud%20Editor/TF2%20HUD%20Editor.jar.changes");
+                    URLConnection connection = url.openConnection();
+                    
+                    String text = "";
+                    BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getInputStream()));
+                    String line;
+                    while((line = reader.readLine()) != null) {
+                        if(!inDev && line.contains(myMD5)) { // dev build cannot MD5
+                            String[] parts = line.split(myMD5);
+                            text += parts[0] + "<b><u>" + myMD5 + "</u></b>" + parts[1];
+                        } else {
+                            text += line;
+                        }
+                    }
+                    reader.close();
+                    
+                    final JEditorPane panel = new JEditorPane("text/html", text);
+                    Dimension s = Toolkit.getDefaultToolkit().getScreenSize();
+                    panel.setPreferredSize(new Dimension(s.width / 4, s.height / 2));
+                    panel.setEditable(false);
+                    panel.setOpaque(false);
+                    panel.addHyperlinkListener(new HyperlinkListener() {
+
+                        @Override
+                        public void hyperlinkUpdate(HyperlinkEvent he) {
+                            if (he.getEventType().equals(HyperlinkEvent.EventType.ACTIVATED)) {
+                                try {
+                                    Desktop.getDesktop().browse(he.getURL().toURI()); // http://stackoverflow.com/questions/5116473/linux-command-to-open-url-in-default-browser
+                                } catch(Exception e) {
+    //                                e.printStackTrace();
+                                }
+                            }
+                        }
+
+                    });
+                    JScrollPane window = new JScrollPane(panel);
+                    window.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
+                    info(window, "Changes");
+                } catch (IOException ex) {
+                    Logger.getLogger(EditorFrame.class.getName()).log(Level.SEVERE, null, ex);
+                }
+            }
+        }.start();
+    }
+    
+    private boolean isMD5(String str) {
+        return str.matches("[a-fA-F0-9]{32}");
+    }
+    
+    private boolean updating;
+    private void checkForUpdates() {
+        if(inDev) {
+            return;
+        }
         new Thread() {
             @Override
             public void run() {
@@ -190,11 +264,11 @@ public class EditorFrame extends JFrame {
                     // read from internet
                     BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getInputStream()));
                     String line = reader.readLine();
-                    if(line != null && line.matches("[a-fA-F0-9]{32}")) { // MD5's are only 32 characters long
+                    if(line != null && isMD5(line)) { // MD5's are only 32 characters long
                         md5 = line;
                         reader.close();
                     } else {
-                        error("Could not obtain latest version information from internet.");
+                        error("Could not obtain latest changelog from internet.");
                         return;
                     }
                     reader.close();
@@ -204,40 +278,47 @@ public class EditorFrame extends JFrame {
                     System.out.println(md5 + " =" + (equal ? "" : "/") + "= " + myMD5);
                     
                     if(!equal) {
-                        error("Downloading the latest version...");
-                        long startTime = System.currentTimeMillis();
- 
-                        System.out.println("Connecting to Dropbox...\n");
+                        int returnCode = JOptionPane.showConfirmDialog(null, "Would you like to update to the latest version?", "A new update is available", JOptionPane.YES_NO_OPTION);
+                        if(returnCode == JOptionPane.YES_OPTION) {
+                            long startTime = System.currentTimeMillis();
 
-                        URL latest = new URL("https://dl.dropbox.com/u/42745598/tf/Hud%20Editor/TF2%20HUD%20Editor.jar");
-                        latest.openConnection();
-                        InputStream in = latest.openStream();
-                        
-                        FileOutputStream writer = new FileOutputStream(runPath); // TODO: stop closing when this happens. Maybe make a backup..
-                        byte[] buffer = new byte[153600];
-                        int totalBytesRead = 0;
-                        int bytesRead = 0;
+                            System.out.println("Connecting to Dropbox...\n");
 
-                        System.out.println("Reading JAR file 150KB blocks at a time.\n");
+                            URL latest = new URL("https://dl.dropbox.com/u/42745598/tf/Hud%20Editor/TF2%20HUD%20Editor.jar");
+                            latest.openConnection();
+                            InputStream in = latest.openStream();
 
-                        while((bytesRead = in.read(buffer)) > 0) {  
-                           writer.write(buffer, 0, bytesRead);
-                           buffer = new byte[153600];
-                           totalBytesRead += bytesRead;
+                            FileOutputStream writer = new FileOutputStream(runPath); // TODO: stop closing when this happens. Maybe make a backup..
+                            byte[] buffer = new byte[153600]; // 150KB
+                            int totalBytesRead = 0;
+                            int bytesRead = 0;
+
+                            System.out.println("Downloading JAR file in 150KB blocks at a time.\n");
+                            
+                            updating = true;
+                            
+                            while((bytesRead = in.read(buffer)) > 0) {  
+                               writer.write(buffer, 0, bytesRead); // I don't want to write directly over the top until I have all the data..
+                               buffer = new byte[153600];
+                               totalBytesRead += bytesRead;
+                            }
+
+                            long endTime = System.currentTimeMillis();
+
+                            System.out.println("Done. " + (new Integer(totalBytesRead).toString()) + " bytes read (" + (new Long(endTime - startTime).toString()) + " millseconds).\n");
+                            writer.close();
+                            in.close();
+
+                            info("Downloaded the latest version.");
+                            
+                            updating = false;
                         }
-
-                        long endTime = System.currentTimeMillis();
-
-                        System.out.println("Done. " + (new Integer(totalBytesRead).toString()) + " bytes read (" + (new Long(endTime - startTime).toString()) + " millseconds).\n");
-                        writer.close();
-                        in.close();
-
-                        error("Downloaded the latest version.");
                     } else {
-                        error("You have the latest version.");
+                        info("You have the latest version.");
                     }
                 } catch (IOException ex) {
                     Logger.getLogger(EditorFrame.class.getName()).log(Level.SEVERE, null, ex);
+                    updating = false;
                 }
             }
         }.start();
@@ -276,6 +357,12 @@ public class EditorFrame extends JFrame {
             Logger.getLogger(EditorFrame.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
+    
+    private void quit() {
+        if(!inDev) {
+            System.exit(0);
+        }
+    }
 
     public EditorFrame() {
         super();
@@ -283,11 +370,12 @@ public class EditorFrame extends JFrame {
         calcMD5();
         
         this.setTitle(ResourceBundle.getBundle("com/timepath/tf2/hudedit/lang").getString("Title"));
+        this.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
         this.addWindowListener(new WindowAdapter() {
 
             @Override
             public void windowClosing(WindowEvent e) {
-                System.exit(0);
+                quit();
             }
 
         });
@@ -300,6 +388,55 @@ public class EditorFrame extends JFrame {
         this.setLocation((d.getWidth() / 2) - (this.getPreferredSize().width / 2), (d.getHeight() / 2) - (this.getPreferredSize().height / 2));
 
         this.setJMenuBar(new EditorMenuBar());
+        
+        this.setDropTarget(new DropTarget() {
+            @Override
+            public void drop(DropTargetDropEvent e) {
+                try {
+                    DropTargetContext context = e.getDropTargetContext();
+                    e.acceptDrop(DnDConstants.ACTION_COPY_OR_MOVE);
+                    Transferable t = e.getTransferable();
+                    if(os == OS.Linux) {
+                        DataFlavor nixFileDataFlavor = new DataFlavor("text/uri-list;class=java.lang.String");
+                        String data = (String) t.getTransferData(nixFileDataFlavor);
+                        for(StringTokenizer st = new StringTokenizer(data, "\r\n"); st.hasMoreTokens();) {
+                            String token = st.nextToken().trim();
+                            if(token.startsWith("#") || token.isEmpty()) {
+                                 // comment line, by RFC 2483
+                                 continue;
+                            }
+                            try {
+                                 File file = new File(new URI(token));
+                                 loadHud(file);
+                            } catch(Exception ex) {
+                            }
+                        }
+                    } else { 
+                        Object data = t.getTransferData(DataFlavor.javaFileListFlavor);
+                        if(data instanceof List) {
+                            for( Iterator<?> it = ((List<?>)data).iterator(); it.hasNext(); ) {
+                                Object o = it.next();
+                                if(o instanceof File) {
+                                    loadHud((File)o);
+                                }
+                            }
+                        }
+                    }
+                    context.dropComplete(true);
+                } catch (ClassNotFoundException ex) {
+                    Logger.getLogger(EditorFrame.class.getName()).log(Level.SEVERE, null, ex);
+                } catch (InvalidDnDOperationException ex) {
+                    Logger.getLogger(EditorFrame.class.getName()).log(Level.SEVERE, null, ex);
+                } catch (UnsupportedFlavorException ex) {
+                    Logger.getLogger(EditorFrame.class.getName()).log(Level.SEVERE, null, ex);
+                } catch (IOException ex) {
+                    Logger.getLogger(EditorFrame.class.getName()).log(Level.SEVERE, null, ex);
+                } finally {
+                    e.dropComplete(true);
+                    repaint();
+                }
+            }
+        });
         
         final JSplitPane splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT);
         splitPane.setResizeWeight(0.8);
@@ -321,8 +458,9 @@ public class EditorFrame extends JFrame {
     }
     
     public void start() {
-        this.setVisible(true);
         this.createBufferStrategy(3); // Triple buffered, any more sees minimal gain.
+        this.setVisible(true);
+        this.checkForUpdates();
     }
     
     
@@ -491,7 +629,19 @@ public class EditorFrame extends JFrame {
     }
     
     private void error(Object msg) {
-        JOptionPane.showMessageDialog(this, msg.toString(), "Error", JOptionPane.ERROR_MESSAGE);
+        error(msg, "Error");
+    }
+    
+    private void error(Object msg, String title) {
+        JOptionPane.showMessageDialog(this, msg, title, JOptionPane.ERROR_MESSAGE);
+    }
+    
+    private void info(Object msg) {
+        info(msg, "Info");
+    }
+    
+    private void info(Object msg, String title) {
+        JOptionPane.showMessageDialog(this, msg, title, JOptionPane.INFORMATION_MESSAGE);
     }
 
     private void closeHud() {
@@ -515,6 +665,20 @@ public class EditorFrame extends JFrame {
         }
         lastLoaded = file;
         System.out.println("You have selected: " + file);
+        
+        if(file.getName().endsWith(".zip")) {
+            try {
+                ZipInputStream zin = new ZipInputStream(new FileInputStream(file));
+                ZipEntry entry;
+                while((entry = zin.getNextEntry()) != null) {
+                    System.out.println(entry.getName());
+                    zin.closeEntry();
+                }
+                zin.close();
+            } catch (IOException e) {
+            }
+            return;
+        }
 
         if(file.isDirectory()) {
             File[] folders = file.listFiles();
@@ -527,6 +691,7 @@ public class EditorFrame extends JFrame {
             }
             if(!valid) {
                 error("Selection not valid. Please choose a folder containing \'resources\' or \'scripts\'.");
+                locateHudDirectory();
                 return;
             }
             closeHud();
@@ -661,66 +826,6 @@ public class EditorFrame extends JFrame {
                 canvas.setPreferredSize(new Dimension(Integer.parseInt(spinnerWidth.getValue().toString()), Integer.parseInt(spinnerHeight.getValue().toString())));
             }
         }
-    }
-    
-    private class EditorActionListener implements ActionListener {
-        
-        EditorActionListener() {
-            
-        }
-
-        @Override
-        public void actionPerformed(ActionEvent e) {
-            String cmd = e.getActionCommand(); // TODO: Based on source, not text
-            if("Open...".equalsIgnoreCase(cmd)) {
-                locateHudDirectory();
-            } else if("Close".equalsIgnoreCase(cmd)) {
-                closeHud();
-            } else if("Save".equalsIgnoreCase(cmd)) {
-                if(canvas.getElements().size() > 0)
-                    error(canvas.getElements().get(canvas.getElements().size() - 1).save());
-            } else if("Revert".equalsIgnoreCase(cmd)) {
-                loadHud(lastLoaded);
-            } else if("Exit".equalsIgnoreCase(cmd)) {
-                System.exit(0);
-            } else if("Change Resolution".equalsIgnoreCase(cmd)) {
-                changeResolution();
-            } else if("Select All".equalsIgnoreCase(cmd)) {
-                for(int i = 0; i < canvas.getElements().size(); i++) {
-                    canvas.select(canvas.getElements().get(i));
-                }
-            } else if("About".equalsIgnoreCase(cmd)) {
-                String aboutText = "<html><h2>This is a <u>W</u>hat <u>Y</u>ou <u>S</u>ee <u>I</u>s <u>W</u>hat <u>Y</u>ou <u>G</u>et HUD Editor for TF2.</h2>";
-                aboutText += "<p>You can graphically edit TF2 HUDs with it!<br>";
-                aboutText += "<p>It was written by <a href=\"http://www.reddit.com/user/TimePath/\">TimePath</a></p>";
-                aboutText += "<p>Please give feedback or suggestions on my Reddit profile</p>";
-                aboutText += "<p>Current version: " + myMD5 + "</p>";
-                aboutText += "</html>";
-                final JEditorPane panel = new JEditorPane("text/html", aboutText);
-                panel.setEditable(false);
-                panel.setOpaque(false);
-                panel.addHyperlinkListener(new HyperlinkListener() {
-
-                    @Override
-                    public void hyperlinkUpdate(HyperlinkEvent he) {
-                        if (he.getEventType().equals(HyperlinkEvent.EventType.ACTIVATED)) {
-                            try {
-                                Desktop.getDesktop().browse(he.getURL().toURI()); // http://stackoverflow.com/questions/5116473/linux-command-to-open-url-in-default-browser
-                            } catch(Exception e) {
-//                                e.printStackTrace();
-                            }
-                        }
-                    }
-
-                });
-                JOptionPane.showMessageDialog(new JFrame(), panel, "About", JOptionPane.INFORMATION_MESSAGE); // this.getParent()
-            } else if("Check for Updates".equalsIgnoreCase(cmd)) {
-                update();
-            } else {
-                System.out.println(e.getActionCommand());
-            }
-        }
-
     }
     
     private class PropertiesTable extends JTable {
@@ -882,6 +987,9 @@ public class EditorFrame extends JFrame {
                             element.validateDisplay();
                             for(int i = 0; i < element.getProps().size(); i++) {
                                 Property entry = element.getProps().get(i);
+                                if(entry.getKey().equals("\\n")) {
+                                    continue;
+                                }
                                 model.insertRow(model.getRowCount(), new Object[] {entry.getKey(), entry.getValue(), entry.getInfo()});
                             }
                         }
@@ -896,6 +1004,28 @@ public class EditorFrame extends JFrame {
     }
     
     private class EditorMenuBar extends JMenuBar {
+        
+        private final JMenuItem newItem;
+        private final JMenuItem openItem;
+        private final JMenuItem openZippedItem;
+        private final JMenuItem saveItem;
+        private final JMenuItem saveAsItem;
+        private final JMenuItem reloadItem;
+        private final JMenuItem closeItem;
+        private final JMenuItem exitItem;
+        private final JMenuItem undoItem;
+        private final JMenuItem redoItem;
+        private final JMenuItem cutItem;
+        private final JMenuItem copyItem;
+        private final JMenuItem pasteItem;
+        private final JMenuItem deleteItem;
+        private final JMenuItem selectAllItem;
+        private final JMenuItem preferencesItem;
+        private final JMenuItem resolutionItem;
+        private final JMenuItem previewItem;
+        private final JMenuItem updateItem;
+        private final JMenuItem aboutItem;
+        private final JMenuItem changeLogItem;
 
         EditorMenuBar() {
             super();
@@ -906,44 +1036,50 @@ public class EditorFrame extends JFrame {
             fileMenu.setMnemonic(KeyEvent.VK_F);
             this.add(fileMenu);
             
-            JMenuItem newItem = new JMenuItem("New", KeyEvent.VK_N);
+            newItem = new JMenuItem("New", KeyEvent.VK_N);
             newItem.setEnabled(false);
             newItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_N, shortcutKey));
             newItem.addActionListener(al);
             fileMenu.add(newItem);
             
-            JMenuItem openItem = new JMenuItem("Open...", KeyEvent.VK_O);
+            openItem = new JMenuItem("Open...", KeyEvent.VK_O);
             openItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_O, shortcutKey));
             openItem.addActionListener(al);
             fileMenu.add(openItem);
             
+            openZippedItem = new JMenuItem("Open Zip...", KeyEvent.VK_Z);
+            openZippedItem.setEnabled(false);
+            openZippedItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_O, shortcutKey + ActionEvent.SHIFT_MASK));
+            openZippedItem.addActionListener(al);
+            fileMenu.add(openZippedItem);
+            
             fileMenu.addSeparator();
             
-            JMenuItem saveItem = new JMenuItem("Save", KeyEvent.VK_S);
+            saveItem = new JMenuItem("Save", KeyEvent.VK_S);
             saveItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_S, shortcutKey));
             saveItem.addActionListener(al);
             fileMenu.add(saveItem);
             
-            JMenuItem saveAsItem = new JMenuItem("Save As...", KeyEvent.VK_A);
+            saveAsItem = new JMenuItem("Save As...", KeyEvent.VK_A);
             saveAsItem.setEnabled(false);
             saveAsItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_S, shortcutKey + ActionEvent.SHIFT_MASK));
             saveAsItem.addActionListener(al);
             fileMenu.add(saveAsItem);
             
-            JMenuItem revertItem = new JMenuItem("Revert", KeyEvent.VK_R);
-            revertItem.addActionListener(al);
-            fileMenu.add(revertItem);
+            reloadItem = new JMenuItem("Revert", KeyEvent.VK_R);
+            reloadItem.addActionListener(al);
+            fileMenu.add(reloadItem);
             
             fileMenu.addSeparator();
 
-            JMenuItem closeItem = new JMenuItem("Close", KeyEvent.VK_C);
+            closeItem = new JMenuItem("Close", KeyEvent.VK_C);
             closeItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_W, shortcutKey));
             closeItem.addActionListener(al);
             fileMenu.add(closeItem);
 
             fileMenu.addSeparator();
 
-            JMenuItem exitItem = new JMenuItem("Exit", KeyEvent.VK_X);
+            exitItem = new JMenuItem("Exit", KeyEvent.VK_X);
             exitItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_Q, shortcutKey));
             exitItem.addActionListener(al);
             fileMenu.add(exitItem);
@@ -952,13 +1088,13 @@ public class EditorFrame extends JFrame {
             editMenu.setMnemonic(KeyEvent.VK_E);
             this.add(editMenu);
             
-            JMenuItem undoItem = new JMenuItem("Undo", KeyEvent.VK_U);
+            undoItem = new JMenuItem("Undo", KeyEvent.VK_U);
             undoItem.setEnabled(false);
             undoItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_Z, ActionEvent.CTRL_MASK));
             undoItem.addActionListener(al);
             editMenu.add(undoItem);
             
-            JMenuItem redoItem = new JMenuItem("Redo", KeyEvent.VK_R);
+            redoItem = new JMenuItem("Redo", KeyEvent.VK_R);
             redoItem.setEnabled(false);
             redoItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_Z, ActionEvent.CTRL_MASK + ActionEvent.SHIFT_MASK));
             redoItem.addActionListener(al);
@@ -966,25 +1102,25 @@ public class EditorFrame extends JFrame {
             
             editMenu.addSeparator();
             
-            JMenuItem cutItem = new JMenuItem("Cut", KeyEvent.VK_T);
+            cutItem = new JMenuItem("Cut", KeyEvent.VK_T);
             cutItem.setEnabled(false);
             cutItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_X, shortcutKey));
             cutItem.addActionListener(al);
             editMenu.add(cutItem);
             
-            JMenuItem copyItem = new JMenuItem("Copy", KeyEvent.VK_C);
+            copyItem = new JMenuItem("Copy", KeyEvent.VK_C);
             copyItem.setEnabled(false);
             copyItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_C, shortcutKey));
             copyItem.addActionListener(al);
             editMenu.add(copyItem);
             
-            JMenuItem pasteItem = new JMenuItem("Paste", KeyEvent.VK_P);
+            pasteItem = new JMenuItem("Paste", KeyEvent.VK_P);
             pasteItem.setEnabled(false);
             pasteItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_V, shortcutKey));
             pasteItem.addActionListener(al);
             editMenu.add(pasteItem);
             
-            JMenuItem deleteItem = new JMenuItem("Delete");
+            deleteItem = new JMenuItem("Delete");
             deleteItem.setEnabled(false);
             deleteItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_DELETE, 0));
             deleteItem.addActionListener(al);
@@ -992,14 +1128,14 @@ public class EditorFrame extends JFrame {
             
             editMenu.addSeparator();
 
-            JMenuItem selectAllItem = new JMenuItem("Select All", KeyEvent.VK_A);
+            selectAllItem = new JMenuItem("Select All", KeyEvent.VK_A);
             selectAllItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_A, shortcutKey));
             selectAllItem.addActionListener(al);
             editMenu.add(selectAllItem);
             
             editMenu.addSeparator();
 
-            JMenuItem preferencesItem = new JMenuItem("Preferences", KeyEvent.VK_E);
+            preferencesItem = new JMenuItem("Preferences", KeyEvent.VK_E);
             preferencesItem.setEnabled(false);
             preferencesItem.addActionListener(al);
             editMenu.add(preferencesItem);
@@ -1008,23 +1144,119 @@ public class EditorFrame extends JFrame {
             viewMenu.setMnemonic(KeyEvent.VK_V);
             this.add(viewMenu);
 
-            JMenuItem resolutionItem = new JMenuItem("Change Resolution", KeyEvent.VK_R);
+            resolutionItem = new JMenuItem("Change Resolution", KeyEvent.VK_R);
             resolutionItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_R, shortcutKey));
             resolutionItem.addActionListener(al);
             viewMenu.add(resolutionItem);
+            
+            previewItem = new JMenuItem("Full Screen Preview", KeyEvent.VK_F);
+            previewItem.setEnabled(false);
+//            previewItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_R, shortcutKey)); // alt + shift + enter on linux
+            previewItem.addActionListener(al);
+            viewMenu.add(previewItem);
+            
+            viewMenu.addSeparator();
+            
+            JMenuItem viewItem1 = new JMenuItem("Main Menu");
+            viewItem1.setEnabled(false);
+            viewItem1.addActionListener(al);
+            viewMenu.add(viewItem1);
+            
+            JMenuItem viewItem2 = new JMenuItem("In-game (Health and ammo)");
+            viewItem2.setEnabled(false);
+            viewItem2.addActionListener(al);
+            viewMenu.add(viewItem2);
+            
+            JMenuItem viewItem3 = new JMenuItem("Scoreboard");
+            viewItem3.setEnabled(false);
+            viewItem3.addActionListener(al);
+            viewMenu.add(viewItem3);
+            
+            JMenuItem viewItem4 = new JMenuItem("CTF HUD");
+            viewItem4.setEnabled(false);
+            viewItem4.addActionListener(al);
+            viewMenu.add(viewItem4);
 
             JMenu helpMenu = new JMenu("Help");
             helpMenu.setMnemonic(KeyEvent.VK_H);
             this.add(helpMenu);
             
-            JMenuItem updateItem = new JMenuItem("Check for Updates", KeyEvent.VK_U);
+            updateItem = new JMenuItem("Check for Updates", KeyEvent.VK_U);
             updateItem.setEnabled(!inDev);
             updateItem.addActionListener(al);
             helpMenu.add(updateItem);
 
-            JMenuItem aboutItem = new JMenuItem("About", KeyEvent.VK_A);
+            changeLogItem = new JMenuItem("Changelog");
+            changeLogItem.addActionListener(al);
+            helpMenu.add(changeLogItem);
+            
+            aboutItem = new JMenuItem("About", KeyEvent.VK_A);
             aboutItem.addActionListener(al);
             helpMenu.add(aboutItem);
+        }
+        
+        private class EditorActionListener implements ActionListener {
+        
+            EditorActionListener() {
+
+            }
+
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                Object cmd = e.getSource();
+                
+                if(cmd == openItem || cmd == openZippedItem) {
+                    locateHudDirectory();
+                } else if(cmd == closeItem) {
+                    closeHud();
+                } else if(cmd == saveItem) {
+                    if(canvas.getElements().size() > 0)
+                        error(canvas.getElements().get(canvas.getElements().size() - 1).save());
+                } else if(cmd == reloadItem) {
+                    loadHud(lastLoaded);
+                } else if(cmd == exitItem) {
+                    quit();
+                } else if(cmd == resolutionItem) {
+                    changeResolution();
+                } else if(cmd == selectAllItem) {
+                    for(int i = 0; i < canvas.getElements().size(); i++) {
+                        canvas.select(canvas.getElements().get(i));
+                    }
+                } else if(cmd == aboutItem) {
+                    String latestThread = "http://www.reddit.com/r/truetf2/comments/11xtwz/wysiwyg_hud_editor_coming_together/";
+                    String aboutText = "<html><h2>This is a <u>W</u>hat <u>Y</u>ou <u>S</u>ee <u>I</u>s <u>W</u>hat <u>Y</u>ou <u>G</u>et HUD Editor for TF2.</h2>";
+                    aboutText += "<p>You can graphically edit TF2 HUDs with it!<br>";
+                    aboutText += "<p>It was written by <a href=\"http://www.reddit.com/user/TimePath/\">TimePath</a></p>";
+                    aboutText += "<p>Source available on <a href=\"http://code.google.com/p/tf2-hud-editor/\">Google code</a></p>";
+                    aboutText += "<p>I have an <a href=\"http://code.google.com/feeds/p/tf2-hud-editor/hgchanges/basic\">Atom feed</a> set up listing source commits</p>";
+                    aboutText += "<p>Please give feedback or suggestions on <a href=\""+latestThread+"\">the latest update thread</a></p>";
+                    aboutText += "<p>Current version: " + myMD5 + "</p>";
+                    aboutText += "</html>";
+                    final JEditorPane panel = new JEditorPane("text/html", aboutText);
+                    panel.setEditable(false);
+                    panel.setOpaque(false);
+                    panel.addHyperlinkListener(new HyperlinkListener() {
+
+                        @Override
+                        public void hyperlinkUpdate(HyperlinkEvent he) {
+                            if (he.getEventType().equals(HyperlinkEvent.EventType.ACTIVATED)) {
+                                try {
+                                    Desktop.getDesktop().browse(he.getURL().toURI()); // http://stackoverflow.com/questions/5116473/linux-command-to-open-url-in-default-browser
+                                } catch(Exception e) {
+    //                                e.printStackTrace();
+                                }
+                            }
+                        }
+
+                    });
+                    info(panel, "About");
+                } else if(cmd == updateItem) {
+                    EditorFrame.this.checkForUpdates();
+                } else if(cmd == changeLogItem) {
+                    changelog();
+                }
+            }
+
         }
         
     }
