@@ -90,6 +90,13 @@ import javax.swing.tree.TreeSelectionModel;
  * http://code.google.com/p/xfiledialog/ - windows "open folder" dialog
  * http://java.dzone.com/news/native-dialogs-swing-little - more native file dialogs on linux
  * http://java-gnome.sourceforge.net/get/
+ * 
+ * Interface design:
+ * http://stackoverflow.com/questions/1004239/swing-tweaks-for-mac-os-x
+ * http://developer.apple.com/library/mac/#documentation/Java/Conceptual/Java14Development/07-NativePlatformIntegration/NativePlatformIntegration.html
+ * 
+ * Deployment:
+ * http://www2.sys-con.com/itsg/virtualcd/java/archives/0801/mcfarland/index.html
  *
  * Reference editors:
  * https://developers.google.com/java-dev-tools/wbpro/
@@ -150,6 +157,8 @@ public class EditorFrame extends JFrame {
     private final static OS os;
 
     private final static int shortcutKey;
+    
+    private final static String exitText;
 
     private enum OS {
 
@@ -163,7 +172,7 @@ public class EditorFrame extends JFrame {
         String osVer = System.getProperty("os.name").toLowerCase();
         if(osVer.indexOf("windows") != -1) {
             os = OS.Windows;
-        } else if(osVer.indexOf("mac") != -1 || osVer.indexOf("OS X") != -1) {
+        } else if(osVer.indexOf("OS X") != -1 || osVer.indexOf("mac") != -1) {
             os = OS.Mac;
         } else if(osVer.indexOf("linux") != -1) {
             os = OS.Linux;
@@ -178,17 +187,25 @@ public class EditorFrame extends JFrame {
         
         if(os == OS.Windows) {
             shortcutKey = ActionEvent.CTRL_MASK;
+            exitText = "Exit";
 //            XFileDialog.setTraceLevel(0);
         } else if(os == OS.Mac) {
             shortcutKey = ActionEvent.META_MASK;
+            exitText = "Quit";
             System.setProperty("apple.awt.showGrowBox", "true");
             System.setProperty("apple.laf.useScreenMenuBar", "true");
+            System.setProperty("com.apple.macos.smallTabs", "true");
             System.setProperty("com.apple.macos.useScreenMenuBar", "true");
-            System.setProperty("com.apple.mrj.application.apple.menu.about.name application property", "TF2 HUD Editor");
+            System.setProperty("com.apple.macos.use-file-dialog-packages", "true");
+            System.setProperty("com.apple.mrj.application.apple.menu.about.name", "TF2 HUD Editor"); // -Xdock:name="TF2 HUD Editor"
+            System.setProperty("com.apple.mrj.application.growbox.intrudes", "false");
+            System.setProperty("com.apple.mrj.application.live-resize", "true");
         } else if(os == OS.Linux) {
             shortcutKey = ActionEvent.CTRL_MASK;
+            exitText = "Exit";
         } else {
             shortcutKey = ActionEvent.CTRL_MASK;
+            exitText = "Exit";
         }
     }
     //</editor-fold>
@@ -236,7 +253,11 @@ public class EditorFrame extends JFrame {
 
                     });
                     JScrollPane window = new JScrollPane(panel);
-                    window.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
+                    if(os == OS.Mac) {
+                        window.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
+                    } else {
+                        window.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
+                    }
                     info(window, "Changes");
                 } catch (IOException ex) {
                     Logger.getLogger(EditorFrame.class.getName()).log(Level.SEVERE, null, ex);
@@ -444,8 +465,13 @@ public class EditorFrame extends JFrame {
         
         canvas = new HudCanvas();
         canvasPane = new JScrollPane(canvas);
-        canvasPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
-        canvasPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_ALWAYS);
+        if(os == OS.Mac) {
+            canvasPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
+            canvasPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_ALWAYS);
+        } else {
+            canvasPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
+            canvasPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_ALWAYS);
+        }
         splitPane.setLeftComponent(canvasPane);
         
         JSplitPane browser = new JSplitPane(JSplitPane.VERTICAL_SPLIT, new EditorFileTree(), new EditorPropertiesTable());
@@ -570,7 +596,6 @@ public class EditorFrame extends JFrame {
         String selection = null;
         if(os == OS.Mac) {
             System.setProperty("apple.awt.fileDialogForDirectories", "true");
-            System.setProperty("com.apple.macos.use-file-dialog-packages", "true");
             FileDialog fd = new FileDialog(this, "Open a HUD folder");
             if(hudSelectionDir != null) {
                 fd.setDirectory(hudSelectionDir);
@@ -587,8 +612,6 @@ public class EditorFrame extends JFrame {
                 hudSelectionDir = new File(file).getParent();
                 selection = file;
             }
-            System.setProperty("apple.awt.fileDialogForDirectories", "false");
-            System.setProperty("com.apple.macos.use-file-dialog-packages", "false");
 //        } else
 //        if(os == OS.Windows) {
 //            XFileDialog fd = new XFileDialog(this); // was EditorFrame.this
@@ -1094,7 +1117,7 @@ public class EditorFrame extends JFrame {
 
             fileMenu.addSeparator();
 
-            exitItem = new JMenuItem("Exit", KeyEvent.VK_X);
+            exitItem = new JMenuItem(exitText, KeyEvent.VK_X);
             exitItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_Q, shortcutKey));
             exitItem.addActionListener(al);
             fileMenu.add(exitItem);
