@@ -31,6 +31,7 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
+import java.io.FilenameFilter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -574,8 +575,14 @@ public class EditorFrame extends JFrame {
             if(hudSelectionDir != null) {
                 fd.setDirectory(hudSelectionDir);
             }
+            fd.setFilenameFilter(new FilenameFilter() {
+                public boolean accept(File dir, String name) {
+                    return new File(dir, name).isDirectory();
+                }
+            });
+            fd.setMode(FileDialog.LOAD);
             fd.setVisible(true);
-            String file = fd.getFile();
+            String file = fd.getDirectory() + fd.getFile();
             if(file != null) {
                 hudSelectionDir = new File(file).getParent();
                 selection = file;
@@ -663,8 +670,16 @@ public class EditorFrame extends JFrame {
         if(file == null) {
             return;
         }
+        if(!file.exists()) {
+            error("Could not access file " + file + "\nSorry mac users! Currently working on a fix. For now, drag and drop the hud folder onto the program.ma");
+        }
         lastLoaded = file;
-        System.out.println("You have selected: " + file);
+        System.out.println("You have selected: " + file.getAbsolutePath());
+        try {
+            System.out.println("You have canonical: " + file.getCanonicalPath());
+        } catch (IOException ex) {
+            Logger.getLogger(EditorFrame.class.getName()).log(Level.SEVERE, null, ex);
+        }
         
         if(file.getName().endsWith(".zip")) {
             try {
@@ -1090,13 +1105,13 @@ public class EditorFrame extends JFrame {
             
             undoItem = new JMenuItem("Undo", KeyEvent.VK_U);
             undoItem.setEnabled(false);
-            undoItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_Z, ActionEvent.CTRL_MASK));
+            undoItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_Z, shortcutKey));
             undoItem.addActionListener(al);
             editMenu.add(undoItem);
             
             redoItem = new JMenuItem("Redo", KeyEvent.VK_R);
             redoItem.setEnabled(false);
-            redoItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_Z, ActionEvent.CTRL_MASK + ActionEvent.SHIFT_MASK));
+            redoItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_Z, shortcutKey + ActionEvent.SHIFT_MASK));
             redoItem.addActionListener(al);
             editMenu.add(redoItem);
             

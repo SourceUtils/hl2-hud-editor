@@ -32,10 +32,12 @@
             <zipfileset src="${store.dir}/temp_final.jar" excludes="META-INF/*.SF, META-INF/*.DSA, META-INF/*.RSA"/>
         </zip>
         <delete file="${store.dir}/temp_final.jar"/>
+        
         <copy file="${store.jar.dated}" tofile="${store.jar}"/>
+        <checksum file="${store.jar}" forceOverwrite="yes"/>
+        
         <chmod file="${store.jar.dated}" perm="777"/>
         <chmod file="${store.jar}" perm="777"/>
-        <checksum file="${store.jar}" forceOverwrite="yes"/>
     </target>
     
 </project>
