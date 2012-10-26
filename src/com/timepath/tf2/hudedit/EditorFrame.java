@@ -1,5 +1,10 @@
 package com.timepath.tf2.hudedit;
 
+import apple.dts.samplecode.osxadapter.OSXAdapter;
+import com.apple.eawt.AppEvent.AboutEvent;
+import com.apple.eawt.AppEvent.QuitEvent;
+import com.apple.eawt.QuitResponse;
+import com.timepath.tf2.hudedit.HudEditor.OS;
 import com.timepath.tf2.hudedit.display.HudCanvas;
 import com.timepath.tf2.hudedit.loaders.ResLoader;
 import com.timepath.tf2.hudedit.util.Element;
@@ -90,6 +95,7 @@ import javax.swing.tree.TreeSelectionModel;
  * http://code.google.com/p/xfiledialog/ - windows "open folder" dialog
  * http://java.dzone.com/news/native-dialogs-swing-little - more native file dialogs on linux
  * http://java-gnome.sourceforge.net/get/
+ * http://developer.apple.com/legacy/mac/library/#samplecode/OSXAdapter/Introduction/Intro.html#//apple_ref/doc/uid/DTS10000685-Intro-DontLinkElementID_2 - mac integration
  * 
  * Interface design:
  * http://stackoverflow.com/questions/1004239/swing-tweaks-for-mac-os-x
@@ -109,106 +115,6 @@ import javax.swing.tree.TreeSelectionModel;
  */
 @SuppressWarnings("serial")
 public class EditorFrame extends JFrame {
-
-    //<editor-fold defaultstate="collapsed" desc="Display">
-    public static void main(String... args) {
-        //<editor-fold defaultstate="collapsed" desc="Try and get nimbus look and feel, if it is installed.">
-//        Toolkit.getDefaultToolkit().setDynamicLayout(true);
-        initialLaf();
-        //</editor-fold>
-        
-        //<editor-fold defaultstate="collapsed" desc="Display the editor">
-        SwingUtilities.invokeLater(new Runnable() {
-            
-            @Override
-            public void run() {
-                EditorFrame frame = new EditorFrame();
-                frame.start();
-            }
-            
-        });
-        //</editor-fold>
-    }
-    
-    private static void initialLaf() {
-        try {
-//            UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
-            for(UIManager.LookAndFeelInfo info : UIManager.getInstalledLookAndFeels()) {
-                if("Nimbus".equals(info.getName())) {
-                    UIManager.setLookAndFeel(info.getClassName());
-                    break;
-                }
-            }
-        } catch(Exception ex) {
-            Logger.getLogger(EditorFrame.class.getName()).log(Level.WARNING, null, ex);
-        }
-    }
-    
-    private static void systemLaf() {
-        try {
-            UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
-        } catch(Exception ex) {
-            Logger.getLogger(EditorFrame.class.getName()).log(Level.WARNING, null, ex);
-        }
-    }
-    //</editor-fold>
-
-    //<editor-fold defaultstate="collapsed" desc="OS specific code">
-    private final static OS os;
-
-    private final static int shortcutKey;
-    
-    private final static String exitText;
-
-    private enum OS {
-
-        Windows, Mac, Linux, Other
-
-    }
-    
-    private static Object initFCUILinux;
-
-    static {
-        String osVer = System.getProperty("os.name").toLowerCase();
-        if(osVer.indexOf("windows") != -1) {
-            os = OS.Windows;
-        } else if(osVer.indexOf("OS X") != -1 || osVer.indexOf("mac") != -1) {
-            os = OS.Mac;
-        } else if(osVer.indexOf("linux") != -1) {
-            os = OS.Linux;
-            initFCUILinux = UIManager.get("FileChooserUI");
-//            if("GTK look and feel".equals(UIManager.getLookAndFeel().getName())) {
-//                UIManager.put("FileChooserUI", "eu.kostia.gtkjfilechooser.ui.GtkFileChooserUI");
-//            }
-        } else {
-            os = OS.Other;
-            System.out.println("Unrecognised OS: " + osVer);
-        }
-        
-        if(os == OS.Windows) {
-            shortcutKey = ActionEvent.CTRL_MASK;
-            exitText = "Exit";
-//            XFileDialog.setTraceLevel(0);
-        } else if(os == OS.Mac) {
-            shortcutKey = ActionEvent.META_MASK;
-            exitText = "Quit";
-            System.setProperty("apple.awt.showGrowBox", "true");
-            System.setProperty("apple.laf.useScreenMenuBar", "true");
-            System.setProperty("com.apple.macos.smallTabs", "true");
-            System.setProperty("com.apple.macos.useScreenMenuBar", "true");
-            System.setProperty("com.apple.macos.use-file-dialog-packages", "true");
-            System.setProperty("com.apple.mrj.application.apple.menu.about.name", "TF2 HUD Editor"); // -Xdock:name="TF2 HUD Editor"
-            System.setProperty("com.apple.mrj.application.growbox.intrudes", "false");
-            System.setProperty("com.apple.mrj.application.live-resize", "true");
-        } else if(os == OS.Linux) {
-            shortcutKey = ActionEvent.CTRL_MASK;
-            exitText = "Exit";
-        } else {
-            shortcutKey = ActionEvent.CTRL_MASK;
-            exitText = "Exit";
-        }
-    }
-    //</editor-fold>
     
     private boolean inDev;
     
@@ -219,6 +125,9 @@ public class EditorFrame extends JFrame {
                 try {
                     URL url = new URL("https://dl.dropbox.com/u/42745598/tf/Hud%20Editor/TF2%20HUD%20Editor.jar.changes");
                     URLConnection connection = url.openConnection();
+//                    (HttpURLConnection) url.openConnection();
+                    int filesize = connection.getContentLength();
+                    System.out.println(filesize);
                     
                     String text = "";
                     BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getInputStream()));
@@ -253,7 +162,7 @@ public class EditorFrame extends JFrame {
 
                     });
                     JScrollPane window = new JScrollPane(panel);
-                    if(os == OS.Mac) {
+                    if(HudEditor.os == OS.Mac) {
                         window.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
                     } else {
                         window.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
@@ -381,9 +290,38 @@ public class EditorFrame extends JFrame {
     }
     
     private void quit() {
-        if(!inDev) {
-            System.exit(0);
-        }
+        System.out.println("Quitting...");
+        System.exit(0);
+    }
+    
+    private void about() {
+        String latestThread = "http://www.reddit.com/r/truetf2/comments/11xtwz/wysiwyg_hud_editor_coming_together/";
+        String aboutText = "<html><h2>This is a <u>W</u>hat <u>Y</u>ou <u>S</u>ee <u>I</u>s <u>W</u>hat <u>Y</u>ou <u>G</u>et HUD Editor for TF2.</h2>";
+        aboutText += "<p>You can graphically edit TF2 HUDs with it!<br>";
+        aboutText += "<p>It was written by <a href=\"http://www.reddit.com/user/TimePath/\">TimePath</a></p>";
+        aboutText += "<p>Source available on <a href=\"http://code.google.com/p/tf2-hud-editor/\">Google code</a></p>";
+        aboutText += "<p>I have an <a href=\"http://code.google.com/feeds/p/tf2-hud-editor/hgchanges/basic\">Atom feed</a> set up listing source commits</p>";
+        aboutText += "<p>Please give feedback or suggestions on <a href=\""+latestThread+"\">the latest update thread</a></p>";
+        aboutText += "<p>Current version: " + myMD5 + "</p>";
+        aboutText += "</html>";
+        final JEditorPane panel = new JEditorPane("text/html", aboutText);
+        panel.setEditable(false);
+        panel.setOpaque(false);
+        panel.addHyperlinkListener(new HyperlinkListener() {
+
+            @Override
+            public void hyperlinkUpdate(HyperlinkEvent he) {
+                if (he.getEventType().equals(HyperlinkEvent.EventType.ACTIVATED)) {
+                    try {
+                        Desktop.getDesktop().browse(he.getURL().toURI()); // http://stackoverflow.com/questions/5116473/linux-command-to-open-url-in-default-browser
+                    } catch(Exception e) {
+//                                e.printStackTrace();
+                    }
+                }
+            }
+
+        });
+        info(panel, "About");
     }
 
     public EditorFrame() {
@@ -418,7 +356,7 @@ public class EditorFrame extends JFrame {
                     DropTargetContext context = e.getDropTargetContext();
                     e.acceptDrop(DnDConstants.ACTION_COPY_OR_MOVE);
                     Transferable t = e.getTransferable();
-                    if(os == OS.Linux) {
+                    if(HudEditor.os == OS.Linux) {
                         DataFlavor nixFileDataFlavor = new DataFlavor("text/uri-list;class=java.lang.String");
                         String data = (String) t.getTransferData(nixFileDataFlavor);
                         for(StringTokenizer st = new StringTokenizer(data, "\r\n"); st.hasMoreTokens();) {
@@ -465,7 +403,7 @@ public class EditorFrame extends JFrame {
         
         canvas = new HudCanvas();
         canvasPane = new JScrollPane(canvas);
-        if(os == OS.Mac) {
+        if(HudEditor.os == OS.Mac) {
             canvasPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
             canvasPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_ALWAYS);
         } else {
@@ -478,15 +416,52 @@ public class EditorFrame extends JFrame {
         browser.setResizeWeight(0.5);
         splitPane.setRightComponent(browser);
         
+        if(HudEditor.os == OS.Mac) {
+//            createMacMenus();
+        }
+        
         this.add(splitPane);
 
         this.pack();
         this.setFocusableWindowState(true);
     }
     
-    public void start() {
+    private void createMacMenus() {
+        if(HudEditor.os != OS.Mac) {
+            return;
+        }
+        try {
+            OSXAdapter.setQuitHandler(this, getClass().getDeclaredMethod("quit", (Class[])null));
+            OSXAdapter.setAboutHandler(this, getClass().getDeclaredMethod("about", (Class[])null));
+//            OSXAdapter.setPreferencesHandler(this, getClass().getDeclaredMethod("preferences", (Class[])null));
+//            OSXAdapter.setFileHandler(this, getClass().getDeclaredMethod("loadImageFile", new Class[] { String.class }));
+
+//            com.apple.eawt.Application app = com.apple.eawt.Application.getApplication();
+    //        app.setEnabledPreferencesMenu(true);
+    //        app.setEnabledAboutMenu(true);
+//            app.setQuitStrategy(QuitStrategy.CLOSE_ALL_WINDOWS);
+//            app.setAboutHandler(new com.apple.eawt.AboutHandler() {
+//                public void handleAbout(AboutEvent e) {
+//                    about();
+//                }
+//            });
+//            app.setQuitHandler(new com.apple.eawt.QuitHandler() {
+//                public void handleQuitRequestWith(QuitEvent qe, QuitResponse qr) {
+//                    quit();
+//                }
+//            });
+//            ImageIcon icon = ... // your code to load your icon
+//            application.setDockIconImage(icon.getImage());
+        } catch(Exception e) {
+            e.printStackTrace();
+            return;
+        }
+    }
+    
+    @Override
+    public void setVisible(boolean b) {
+        super.setVisible(b);
         this.createBufferStrategy(3); // Triple buffered, any more sees minimal gain.
-        this.setVisible(true);
         this.checkForUpdates();
     }
     
@@ -594,7 +569,7 @@ public class EditorFrame extends JFrame {
      */
     private void locateHudDirectory() {
         String selection = null;
-        if(os == OS.Mac) {
+        if(HudEditor.os == OS.Mac) {
             System.setProperty("apple.awt.fileDialogForDirectories", "true");
             FileDialog fd = new FileDialog(this, "Open a HUD folder");
             if(hudSelectionDir != null) {
@@ -613,13 +588,13 @@ public class EditorFrame extends JFrame {
                 selection = file;
             }
 //        } else
-//        if(os == OS.Windows) {
+//        if(HudEditor.os == OS.Windows) {
 //            XFileDialog fd = new XFileDialog(this); // was EditorFrame.this
 //            fd.setTitle("Open a HUD folder");
 //            selection = fd.getFolder();
 //            fd.dispose();
 //        } else
-//        if(os == OS.Linux) {
+//        if(HudEditor.os == OS.Linux) {
 //            EditorFrame.systemLaf();
 //            UIManager.put("FileChooserUI", "eu.kostia.gtkjfilechooser.ui.GtkFileChooserUI");
 //            JFileChooser fd = new JFileChooser();
@@ -1043,27 +1018,27 @@ public class EditorFrame extends JFrame {
     
     private class EditorMenuBar extends JMenuBar {
         
-        private final JMenuItem newItem;
-        private final JMenuItem openItem;
-        private final JMenuItem openZippedItem;
-        private final JMenuItem saveItem;
-        private final JMenuItem saveAsItem;
-        private final JMenuItem reloadItem;
-        private final JMenuItem closeItem;
-        private final JMenuItem exitItem;
-        private final JMenuItem undoItem;
-        private final JMenuItem redoItem;
-        private final JMenuItem cutItem;
-        private final JMenuItem copyItem;
-        private final JMenuItem pasteItem;
-        private final JMenuItem deleteItem;
-        private final JMenuItem selectAllItem;
-        private final JMenuItem preferencesItem;
-        private final JMenuItem resolutionItem;
-        private final JMenuItem previewItem;
-        private final JMenuItem updateItem;
-        private final JMenuItem aboutItem;
-        private final JMenuItem changeLogItem;
+        private JMenuItem newItem;
+        private JMenuItem openItem;
+        private JMenuItem openZippedItem;
+        private JMenuItem saveItem;
+        private JMenuItem saveAsItem;
+        private JMenuItem reloadItem;
+        private JMenuItem closeItem;
+        private JMenuItem exitItem;
+        private JMenuItem undoItem;
+        private JMenuItem redoItem;
+        private JMenuItem cutItem;
+        private JMenuItem copyItem;
+        private JMenuItem pasteItem;
+        private JMenuItem deleteItem;
+        private JMenuItem selectAllItem;
+        private JMenuItem preferencesItem;
+        private JMenuItem resolutionItem;
+        private JMenuItem previewItem;
+        private JMenuItem updateItem;
+        private JMenuItem aboutItem;
+        private JMenuItem changeLogItem;
 
         EditorMenuBar() {
             super();
@@ -1076,31 +1051,38 @@ public class EditorFrame extends JFrame {
             
             newItem = new JMenuItem("New", KeyEvent.VK_N);
             newItem.setEnabled(false);
-            newItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_N, shortcutKey));
+            newItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_N, HudEditor.shortcutKey));
             newItem.addActionListener(al);
             fileMenu.add(newItem);
             
             openItem = new JMenuItem("Open...", KeyEvent.VK_O);
-            openItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_O, shortcutKey));
+            openItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_O, HudEditor.shortcutKey));
             openItem.addActionListener(al);
             fileMenu.add(openItem);
             
             openZippedItem = new JMenuItem("Open Zip...", KeyEvent.VK_Z);
             openZippedItem.setEnabled(false);
-            openZippedItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_O, shortcutKey + ActionEvent.SHIFT_MASK));
+            openZippedItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_O, HudEditor.shortcutKey + ActionEvent.SHIFT_MASK));
             openZippedItem.addActionListener(al);
             fileMenu.add(openZippedItem);
             
-            fileMenu.addSeparator();
+            if(HudEditor.os == OS.Mac) {
+                fileMenu.addSeparator();
+            
+                closeItem = new JMenuItem("Close", KeyEvent.VK_C);
+                closeItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_W, HudEditor.shortcutKey));
+                closeItem.addActionListener(al);
+                fileMenu.add(closeItem);
+            }
             
             saveItem = new JMenuItem("Save", KeyEvent.VK_S);
-            saveItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_S, shortcutKey));
+            saveItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_S, HudEditor.shortcutKey));
             saveItem.addActionListener(al);
             fileMenu.add(saveItem);
             
             saveAsItem = new JMenuItem("Save As...", KeyEvent.VK_A);
             saveAsItem.setEnabled(false);
-            saveAsItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_S, shortcutKey + ActionEvent.SHIFT_MASK));
+            saveAsItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_S, HudEditor.shortcutKey + ActionEvent.SHIFT_MASK));
             saveAsItem.addActionListener(al);
             fileMenu.add(saveAsItem);
             
@@ -1110,17 +1092,19 @@ public class EditorFrame extends JFrame {
             
             fileMenu.addSeparator();
 
-            closeItem = new JMenuItem("Close", KeyEvent.VK_C);
-            closeItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_W, shortcutKey));
-            closeItem.addActionListener(al);
-            fileMenu.add(closeItem);
+            if(HudEditor.os != OS.Mac) {
+                closeItem = new JMenuItem("Close", KeyEvent.VK_C);
+                closeItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_W, HudEditor.shortcutKey));
+                closeItem.addActionListener(al);
+                fileMenu.add(closeItem);
+            
+                fileMenu.addSeparator();
 
-            fileMenu.addSeparator();
-
-            exitItem = new JMenuItem(exitText, KeyEvent.VK_X);
-            exitItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_Q, shortcutKey));
-            exitItem.addActionListener(al);
-            fileMenu.add(exitItem);
+                exitItem = new JMenuItem("Exit", KeyEvent.VK_X);
+                exitItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_Q, HudEditor.shortcutKey));
+                exitItem.addActionListener(al);
+                fileMenu.add(exitItem);
+            }
 
             JMenu editMenu = new JMenu("Edit");
             editMenu.setMnemonic(KeyEvent.VK_E);
@@ -1128,13 +1112,13 @@ public class EditorFrame extends JFrame {
             
             undoItem = new JMenuItem("Undo", KeyEvent.VK_U);
             undoItem.setEnabled(false);
-            undoItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_Z, shortcutKey));
+            undoItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_Z, HudEditor.shortcutKey));
             undoItem.addActionListener(al);
             editMenu.add(undoItem);
             
             redoItem = new JMenuItem("Redo", KeyEvent.VK_R);
             redoItem.setEnabled(false);
-            redoItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_Z, shortcutKey + ActionEvent.SHIFT_MASK));
+            redoItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_Z, HudEditor.shortcutKey + ActionEvent.SHIFT_MASK));
             redoItem.addActionListener(al);
             editMenu.add(redoItem);
             
@@ -1142,19 +1126,19 @@ public class EditorFrame extends JFrame {
             
             cutItem = new JMenuItem("Cut", KeyEvent.VK_T);
             cutItem.setEnabled(false);
-            cutItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_X, shortcutKey));
+            cutItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_X, HudEditor.shortcutKey));
             cutItem.addActionListener(al);
             editMenu.add(cutItem);
             
             copyItem = new JMenuItem("Copy", KeyEvent.VK_C);
             copyItem.setEnabled(false);
-            copyItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_C, shortcutKey));
+            copyItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_C, HudEditor.shortcutKey));
             copyItem.addActionListener(al);
             editMenu.add(copyItem);
             
             pasteItem = new JMenuItem("Paste", KeyEvent.VK_P);
             pasteItem.setEnabled(false);
-            pasteItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_V, shortcutKey));
+            pasteItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_V, HudEditor.shortcutKey));
             pasteItem.addActionListener(al);
             editMenu.add(pasteItem);
             
@@ -1167,23 +1151,25 @@ public class EditorFrame extends JFrame {
             editMenu.addSeparator();
 
             selectAllItem = new JMenuItem("Select All", KeyEvent.VK_A);
-            selectAllItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_A, shortcutKey));
+            selectAllItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_A, HudEditor.shortcutKey));
             selectAllItem.addActionListener(al);
             editMenu.add(selectAllItem);
             
-            editMenu.addSeparator();
+            if(HudEditor.os == OS.Mac) {
+                editMenu.addSeparator();
 
-            preferencesItem = new JMenuItem("Preferences", KeyEvent.VK_E);
-            preferencesItem.setEnabled(false);
-            preferencesItem.addActionListener(al);
-            editMenu.add(preferencesItem);
+                preferencesItem = new JMenuItem("Preferences", KeyEvent.VK_E);
+                preferencesItem.setEnabled(false);
+                preferencesItem.addActionListener(al);
+                editMenu.add(preferencesItem);
+            }
 
             JMenu viewMenu = new JMenu("View");
             viewMenu.setMnemonic(KeyEvent.VK_V);
             this.add(viewMenu);
 
             resolutionItem = new JMenuItem("Change Resolution", KeyEvent.VK_R);
-            resolutionItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_R, shortcutKey));
+            resolutionItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_R, HudEditor.shortcutKey));
             resolutionItem.addActionListener(al);
             viewMenu.add(resolutionItem);
             
@@ -1228,9 +1214,11 @@ public class EditorFrame extends JFrame {
             changeLogItem.addActionListener(al);
             helpMenu.add(changeLogItem);
             
-            aboutItem = new JMenuItem("About", KeyEvent.VK_A);
-            aboutItem.addActionListener(al);
-            helpMenu.add(aboutItem);
+            if(HudEditor.os != OS.Mac) {
+                aboutItem = new JMenuItem("About", KeyEvent.VK_A);
+                aboutItem.addActionListener(al);
+                helpMenu.add(aboutItem);
+            }
         }
         
         private class EditorActionListener implements ActionListener {
@@ -1261,33 +1249,7 @@ public class EditorFrame extends JFrame {
                         canvas.select(canvas.getElements().get(i));
                     }
                 } else if(cmd == aboutItem) {
-                    String latestThread = "http://www.reddit.com/r/truetf2/comments/11xtwz/wysiwyg_hud_editor_coming_together/";
-                    String aboutText = "<html><h2>This is a <u>W</u>hat <u>Y</u>ou <u>S</u>ee <u>I</u>s <u>W</u>hat <u>Y</u>ou <u>G</u>et HUD Editor for TF2.</h2>";
-                    aboutText += "<p>You can graphically edit TF2 HUDs with it!<br>";
-                    aboutText += "<p>It was written by <a href=\"http://www.reddit.com/user/TimePath/\">TimePath</a></p>";
-                    aboutText += "<p>Source available on <a href=\"http://code.google.com/p/tf2-hud-editor/\">Google code</a></p>";
-                    aboutText += "<p>I have an <a href=\"http://code.google.com/feeds/p/tf2-hud-editor/hgchanges/basic\">Atom feed</a> set up listing source commits</p>";
-                    aboutText += "<p>Please give feedback or suggestions on <a href=\""+latestThread+"\">the latest update thread</a></p>";
-                    aboutText += "<p>Current version: " + myMD5 + "</p>";
-                    aboutText += "</html>";
-                    final JEditorPane panel = new JEditorPane("text/html", aboutText);
-                    panel.setEditable(false);
-                    panel.setOpaque(false);
-                    panel.addHyperlinkListener(new HyperlinkListener() {
-
-                        @Override
-                        public void hyperlinkUpdate(HyperlinkEvent he) {
-                            if (he.getEventType().equals(HyperlinkEvent.EventType.ACTIVATED)) {
-                                try {
-                                    Desktop.getDesktop().browse(he.getURL().toURI()); // http://stackoverflow.com/questions/5116473/linux-command-to-open-url-in-default-browser
-                                } catch(Exception e) {
-    //                                e.printStackTrace();
-                                }
-                            }
-                        }
-
-                    });
-                    info(panel, "About");
+                    about();
                 } else if(cmd == updateItem) {
                     EditorFrame.this.checkForUpdates();
                 } else if(cmd == changeLogItem) {
