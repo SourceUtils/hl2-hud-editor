@@ -1,12 +1,9 @@
-package com.timepath.tf2.hudedit;
+package com.timepath.tf2.hudedit.classloader;
 
 import java.io.File;
-import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
-import java.net.URL;
-import java.util.Enumeration;
 
 /**
  *
@@ -30,7 +27,9 @@ public class MyClassLoader extends ClassLoader {
     }
     
     public void run(String className, String[] args) throws Throwable {
-        Method method = this.loadClass(className).getMethod("main", new Class<?>[] {String[].class});
+        Class<?> clazz = loadClass(className);
+        Object instance = clazz.newInstance();
+        Method method = clazz.getMethod("main", new Class<?>[] {String[].class});
         // ensure 'method' is 'public static void main(args[])'
         boolean modifiersValid = false;
         boolean returnTypeValid = false;
@@ -46,11 +45,16 @@ public class MyClassLoader extends ClassLoader {
         }
         
         try {
-            Thread.currentThread().setContextClassLoader(this);
-            method.invoke(null, (Object)args);
+            method.invoke(instance, (Object) args);
         } catch (InvocationTargetException e) {
             throw e.getTargetException();
         }
+    }
+
+    @Override
+    protected Class<?> findClass(String name) throws ClassNotFoundException {
+        System.out.println("findClass("+name+")");
+        return super.findClass(name);
     }
 
     @Override

@@ -1,8 +1,7 @@
 package com.timepath.tf2.hudedit.util;
 
 import com.timepath.tf2.hudedit.EditorFrame;
-import com.timepath.tf2.hudedit.display.HudCanvas;
-import com.timepath.tf2.hudedit.loaders.ResLoader;
+import com.timepath.tf2.hudedit.display.EditorCanvas;
 import java.awt.Color;
 import java.awt.Font;
 import java.awt.Image;
@@ -24,9 +23,9 @@ public class Element {
     
     public static Map<String, Element> areas = new HashMap<String, Element>();
 
-    HudCanvas canvas = EditorFrame.canvas;
+    EditorCanvas canvas = EditorFrame.canvas;
 
-    public Element(HudCanvas canvas) {
+    public Element(EditorCanvas canvas) {
         this.canvas = canvas;
     }
 
@@ -562,11 +561,11 @@ public class Element {
         }
     }
 
-    public HudCanvas getCanvas() {
+    public EditorCanvas getCanvas() {
         return canvas;
     }
 
-    public void setCanvas(HudCanvas canvas) {
+    public void setCanvas(EditorCanvas canvas) {
         this.canvas = canvas;
     }
 

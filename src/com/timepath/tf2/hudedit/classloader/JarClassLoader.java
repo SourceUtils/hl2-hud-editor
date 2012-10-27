@@ -21,7 +21,8 @@
  *
  * $Id: JarClassLoader.java,v 1.37 2011/11/02 14:38:56 mg Exp $
  */
-package com.jdotsoft.jarloader;
+//package com.jdotsoft.jarloader;
+package com.timepath.tf2.hudedit.classloader;
 
 import java.applet.AppletContext;
 import java.applet.AppletStub;
@@ -48,6 +49,7 @@ import java.net.URLDecoder;
 import java.security.CodeSource;
 import java.security.ProtectionDomain;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Enumeration;
 import java.util.HashMap;
@@ -60,7 +62,6 @@ import java.util.jar.Attributes.Name;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 import java.util.jar.Manifest;
-
 import javax.swing.JApplet;
 
 /**
@@ -272,7 +273,7 @@ public class JarClassLoader extends ClassLoader {
         hsDeleteOnExit = new HashSet<File>();
 
         // Prepare common for all protocols 
-        String sUrlTopJar = null;
+        String sUrlTopJar;
         pd = getClass().getProtectionDomain();
         CodeSource cs = pd.getCodeSource();
         URL urlTopJar = cs.getLocation();
@@ -343,6 +344,7 @@ public class JarClassLoader extends ClassLoader {
         
         checkShading();
         Runtime.getRuntime().addShutdownHook(new Thread() {
+            @Override
             public void run() {
                 shutdown();
             }
@@ -394,9 +396,7 @@ public class JarClassLoader extends ClassLoader {
             }
         }
         if (hsLogArea.size() == 1 && hsLogArea.contains(LogArea.CONFIG)) {
-            for (LogArea la : LogArea.values()) {
-                hsLogArea.add(la);
-            }
+            hsLogArea.addAll(Arrays.asList(LogArea.values()));
         }
     }
 
@@ -689,7 +689,7 @@ public class JarClassLoader extends ClassLoader {
      * @param fileCfg file with temporary files list.
      */
     private void persistNewTemp(File fileCfg) {
-        if (hsDeleteOnExit.size() == 0) {
+        if (hsDeleteOnExit.isEmpty()) {
             logDebug(LogArea.CONFIG, "No temp file names to persist on exit.");
             fileCfg.delete(); // do not pollute disk
             return;

@@ -3,10 +3,12 @@ package com.timepath.tf2.hudedit;
 //<editor-fold defaultstate="collapsed" desc="imports">
 import apple.dts.samplecode.osxadapter.OSXAdapter;
 import com.timepath.tf2.hudedit.HudEditor.OS;
-import com.timepath.tf2.hudedit.display.HudCanvas;
+import com.timepath.tf2.hudedit.display.EditorCanvas;
+import com.timepath.tf2.hudedit.display.EditorFileTreePane;
+import com.timepath.tf2.hudedit.display.EditorPropertiesTablePane;
+import com.timepath.tf2.hudedit.display.EditorPropertiesTablePane.EditorPropertiesTable;
 import com.timepath.tf2.hudedit.loaders.ResLoader;
 import com.timepath.tf2.hudedit.util.Element;
-import com.timepath.tf2.hudedit.util.Property;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Cursor;
@@ -15,7 +17,6 @@ import java.awt.Dimension;
 import java.awt.DisplayMode;
 import java.awt.FileDialog;
 import java.awt.GraphicsEnvironment;
-import java.awt.Rectangle;
 import java.awt.Toolkit;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.Transferable;
@@ -39,7 +40,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.UnsupportedEncodingException;
-import java.net.HttpURLConnection;
 import java.net.URI;
 import java.net.URL;
 import java.net.URLConnection;
@@ -66,26 +66,18 @@ import javax.swing.JOptionPane;
 import javax.swing.JScrollPane;
 import javax.swing.JSpinner;
 import javax.swing.JSplitPane;
-import javax.swing.JTable;
 import javax.swing.JTree;
 import javax.swing.KeyStroke;
-import javax.swing.ListSelectionModel;
 import javax.swing.ScrollPaneConstants;
 import javax.swing.SpinnerNumberModel;
 import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
 import javax.swing.event.HyperlinkEvent;
 import javax.swing.event.HyperlinkListener;
-import javax.swing.event.TreeSelectionEvent;
-import javax.swing.event.TreeSelectionListener;
 import javax.swing.table.DefaultTableModel;
-import javax.swing.table.TableCellEditor;
-import javax.swing.table.TableCellRenderer;
-import javax.swing.table.TableModel;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeCellRenderer;
 import javax.swing.tree.DefaultTreeModel;
-import javax.swing.tree.TreeSelectionModel;
 import net.tomahawk.XFileDialog;
 //</editor-fold>
 
@@ -100,6 +92,7 @@ import net.tomahawk.XFileDialog;
  * Interface design:
  * http://stackoverflow.com/questions/1004239/swing-tweaks-for-mac-os-x
  * http://developer.apple.com/library/mac/#documentation/Java/Conceptual/Java14Development/07-NativePlatformIntegration/NativePlatformIntegration.html
+ * http://today.java.net/pub/a/today/2003/12/08/swing.html
  * 
  * Deployment:
  * http://www2.sys-con.com/itsg/virtualcd/java/archives/0801/mcfarland/index.html
@@ -136,7 +129,13 @@ public class EditorFrame extends JFrame {
                     while((line = reader.readLine()) != null) {
                         if(!inDev && line.contains(myMD5)) { // dev build cannot MD5
                             String[] parts = line.split(myMD5);
-                            text += parts[0] + "<b><u>" + myMD5 + "</u></b>" + parts[1];
+                            if(parts[0] != null) {
+                                text += parts[0];
+                            }
+                            text += "<b><u>" + myMD5 + "</u></b>";
+                            if(parts[1] != null) {
+                                text += parts[1];
+                            }
                         } else {
                             text += line;
                         }
@@ -181,13 +180,18 @@ public class EditorFrame extends JFrame {
     }
     
     public static void main(String[] args) {
+        
+        if(HudEditor.os == OS.Windows) {
+            try {
+                XFileDialog.setTraceLevel(0);
+            } catch(UnsatisfiedLinkError e) {
+                System.out.println("java.library.path = " + System.getProperty("java.library.path"));
+            }
+        }
     
-        //<editor-fold defaultstate="collapsed" desc="Try and get nimbus look and feel, if it is installed.">
 //        Toolkit.getDefaultToolkit().setDynamicLayout(true);
         initialLaf();
-        //</editor-fold>
         
-        //<editor-fold defaultstate="collapsed" desc="Display the editor">
         SwingUtilities.invokeLater(new Runnable() { // SwingUtilities vs EventQueue?
             
             @Override
@@ -197,7 +201,6 @@ public class EditorFrame extends JFrame {
             }
             
         });
-        //</editor-fold>
         
     }
     
@@ -234,7 +237,7 @@ public class EditorFrame extends JFrame {
             
             private void doCheckForUpdates() {
                 try {
-                    String md5 = "";
+                    String md5;
                     URL url = new URL("https://dl.dropbox.com/u/42745598/tf/Hud%20Editor/TF2%20HUD%20Editor.jar.MD5");
                     URLConnection connection = url.openConnection();
 
@@ -268,7 +271,7 @@ public class EditorFrame extends JFrame {
                             FileOutputStream writer = new FileOutputStream(runPath); // TODO: stop closing when this happens. Maybe make a backup..
                             byte[] buffer = new byte[153600]; // 150KB
                             int totalBytesRead = 0;
-                            int bytesRead = 0;
+                            int bytesRead;
 
                             System.out.println("Downloading JAR file in 150KB blocks at a time.\n");
                             
@@ -345,12 +348,14 @@ public class EditorFrame extends JFrame {
         }
     }
     
-    private void quit() {
-        System.out.println("Quitting...");
-        System.exit(0);
+    public void quit() {
+        if(!updating) {
+            System.out.println("Quitting...");
+            System.exit(0);
+        }
     }
     
-    private void about() {
+    public void about() {
         String latestThread = "http://www.reddit.com/r/truetf2/comments/11xtwz/wysiwyg_hud_editor_coming_together/";
         String aboutText = "<html><h2>This is a <u>W</u>hat <u>Y</u>ou <u>S</u>ee <u>I</u>s <u>W</u>hat <u>Y</u>ou <u>G</u>et HUD Editor for TF2.</h2>";
         aboutText += "<p>You can graphically edit TF2 HUDs with it!<br>";
@@ -389,7 +394,7 @@ public class EditorFrame extends JFrame {
         
         calcMD5();
         
-        this.setTitle(ResourceBundle.getBundle("com/timepath/tf2/hudedit/lang").getString("Title"));
+        this.setTitle(ResourceBundle.getBundle("com/timepath/tf2/hudedit/internationalization/lang").getString("Title"));
         this.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
         this.addWindowListener(new WindowAdapter() {
 
@@ -461,7 +466,7 @@ public class EditorFrame extends JFrame {
         final JSplitPane splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT);
         splitPane.setResizeWeight(0.8);
         
-        canvas = new HudCanvas();
+        canvas = new EditorCanvas();
         canvasPane = new JScrollPane(canvas);
         if(HudEditor.os == OS.Mac) {
             canvasPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
@@ -472,7 +477,14 @@ public class EditorFrame extends JFrame {
         }
         splitPane.setLeftComponent(canvasPane);
         
-        JSplitPane browser = new JSplitPane(JSplitPane.VERTICAL_SPLIT, new EditorFileTree(), new EditorPropertiesTable());
+        EditorPropertiesTablePane propTablePane = new EditorPropertiesTablePane();
+        propTable = propTablePane.getPropTable();
+        
+        hudFilesRoot = new DefaultMutableTreeNode(null);
+        fileSystem = new JTree(hudFilesRoot);
+        EditorFileTreePane fileTreePane = new EditorFileTreePane(canvas, propTable, fileSystem);
+        
+        JSplitPane browser = new JSplitPane(JSplitPane.VERTICAL_SPLIT, fileTreePane, propTablePane);
         browser.setResizeWeight(0.5);
         splitPane.setRightComponent(browser);
         
@@ -535,7 +547,7 @@ public class EditorFrame extends JFrame {
     
     private JScrollPane canvasPane;
     
-    public static HudCanvas canvas; // should not be static
+    public static EditorCanvas canvas; // should not be static
 
     private ResLoader resloader;
 
@@ -543,7 +555,7 @@ public class EditorFrame extends JFrame {
 
     private DefaultMutableTreeNode hudFilesRoot;
 
-    private PropertiesTable propTable;
+    private EditorPropertiesTable propTable;
     
     private String hudSelectionDir;
     
@@ -912,180 +924,7 @@ public class EditorFrame extends JFrame {
         }
     }
     
-    private class PropertiesTable extends JTable {
-
-        PropertiesTable() {
-            super();
-        }
-
-        PropertiesTable(TableModel model) {
-            super(model);
-        }
-
-        @Override
-        public boolean isCellEditable(int row, int column) {
-            return (column != 0); // deny editing of key
-        }
-
-        @Override
-        public TableCellEditor getCellEditor(int row, int column) {
-            return super.getCellEditor(row, column);
-        }
-
-        @Override
-        public TableCellRenderer getCellRenderer(int row, int column) {
-            return super.getCellRenderer(row, column);
-        }
-
-    }
     
-    class EditorPropertiesTable extends JScrollPane {
-        
-        public EditorPropertiesTable() {
-            super();
-            
-            DefaultTableModel model = new DefaultTableModel();
-            model.addColumn("Key");
-            model.addColumn("Value");
-            model.addColumn("Info");
-            
-            model.insertRow(0, new String[]{"", "", ""});
-
-            propTable = new PropertiesTable(model);
-            propTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-            propTable.setColumnSelectionAllowed(false);
-            propTable.setRowSelectionAllowed(true);
-            propTable.getTableHeader().setReorderingAllowed(false);
-
-            this.setViewportView(propTable);
-            this.setPreferredSize(new Dimension(400, 400));
-        }
-        
-    }
-    
-    private class CustomTreeCellRenderer extends DefaultTreeCellRenderer {
-
-        CustomTreeCellRenderer() {
-            super();
-        }
-
-        private void setIcons(JTree tree, Icon ico) {
-            if(tree.isEnabled()) {
-                this.setIcon(ico);
-            } else {
-                this.setDisabledIcon(ico);
-            }
-        }
-
-        JFileChooser iconFinder = new JFileChooser();
-        Color sameColor = Color.BLACK;
-        Color diffColor = Color.BLUE;
-        Color newColor = Color.GREEN.darker(); 
-
-        /**
-          * Configures the renderer based on the passed in components.
-          * The value is set from messaging the tree with
-          * <code>convertValueToText</code>, which ultimately invokes
-          * <code>toString</code> on <code>value</code>.
-          * The foreground color is set based on the selection and the icon
-          * is set based on on leaf and expanded.
-          */
-        @Override
-        public Component getTreeCellRendererComponent(JTree tree, Object value, boolean sel, boolean expanded, boolean leaf, int row, boolean hasFocus) {
-            String valueText = value.toString();
-
-            Color tColor = null;
-
-            if(value instanceof DefaultMutableTreeNode) {
-                Object nodeValue = ((DefaultMutableTreeNode) value).getUserObject();
-                if(nodeValue instanceof String) {
-                    tColor = sameColor;
-                    setIcons(tree, UIManager.getIcon("FileView.computerIcon"));
-                } else if(nodeValue instanceof File) { // this will either be an actual file on the system (directories included), or an element within a file
-                    tColor = diffColor;
-                    File f = ((File) nodeValue);
-                    valueText = f.getName();
-                    setIcons(tree, iconFinder.getIcon(f));
-                } else if(nodeValue instanceof Element) {
-                    tColor = newColor;
-                    Element e = (Element) nodeValue;
-                    if(e.getProps().isEmpty() && leaf) { // If no properties, warn because irrelevant. Only care if leaves are empty
-                        setIcons(tree, UIManager.getIcon("FileChooser.detailsViewIcon"));
-                    } else {
-                        setIcons(tree, UIManager.getIcon("FileChooser.listViewIcon"));
-                    }
-                } else {
-                    if(nodeValue != null) {
-                        System.out.println(nodeValue.getClass());
-                    }
-                    setIcons(tree, null);
-                }
-            }
-            String stringValue = tree.convertValueToText(valueText, sel, expanded, leaf, row, hasFocus);
-            this.hasFocus = hasFocus;
-            this.setText(stringValue);
-            if(tColor != null) {
-                this.setForeground(sel ? tColor != newColor ? new Color(-tColor.getRed() + 255, -tColor.getGreen() + 255, -tColor.getBlue() + 255) : tColor.brighter() : tColor);
-            } else {
-                this.setForeground(sel ? getTextSelectionColor() : getTextNonSelectionColor());
-            }
-            this.setEnabled(tree.isEnabled());
-            this.setComponentOrientation(tree.getComponentOrientation());
-            this.selected = sel;
-            return this;
-        }
-    }
-    
-    class EditorFileTree extends JScrollPane {
-
-        EditorFileTree() {
-            super();
-            
-            hudFilesRoot = new DefaultMutableTreeNode(null);
-
-            fileSystem = new JTree(hudFilesRoot);
-            fileSystem.setShowsRootHandles(true);
-            fileSystem.setSelectionRow(0);
-            fileSystem.getSelectionModel().setSelectionMode(TreeSelectionModel.SINGLE_TREE_SELECTION);
-            fileSystem.setCellRenderer(new CustomTreeCellRenderer());
-            fileSystem.addTreeSelectionListener(new TreeSelectionListener() {
-
-                @Override
-                public void valueChanged(TreeSelectionEvent e) {
-                    DefaultTableModel model = (DefaultTableModel) propTable.getModel();
-                    model.getDataVector().removeAllElements();
-                    model.insertRow(0, new String[]{"", "", ""});
-                    propTable.scrollRectToVisible(new Rectangle(0, 0, 0, 0));
-
-                    DefaultMutableTreeNode node = (DefaultMutableTreeNode) fileSystem.getLastSelectedPathComponent();
-                    if(node == null) {
-                        return;
-                    }
-
-                    Object nodeInfo = node.getUserObject();
-                    if(nodeInfo instanceof Element) {
-                        Element element = (Element) nodeInfo;
-                        canvas.load(element);
-                        if(!element.getProps().isEmpty()) {
-                            model.getDataVector().removeAllElements();
-                            element.validateDisplay();
-                            for(int i = 0; i < element.getProps().size(); i++) {
-                                Property entry = element.getProps().get(i);
-                                if(entry.getKey().equals("\\n")) {
-                                    continue;
-                                }
-                                model.insertRow(model.getRowCount(), new Object[] {entry.getKey(), entry.getValue(), entry.getInfo()});
-                            }
-                        }
-                    }
-                }
-
-            });
-            
-            this.setViewportView(fileSystem);
-            this.setPreferredSize(new Dimension(400, 400));
-        }
-    }
     
     private class EditorMenuBar extends JMenuBar {
         
@@ -1160,10 +999,10 @@ public class EditorFrame extends JFrame {
             reloadItem = new JMenuItem("Revert", KeyEvent.VK_R);
             reloadItem.addActionListener(al);
             fileMenu.add(reloadItem);
-            
-            fileMenu.addSeparator();
 
             if(HudEditor.os != OS.Mac) {
+                fileMenu.addSeparator();
+                
                 closeItem = new JMenuItem("Close", KeyEvent.VK_C);
                 closeItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_W, HudEditor.shortcutKey));
                 closeItem.addActionListener(al);

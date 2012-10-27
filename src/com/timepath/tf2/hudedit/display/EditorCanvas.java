@@ -3,7 +3,6 @@ package com.timepath.tf2.hudedit.display;
 import com.timepath.tf2.hudedit.util.Element;
 import java.awt.AlphaComposite;
 import java.awt.Color;
-import java.awt.Composite;
 import java.awt.Dimension;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
@@ -27,9 +26,9 @@ import javax.swing.JPanel;
  * @author andrew
  */
 @SuppressWarnings("serial")
-public class HudCanvas extends JPanel implements MouseListener, MouseMotionListener {
+public class EditorCanvas extends JPanel implements MouseListener, MouseMotionListener {
 
-    public HudCanvas() {
+    public EditorCanvas() {
         super();
         init();
     }
@@ -261,7 +260,7 @@ public class HudCanvas extends JPanel implements MouseListener, MouseMotionListe
     @Override
     public void mouseMoved(MouseEvent event) {
         Point p = new Point(event.getPoint());
-        p.translate(-HudCanvas.offX, -HudCanvas.offY);
+        p.translate(-EditorCanvas.offX, -EditorCanvas.offY);
         
         hover(chooseBest(pick(p, elements)));
     }
@@ -269,7 +268,7 @@ public class HudCanvas extends JPanel implements MouseListener, MouseMotionListe
     @Override
     public void mousePressed(MouseEvent event) {
         Point p = new Point(event.getPoint());
-        p.translate(-HudCanvas.offX, -HudCanvas.offY);
+        p.translate(-EditorCanvas.offX, -EditorCanvas.offY);
         int button = event.getButton(); // Button2 is middle click on linux. How odd.
         
         if(button == MouseEvent.BUTTON1) {
@@ -304,7 +303,7 @@ public class HudCanvas extends JPanel implements MouseListener, MouseMotionListe
     @Override
     public void mouseReleased(MouseEvent event) {
         Point p = new Point(event.getPoint());
-        p.translate(-HudCanvas.offX, -HudCanvas.offY);
+        p.translate(-EditorCanvas.offX, -EditorCanvas.offY);
         int button = event.getButton();
         
         if(button == MouseEvent.BUTTON1) {
@@ -321,7 +320,7 @@ public class HudCanvas extends JPanel implements MouseListener, MouseMotionListe
     @Override
     public void mouseDragged(MouseEvent event) { 
         Point p = new Point(event.getPoint());
-        p.translate(-HudCanvas.offX, -HudCanvas.offY);
+        p.translate(-EditorCanvas.offX, -EditorCanvas.offY);
         int button = event.getButton();
         
         //        if(button == MouseEvent.BUTTON1) {
