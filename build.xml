@@ -5,12 +5,13 @@
     
     <property name="store.jar.name" value="TF2 HUD Editor"/>
     <property name="store.dir" value="${user.home}/Dropbox/Public/tf/Hud Editor"/>
+    <property name="archive.dir" value="archives"/>
     <tstamp prefix="build-info">
         <format property="timestamp" pattern="yyyyMMdd/Hmm" locale="en" />
     </tstamp>
     
     <property name="store.jar" value="${store.dir}/${store.jar.name}.jar"/>
-    <property name="store.jar.dated" value="${store.dir}/${build-info.timestamp}.jar"/>
+    <property name="store.jar.dated" value="${archive.dir}/${build-info.timestamp}.jar"/>
     
     <target name="-post-clean">
 <!--        <delete file="${store.jar}"/>-->
@@ -21,7 +22,7 @@
         <mkdir dir="${store.dir}"/>
         <delete file="${store.jar.dated}"/>
         <mkdir dir="dist/lib"/> <!-- Just in case no external libraries are in use and we don't want the packagint ot fail -->
-        <jar destfile="${store.dir}/temp_final.jar" filesetmanifest="skip">
+        <jar destfile="${archive.dir}/temp_final.jar" filesetmanifest="skip">
             <zipgroupfileset dir="dist" includes="*.jar"/>
             <zipgroupfileset dir="dist/lib" includes="*.jar" excludes="AppleJavaExtensions.jar"/>
             <!--<zipgroupfileset dir="." includes="*.dll, *.so, *.dylib"/>-->
@@ -30,7 +31,7 @@
             </manifest>
         </jar>
         <zip destfile="${store.jar.dated}">
-            <zipfileset src="${store.dir}/temp_final.jar" excludes="META-INF/*.SF, META-INF/*.DSA, META-INF/*.RSA"/>
+            <zipfileset src="${archive.dir}/temp_final.jar" excludes="META-INF/*.SF, META-INF/*.DSA, META-INF/*.RSA"/>
         </zip>
         <delete file="${store.dir}/temp_final.jar"/>
         
