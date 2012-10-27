@@ -1,5 +1,6 @@
 package com.timepath.tf2.hudedit.loaders;
 
+import java.io.IOException;
 import java.io.RandomAccessFile;
 
 /**
@@ -17,9 +18,6 @@ public class VtfLoader {
     }
     
     
-//    typedef struct tagVTFHEADER
-//{
-//	char		signature[4];		// 
 //	unsigned int	version[2];		// version[0].version[1] (currently 7.2).
 //	unsigned int	headerSize;		// Size of the header struct (16 byte aligned; currently 80 bytes).
 //	unsigned short	width;			// Width of the largest mipmap in pixels. Must be a power of 2.
@@ -38,25 +36,101 @@ public class VtfLoader {
 //	unsigned char	lowResImageHeight;	// Low resolution image height.
 //	unsigned short	depth;			// Depth of the largest mipmap in pixels.
 //						// Must be a power of 2. Can be 0 or 1 for a 2D texture (v7.2 only).
+    
+    /*
+     *   Version: v7.3
+  Size On Disk: 170.83 KB
+  Width: 256
+  Height: 128
+  Depth: 1
+  Frames: 1
+  Start Frame: 0
+  Faces: 1
+  Mipmaps: 9
+  Flags: 0x00002340
+  Bumpmap Scale: 1.00
+  Reflectivity: 0.09, 0.14, 0.18
+  Format: BGRA8888
 
-    // http://en.wikipedia.org/wiki/C_data_types#Basic_types
-    // http://www.cafeaulait.org/course/week2/02.html
+     */
+    // all Little endian - least significant first
     public void load(String path) {
         RandomAccessFile bin;
 
         try {
           bin = new RandomAccessFile(path, "r");
-          String signature = new String(new byte[] {bin.readByte(), bin.readByte(), bin.readByte(), bin.readByte()});
+          String signature = new String(new byte[] {readChar(bin), readChar(bin), readChar(bin), readChar(bin)});
           System.out.println("SIG=" + signature + ", " + (signature.equals("VTF\0") ? "valid" : "invalid"));
-          int[] version = {bin.readUnsignedShort(), bin.readUnsignedShort()};
+          int[] version = {readUInt(bin), readUInt(bin)};
           System.out.println("VER=" + version[0] + "." + version[1]);
-          int headerSize = bin.readInt();
+          int headerSize = readUInt(bin);
           System.out.println("LEN=" + headerSize);
+          int width = readUShort(bin);
+          System.out.println("WIDE=" + width);
+          int height = readUShort(bin);
+          System.out.println("HIGH=" + height);
+          int flags = readUInt(bin);
+          System.out.println("FLAG=" + flags);
+          int frames = readUShort(bin);
+          System.out.println("FRAMES=" + frames); // zero indexed
+          int first = readUShort(bin);
+          System.out.println("FIRST=" + first); // zero indexed
+          bin.skipBytes(4); // padding
+          float[] reflectivity = new float[] {readFloat(bin), readFloat(bin), readFloat(bin)};
+          System.out.println("REFLECTIVITY=" + reflectivity[0] + ", " + reflectivity[1] + ", " + reflectivity[2]);
+          bin.skipBytes(4); // padding
+          float bumpScale = readFloat(bin);
+          System.out.println("BUMPSCALE=" + bumpScale);
+          int fullFormat = readUInt(bin);
+          System.out.println("FULLFORMAT=" + Formats.getEnumForIndex(fullFormat));
+          int mipCount = readUChar(bin);
+          System.out.println("MIPS=" + mipCount);
+          int lowFormat = readUInt(bin);
+          System.out.println("LOWFORMAT=" + Formats.getEnumForIndex(lowFormat));
+          int lowWidth = readUChar(bin);
+          System.out.println("LOWWIDTH=" + lowWidth);
+          int lowHeight = readUChar(bin);
+          System.out.println("LOWHIGH=" + lowHeight);
+          int depth = readUShort(bin);
+          System.out.println("DEPTH=" + depth);
           
+          // 64 bytes have been read so far
+          // http://msdn.microsoft.com/en-us/library/aa920432.aspx
           bin.close();
         } catch (Exception e) {
           System.out.println("**Error: " + e.getMessage());
         }
+    }
+    
+    byte readByte(RandomAccessFile f) throws IOException {
+        byte b = f.readByte();
+//        System.err.println(Integer.toHexString(new Byte(b)).toUpperCase());
+        return b;
+    }
+    
+    int readUByte(RandomAccessFile f) throws IOException {
+        return readByte(f) & 0xff;
+    }
+    
+    byte readChar(RandomAccessFile f) throws IOException {
+        return readByte(f);
+    }
+    
+    int readUChar(RandomAccessFile f) throws IOException {
+        return readUByte(f);
+    }
+    
+    int readUInt(RandomAccessFile f) throws IOException {
+        return readUByte(f) + (readUByte(f) << 8) + (readUByte(f) << 16) + (readUByte(f) << 24);
+    }
+    
+    float readFloat(RandomAccessFile f) throws IOException {
+        int intBits = readUByte(f) + (readUByte(f) << 8) + (readUByte(f) << 16) + (readUByte(f) << 24);
+        return Float.intBitsToFloat(intBits);
+    }
+    
+    int readUShort(RandomAccessFile f) throws IOException {
+        return (readUByte(f) + (readUByte(f) << 8));
     }
     
     private static enum Formats {
@@ -111,6 +185,9 @@ public class VtfLoader {
         
     }
     
+    /**
+     * https://developer.valvesoftware.com/wiki/Valve_Texture_Format#Image_flags
+     */
     private static enum Flags {
         // Flags from the *.txt config file
         TEXTUREFLAGS_POINTSAMPLE(0x00000001),
