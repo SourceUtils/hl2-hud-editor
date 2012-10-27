@@ -4,14 +4,9 @@ package com.timepath.tf2.hudedit.swing;
 import com.timepath.tf2.hudedit.Main;
 import com.timepath.tf2.hudedit.temp.OSXAdapter;
 import com.timepath.tf2.hudedit.Main.OS;
-import com.timepath.tf2.hudedit.swing.EditorCanvas;
-import com.timepath.tf2.hudedit.swing.EditorFileTreePane;
-import com.timepath.tf2.hudedit.swing.EditorPropertiesTablePane;
 import com.timepath.tf2.hudedit.swing.EditorPropertiesTablePane.EditorPropertiesTable;
 import com.timepath.tf2.hudedit.loaders.ResLoader;
-import com.timepath.tf2.hudedit.util.Element;
-import java.awt.Color;
-import java.awt.Component;
+import java.awt.BorderLayout;
 import java.awt.Cursor;
 import java.awt.Desktop;
 import java.awt.Dimension;
@@ -35,18 +30,19 @@ import java.awt.event.WindowEvent;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.FilenameFilter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.UnsupportedEncodingException;
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.URLConnection;
 import java.net.URLDecoder;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.ResourceBundle;
@@ -55,15 +51,17 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
-import javax.swing.Icon;
 import javax.swing.JDialog;
 import javax.swing.JEditorPane;
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
+import javax.swing.JLabel;
 import javax.swing.JMenu;
 import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
+import javax.swing.JPanel;
+import javax.swing.JProgressBar;
 import javax.swing.JScrollPane;
 import javax.swing.JSpinner;
 import javax.swing.JSplitPane;
@@ -77,7 +75,6 @@ import javax.swing.event.HyperlinkEvent;
 import javax.swing.event.HyperlinkListener;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.tree.DefaultMutableTreeNode;
-import javax.swing.tree.DefaultTreeCellRenderer;
 import javax.swing.tree.DefaultTreeModel;
 import net.tomahawk.XFileDialog;
 //</editor-fold>
@@ -228,10 +225,11 @@ public class EditorFrame extends JFrame {
     }
     
     private boolean updating;
+    
     private void checkForUpdates() {
-        if(inDev) {
-            return;
-        }
+//        if(inDev) {
+//            return;
+//        }
         new Thread() {
             
             int retries = 3;
@@ -266,10 +264,31 @@ public class EditorFrame extends JFrame {
                             System.out.println("Connecting to Dropbox...\n");
 
                             URL latest = new URL("https://dl.dropbox.com/u/42745598/tf/Hud%20Editor/TF2%20HUD%20Editor.jar");
-                            latest.openConnection();
-                            InputStream in = latest.openStream();
+                            URLConnection editor = latest.openConnection();
+                            
+                            JProgressBar pb = new JProgressBar(0,editor.getContentLength());
+                            pb.setPreferredSize(new Dimension(175,20));
+                            pb.setStringPainted(true);
+                            pb.setValue(0); 
 
-                            FileOutputStream writer = new FileOutputStream(runPath); // TODO: stop closing when this happens. Maybe make a backup..
+                            JLabel label = new JLabel("Update Progress: ");
+
+                            JPanel center_panel = new JPanel();
+                            center_panel.add(label);
+                            center_panel.add(pb);
+
+                            JDialog dialog = new JDialog((JFrame) null, "Updating...");
+                            dialog.getContentPane().add(center_panel, BorderLayout.CENTER);
+                            dialog.pack();
+                            dialog.setVisible(true);
+                            
+                            dialog.setLocationRelativeTo(null); // center on screen
+                            dialog.toFront(); // raise above other java windows
+
+                            InputStream in = latest.openStream();
+                            
+
+//                            FileOutputStream writer = new FileOutputStream(runPath); // TODO: stop closing when this happens. Maybe make a backup..
                             byte[] buffer = new byte[153600]; // 150KB
                             int totalBytesRead = 0;
                             int bytesRead;
@@ -279,20 +298,28 @@ public class EditorFrame extends JFrame {
                             updating = true;
                             
                             while((bytesRead = in.read(buffer)) > 0) {  
-                               writer.write(buffer, 0, bytesRead); // I don't want to write directly over the top until I have all the data..
+//                               writer.write(buffer, 0, bytesRead); // I don't want to write directly over the top until I have all the data..
                                buffer = new byte[153600];
                                totalBytesRead += bytesRead;
+                               pb.setValue(totalBytesRead);
                             }
 
                             long endTime = System.currentTimeMillis();
 
                             System.out.println("Done. " + (new Integer(totalBytesRead).toString()) + " bytes read (" + (new Long(endTime - startTime).toString()) + " millseconds).\n");
-                            writer.close();
+//                            writer.close();
                             in.close();
+                            
+                            dialog.dispose();
 
-                            info("Downloaded the latest version.");
+                            info("Downloaded the latest version. Please restart now.");
                             
                             updating = false;
+                            try {
+                                restart();
+                            } catch (URISyntaxException ex) {
+                                Logger.getLogger(EditorFrame.class.getName()).log(Level.SEVERE, null, ex);
+                            }
                         }
                     } else {
                         info("You have the latest version.");
@@ -313,6 +340,24 @@ public class EditorFrame extends JFrame {
                 doCheckForUpdates();
             }
         }.start();
+    }
+    
+    private void restart() throws URISyntaxException, IOException { // TODO: wrap this class in a launcher, rather than explicitly restarting
+        final String javaBin = System.getProperty("java.home") + File.separator + "bin" + File.separator + "java";
+        final File currentJar = new File(EditorFrame.class.getProtectionDomain().getCodeSource().getLocation().toURI());
+
+        if(!currentJar.getName().endsWith(".jar")) {
+            return;
+        }
+
+        final ArrayList<String> command = new ArrayList<String>();
+        command.add(javaBin);
+        command.add("-jar");
+        command.add(currentJar.getPath());
+
+        final ProcessBuilder builder = new ProcessBuilder(command);
+        builder.start();
+        System.exit(0);
     }
     
     private String runPath;
@@ -1117,7 +1162,7 @@ public class EditorFrame extends JFrame {
             this.add(helpMenu);
             
             updateItem = new JMenuItem("Check for Updates", KeyEvent.VK_U);
-            updateItem.setEnabled(!inDev);
+//            updateItem.setEnabled(!inDev);
             updateItem.addActionListener(al);
             helpMenu.add(updateItem);
 
