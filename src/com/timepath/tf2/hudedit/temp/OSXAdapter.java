@@ -55,7 +55,7 @@ Copyright © 2003-2007 Apple, Inc., All Rights Reserved
  
 */
  
-package apple.dts.samplecode.osxadapter;
+package com.timepath.tf2.hudedit.temp;
  
 import java.lang.reflect.*;
  

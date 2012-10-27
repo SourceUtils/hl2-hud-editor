@@ -22,7 +22,7 @@
  * $Id: JarClassLoader.java,v 1.37 2011/11/02 14:38:56 mg Exp $
  */
 //package com.jdotsoft.jarloader;
-package com.timepath.tf2.hudedit.classloader;
+package com.timepath.tf2.hudedit.temp;
 
 import java.applet.AppletContext;
 import java.applet.AppletStub;

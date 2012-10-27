@@ -1,13 +1,13 @@
 package com.timepath.tf2.hudedit;
 
-import com.timepath.tf2.hudedit.classloader.JarClassLoader;
+import com.timepath.tf2.hudedit.temp.JarClassLoader;
 import java.awt.event.ActionEvent;
 
 /**
  *
  * @author andrew
  */
-public class HudEditor {
+public class Main {
     
     public final static OS os;
 
@@ -56,7 +56,7 @@ public class HudEditor {
     public static void main(String[] args) {
         JarClassLoader cl = new JarClassLoader();
         try {
-            cl.invokeMain("com.timepath.tf2.hudedit.EditorFrame", args);
+            cl.invokeMain("com.timepath.tf2.hudedit.swing.EditorFrame", args);
         } catch(Throwable e) {
             e.printStackTrace();
         }

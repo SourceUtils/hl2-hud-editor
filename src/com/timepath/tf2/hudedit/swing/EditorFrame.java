@@ -1,12 +1,13 @@
-package com.timepath.tf2.hudedit;
+package com.timepath.tf2.hudedit.swing;
 
 //<editor-fold defaultstate="collapsed" desc="imports">
-import apple.dts.samplecode.osxadapter.OSXAdapter;
-import com.timepath.tf2.hudedit.HudEditor.OS;
-import com.timepath.tf2.hudedit.display.EditorCanvas;
-import com.timepath.tf2.hudedit.display.EditorFileTreePane;
-import com.timepath.tf2.hudedit.display.EditorPropertiesTablePane;
-import com.timepath.tf2.hudedit.display.EditorPropertiesTablePane.EditorPropertiesTable;
+import com.timepath.tf2.hudedit.Main;
+import com.timepath.tf2.hudedit.temp.OSXAdapter;
+import com.timepath.tf2.hudedit.Main.OS;
+import com.timepath.tf2.hudedit.swing.EditorCanvas;
+import com.timepath.tf2.hudedit.swing.EditorFileTreePane;
+import com.timepath.tf2.hudedit.swing.EditorPropertiesTablePane;
+import com.timepath.tf2.hudedit.swing.EditorPropertiesTablePane.EditorPropertiesTable;
 import com.timepath.tf2.hudedit.loaders.ResLoader;
 import com.timepath.tf2.hudedit.util.Element;
 import java.awt.Color;
@@ -162,7 +163,7 @@ public class EditorFrame extends JFrame {
 
                     });
                     JScrollPane window = new JScrollPane(panel);
-                    if(HudEditor.os == OS.Mac) {
+                    if(Main.os == OS.Mac) {
                         window.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
                     } else {
                         window.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
@@ -181,7 +182,7 @@ public class EditorFrame extends JFrame {
     
     public static void main(String[] args) {
         
-        if(HudEditor.os == OS.Windows) {
+        if(Main.os == OS.Windows) {
             try {
                 XFileDialog.setTraceLevel(0);
             } catch(UnsatisfiedLinkError e) {
@@ -421,7 +422,7 @@ public class EditorFrame extends JFrame {
                     DropTargetContext context = e.getDropTargetContext();
                     e.acceptDrop(DnDConstants.ACTION_COPY_OR_MOVE);
                     Transferable t = e.getTransferable();
-                    if(HudEditor.os == OS.Linux) {
+                    if(Main.os == OS.Linux) {
                         DataFlavor nixFileDataFlavor = new DataFlavor("text/uri-list;class=java.lang.String");
                         String data = (String) t.getTransferData(nixFileDataFlavor);
                         for(StringTokenizer st = new StringTokenizer(data, "\r\n"); st.hasMoreTokens();) {
@@ -468,7 +469,7 @@ public class EditorFrame extends JFrame {
         
         canvas = new EditorCanvas();
         canvasPane = new JScrollPane(canvas);
-        if(HudEditor.os == OS.Mac) {
+        if(Main.os == OS.Mac) {
             canvasPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
             canvasPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_ALWAYS);
         } else {
@@ -488,7 +489,7 @@ public class EditorFrame extends JFrame {
         browser.setResizeWeight(0.5);
         splitPane.setRightComponent(browser);
         
-        if(HudEditor.os == OS.Mac) {
+        if(Main.os == OS.Mac) {
             createMacMenus();
         }
         
@@ -507,7 +508,7 @@ public class EditorFrame extends JFrame {
     }
     
     private void createMacMenus() {
-        if(HudEditor.os != OS.Mac) {
+        if(Main.os != OS.Mac) {
             return;
         }
         try {
@@ -650,7 +651,7 @@ public class EditorFrame extends JFrame {
         new Thread(new Runnable() {
             public void run() {
                 String selection = null;
-                if(HudEditor.os == OS.Mac) {
+                if(Main.os == OS.Mac) {
                     System.setProperty("apple.awt.fileDialogForDirectories", "true");
                     FileDialog fd = new FileDialog(EditorFrame.this, "Open a HUD folder");
                     if(hudSelectionDir != null) {
@@ -669,7 +670,7 @@ public class EditorFrame extends JFrame {
                         selection = file;
                     }
                 } else
-                if(HudEditor.os == OS.Windows) {
+                if(Main.os == OS.Windows) {
                     XFileDialog fd = new XFileDialog(EditorFrame.this);
                     fd.setTitle("Open a HUD folder");
                     selection = fd.getFolder();
@@ -961,38 +962,38 @@ public class EditorFrame extends JFrame {
             
             newItem = new JMenuItem("New", KeyEvent.VK_N);
             newItem.setEnabled(false);
-            newItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_N, HudEditor.shortcutKey));
+            newItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_N, Main.shortcutKey));
             newItem.addActionListener(al);
             fileMenu.add(newItem);
             
             openItem = new JMenuItem("Open...", KeyEvent.VK_O);
-            openItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_O, HudEditor.shortcutKey));
+            openItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_O, Main.shortcutKey));
             openItem.addActionListener(al);
             fileMenu.add(openItem);
             
             openZippedItem = new JMenuItem("Open Zip...", KeyEvent.VK_Z);
             openZippedItem.setEnabled(false);
-            openZippedItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_O, HudEditor.shortcutKey + ActionEvent.SHIFT_MASK));
+            openZippedItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_O, Main.shortcutKey + ActionEvent.SHIFT_MASK));
             openZippedItem.addActionListener(al);
             fileMenu.add(openZippedItem);
             
-            if(HudEditor.os == OS.Mac) {
+            if(Main.os == OS.Mac) {
                 fileMenu.addSeparator();
             
                 closeItem = new JMenuItem("Close", KeyEvent.VK_C);
-                closeItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_W, HudEditor.shortcutKey));
+                closeItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_W, Main.shortcutKey));
                 closeItem.addActionListener(al);
                 fileMenu.add(closeItem);
             }
             
             saveItem = new JMenuItem("Save", KeyEvent.VK_S);
-            saveItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_S, HudEditor.shortcutKey));
+            saveItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_S, Main.shortcutKey));
             saveItem.addActionListener(al);
             fileMenu.add(saveItem);
             
             saveAsItem = new JMenuItem("Save As...", KeyEvent.VK_A);
             saveAsItem.setEnabled(false);
-            saveAsItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_S, HudEditor.shortcutKey + ActionEvent.SHIFT_MASK));
+            saveAsItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_S, Main.shortcutKey + ActionEvent.SHIFT_MASK));
             saveAsItem.addActionListener(al);
             fileMenu.add(saveAsItem);
             
@@ -1000,18 +1001,18 @@ public class EditorFrame extends JFrame {
             reloadItem.addActionListener(al);
             fileMenu.add(reloadItem);
 
-            if(HudEditor.os != OS.Mac) {
+            if(Main.os != OS.Mac) {
                 fileMenu.addSeparator();
                 
                 closeItem = new JMenuItem("Close", KeyEvent.VK_C);
-                closeItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_W, HudEditor.shortcutKey));
+                closeItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_W, Main.shortcutKey));
                 closeItem.addActionListener(al);
                 fileMenu.add(closeItem);
             
                 fileMenu.addSeparator();
 
                 exitItem = new JMenuItem("Exit", KeyEvent.VK_X);
-                exitItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_Q, HudEditor.shortcutKey));
+                exitItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_Q, Main.shortcutKey));
                 exitItem.addActionListener(al);
                 fileMenu.add(exitItem);
             }
@@ -1022,13 +1023,13 @@ public class EditorFrame extends JFrame {
             
             undoItem = new JMenuItem("Undo", KeyEvent.VK_U);
             undoItem.setEnabled(false);
-            undoItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_Z, HudEditor.shortcutKey));
+            undoItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_Z, Main.shortcutKey));
             undoItem.addActionListener(al);
             editMenu.add(undoItem);
             
             redoItem = new JMenuItem("Redo", KeyEvent.VK_R);
             redoItem.setEnabled(false);
-            redoItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_Z, HudEditor.shortcutKey + ActionEvent.SHIFT_MASK));
+            redoItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_Z, Main.shortcutKey + ActionEvent.SHIFT_MASK));
             redoItem.addActionListener(al);
             editMenu.add(redoItem);
             
@@ -1036,19 +1037,19 @@ public class EditorFrame extends JFrame {
             
             cutItem = new JMenuItem("Cut", KeyEvent.VK_T);
             cutItem.setEnabled(false);
-            cutItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_X, HudEditor.shortcutKey));
+            cutItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_X, Main.shortcutKey));
             cutItem.addActionListener(al);
             editMenu.add(cutItem);
             
             copyItem = new JMenuItem("Copy", KeyEvent.VK_C);
             copyItem.setEnabled(false);
-            copyItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_C, HudEditor.shortcutKey));
+            copyItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_C, Main.shortcutKey));
             copyItem.addActionListener(al);
             editMenu.add(copyItem);
             
             pasteItem = new JMenuItem("Paste", KeyEvent.VK_P);
             pasteItem.setEnabled(false);
-            pasteItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_V, HudEditor.shortcutKey));
+            pasteItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_V, Main.shortcutKey));
             pasteItem.addActionListener(al);
             editMenu.add(pasteItem);
             
@@ -1061,11 +1062,11 @@ public class EditorFrame extends JFrame {
             editMenu.addSeparator();
 
             selectAllItem = new JMenuItem("Select All", KeyEvent.VK_A);
-            selectAllItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_A, HudEditor.shortcutKey));
+            selectAllItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_A, Main.shortcutKey));
             selectAllItem.addActionListener(al);
             editMenu.add(selectAllItem);
             
-            if(HudEditor.os == OS.Mac) {
+            if(Main.os == OS.Mac) {
                 editMenu.addSeparator();
 
                 preferencesItem = new JMenuItem("Preferences", KeyEvent.VK_E);
@@ -1079,7 +1080,7 @@ public class EditorFrame extends JFrame {
             this.add(viewMenu);
 
             resolutionItem = new JMenuItem("Change Resolution", KeyEvent.VK_R);
-            resolutionItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_R, HudEditor.shortcutKey));
+            resolutionItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_R, Main.shortcutKey));
             resolutionItem.addActionListener(al);
             viewMenu.add(resolutionItem);
             
@@ -1124,7 +1125,7 @@ public class EditorFrame extends JFrame {
             changeLogItem.addActionListener(al);
             helpMenu.add(changeLogItem);
             
-            if(HudEditor.os != OS.Mac) {
+            if(Main.os != OS.Mac) {
                 aboutItem = new JMenuItem("About", KeyEvent.VK_A);
                 aboutItem.addActionListener(al);
                 helpMenu.add(aboutItem);

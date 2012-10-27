@@ -1,4 +1,4 @@
-package com.timepath.tf2.hudedit.display;
+package com.timepath.tf2.hudedit.swing;
 
 
 import java.awt.Dimension;

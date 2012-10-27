@@ -2,10 +2,9 @@
  * To change this template, choose Tools | Templates
  * and open the template in the editor.
  */
-package com.timepath.tf2.hudedit.display;
+package com.timepath.tf2.hudedit.swing;
 
-import com.timepath.tf2.hudedit.EditorFrame;
-import com.timepath.tf2.hudedit.display.EditorPropertiesTablePane.EditorPropertiesTable;
+import com.timepath.tf2.hudedit.swing.EditorPropertiesTablePane.EditorPropertiesTable;
 import com.timepath.tf2.hudedit.util.Element;
 import com.timepath.tf2.hudedit.util.Property;
 import java.awt.Color;

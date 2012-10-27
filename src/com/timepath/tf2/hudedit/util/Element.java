@@ -1,7 +1,7 @@
 package com.timepath.tf2.hudedit.util;
 
-import com.timepath.tf2.hudedit.EditorFrame;
-import com.timepath.tf2.hudedit.display.EditorCanvas;
+import com.timepath.tf2.hudedit.swing.EditorFrame;
+import com.timepath.tf2.hudedit.swing.EditorCanvas;
 import java.awt.Color;
 import java.awt.Font;
 import java.awt.Image;

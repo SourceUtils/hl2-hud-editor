@@ -1,4 +1,4 @@
-package com.timepath.tf2.hudedit.display;
+package com.timepath.tf2.hudedit.swing;
 
 import com.timepath.tf2.hudedit.util.Element;
 import java.awt.AlphaComposite;
@@ -48,7 +48,7 @@ public class EditorCanvas extends JPanel implements MouseListener, MouseMotionLi
     private Image background;
     
     private void loadBackground() {
-        URL url = getClass().getResource("/bg/Badlands1.png");
+        URL url = getClass().getResource("/Badlands1.png");
         background = Toolkit.getDefaultToolkit().getImage(url);
         this.prepareImage(background, this);
     }
