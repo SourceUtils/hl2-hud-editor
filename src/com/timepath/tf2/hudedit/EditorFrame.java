@@ -1,5 +1,6 @@
 package com.timepath.tf2.hudedit;
 
+//<editor-fold defaultstate="collapsed" desc="imports">
 import apple.dts.samplecode.osxadapter.OSXAdapter;
 import com.timepath.tf2.hudedit.HudEditor.OS;
 import com.timepath.tf2.hudedit.display.HudCanvas;
@@ -38,6 +39,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.UnsupportedEncodingException;
+import java.net.HttpURLConnection;
 import java.net.URI;
 import java.net.URL;
 import java.net.URLConnection;
@@ -85,6 +87,7 @@ import javax.swing.tree.DefaultTreeCellRenderer;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreeSelectionModel;
 import net.tomahawk.XFileDialog;
+//</editor-fold>
 
 /**
  *
@@ -122,7 +125,8 @@ public class EditorFrame extends JFrame {
                 try {
                     URL url = new URL("https://dl.dropbox.com/u/42745598/tf/Hud%20Editor/TF2%20HUD%20Editor.jar.changes");
                     URLConnection connection = url.openConnection();
-//                    (HttpURLConnection) url.openConnection();
+//                    HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+                    System.out.println("getting filesize...");
                     int filesize = connection.getContentLength();
                     System.out.println(filesize);
                     
@@ -176,7 +180,7 @@ public class EditorFrame extends JFrame {
         return str.matches("[a-fA-F0-9]{32}");
     }
     
-    public static void main(String... args) {
+    public static void main(String[] args) {
     
         //<editor-fold defaultstate="collapsed" desc="Try and get nimbus look and feel, if it is installed.">
 //        Toolkit.getDefaultToolkit().setDynamicLayout(true);
@@ -376,7 +380,13 @@ public class EditorFrame extends JFrame {
         info(panel, "About");
     }
 
-    public EditorFrame() {        
+    public EditorFrame() {   
+        try {
+            System.loadLibrary("xfiledialog");
+        } catch(UnsatisfiedLinkError e) {
+            
+        }
+        
         calcMD5();
         
         this.setTitle(ResourceBundle.getBundle("com/timepath/tf2/hudedit/lang").getString("Title"));
@@ -467,13 +477,21 @@ public class EditorFrame extends JFrame {
         splitPane.setRightComponent(browser);
         
         if(HudEditor.os == OS.Mac) {
-//            createMacMenus();
+            createMacMenus();
         }
         
         this.getContentPane().add(splitPane);
 
         this.pack();
         this.setFocusableWindowState(true);
+        
+        Runtime.getRuntime().addShutdownHook(new Thread() {
+            @Override
+            public void run() {
+                System.out.println("Shutting down...");
+//                System.exit(0);
+            }
+        });
     }
     
     private void createMacMenus() {

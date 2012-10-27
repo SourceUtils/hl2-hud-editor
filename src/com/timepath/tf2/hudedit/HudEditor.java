@@ -1,6 +1,5 @@
 package com.timepath.tf2.hudedit;
 
-import com.jdotsoft.jarloader.JarClassLoader;
 import java.awt.event.ActionEvent;
 import net.tomahawk.XFileDialog;
 
@@ -42,8 +41,8 @@ public class HudEditor {
             }
         } else if(os == OS.Mac) {
             shortcutKey = ActionEvent.META_MASK;
-//            System.setProperty("apple.awt.brushMetalLook", "false");
-            System.setProperty("apple.awt.showGrowBox", "true");
+            System.setProperty("apple.awt.brushMetalLook", "false"); // looks stupid
+            System.setProperty("apple.awt.showGrowBox", "false"); // looks stupid
             System.setProperty("apple.laf.useScreenMenuBar", "true");
             System.setProperty("com.apple.macos.smallTabs", "true");
             System.setProperty("com.apple.macos.useScreenMenuBar", "true");
@@ -59,10 +58,10 @@ public class HudEditor {
     }
     
     public static void main(String... args) {
-        JarClassLoader jcl = new JarClassLoader();
+        MyClassLoader cl = new MyClassLoader();
         try {
-            jcl.invokeMain("com.timepath.tf2.hudedit.EditorFrame", args);
-        } catch (Throwable e) {
+            cl.run("com.timepath.tf2.hudedit.EditorFrame", args);
+        } catch(Throwable e) {
             e.printStackTrace();
         }
     }
