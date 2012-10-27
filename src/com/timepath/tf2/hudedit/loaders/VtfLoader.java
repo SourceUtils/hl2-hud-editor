@@ -1,7 +1,13 @@
 package com.timepath.tf2.hudedit.loaders;
 
+import java.awt.Color;
+import java.awt.Graphics2D;
+import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.io.RandomAccessFile;
+import javax.swing.ImageIcon;
+import javax.swing.JFrame;
+import javax.swing.JLabel;
 
 /**
  *
@@ -15,9 +21,10 @@ public class VtfLoader {
     
     public static void main(String... args) {
         new VtfLoader().load("./res/eng_status_area_sentry_blue.vtf");
+        new VtfLoader().load("./res/bomb_carried.vtf");
     }
     
-    
+//      4 bytes of characters
 //	unsigned int	version[2];		// version[0].version[1] (currently 7.2).
 //	unsigned int	headerSize;		// Size of the header struct (16 byte aligned; currently 80 bytes).
 //	unsigned short	width;			// Width of the largest mipmap in pixels. Must be a power of 2.
@@ -36,69 +43,68 @@ public class VtfLoader {
 //	unsigned char	lowResImageHeight;	// Low resolution image height.
 //	unsigned short	depth;			// Depth of the largest mipmap in pixels.
 //						// Must be a power of 2. Can be 0 or 1 for a 2D texture (v7.2 only).
-    
-    /*
-     *   Version: v7.3
-  Size On Disk: 170.83 KB
-  Width: 256
-  Height: 128
-  Depth: 1
-  Frames: 1
-  Start Frame: 0
-  Faces: 1
-  Mipmaps: 9
-  Flags: 0x00002340
-  Bumpmap Scale: 1.00
-  Reflectivity: 0.09, 0.14, 0.18
-  Format: BGRA8888
-
-     */
     // all Little endian - least significant first
     public void load(String path) {
         RandomAccessFile bin;
-
         try {
           bin = new RandomAccessFile(path, "r");
-          String signature = new String(new byte[] {readChar(bin), readChar(bin), readChar(bin), readChar(bin)});
+          String signature = new String(new byte[] {readChar(bin), readChar(bin), readChar(bin), readChar(bin)}); // 4
           System.out.println("SIG=" + signature + ", " + (signature.equals("VTF\0") ? "valid" : "invalid"));
-          int[] version = {readUInt(bin), readUInt(bin)};
+          int[] version = {readUInt(bin), readUInt(bin)}; // 12
           System.out.println("VER=" + version[0] + "." + version[1]);
-          int headerSize = readUInt(bin);
+          int headerSize = readUInt(bin); // 16
           System.out.println("LEN=" + headerSize);
-          int width = readUShort(bin);
+          int width = readUShort(bin); // 18
           System.out.println("WIDE=" + width);
-          int height = readUShort(bin);
+          int height = readUShort(bin); // 20
           System.out.println("HIGH=" + height);
-          int flags = readUInt(bin);
+          int flags = readUInt(bin); // 24
           System.out.println("FLAG=" + flags);
-          int frames = readUShort(bin);
+          int frames = readUShort(bin); // 26
           System.out.println("FRAMES=" + frames); // zero indexed
-          int first = readUShort(bin);
-          System.out.println("FIRST=" + first); // zero indexed
-          bin.skipBytes(4); // padding
-          float[] reflectivity = new float[] {readFloat(bin), readFloat(bin), readFloat(bin)};
+          int first = readUShort(bin); // 28
+          System.out.println("FIRSTFRAME=" + first); // zero indexed
+          bin.skipBytes(4); // padding to 32
+          float[] reflectivity = new float[] {readFloat(bin), readFloat(bin), readFloat(bin)}; // 44
           System.out.println("REFLECTIVITY=" + reflectivity[0] + ", " + reflectivity[1] + ", " + reflectivity[2]);
-          bin.skipBytes(4); // padding
-          float bumpScale = readFloat(bin);
+          bin.skipBytes(4); // padding 48
+          float bumpScale = readFloat(bin); // 52
           System.out.println("BUMPSCALE=" + bumpScale);
-          int fullFormat = readUInt(bin);
+          int fullFormat = readUInt(bin); // 56
           System.out.println("FULLFORMAT=" + Formats.getEnumForIndex(fullFormat));
-          int mipCount = readUChar(bin);
+          int mipCount = readUChar(bin); // 57
           System.out.println("MIPS=" + mipCount);
-          int lowFormat = readUInt(bin);
+          int lowFormat = readUInt(bin); // 61
           System.out.println("LOWFORMAT=" + Formats.getEnumForIndex(lowFormat));
-          int lowWidth = readUChar(bin);
+          int lowWidth = readUChar(bin); // 62
           System.out.println("LOWWIDTH=" + lowWidth);
-          int lowHeight = readUChar(bin);
+          int lowHeight = readUChar(bin); // 63
           System.out.println("LOWHIGH=" + lowHeight);
-          int depth = readUShort(bin);
+          int depth = readUByte(bin); // 64. documentation says this is 2 bytes, but I think that they are wrong
           System.out.println("DEPTH=" + depth);
-          
-          // 64 bytes have been read so far
           // http://msdn.microsoft.com/en-us/library/aa920432.aspx
+          
+          bin.skipBytes(headerSize - 64 - 8); // 64 for above info, 8 for CRC. I have no idea what that data does          
+          
+          String crcHead = new String(new byte[] {readChar(bin), readChar(bin), readChar(bin), readChar(bin)});
+          System.out.println("CRC=" + crcHead + ", " + (crcHead.equals("CRC\2") ? "valid" : "invalid") + " tag");
+          int crc = readLong(bin);
+          System.out.println("CRC=0x" + Integer.toHexString(crc).toUpperCase());
+          
+          int pieces = (lowWidth * lowHeight) / (4*4); // DXT1. Each 'block' is 4*4 pixels. 16 pixels become 8 bytes
+          System.out.println("PIECES=" + pieces);
+          byte[] thumbData = new byte[pieces * 8];
+          bin.read(thumbData);
+          BufferedImage img = loadDXT1(thumbData, lowWidth, lowHeight);
+          
+          JFrame f = new JFrame();
+          f.add(new JLabel(new ImageIcon(img)));
+          f.setVisible(true);
+          f.pack();
+          
           bin.close();
         } catch (Exception e) {
-          System.out.println("**Error: " + e.getMessage());
+            e.printStackTrace();
         }
     }
     
@@ -130,7 +136,151 @@ public class VtfLoader {
     }
     
     int readUShort(RandomAccessFile f) throws IOException {
-        return (readUByte(f) + (readUByte(f) << 8));
+        return readUByte(f) + (readUByte(f) << 8);
+    }
+    
+    int readLong(RandomAccessFile f) throws IOException {
+        return readByte(f) + (readByte(f) << 8) + (readByte(f) << 16) + (readByte(f) << 24);
+    }
+    
+    String toBinaryString(byte n) {
+        StringBuilder sb = new StringBuilder("00000000");
+        for (int bit = 0; bit < 8; bit++) {
+            if (((n >> bit) & 1) > 0) {
+                sb.setCharAt(7 - bit, '1');
+            }
+        }
+        return sb.toString();
+    }
+    
+    /**
+     * http://en.wikipedia.org/wiki/S3_Texture_Compression
+     * http://www.fsdeveloper.com/wiki/index.php?title=DXT_compression_explained
+     * http://msdn.microsoft.com/en-us/library/aa920432.aspx
+     */
+    BufferedImage loadDXT1(byte[] b, int width, int height) {
+        BufferedImage bi = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
+        Graphics2D g = (Graphics2D) bi.getGraphics();
+        int pos = 0;
+        double xRun = width / 8;
+        double yRun = height / 8;
+        
+        int red_mask_565 = 0xF800; // first 5 bits
+        int green_mask_565 = 0x7E0; // next 6 bits
+        int blue_mask_565 = 0x1F;
+        
+        int red_mask_555 = 0x7C00; // first 5 bits
+        int green_mask_555 = 0x3E0; // next 5 bits
+        int blue_mask_555 = 0x1F;
+        
+        int bits_12 = 0xC0; // first 2 bits
+        int bits_34 = 0x30; // next 2 bits
+        int bits_56 = 0xC; // next 2 bits
+        int bits_78 = 0x3; // last 2 bits
+        
+        
+//        Reverse this process to create an RGB 565 pixel. Assuming the color values have been truncated to the correct number of bits:
+//
+//        WORD pixel565 = (red_value << 11) | (green_value << 5) | blue_value;
+//
+//        RGB 555 
+//
+//        Working with RGB 555 is essentially the same as RGB 565, except the bit masks and bit shift operations are different. To get the color components from an RGB 555 pixel, do the following:
+//
+//        BYTE red_value = (pixel & red_mask) >> 10;
+//        BYTE green_value = (pixel & green_mask) >> 5;
+//        BYTE blue_value = (pixel & blue_mask);
+//
+//        // Expand to 8-bit values:
+//        BYTE red   = red_value << 3;
+//        BYTE green = green_value << 3;
+//        BYTE blue  = blue_value << 3;
+//
+//        To pack the red, green, and blue color values into an RGB 555 pixel, do the following:
+//
+//        WORD pixel565 = (red << 10) | (green << 5) | blue;
+        
+        for(int y = 0; y < yRun; y++) {
+            for(int x = 0; x < xRun; x++) {
+                int color_0 = (b[pos++] & 0xff) + ((b[pos++] & 0xff) << 8) + ((b[pos++] & 0xff) << 16) + ((b[pos++] & 0xff) << 24);
+                int color_1 = (b[pos++] & 0xff) + ((b[pos++] & 0xff) << 8) + ((b[pos++] & 0xff) << 16) + ((b[pos++] & 0xff) << 24);
+                
+//                if (color_0 > color_1) {
+//                    // Four-color block: derive the other two colors. 
+//                    // 00 = color_0, 01 = color_1, 10 = color_2, 11 = color_3
+//                    // These 2-bit codes correspond to the 2-bit fields 
+//                    // stored in the 64-bit block.
+//                    color_2 = (2 * color_0 + color_1 + 1) / 3;
+//                    color_3 = (color_0 + 2 * color_1 + 1) / 3;
+//                } else { 
+//                    // Three-color block: derive the other color.
+//                    // 00 = color_0,  01 = color_1,  10 = color_2,  
+//                    // 11 = transparent.
+//                    // These 2-bit codes correspond to the 2-bit fields 
+//                    // stored in the 64-bit block. 
+//                     color_2 = (color_0 + color_1) / 2;    
+//                     color_3 = transparent;
+//                }
+
+                int red1   = (int) (((color_0 & red_mask_565) >> 11) << 3);
+                int green1 = (int) (((color_0 & green_mask_565) >> 5) << 2);
+                int blue1  = (int) ((color_0 & blue_mask_565) << 3);
+                Color c1 = new Color(red1, green1, blue1);
+                
+                int red2   = (int) (((color_1 & red_mask_565) >> 11) << 3);
+                int green2 = (int) (((color_1 & green_mask_565) >> 5) << 2);
+                int blue2  = (int) ((color_1 & blue_mask_565) << 3);
+                Color c2 = new Color(red2, green2, blue2);
+                
+//                g.setColor(c1);
+//                g.fillRect(x * 16, y * 16, 16, 16 - 8);
+//                g.setColor(c2);
+//                g.fillRect(x * 16, (y * 16) + 8, 16, 16 - 8);
+                
+                for(int y1 = 0; y1 < 4; y1++) { // 16/4 = 4
+                    byte next4 = b[pos++];
+                    int v1 = (next4 & bits_12) >> 6;
+                    int v2 = (next4 & bits_34) >> 4;
+                    int v3 = (next4 & bits_56) >> 2;
+                    int v4 = next4 & bits_78;
+                    
+                    for(int i = 0; i < 4; i++) {
+                        if(v1 == 0) {
+                            g.setColor(c1);
+                        } else if(v1 == 1) {
+                            g.setColor(c2);
+                        } else if(v1 == 2) {                            
+                            int cred = (2 * (c1.getRed() / 3)) + (c2.getRed() / 3);
+                            int cgrn = (2 * (c1.getGreen() / 3)) + (c2.getGreen() / 3);
+                            int cblu = (2 * (c1.getBlue() / 3)) + (c2.getBlue() / 3);
+//                            if((cred > 255 || cgrn > 255 || cblu > 255) || (cred < 0 || cgrn < 0 || cblu < 0)) {
+//                                System.err.println(cred  + ":" + cgrn  + ":" + cblu);
+//                            }
+                            Color c = new Color(cred, cgrn, cblu);
+//                            System.out.println(c);
+                            g.setColor(c);
+                        } else if(v1 == 3) {
+                            int cred = (c1.getRed() / 3) + (2 * (c2.getRed() / 3)); // docs say 3/2, but 2/3 makes more sense
+                            int cgrn = (c1.getGreen() / 3) + (2 * (c2.getGreen() / 3));
+                            int cblu = (c1.getBlue() / 3) + (2 * (c2.getBlue() / 3));
+//                            if((cred > 255 || cgrn > 255 || cblu > 255) || (cred < 0 || cgrn < 0 || cblu < 0)) {
+//                                System.err.println(cred  + ":" + cgrn  + ":" + cblu);
+//                            }
+                            Color c = new Color(cred, cgrn, cblu);
+//                            System.out.println(c);
+                            g.setColor(c);
+                        }
+                        g.drawLine((x * 16) + i, y * 16, (x * 16) + i, y * 16);
+                    }
+                    
+                    
+
+//                    System.out.println(Integer.toBinaryString(v1) + " " + Integer.toBinaryString(v2) + " " + Integer.toBinaryString(v3) + " " + Integer.toBinaryString(v4));
+                }
+//                System.out.println("=====");
+            }
+        }
+        return bi;
     }
     
     private static enum Formats {
