@@ -21,8 +21,8 @@ public class VtfLoader {
     }
     
     public static void main(String... args) {
-//        new VtfLoader().load("./res/eng_status_area_sentry_blue.vtf");
-        new VtfLoader().load("./res/bomb_carried.vtf");
+        new VtfLoader().load("./res/eng_status_area_sentry_blue.vtf");
+//        new VtfLoader().load("./res/bomb_carried.vtf");
     }
     
 //      4 bytes of characters
@@ -115,6 +115,12 @@ public class VtfLoader {
               System.out.println("HIGHPIECES=" + pieces + ", MIP="+(mipCount-i-1));
               byte[] imageDate = new byte[pieces * 16]; // 16 bytes per piece
               bin.read(imageDate);
+              if(w <= 0) {
+                  w = 1;
+              }
+              if(h <= 0) {
+                  h = 1;
+              }
               image = loadDXT5(imageDate, w, h);
           }
           f.add(new JLabel(new ImageIcon(image)), BorderLayout.SOUTH);
