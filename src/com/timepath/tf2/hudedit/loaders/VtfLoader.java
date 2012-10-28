@@ -4,6 +4,7 @@ import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Graphics2D;
 import java.awt.image.BufferedImage;
+import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import javax.swing.ImageIcon;
@@ -21,7 +22,14 @@ public class VtfLoader {
     }
     
     public static void main(String... args) {
-        new VtfLoader().load("./res/eng_status_area_sentry_blue.vtf");
+        File root = new File("./res/vtf/");
+        File[] subs = root.listFiles();
+        for(int i = 0; i < subs.length; i++) {
+            if(subs[i].getName().endsWith(".vtf")) {
+                new VtfLoader().load(subs[i].getPath());
+            }
+        }
+//        new VtfLoader().load("./res/eng_status_area_sentry_blue.vtf");
 //        new VtfLoader().load("./res/bomb_carried.vtf");
     }
     
@@ -45,6 +53,9 @@ public class VtfLoader {
 //	unsigned short	depth;			// Depth of the largest mipmap in pixels.
 //						// Must be a power of 2. Can be 0 or 1 for a 2D texture (v7.2 only).
     // all Little endian - least significant bits first
+    // sometimes the alignment isn't quite right, too far right with previous mipmap visible to the left. particularly obvious on deathwheel images. Some load in different formats, some have LOD tags. Some even load as DXT1!
+    // common formats:
+    // DXT5, DXT1, BGRA8888, UV88
     public void load(String path) {
         RandomAccessFile bin;
         try {
@@ -60,7 +71,7 @@ public class VtfLoader {
           int height = readUShort(bin); // 20
           System.out.println("HIGH=" + height);
           int flags = readUInt(bin); // 24
-          System.out.println("FLAG=" + flags);
+          System.out.println("FLAG=" + Integer.toHexString(flags));
           int frames = readUShort(bin); // 26
           System.out.println("FRAMES=" + frames); // zero indexed
           int first = readUShort(bin); // 28
@@ -111,17 +122,17 @@ public class VtfLoader {
                   h /= 2;
               }
               
-              int pieces = (w * h) / 16; // DXT5. Each 'block' is 4*4 pixels. 16 pixels become 16 bytes
+              int pieces = (w * h) / 16;
               System.out.println("HIGHPIECES=" + pieces + ", MIP="+(mipCount-i-1));
-              byte[] imageDate = new byte[pieces * 16]; // 16 bytes per piece
-              bin.read(imageDate);
+              byte[] imageData = new byte[pieces * (((2 * 8) + (4*4*3) + (2 * 16) + (4*4*2)) / 8)]; // DXT5. Each 'block' is 4*4 pixels + some other data. 16 pixels become 16 bytes [128 bits] (2 * 8 bit alpha values, 4x4 3 bit alpha indicies, 2 * 16 bit colours, 4*4 2 bit indicies)
+              bin.read(imageData);
               if(w <= 0) {
                   w = 1;
               }
               if(h <= 0) {
                   h = 1;
               }
-              image = loadDXT5(imageDate, w, h);
+              image = loadDXT5(imageData, w, h);
           }
           f.add(new JLabel(new ImageIcon(image)), BorderLayout.SOUTH);
           
