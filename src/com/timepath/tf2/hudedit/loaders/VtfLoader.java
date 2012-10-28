@@ -285,7 +285,7 @@ public class VtfLoader {
                                 Color c = new Color(cred, cgrn, cblu, calp);
                                 g.setColor(c);
                             } else if(bit == 3) {
-                                Color c = new Color(255, 0, 255, 0); // transparent
+                                Color c = new Color(0, 0, 0, 0); // transparent
                                 g.setColor(c);
                             }
                         } else {
