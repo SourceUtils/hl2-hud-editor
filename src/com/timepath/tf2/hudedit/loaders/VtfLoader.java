@@ -1,5 +1,6 @@
 package com.timepath.tf2.hudedit.loaders;
 
+import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Graphics2D;
 import java.awt.image.BufferedImage;
@@ -20,7 +21,7 @@ public class VtfLoader {
     }
     
     public static void main(String... args) {
-        new VtfLoader().load("./res/eng_status_area_sentry_blue.vtf");
+//        new VtfLoader().load("./res/eng_status_area_sentry_blue.vtf");
         new VtfLoader().load("./res/bomb_carried.vtf");
     }
     
@@ -43,7 +44,7 @@ public class VtfLoader {
 //	unsigned char	lowResImageHeight;	// Low resolution image height.
 //	unsigned short	depth;			// Depth of the largest mipmap in pixels.
 //						// Must be a power of 2. Can be 0 or 1 for a 2D texture (v7.2 only).
-    // all Little endian - least significant first
+    // all Little endian - least significant bits first
     public void load(String path) {
         RandomAccessFile bin;
         try {
@@ -91,16 +92,39 @@ public class VtfLoader {
           int crc = readLong(bin);
           System.out.println("CRC=0x" + Integer.toHexString(crc).toUpperCase());
           
-          int pieces = (lowWidth * lowHeight) / (4*4); // DXT1. Each 'block' is 4*4 pixels. 16 pixels become 8 bytes
-          System.out.println("PIECES=" + pieces);
-          byte[] thumbData = new byte[pieces * 8];
+          int lowPieces = (lowWidth * lowHeight) / 16; // DXT1. Each 'block' is 4*4 pixels. 16 pixels become 8 bytes
+          System.out.println("LOWPIECES=" + lowPieces);
+          byte[] thumbData = new byte[lowPieces * 8]; // 8 bytes per piece
           bin.read(thumbData);
-          BufferedImage img = loadDXT1(thumbData, lowWidth, lowHeight);
+          BufferedImage thumbImage = loadDXT1(thumbData, lowWidth, lowHeight); // no mipmaps
           
-          JFrame f = new JFrame();
-          f.add(new JLabel(new ImageIcon(img)));
+          JFrame f = new JFrame(path);
+          f.setLayout(new BorderLayout());
+          
+          BufferedImage image = null;
+          for(int i = 0; i < mipCount; i++) { // mipmaps
+              int w = width;
+              int h = height;
+              
+              for(int n = 1; n < mipCount - i; n++) { // do not do on biggest
+                  w /= 2;
+                  h /= 2;
+              }
+              
+              int pieces = (w * h) / 16; // DXT5. Each 'block' is 4*4 pixels. 16 pixels become 16 bytes
+              System.out.println("HIGHPIECES=" + pieces + ", MIP="+(mipCount-i-1));
+              byte[] imageDate = new byte[pieces * 16]; // 16 bytes per piece
+              bin.read(imageDate);
+              image = loadDXT5(imageDate, w, h);
+          }
+          f.add(new JLabel(new ImageIcon(image)), BorderLayout.SOUTH);
+          
+          f.add(new JLabel(new ImageIcon(thumbImage)), BorderLayout.NORTH);
+          
           f.setVisible(true);
           f.pack();
+          
+          System.out.println("L:" + bin.length() + ", P:" + bin.getFilePointer() + ", R:" + (bin.length() - bin.getFilePointer()));
           
           bin.close();
         } catch (Exception e) {
@@ -157,13 +181,13 @@ public class VtfLoader {
      * http://en.wikipedia.org/wiki/S3_Texture_Compression
      * http://www.fsdeveloper.com/wiki/index.php?title=DXT_compression_explained
      * http://msdn.microsoft.com/en-us/library/aa920432.aspx
+     * 
+     * 8 bytes per 4*4
      */
     BufferedImage loadDXT1(byte[] b, int width, int height) {
         BufferedImage bi = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
         Graphics2D g = (Graphics2D) bi.getGraphics();
         int pos = 0;
-        double xRun = width / 8;
-        double yRun = height / 8;
         
         int red_mask_565 = 0xF800; // first 5 bits
         int green_mask_565 = 0x7E0; // next 6 bits
@@ -173,111 +197,168 @@ public class VtfLoader {
         int green_mask_555 = 0x3E0; // next 5 bits
         int blue_mask_555 = 0x1F;
         
+        int alpha_mask_555 = 0x1;
+        
         int bits_12 = 0xC0; // first 2 bits
         int bits_34 = 0x30; // next 2 bits
         int bits_56 = 0xC; // next 2 bits
         int bits_78 = 0x3; // last 2 bits
-        
-        
-//        Reverse this process to create an RGB 565 pixel. Assuming the color values have been truncated to the correct number of bits:
-//
-//        WORD pixel565 = (red_value << 11) | (green_value << 5) | blue_value;
-//
-//        RGB 555 
-//
-//        Working with RGB 555 is essentially the same as RGB 565, except the bit masks and bit shift operations are different. To get the color components from an RGB 555 pixel, do the following:
-//
-//        BYTE red_value = (pixel & red_mask) >> 10;
-//        BYTE green_value = (pixel & green_mask) >> 5;
-//        BYTE blue_value = (pixel & blue_mask);
-//
-//        // Expand to 8-bit values:
-//        BYTE red   = red_value << 3;
-//        BYTE green = green_value << 3;
-//        BYTE blue  = blue_value << 3;
-//
-//        To pack the red, green, and blue color values into an RGB 555 pixel, do the following:
-//
-//        WORD pixel565 = (red << 10) | (green << 5) | blue;
-        
-        for(int y = 0; y < yRun; y++) {
-            for(int x = 0; x < xRun; x++) {
-                int color_0 = (b[pos++] & 0xff) + ((b[pos++] & 0xff) << 8) + ((b[pos++] & 0xff) << 16) + ((b[pos++] & 0xff) << 24);
-                int color_1 = (b[pos++] & 0xff) + ((b[pos++] & 0xff) << 8) + ((b[pos++] & 0xff) << 16) + ((b[pos++] & 0xff) << 24);
-                
-//                if (color_0 > color_1) {
-//                    // Four-color block: derive the other two colors. 
-//                    // 00 = color_0, 01 = color_1, 10 = color_2, 11 = color_3
-//                    // These 2-bit codes correspond to the 2-bit fields 
-//                    // stored in the 64-bit block.
-//                    color_2 = (2 * color_0 + color_1 + 1) / 3;
-//                    color_3 = (color_0 + 2 * color_1 + 1) / 3;
-//                } else { 
-//                    // Three-color block: derive the other color.
-//                    // 00 = color_0,  01 = color_1,  10 = color_2,  
-//                    // 11 = transparent.
-//                    // These 2-bit codes correspond to the 2-bit fields 
-//                    // stored in the 64-bit block. 
-//                     color_2 = (color_0 + color_1) / 2;    
-//                     color_3 = transparent;
-//                }
 
-                int red1   = (int) (((color_0 & red_mask_565) >> 11) << 3);
-                int green1 = (int) (((color_0 & green_mask_565) >> 5) << 2);
-                int blue1  = (int) ((color_0 & blue_mask_565) << 3);
-                Color c1 = new Color(red1, green1, blue1);
+//        RGB 565: WORD pixel565 = (red_value << 11) | (green_value << 5) | blue_value;
+//        RGB 555: WORD pixel565 = (red << 10) | (green << 5) | blue;
+        
+        for(int y = 0; y < (height / 4); y++) {
+            for(int x = 0; x < (width / 4); x++) {
+                int color_0 = (b[pos++] & 0xff) + ((b[pos++] & 0xff) << 8); // 2 bytes
+                int color_1 = (b[pos++] & 0xff) + ((b[pos++] & 0xff) << 8); // 2 bytes
                 
-                int red2   = (int) (((color_1 & red_mask_565) >> 11) << 3);
-                int green2 = (int) (((color_1 & green_mask_565) >> 5) << 2);
-                int blue2  = (int) ((color_1 & blue_mask_565) << 3);
-                Color c2 = new Color(red2, green2, blue2);
+                int red1, green1, blue1, red2, green2, blue2;
+                Color c1, c2;
                 
-//                g.setColor(c1);
-//                g.fillRect(x * 16, y * 16, 16, 16 - 8);
-//                g.setColor(c2);
-//                g.fillRect(x * 16, (y * 16) + 8, 16, 16 - 8);
+                if(color_0 < color_1) { // 3 colours + transparency : 5551 rgba
+                    red1   = (int) (((color_0 & red_mask_555) >> 10) << 3);
+                    green1 = (int) (((color_0 & green_mask_555) >> 5) << 3);
+                    blue1  = (int) ((color_0 & blue_mask_555) << 3);
+                    int alpha1 = (int) ((color_0 & alpha_mask_555) << 7);
+                    c1 = new Color(red1, green1, blue1, alpha1);
+
+                    red2   = (int) (((color_1 & red_mask_555) >> 10) << 3);
+                    green2 = (int) (((color_1 & green_mask_555) >> 5) << 3);
+                    blue2  = (int) ((color_1 & alpha_mask_555) << 7);
+                    int alpha2 = 0;
+                    c2 = new Color(red2, green2, blue2, alpha2);
+                } else { // 4 colours : 565 rgb
+                    red1   = (int) (((color_0 & red_mask_565) >> 11) << 3);
+                    green1 = (int) (((color_0 & green_mask_565) >> 5) << 2);
+                    blue1  = (int) ((color_0 & blue_mask_565) << 3);
+                    c1 = new Color(red1, green1, blue1);
+
+                    red2   = (int) (((color_1 & red_mask_565) >> 11) << 3);
+                    green2 = (int) (((color_1 & green_mask_565) >> 5) << 2);
+                    blue2  = (int) ((color_1 & blue_mask_565) << 3);
+                    c2 = new Color(red2, green2, blue2);
+                }
+
                 
-                for(int y1 = 0; y1 < 4; y1++) { // 16/4 = 4
+                
+                // remaining 4 bytes
+                for(int y1 = 0; y1 < 4; y1++) { // 16 bits / 4 lines = 4 bits/line = 1 byte/line
                     byte next4 = b[pos++];
-                    int v1 = (next4 & bits_12) >> 6;
-                    int v2 = (next4 & bits_34) >> 4;
-                    int v3 = (next4 & bits_56) >> 2;
-                    int v4 = next4 & bits_78;
+                    int[] bits = new int[]{(next4 & bits_12) >> 6, (next4 & bits_34) >> 4, (next4 & bits_56) >> 2, next4 & bits_78};
                     
-                    for(int i = 0; i < 4; i++) {
-                        if(v1 == 0) {
+                    for(int i = 0; i < 4; i++) { // horizontal scan
+                        int bit = bits[i];
+                        if(bit == 0) {
                             g.setColor(c1);
-                        } else if(v1 == 1) {
+                        } else if(bit == 1) {
                             g.setColor(c2);
-                        } else if(v1 == 2) {                            
+                        } else if(color_0 < color_1) { // transparent
+                            if(bit == 2) {                            
+                                int cred = (c1.getRed() / 2) + (c2.getRed() / 2);
+                                int cgrn = (c1.getGreen() / 2) + (c2.getGreen() / 2);
+                                int cblu = (c1.getBlue() / 2) + (c2.getBlue() / 2);
+                                int calp = (c1.getAlpha() / 2) + (c2.getAlpha() / 2);
+                                Color c = new Color(cred, cgrn, cblu, calp);
+                                g.setColor(c);
+                            } else if(bit == 3) {
+                                Color c = new Color(255, 0, 255, 0); // transparent
+                                g.setColor(c);
+                            }
+                        } else {
+                            if(bit == 2) {                            
+                                int cred = (2 * (c1.getRed() / 3)) + (c2.getRed() / 3);
+                                int cgrn = (2 * (c1.getGreen() / 3)) + (c2.getGreen() / 3);
+                                int cblu = (2 * (c1.getBlue() / 3)) + (c2.getBlue() / 3);
+                                Color c = new Color(cred, cgrn, cblu);
+                                g.setColor(c);
+                            } else if(bit == 3) {
+                                int cred = (c1.getRed() / 3) + (2 * (c2.getRed() / 3));
+                                int cgrn = (c1.getGreen() / 3) + (2 * (c2.getGreen() / 3));
+                                int cblu = (c1.getBlue() / 3) + (2 * (c2.getBlue() / 3));
+                                Color c = new Color(cred, cgrn, cblu);
+                                g.setColor(c);
+                            }
+                        }
+                        g.drawLine((x * 4) + 4 - i, (y * 4) + y1,
+                                   (x * 4) + 4 - i, (y * 4) + y1);
+                    }
+                }
+            }
+        }
+        return bi;
+    }
+    
+    /**
+     * http://en.wikipedia.org/wiki/S3_Texture_Compression
+     * http://www.fsdeveloper.com/wiki/index.php?title=DXT_compression_explained
+     * http://msdn.microsoft.com/en-us/library/aa920432.aspx
+     * 
+     * 8 bytes for alpha channel, additional 8 per 4*4 chunk
+     */
+    BufferedImage loadDXT5(byte[] b, int width, int height) {
+        BufferedImage bi = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
+        Graphics2D g = (Graphics2D) bi.getGraphics();
+        int pos = 0;
+        
+        int red_mask_565 = 0xF800; // first 5 bits
+        int green_mask_565 = 0x7E0; // next 6 bits
+        int blue_mask_565 = 0x1F;
+        
+        int bits_12 = 0xC0; // first 2 bits
+        int bits_34 = 0x30; // next 2 bits
+        int bits_56 = 0xC; // next 2 bits
+        int bits_78 = 0x3; // last 2 bits
+
+//        RGB 565: WORD pixel565 = (red_value << 11) | (green_value << 5) | blue_value;
+        
+        for(int y = 0; y < (height / 4); y++) {
+            for(int x = 0; x < (width / 4); x++) {
+                pos += 8; // 64 bits of alpha channel data (two 8 bit alpha values and a 4x4 3 bit lookup table) 
+                
+                int color_0 = (b[pos++] & 0xff) + ((b[pos++] & 0xff) << 8); // 2 bytes
+                int color_1 = (b[pos++] & 0xff) + ((b[pos++] & 0xff) << 8); // 2 bytes
+                
+                int red1, green1, blue1, red2, green2, blue2;
+                Color c1, c2;
+                
+                red1 = (int) (((color_0 & red_mask_565) >> 11) << 3);
+                green1 = (int) (((color_0 & green_mask_565) >> 5) << 2);
+                blue1 = (int) ((color_0 & blue_mask_565) << 3);
+                c1 = new Color(red1, green1, blue1);
+
+                red2 = (int) (((color_1 & red_mask_565) >> 11) << 3);
+                green2 = (int) (((color_1 & green_mask_565) >> 5) << 2);
+                blue2 = (int) ((color_1 & blue_mask_565) << 3);
+                c2 = new Color(red2, green2, blue2);
+                
+                // remaining 4 bytes
+                for(int y1 = 0; y1 < 4; y1++) { // 16 bits / 4 lines = 4 bits/line = 1 byte/line
+                    byte next4 = b[pos++];
+                    int[] bits = new int[]{(next4 & bits_12) >> 6, (next4 & bits_34) >> 4, (next4 & bits_56) >> 2, next4 & bits_78};
+                    
+                    for(int i = 0; i < 4; i++) { // horizontal scan
+                        int bit = bits[i];
+                        if(bit == 0) {
+                            g.setColor(c1);
+                        } else if(bit == 1) {
+                            g.setColor(c2);
+                        } else if(bit == 2) {                            
                             int cred = (2 * (c1.getRed() / 3)) + (c2.getRed() / 3);
                             int cgrn = (2 * (c1.getGreen() / 3)) + (c2.getGreen() / 3);
                             int cblu = (2 * (c1.getBlue() / 3)) + (c2.getBlue() / 3);
-//                            if((cred > 255 || cgrn > 255 || cblu > 255) || (cred < 0 || cgrn < 0 || cblu < 0)) {
-//                                System.err.println(cred  + ":" + cgrn  + ":" + cblu);
-//                            }
                             Color c = new Color(cred, cgrn, cblu);
-//                            System.out.println(c);
                             g.setColor(c);
-                        } else if(v1 == 3) {
-                            int cred = (c1.getRed() / 3) + (2 * (c2.getRed() / 3)); // docs say 3/2, but 2/3 makes more sense
+                        } else if(bit == 3) {
+                            int cred = (c1.getRed() / 3) + (2 * (c2.getRed() / 3));
                             int cgrn = (c1.getGreen() / 3) + (2 * (c2.getGreen() / 3));
                             int cblu = (c1.getBlue() / 3) + (2 * (c2.getBlue() / 3));
-//                            if((cred > 255 || cgrn > 255 || cblu > 255) || (cred < 0 || cgrn < 0 || cblu < 0)) {
-//                                System.err.println(cred  + ":" + cgrn  + ":" + cblu);
-//                            }
                             Color c = new Color(cred, cgrn, cblu);
-//                            System.out.println(c);
                             g.setColor(c);
                         }
-                        g.drawLine((x * 16) + i, y * 16, (x * 16) + i, y * 16);
+                        g.drawLine((x * 4) + 4 - i, (y * 4) + y1,
+                                   (x * 4) + 4 - i, (y * 4) + y1);
                     }
-                    
-                    
-
-//                    System.out.println(Integer.toBinaryString(v1) + " " + Integer.toBinaryString(v2) + " " + Integer.toBinaryString(v3) + " " + Integer.toBinaryString(v4));
                 }
-//                System.out.println("=====");
             }
         }
         return bi;
