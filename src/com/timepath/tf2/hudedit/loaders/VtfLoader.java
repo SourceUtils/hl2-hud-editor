@@ -318,6 +318,8 @@ public class VtfLoader {
      * http://msdn.microsoft.com/en-us/library/aa920432.aspx
      * 
      * 8 bytes for alpha channel, additional 8 per 4*4 chunk
+     * 
+     * TODO: fully implement correct colours
      */
     BufferedImage loadDXT5(byte[] b, int width, int height) {
         BufferedImage bi = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
