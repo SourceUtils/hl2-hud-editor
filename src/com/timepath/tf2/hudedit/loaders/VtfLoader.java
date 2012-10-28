@@ -56,10 +56,13 @@ public class VtfLoader {
     // sometimes the alignment isn't quite right, too far right with previous mipmap visible to the left. particularly obvious on deathwheel images. Some load in different formats, some have LOD tags. Some even load as DXT1!
     // common formats:
     // DXT5, DXT1, BGRA8888, UV88
+    // http://www.piksel.org/frei0r/1.1/spec/group__COLOR__MODEL.html
+    // http://code.google.com/p/gimp-vtf/source/browse/trunk/gimp-vtf/?r=16
     public void load(String path) {
         RandomAccessFile bin;
         try {
           bin = new RandomAccessFile(path, "r");
+          System.out.println("FILE=" + path);
           String signature = new String(new byte[] {readChar(bin), readChar(bin), readChar(bin), readChar(bin)}); // 4
           System.out.println("SIG=" + signature + ", " + (signature.equals("VTF\0") ? "valid" : "invalid"));
           int[] version = {readUInt(bin), readUInt(bin)}; // 12
@@ -72,6 +75,9 @@ public class VtfLoader {
           System.out.println("HIGH=" + height);
           int flags = readUInt(bin); // 24
           System.out.println("FLAG=" + Integer.toHexString(flags));
+          
+          System.out.println("USEMIPS=" + !((flags & Flags.TEXTUREFLAGS_NOMIP.getMask()) == 0xff));
+          
           int frames = readUShort(bin); // 26
           System.out.println("FRAMES=" + frames); // zero indexed
           int first = readUShort(bin); // 28
@@ -96,7 +102,7 @@ public class VtfLoader {
           System.out.println("DEPTH=" + depth);
           // http://msdn.microsoft.com/en-us/library/aa920432.aspx
           
-          bin.skipBytes(headerSize - 64 - 8); // 64 for above info, 8 for CRC. I have no idea what that data does          
+          bin.skipBytes(headerSize - 64 - 8); // 64 for above info, 8 for CRC. I have no idea what the data inbetween does          
           
           String crcHead = new String(new byte[] {readChar(bin), readChar(bin), readChar(bin), readChar(bin)});
           System.out.println("CRC=" + crcHead + ", " + (crcHead.equals("CRC\2") ? "valid" : "invalid") + " tag");
@@ -142,6 +148,7 @@ public class VtfLoader {
           f.pack();
           
           System.out.println("L:" + bin.length() + ", P:" + bin.getFilePointer() + ", R:" + (bin.length() - bin.getFilePointer()));
+          System.out.print("\n\n\n");
           
           bin.close();
         } catch (Exception e) {
