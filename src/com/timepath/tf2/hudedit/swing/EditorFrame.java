@@ -107,76 +107,6 @@ import net.tomahawk.XFileDialog;
 @SuppressWarnings("serial")
 public class EditorFrame extends JFrame {
     
-    private boolean inDev;
-    
-    private void changelog() {
-        new Thread() {
-            @Override
-            public void run() {
-                try {
-                    URL url = new URL("https://dl.dropbox.com/u/42745598/tf/Hud%20Editor/TF2%20HUD%20Editor.jar.changes");
-                    URLConnection connection = url.openConnection();
-//                    HttpURLConnection connection = (HttpURLConnection) url.openConnection();
-                    System.out.println("getting filesize...");
-                    int filesize = connection.getContentLength();
-                    System.out.println(filesize);
-                    
-                    String text = "";
-                    BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getInputStream()));
-                    String line;
-                    while((line = reader.readLine()) != null) {
-                        if(!inDev && line.contains(myMD5)) { // dev build cannot MD5
-                            String[] parts = line.split(myMD5);
-                            if(parts[0] != null) {
-                                text += parts[0];
-                            }
-                            text += "<b><u>" + myMD5 + "</u></b>";
-                            if(parts[1] != null) {
-                                text += parts[1];
-                            }
-                        } else {
-                            text += line;
-                        }
-                    }
-                    reader.close();
-                    
-                    final JEditorPane panel = new JEditorPane("text/html", text);
-                    Dimension s = Toolkit.getDefaultToolkit().getScreenSize();
-                    panel.setPreferredSize(new Dimension(s.width / 4, s.height / 2));
-                    panel.setEditable(false);
-                    panel.setOpaque(false);
-                    panel.addHyperlinkListener(new HyperlinkListener() {
-
-                        @Override
-                        public void hyperlinkUpdate(HyperlinkEvent he) {
-                            if (he.getEventType().equals(HyperlinkEvent.EventType.ACTIVATED)) {
-                                try {
-                                    Desktop.getDesktop().browse(he.getURL().toURI()); // http://stackoverflow.com/questions/5116473/linux-command-to-open-url-in-default-browser
-                                } catch(Exception e) {
-    //                                e.printStackTrace();
-                                }
-                            }
-                        }
-
-                    });
-                    JScrollPane window = new JScrollPane(panel);
-                    if(Main.os == OS.Mac) {
-                        window.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
-                    } else {
-                        window.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
-                    }
-                    info(window, "Changes");
-                } catch (IOException ex) {
-                    Logger.getLogger(EditorFrame.class.getName()).log(Level.SEVERE, null, ex);
-                }
-            }
-        }.start();
-    }
-    
-    private boolean isMD5(String str) {
-        return str.matches("[a-fA-F0-9]{32}");
-    }
-    
     public static void main(String[] args) {
         
         if(Main.os == OS.Windows) {
@@ -224,12 +154,88 @@ public class EditorFrame extends JFrame {
         }
     }
     
+    private boolean indev;
+    
     private boolean updating;
     
+    private String runPath;
+    
+    private String myMD5 = "";
+    
+    private boolean isMD5(String str) {
+        return str.matches("[a-fA-F0-9]{32}");
+    }
+    
+    //<editor-fold defaultstate="collapsed" desc="UI">
+    private void changelog() {
+        new Thread() {
+            @Override
+            public void run() {
+                try {
+                    URL url = new URL("https://dl.dropbox.com/u/42745598/tf/Hud%20Editor/TF2%20HUD%20Editor.jar.changes");
+                    URLConnection connection = url.openConnection();
+                    //                    HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+                    System.out.println("getting filesize...");
+                    int filesize = connection.getContentLength();
+                    System.out.println(filesize);
+                    
+                    String text = "";
+                    BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getInputStream()));
+                    String line;
+                    while((line = reader.readLine()) != null) {
+                        if(!indev && line.contains(myMD5)) { // dev build cannot MD5
+                            String[] parts = line.split(myMD5);
+                            if(parts[0] != null) {
+                                text += parts[0];
+                            }
+                            text += "<b><u>" + myMD5 + "</u></b>";
+                            if(parts[1] != null) {
+                                text += parts[1];
+                            }
+                        } else {
+                            text += line;
+                        }
+                    }
+                    reader.close();
+                    
+                    final JEditorPane panel = new JEditorPane("text/html", text);
+                    Dimension s = Toolkit.getDefaultToolkit().getScreenSize();
+                    panel.setPreferredSize(new Dimension(s.width / 4, s.height / 2));
+                    panel.setEditable(false);
+                    panel.setOpaque(false);
+                    panel.addHyperlinkListener(new HyperlinkListener() {
+                        
+                        @Override
+                        public void hyperlinkUpdate(HyperlinkEvent he) {
+                            if (he.getEventType().equals(HyperlinkEvent.EventType.ACTIVATED)) {
+                                try {
+                                    Desktop.getDesktop().browse(he.getURL().toURI()); // http://stackoverflow.com/questions/5116473/linux-command-to-open-url-in-default-browser
+                                } catch(Exception e) {
+                                    //                                e.printStackTrace();
+                                }
+                            }
+                        }
+                        
+                    });
+                    JScrollPane window = new JScrollPane(panel);
+                    if(Main.os == OS.Mac) {
+                        window.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
+                    } else {
+                        window.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
+                    }
+                    info(window, "Changes");
+                } catch(IOException ex) {
+                    error(ex);
+                    Logger.getLogger(EditorFrame.class.getName()).log(Level.SEVERE, null, ex);
+                }
+            }
+        }.start();
+    }
+    
     private void checkForUpdates() {
-//        if(inDev) {
-//            return;
-//        }
+        //        if(inDev) {
+        //            return;
+        //        }
         new Thread() {
             
             int retries = 3;
@@ -239,7 +245,7 @@ public class EditorFrame extends JFrame {
                     String md5;
                     URL url = new URL("https://dl.dropbox.com/u/42745598/tf/Hud%20Editor/TF2%20HUD%20Editor.jar.MD5");
                     URLConnection connection = url.openConnection();
-
+                    
                     // read from internet
                     BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getInputStream()));
                     String line = reader.readLine();
@@ -253,30 +259,30 @@ public class EditorFrame extends JFrame {
                     reader.close();
                     
                     boolean equal = md5.equals(myMD5);
-
+                    
                     System.out.println(md5 + " =" + (equal ? "" : "/") + "= " + myMD5);
                     
                     if(!equal) {
                         int returnCode = JOptionPane.showConfirmDialog(null, "Would you like to update to the latest version?", "A new update is available", JOptionPane.YES_NO_OPTION);
                         if(returnCode == JOptionPane.YES_OPTION) {
                             long startTime = System.currentTimeMillis();
-
+                            
                             System.out.println("Connecting to Dropbox...\n");
-
+                            
                             URL latest = new URL("https://dl.dropbox.com/u/42745598/tf/Hud%20Editor/TF2%20HUD%20Editor.jar");
                             URLConnection editor = latest.openConnection();
                             
                             JProgressBar pb = new JProgressBar(0,editor.getContentLength());
                             pb.setPreferredSize(new Dimension(175,20));
                             pb.setStringPainted(true);
-                            pb.setValue(0); 
-
+                            pb.setValue(0);
+                            
                             JLabel label = new JLabel("Update Progress: ");
-
+                            
                             JPanel center_panel = new JPanel();
                             center_panel.add(label);
                             center_panel.add(pb);
-
+                            
                             JDialog dialog = new JDialog((JFrame) null, "Updating...");
                             dialog.getContentPane().add(center_panel, BorderLayout.CENTER);
                             dialog.pack();
@@ -284,34 +290,34 @@ public class EditorFrame extends JFrame {
                             
                             dialog.setLocationRelativeTo(null); // center on screen
                             dialog.toFront(); // raise above other java windows
-
+                            
                             InputStream in = latest.openStream();
                             
-
-//                            FileOutputStream writer = new FileOutputStream(runPath); // TODO: stop closing when this happens. Maybe make a backup..
+                            
+                            //                            FileOutputStream writer = new FileOutputStream(runPath); // TODO: stop closing when this happens. Maybe make a backup..
                             byte[] buffer = new byte[153600]; // 150KB
                             int totalBytesRead = 0;
                             int bytesRead;
-
+                            
                             System.out.println("Downloading JAR file in 150KB blocks at a time.\n");
                             
                             updating = true;
                             
-                            while((bytesRead = in.read(buffer)) > 0) {  
-//                               writer.write(buffer, 0, bytesRead); // I don't want to write directly over the top until I have all the data..
-                               buffer = new byte[153600];
-                               totalBytesRead += bytesRead;
-                               pb.setValue(totalBytesRead);
+                            while((bytesRead = in.read(buffer)) > 0) {
+                                //                               writer.write(buffer, 0, bytesRead); // I don't want to write directly over the top until I have all the data..
+                                buffer = new byte[153600];
+                                totalBytesRead += bytesRead;
+                                pb.setValue(totalBytesRead);
                             }
-
+                            
                             long endTime = System.currentTimeMillis();
-
+                            
                             System.out.println("Done. " + (new Integer(totalBytesRead).toString()) + " bytes read (" + (new Long(endTime - startTime).toString()) + " millseconds).\n");
-//                            writer.close();
+                            //                            writer.close();
                             in.close();
                             
                             dialog.dispose();
-
+                            
                             info("Downloaded the latest version. Please restart now.");
                             
                             updating = false;
@@ -342,6 +348,37 @@ public class EditorFrame extends JFrame {
         }.start();
     }
     
+    public void about() {
+        String latestThread = "http://www.reddit.com/r/truetf2/comments/11xtwz/wysiwyg_hud_editor_coming_together/";
+        String aboutText = "<html><h2>This is a <u>W</u>hat <u>Y</u>ou <u>S</u>ee <u>I</u>s <u>W</u>hat <u>Y</u>ou <u>G</u>et HUD Editor for TF2.</h2>";
+        aboutText += "<p>You can graphically edit TF2 HUDs with it!<br>";
+        aboutText += "<p>It was written by <a href=\"http://www.reddit.com/user/TimePath/\">TimePath</a></p>";
+        aboutText += "<p>Source available on <a href=\"http://code.google.com/p/tf2-hud-editor/\">Google code</a></p>";
+        aboutText += "<p>I have an <a href=\"http://code.google.com/feeds/p/tf2-hud-editor/hgchanges/basic\">Atom feed</a> set up listing source commits</p>";
+        aboutText += "<p>Please give feedback or suggestions on <a href=\""+latestThread+"\">the latest update thread</a></p>";
+        aboutText += "<p>Current version: " + myMD5 + "</p>";
+        aboutText += "</html>";
+        final JEditorPane panel = new JEditorPane("text/html", aboutText);
+        panel.setEditable(false);
+        panel.setOpaque(false);
+        panel.addHyperlinkListener(new HyperlinkListener() {
+            
+            @Override
+            public void hyperlinkUpdate(HyperlinkEvent he) {
+                if (he.getEventType().equals(HyperlinkEvent.EventType.ACTIVATED)) {
+                    try {
+                        Desktop.getDesktop().browse(he.getURL().toURI()); // http://stackoverflow.com/questions/5116473/linux-command-to-open-url-in-default-browser
+                    } catch(Exception e) {
+                        //                                e.printStackTrace();
+                    }
+                }
+            }
+            
+        });
+        info(panel, "About");
+    }
+    //</editor-fold>
+    
     private void restart() throws URISyntaxException, IOException { // TODO: wrap this class in a launcher, rather than explicitly restarting
         final String javaBin = System.getProperty("java.home") + File.separator + "bin" + File.separator + "java";
         final File currentJar = new File(EditorFrame.class.getProtectionDomain().getCodeSource().getLocation().toURI());
@@ -360,14 +397,11 @@ public class EditorFrame extends JFrame {
         System.exit(0);
     }
     
-    private String runPath;
-    private String myMD5 = "";
-    
     private void calcMD5() {
         try {
             runPath = URLDecoder.decode(EditorFrame.class.getProtectionDomain().getCodeSource().getLocation().getPath(), "UTF-8");
             if(!runPath.endsWith(".jar")) {
-                inDev = true;
+                indev = true;
                 return;
             }
             InputStream fis = new FileInputStream(runPath);
@@ -400,44 +434,8 @@ public class EditorFrame extends JFrame {
             System.exit(0);
         }
     }
-    
-    public void about() {
-        String latestThread = "http://www.reddit.com/r/truetf2/comments/11xtwz/wysiwyg_hud_editor_coming_together/";
-        String aboutText = "<html><h2>This is a <u>W</u>hat <u>Y</u>ou <u>S</u>ee <u>I</u>s <u>W</u>hat <u>Y</u>ou <u>G</u>et HUD Editor for TF2.</h2>";
-        aboutText += "<p>You can graphically edit TF2 HUDs with it!<br>";
-        aboutText += "<p>It was written by <a href=\"http://www.reddit.com/user/TimePath/\">TimePath</a></p>";
-        aboutText += "<p>Source available on <a href=\"http://code.google.com/p/tf2-hud-editor/\">Google code</a></p>";
-        aboutText += "<p>I have an <a href=\"http://code.google.com/feeds/p/tf2-hud-editor/hgchanges/basic\">Atom feed</a> set up listing source commits</p>";
-        aboutText += "<p>Please give feedback or suggestions on <a href=\""+latestThread+"\">the latest update thread</a></p>";
-        aboutText += "<p>Current version: " + myMD5 + "</p>";
-        aboutText += "</html>";
-        final JEditorPane panel = new JEditorPane("text/html", aboutText);
-        panel.setEditable(false);
-        panel.setOpaque(false);
-        panel.addHyperlinkListener(new HyperlinkListener() {
 
-            @Override
-            public void hyperlinkUpdate(HyperlinkEvent he) {
-                if (he.getEventType().equals(HyperlinkEvent.EventType.ACTIVATED)) {
-                    try {
-                        Desktop.getDesktop().browse(he.getURL().toURI()); // http://stackoverflow.com/questions/5116473/linux-command-to-open-url-in-default-browser
-                    } catch(Exception e) {
-//                                e.printStackTrace();
-                    }
-                }
-            }
-
-        });
-        info(panel, "About");
-    }
-
-    public EditorFrame() {   
-        try {
-            System.loadLibrary("xfiledialog");
-        } catch(UnsatisfiedLinkError e) {
-            
-        }
-        
+    public EditorFrame() {
         calcMD5();
         
         this.setTitle(ResourceBundle.getBundle("com/timepath/tf2/hudedit/internationalization/lang").getString("Title"));
@@ -587,7 +585,9 @@ public class EditorFrame extends JFrame {
     public void setVisible(boolean b) {
         super.setVisible(b);
         this.createBufferStrategy(3); // Triple buffered, any more sees minimal gain.
-        this.checkForUpdates();
+        if(!indev) {
+            this.checkForUpdates();
+        }
     }
     
     
@@ -605,7 +605,7 @@ public class EditorFrame extends JFrame {
     
     private String hudSelectionDir;
     
-    private File lastLoaded;
+    private File lastLoaded = new File("/home/andrew/TF2 HUDS/frankenhudr47"); // convenience
     
     //<editor-fold defaultstate="collapsed" desc="Broesel's stuff">
     //    private void selectSteamLocation() {
@@ -1043,6 +1043,7 @@ public class EditorFrame extends JFrame {
             fileMenu.add(saveAsItem);
             
             reloadItem = new JMenuItem("Revert", KeyEvent.VK_R);
+            reloadItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_F5, 0));
             reloadItem.addActionListener(al);
             fileMenu.add(reloadItem);
 

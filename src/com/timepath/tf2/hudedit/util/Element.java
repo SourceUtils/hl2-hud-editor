@@ -1,5 +1,7 @@
 package com.timepath.tf2.hudedit.util;
 
+import com.timepath.tf2.hudedit.loaders.ResLoader;
+import com.timepath.tf2.hudedit.loaders.VtfLoader;
 import com.timepath.tf2.hudedit.swing.EditorFrame;
 import com.timepath.tf2.hudedit.swing.EditorCanvas;
 import java.awt.Color;
@@ -272,7 +274,7 @@ public class Element {
     public void setEnabled(boolean enabled) {
         this.enabled = enabled;
     }
-    private Font font; // http://www.3rd-evolution.de/tkrammer/docs/java_font_size.html
+    private Font font;
 
     public Font getFont() {
         return font;
@@ -298,14 +300,17 @@ public class Element {
             String k = entry.getKey();
             if (k != null && k.contains("\"")) { // assumes one set of quotes
                 k = k.substring(1, k.length() - 1);
+                k = k.replaceAll("\"", "").trim();
             }
             String v = entry.getValue();
             if (v != null && v.contains("\"")) {
                 v = v.substring(1, v.length() - 1);
+                v = v.replaceAll("\"", "").trim();
             }
             String i = entry.getInfo();
             if (i != null && i.contains("\"")) {
                 i = i.substring(1, i.length() - 1);
+                i = i.replaceAll("\"", "").trim();
             }
 
             if ("enabled".equalsIgnoreCase(k)) {
@@ -359,6 +364,17 @@ public class Element {
                 } catch(NumberFormatException e) {
                     
                 }
+            } else if("font".equalsIgnoreCase(k)) {
+                if(!ResLoader.fonts.containsKey(v)) {
+                    continue;
+                }
+                HudFont a = ResLoader.fonts.get(v);
+                Font f = a.getFont();
+                if(f != null) {
+                    this.setFont(f);
+                }
+            } else if("image".equalsIgnoreCase(k)) {
+                this.setImage(new VtfLoader().load("./res/vtf/hud/" + v + ".vtf"));
             } else {
 //                System.out.println("Other property: " + k);
             }
@@ -554,9 +570,11 @@ public class Element {
                 entry.setValue(this.getLabelText());
             } else if ("ControlName".equalsIgnoreCase(k)) {
                 entry.setValue(this.getControlName());
+            } else if ("font".equalsIgnoreCase(k)) {
+//                entry.setValue(this.getFont()); // TODO
             }
             if(!entry.getKey().equals("//") && !entry.getKey().equals("\\n")) {
-                entry.setValue("\"" + entry.getValue() + "\"");
+                entry.setValue("" + entry.getValue() + ""); // TODO: insert quotes on table
             }
         }
     }

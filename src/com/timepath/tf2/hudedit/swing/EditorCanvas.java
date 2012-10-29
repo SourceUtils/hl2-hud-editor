@@ -222,7 +222,13 @@ public class EditorCanvas extends JPanel implements MouseListener, MouseMotionLi
             
             if(e.getFgColor() != null) {
                 g.setColor(e.getFgColor());
-                g.fillRect(elementX + offX, elementY + offY, elementW - 1, elementH - 1);
+                if(e.getLabelText() == null) {
+                    g.fillRect(elementX + offX, elementY + offY, elementW - 1, elementH - 1);
+                }
+            }
+            
+            if(e.getImage() != null) {
+                g.drawImage(e.getImage(), elementX + offX, elementY + offY, elementW, elementH, this);
             }
             
             if(selectedElements.contains(e)) {
@@ -241,7 +247,14 @@ public class EditorCanvas extends JPanel implements MouseListener, MouseMotionLi
             }
             
             if(e.getLabelText() != null && !e.getLabelText().isEmpty()) {
-                g.drawString(e.getLabelText(), elementX + offX, elementY + offY);
+                if(e.getFgColor() != null) {
+                    g.setColor(e.getFgColor());
+                }
+                int screenRes = Toolkit.getDefaultToolkit().getScreenResolution();
+                int fontSize = (int)Math.round(12.0 * screenRes / 72.0);
+                g.setFont(e.getFont());
+                g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                g.drawString(e.getLabelText(), elementX + offX, elementY + offY + fontSize);
             }
         }
         

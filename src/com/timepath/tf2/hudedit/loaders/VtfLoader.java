@@ -3,6 +3,7 @@ package com.timepath.tf2.hudedit.loaders;
 import java.awt.Color;
 import java.awt.FlowLayout;
 import java.awt.Graphics2D;
+import java.awt.Image;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
@@ -33,8 +34,8 @@ public class VtfLoader {
         File[] subs = root.listFiles();
         for(int i = 0; i < subs.length; i++) {
             if(subs[i].getName().endsWith(".vtf")) {
-                if(new VtfLoader().load(subs[i].getPath())) { // returns true on successful load
-                    Thread.sleep(5000);
+                if(new VtfLoader().load(subs[i].getPath()) != null) { // returns non-null on successful load
+                    Thread.sleep(1000);
                 }
             }
         }
@@ -44,7 +45,7 @@ public class VtfLoader {
 //        new VtfLoader().load("./res/vtf/bomb_carried.vtf");
     }
     
-    public boolean load(String path) {
+    public Image load(String path) {
         RandomAccessFile bin;
         JFrame f = new JFrame(path);
         FlowLayout fl = new FlowLayout(FlowLayout.LEFT);
@@ -76,15 +77,16 @@ public class VtfLoader {
             if(fullFormat != Format.IMAGE_FORMAT_DXT1 && fullFormat != Format.IMAGE_FORMAT_DXT5) {
 //                System.err.println("FULLFORMAT=" + fullFormat);
 //                System.err.print("\n");
-                return false;
+                return null;
             }
+            System.out.println(bin.length());
 //            System.err.println("FILE=" + path);
 //            System.err.println("SIG=" + signature + ", " + (signature.equals("VTF\0") ? "valid" : "invalid"));
 //            System.err.println("VER=" + version[0] + "." + version[1]);
-//            System.err.println("LEN=" + headerSize);
-            System.err.println("WIDE=" + width);
-            System.err.println("HIGH=" + height);
-            System.err.println("MIPS=" + mipCount);
+            System.err.println("LEN=" + headerSize);
+//            System.err.println("WIDE=" + width);
+//            System.err.println("HIGH=" + height);
+//            System.err.println("MIPS=" + mipCount);
 //            System.err.println("FLAG=" + Integer.toHexString(flags));
 //            System.err.println("USEMIPS=" + !((flags & Flags.TEXTUREFLAGS_NOMIP.getMask()) == 0xff));
           if(frames > 1) {
@@ -128,6 +130,7 @@ public class VtfLoader {
           BufferedImage thumbImage = loadDXT1(thumbData, lowWidth, lowHeight);
           f.setIconImage(thumbImage);
           f.add(new JLabel(new ImageIcon(thumbImage)));
+          System.out.println(thumbData.length);
           //</editor-fold>
           BufferedImage image = null;
           
@@ -151,6 +154,7 @@ public class VtfLoader {
                   image = new BufferedImage(w * scale, h * scale, BufferedImage.TYPE_INT_ARGB);
                   Graphics2D g = (Graphics2D) image.getGraphics();
                   g.drawImage(loadDXT1(imageData, w, h), 0, 0, w * scale, h * scale, null);
+                  System.out.println(imageData.length);
               } else if(fullFormat == Format.IMAGE_FORMAT_DXT5) {
                   byte[] imageData = new byte[Math.max(w * h, 16)]; // DXT5. Each 'block' is 4*4 pixels + some other data. 16 pixels become 16 bytes [128 bits] (2 * 8 bit alpha values, 4x4 3 bit alpha indicies, 2 * 16 bit colours, 4*4 2 bit indicies)
                   bin.read(imageData);
@@ -158,13 +162,14 @@ public class VtfLoader {
                   image = new BufferedImage(w * scale, h * scale, BufferedImage.TYPE_INT_ARGB);
                   Graphics2D g = (Graphics2D) image.getGraphics();
                   g.drawImage(loadDXT5(imageData, w, h), 0, 0, w * scale, h * scale, null);
+                  System.out.println(imageData.length);
               }
               if(image != null) {
                   f.add(new JLabel(new ImageIcon(image)));
               }
           }
           
-          f.setVisible(true);
+//          f.setVisible(true);
           f.pack();
           
           System.err.println("L:" + bin.length() + ", P:" + bin.getFilePointer() + ", R:" + (bin.length() - bin.getFilePointer()));
@@ -172,10 +177,10 @@ public class VtfLoader {
           
           bin.close();
           
-          return true;
+          return image;
         } catch (Exception e) {
             e.printStackTrace();
-            return false;
+            return null;
         }
     }
     

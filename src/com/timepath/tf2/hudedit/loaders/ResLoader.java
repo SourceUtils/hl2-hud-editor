@@ -1,6 +1,7 @@
 package com.timepath.tf2.hudedit.loaders;
 
 import com.timepath.tf2.hudedit.util.Element;
+import com.timepath.tf2.hudedit.util.HudFont;
 import com.timepath.tf2.hudedit.util.Property;
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -8,10 +9,12 @@ import java.io.RandomAccessFile;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.Scanner;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.tree.DefaultMutableTreeNode;
+import javax.swing.tree.TreeNode;
 
 /**
  * 
@@ -60,6 +63,8 @@ public class ResLoader {
             }
         }
     }
+    
+    public static HashMap<String,HudFont> fonts = new HashMap<String,HudFont>(); 
 
     // TODO: Special exceptions for *scheme.res, hudlayout.res, 
     public void analyze(final File file, final DefaultMutableTreeNode top) {
@@ -74,6 +79,9 @@ public class ResLoader {
                     RandomAccessFile rf = new RandomAccessFile(file.getPath(), "r");
                     s = new Scanner(rf.getChannel());
                     processAnalyze(s, top, new ArrayList<Property>(), file);
+                    if(file.getName().equalsIgnoreCase("ClientScheme.res")) {
+                        clientScheme(top);
+                    }
                 } catch(FileNotFoundException ex) {
                     logger.log(Level.SEVERE, null, ex);
                 } finally {
@@ -81,6 +89,19 @@ public class ResLoader {
                         s.close();
                     }
                 }
+            }
+
+            private void clientScheme(DefaultMutableTreeNode props) {
+                System.out.println("Found clientscheme");
+                TreeNode fontNode = props.getChildAt(0).getChildAt(3); // XXX: hardcoded
+                for(int i = 0; i < fontNode.getChildCount(); i++) {
+                    TreeNode font = fontNode.getChildAt(i);
+                    TreeNode detailFont = font.getChildAt(0); // XXX: hardcoded detail level
+                    Element fontElement = (Element) ((DefaultMutableTreeNode) detailFont).getUserObject();
+                    String fontName = font.toString().replaceAll("\"", ""); // Some use quotes.. oh well
+                    fonts.put(fontName, new HudFont(fontName, fontElement));
+                }
+                System.out.println("Loaded clientscheme");
             }
         }.start();
     }

@@ -1,6 +1,7 @@
 package com.timepath.tf2.hudedit;
 
 import com.timepath.tf2.hudedit.temp.JarClassLoader;
+import com.timepath.tf2.hudedit.util.HudFont;
 import java.awt.event.ActionEvent;
 
 /**
