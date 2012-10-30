@@ -1,16 +1,26 @@
 package com.timepath.tf2.hudedit.loaders;
 
+import java.awt.BorderLayout;
 import java.awt.Color;
-import java.awt.FlowLayout;
+import java.awt.Dimension;
+import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Image;
 import java.awt.image.BufferedImage;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
+import javax.swing.BorderFactory;
+import javax.swing.BoxLayout;
 import javax.swing.ImageIcon;
+import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.filechooser.FileFilter;
 
 /**
  * common: DXT5, DXT1, BGRA8888, UV88
@@ -29,93 +39,294 @@ public class VtfLoader {
         
     }
     
-    public static void main(String... args) throws InterruptedException {
-        File root = new File("./res/vtf/");
+    public void test() {
+        class ImagePreviewPanel extends JPanel implements PropertyChangeListener {
+
+            private int width, height;
+            private Image image;
+            private static final int ACCSIZE = 256;
+            private Color bg;
+
+            public ImagePreviewPanel() {
+                setPreferredSize(new Dimension(ACCSIZE, -1));
+                bg = getBackground();
+            }
+
+            public void propertyChange(PropertyChangeEvent e) {
+                String propertyName = e.getPropertyName();
+
+                // Make sure we are responding to the right event.
+                if(propertyName.equals(JFileChooser.SELECTED_FILE_CHANGED_PROPERTY)) {
+                    File selection = (File)e.getNewValue();
+                    String name;
+
+                    if(selection == null) {
+                        return;
+                    } else {
+                        name = selection.getAbsolutePath();
+                    }
+
+                    /*
+                     * Make reasonably sure we have an image format that AWT can
+                     * handle so we don't try to draw something silly.
+                     */
+                    if((name != null) && name.toLowerCase().endsWith(".vtf")) {
+                        Image i = new VtfLoader().load(name);
+                        image = (i != null ? i : new BufferedImage(128, 128, BufferedImage.TYPE_INT_ARGB));
+                        scaleImage();
+                        repaint();
+                    }
+                }
+            }
+
+            private void scaleImage() {
+                width = image.getWidth(this);
+                height = image.getHeight(this);
+                double ratio = 1.0;
+
+                /* 
+                 * Determine how to scale the image. Since the accessory can expand
+                 * vertically make sure we don't go larger than ACCSIZE when scaling
+                 * vertically.
+                 */
+                if (width >= height) {
+                    ratio = (double)(ACCSIZE-5) / width;
+                    width = ACCSIZE-5;
+                    height = (int)(height * ratio);
+                }
+                else {
+                    if (getHeight() > ACCSIZE) {
+                        ratio = (double)(ACCSIZE-5) / height;
+                        height = ACCSIZE-5;
+                        width = (int)(width * ratio);
+                    }
+                    else {
+                        ratio = (double)getHeight() / height;
+                        height = getHeight();
+                        width = (int)(width * ratio);
+                    }
+                }
+
+                image = image.getScaledInstance(width, height, Image.SCALE_DEFAULT);
+            }
+
+            @Override
+            public void paintComponent(Graphics g) {
+                g.setColor(bg);
+
+                /*
+                 * If we don't do this, we will end up with garbage from previous
+                 * images if they have larger sizes than the one we are currently
+                 * drawing. Also, it seems that the file list can paint outside
+                 * of its rectangle, and will cause odd behavior if we don't clear
+                 * or fill the rectangle for the accessory before drawing. This might
+                 * be a bug in JFileChooser.
+                 */
+                g.fillRect(0, 0, ACCSIZE, getHeight());
+                g.drawImage(image, getWidth() / 2 - width / 2 + 5, getHeight() / 2 - height / 2, this);
+            }
+
+        }
+        
+        JFileChooser chooser = new JFileChooser("./res/vtf/hud/");
+        chooser.setFileFilter(new FileFilter() {
+
+            @Override
+            public boolean accept(File file) {
+                return file.getName().toLowerCase().endsWith(".vtf") || file.isDirectory();
+            }
+
+            @Override
+            public String getDescription() {
+                return "VTF";
+            }
+            
+        });
+        ImagePreviewPanel preview = new ImagePreviewPanel();
+        chooser.setAccessory(preview);
+        chooser.addPropertyChangeListener(preview);
+        chooser.showOpenDialog(null);
+    }
+    
+    public void test2() {
+        JFrame f = new JFrame("Vtf Loader");
+        f.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+//        f.setLayout(new FlowLayout(FlowLayout.LEFT));
+//        f.setPreferredSize(Toolkit.getDefaultToolkit().getScreenSize());
+        
+        JScrollPane jsp = new JScrollPane();
+        jsp.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
+        f.add(jsp);
+        JPanel pane = new JPanel();
+        pane.setLayout(new BoxLayout(pane, BoxLayout.PAGE_AXIS));
+        jsp.setViewportView(pane);
+        
+        boolean init = false;
+        File root = new File("./res/vtf/hud/");
         File[] subs = root.listFiles();
         for(int i = 0; i < subs.length; i++) {
             if(subs[i].getName().endsWith(".vtf")) {
-                if(new VtfLoader().load(subs[i].getPath()) != null) { // returns non-null on successful load
-                    Thread.sleep(1000);
+                Image image = new VtfLoader().load(subs[i].getPath());
+                if(image != null) {
+                    JPanel p = new JPanel(new BorderLayout());
+                    p.setBackground(Color.GRAY);
+                    p.setSize(image.getWidth(null), image.getHeight(null));
+                    JLabel l = new JLabel();
+                    p.setToolTipText(subs[i].getName());
+                    l.setIcon(new ImageIcon(image));
+                    p.add(l, BorderLayout.CENTER);
+                    p.setBorder(BorderFactory.createLineBorder(Color.BLACK));
+                    pane.add(p);
+                    jsp.invalidate();
+                    jsp.validate();
+                    jsp.repaint();
+                    
+                    if(!init) {
+                        f.setVisible(true);
+                        f.pack();
+                        init = true;
+                    }
+//                    Thread.sleep(5000);
                 }
             }
         }
-//        new VtfLoader().load("./res/vtf/death_wheel_4_icon.vtf");
-//        new VtfLoader().load("./res/vtf/class_demored.vtf");
-//        new VtfLoader().load("./res/vtf/eng_status_area_sentry_blue.vtf");
-//        new VtfLoader().load("./res/vtf/bomb_carried.vtf");
+        if(!init) {
+            f.setVisible(true);
+            f.pack();
+            init = true;
+        }
+    }
+    
+    public static void main(String... args) throws InterruptedException {
+        new VtfLoader().test();
+    }
+    
+    public class VtfFile {
+        
+        public VtfFile() {
+            
+        }
+        
+        /**
+         * 8 bytes
+         */
+        int[] version;
+        
+        /**
+         * 2 bytes
+         */
+        int width;
+        
+        /**
+         * 2 bytes
+         */
+        int height;
+        
+        /**
+         * 4 bytes
+         */
+        int flags;
+        
+        /**
+         * 2 bytes
+         */
+        int frameCount;
+        
+        /**
+         * 2 bytes
+         * Zero indexed
+         */
+        int frameFirst;
+        
+        /**
+         * 12 bytes
+         */
+        float[] reflectivity;
+        
+        /**
+         * 4 bytes
+         */
+        float bumpScale;
+        
+        /**
+         * 4 bytes
+         */
+        Format format;
+        
+        /**
+         * 1 byte
+         */
+        int mipCount;
+        
+        /**
+         * 4 bytes
+         */
+        Format thumbFormat;
+        
+        /**
+         * 1 byte
+         */
+        int thumbWidth;
+        
+        /**
+         * 1 byte
+         */
+        int thumbHeight;
+        
+        /**
+         * 1 byte
+         * The documentation says 2, but I don't think so...
+         */
+        int depth;
+        
     }
     
     public Image load(String path) {
-        RandomAccessFile bin;
-        JFrame f = new JFrame(path);
-        FlowLayout fl = new FlowLayout(FlowLayout.LEFT);
-        f.setLayout(fl);
+        RandomAccessFile file;
         try {
-            bin = new RandomAccessFile(path, "r");
-            //<editor-fold defaultstate="collapsed" desc="Header">
-            String signature = new String(new byte[] {readChar(bin), readChar(bin), readChar(bin), readChar(bin)}); // 4
-            int[] version = {readUInt(bin), readUInt(bin)}; // 12
-            int headerSize = readUInt(bin); // 16
-            int width = readUShort(bin); // 18
-            int height = readUShort(bin); // 20
-            int flags = readUInt(bin); // 24
-            int frames = readUShort(bin); // 26
-            int first = readUShort(bin); // 28
-            bin.skipBytes(4); // padding to 32
-            float[] reflectivity = new float[] {readFloat(bin), readFloat(bin), readFloat(bin)}; // 44
-            bin.skipBytes(4); // padding 48
-            float bumpScale = readFloat(bin); // 52
-            Format fullFormat = Format.getEnumForIndex(readUInt(bin)); // 56
-            int mipCount = readUChar(bin); // 57
-            Format lowFormat = Format.getEnumForIndex(readUInt(bin)); // 61
-            int lowWidth = readUChar(bin); // 62
-            int lowHeight = readUChar(bin); // 63
-            int depth = readUByte(bin); // 64. documentation says this is 2 bytes, but I think that they are wrong
-            //</editor-fold>
+            file = new RandomAccessFile(path, "r");
+            System.out.println("Loading " + path + "...");
+            String signature = new String(new byte[] {readChar(file), readChar(file), readChar(file), readChar(file)});
+            if(!(signature.equals("VTF\0"))) {
+                System.err.println("Invalid VTF file " + path);
+            }
+            VtfFile vtf = new VtfFile();
+            vtf.version = new int[] {readUInt(file), readUInt(file)};
+            int headerSize = readUInt(file);
+            vtf.width = readUShort(file);
+            vtf.height = readUShort(file);
+            vtf.flags = readUInt(file);
+            vtf.frameCount = readUShort(file);
+            vtf.frameFirst = readUShort(file);
+            file.skipBytes(4); // padding
+            vtf.reflectivity = new float[] {readFloat(file), readFloat(file), readFloat(file)};
+            file.skipBytes(4); // padding
+            vtf.bumpScale = readFloat(file);
+            vtf.format = Format.getEnumForIndex(readUInt(file));
+            vtf.mipCount = readUChar(file);
+            vtf.thumbFormat = Format.getEnumForIndex(readUInt(file));
+            vtf.thumbWidth = readUChar(file);
+            vtf.thumbHeight = readUChar(file);
+            vtf.depth = readUByte(file); // the 64th byte
 
-            //<editor-fold defaultstate="collapsed" desc="Header processing">
-            if(fullFormat != Format.IMAGE_FORMAT_DXT1 && fullFormat != Format.IMAGE_FORMAT_DXT5) {
-//                System.err.println("FULLFORMAT=" + fullFormat);
-//                System.err.print("\n");
+            if(vtf.format != Format.IMAGE_FORMAT_DXT1 && vtf.format != Format.IMAGE_FORMAT_DXT5) {
+                System.err.println("Unrecognised VTF format " + vtf.format);
                 return null;
             }
-            System.out.println(bin.length());
-//            System.err.println("FILE=" + path);
-//            System.err.println("SIG=" + signature + ", " + (signature.equals("VTF\0") ? "valid" : "invalid"));
-//            System.err.println("VER=" + version[0] + "." + version[1]);
-            System.err.println("LEN=" + headerSize);
-//            System.err.println("WIDE=" + width);
-//            System.err.println("HIGH=" + height);
-//            System.err.println("MIPS=" + mipCount);
-//            System.err.println("FLAG=" + Integer.toHexString(flags));
 //            System.err.println("USEMIPS=" + !((flags & Flags.TEXTUREFLAGS_NOMIP.getMask()) == 0xff));
-          if(frames > 1) {
-              System.err.println("FRAMES=" + frames); // zero indexed
+          if(vtf.frameCount > 1) {
+              System.err.println("FRAMES = " + vtf.frameCount); // zero indexed
+              if(vtf.frameFirst != 0) {
+                  System.err.println("FIRSTFRAME = " + vtf.frameFirst); // zero indexed
+              }
           }
-          if(first != 0) {
-              System.err.println("FIRSTFRAME=" + first); // zero indexed
-          }
-          //          System.err.println("REFLECTIVITY=" + reflectivity[0] + ", " + reflectivity[1] + ", " + reflectivity[2]);
-          //          if(bumpScale != 1) {
-          //              System.err.println("BUMPSCALE=" + bumpScale);
-          //          }
-//          
           
-          //          if(lowFormat != Format.IMAGE_FORMAT_DXT1 && lowFormat != Format.IMAGE_FORMAT_DXT1_ONEBITALPHA) {
-          //              System.err.println("LOWFORMAT=" + lowFormat);
-          //          }
-          //          System.err.println("LOWWIDTH=" + lowWidth);
-          //          System.err.println("LOWHIGH=" + lowHeight);
-          //          if(depth != 1) {
-          //              System.err.println("DEPTH=" + depth);
-          //          }
-          //</editor-fold>
-          
-          bin.skipBytes(headerSize - 64 - 8); // 64 for all the above info, 8 for CRC or other things. I have no idea what the data inbetween does          
+//          file.seek(headerSize);
+          file.skipBytes(headerSize - 64 - 8); // 64 for all the above info, 8 for CRC or other things. I have no idea what the data inbetween does          
           
           //<editor-fold defaultstate="collapsed" desc="CRC">
-          String crcHead = new String(new byte[] {readChar(bin), readChar(bin), readChar(bin), readChar(bin)});
-          int crc = readLong(bin);
+          String crcHead = new String(new byte[] {readChar(file), readChar(file), readChar(file), readChar(file)});
+          int crc = readLong(file);
           
           if(!(crcHead.equals("CRC\2"))) {
               System.err.println("CRC=" + crcHead + ", invalid");
@@ -125,57 +336,52 @@ public class VtfLoader {
           //</editor-fold>
           
           //<editor-fold defaultstate="collapsed" desc="Thumbnail">
-          byte[] thumbData = new byte[(lowWidth * lowHeight) / 2]; // DXT1. Each 'block' is 4*4 pixels. 16 pixels become 8 bytes
-          bin.read(thumbData);
-          BufferedImage thumbImage = loadDXT1(thumbData, lowWidth, lowHeight);
-          f.setIconImage(thumbImage);
-          f.add(new JLabel(new ImageIcon(thumbImage)));
-          System.out.println(thumbData.length);
+          byte[] thumbData = new byte[(vtf.thumbWidth * vtf.thumbHeight) / 2]; // DXT1. Each 'block' is 4*4 pixels. 16 pixels become 8 bytes
+          file.read(thumbData);
+          BufferedImage thumbImage = loadDXT1(thumbData, vtf.thumbWidth, vtf.thumbHeight);
+//          System.out.println(thumbData.length);
           //</editor-fold>
+          
           BufferedImage image = null;
           
           int scale = 2;
           
-          
-          int[] sizesX = new int[mipCount]; // largest -> smallest {64, 32, 16, 8, 4, 2, 1}
-          int[] sizesY = new int[mipCount];
-          for(int n = 0; n < mipCount; n++) {
-              sizesX[n] = Math.max((width >> n), 1);
-              sizesY[n] = Math.max((height >> n), 1);
+          int[] sizesX = new int[vtf.mipCount]; // largest -> smallest {64, 32, 16, 8, 4, 2, 1}
+          int[] sizesY = new int[vtf.mipCount];
+          for(int n = 0; n < vtf.mipCount; n++) {
+              sizesX[n] = Math.max((vtf.width >> n), 1);
+              sizesY[n] = Math.max((vtf.height >> n), 1);
           }
-          for(int i = 0; i < mipCount; i++) {
-              int w = sizesX[mipCount - i - 1];
-              int h = sizesY[mipCount - i - 1];
+          for(int i = 0; i < vtf.mipCount; i++) {
+              int w = sizesX[vtf.mipCount - i - 1];
+              int h = sizesY[vtf.mipCount - i - 1];
               
-              if(fullFormat == Format.IMAGE_FORMAT_DXT1) {
+              if(vtf.format == Format.IMAGE_FORMAT_DXT1) {
                   byte[] imageData = new byte[Math.max((w * h) / 2, 8)]; // DXT1. Each 'block' is 4*4 pixels + some other data. 16 pixels become 8 bytes [64 bits] (2 * 16 bit colours, 4*4 2 bit indicies)
-                  bin.read(imageData);
+                  file.read(imageData);
                   
                   image = new BufferedImage(w * scale, h * scale, BufferedImage.TYPE_INT_ARGB);
                   Graphics2D g = (Graphics2D) image.getGraphics();
                   g.drawImage(loadDXT1(imageData, w, h), 0, 0, w * scale, h * scale, null);
-                  System.out.println(imageData.length);
-              } else if(fullFormat == Format.IMAGE_FORMAT_DXT5) {
+//                  System.out.println(imageData.length);
+              } else if(vtf.format == Format.IMAGE_FORMAT_DXT5) {
                   byte[] imageData = new byte[Math.max(w * h, 16)]; // DXT5. Each 'block' is 4*4 pixels + some other data. 16 pixels become 16 bytes [128 bits] (2 * 8 bit alpha values, 4x4 3 bit alpha indicies, 2 * 16 bit colours, 4*4 2 bit indicies)
-                  bin.read(imageData);
+                  file.read(imageData);
                   
                   image = new BufferedImage(w * scale, h * scale, BufferedImage.TYPE_INT_ARGB);
                   Graphics2D g = (Graphics2D) image.getGraphics();
                   g.drawImage(loadDXT5(imageData, w, h), 0, 0, w * scale, h * scale, null);
-                  System.out.println(imageData.length);
+//                  System.out.println(imageData.length);
               }
-              if(image != null) {
-                  f.add(new JLabel(new ImageIcon(image)));
-              }
+              
           }
           
-//          f.setVisible(true);
-          f.pack();
-          
-          System.err.println("L:" + bin.length() + ", P:" + bin.getFilePointer() + ", R:" + (bin.length() - bin.getFilePointer()));
+          System.err.println("L:" + file.length() + ", P:" + file.getFilePointer() + ", R:" + (file.length() - file.getFilePointer()));
           System.err.print("\n");
           
-          bin.close();
+          file.close();
+          
+          System.out.println("Loaded " + path + "!");
           
           return image;
         } catch (Exception e) {
