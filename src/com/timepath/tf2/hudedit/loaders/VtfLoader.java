@@ -1,5 +1,6 @@
 package com.timepath.tf2.hudedit.loaders;
 
+import java.awt.AlphaComposite;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Dimension;
@@ -285,7 +286,7 @@ public class VtfLoader {
         RandomAccessFile file;
         try {
             file = new RandomAccessFile(path, "r");
-            System.out.println("Loading " + path + "...");
+//            System.out.println("Loading " + path + "...");
             String signature = new String(new byte[] {readChar(file), readChar(file), readChar(file), readChar(file)});
             if(!(signature.equals("VTF\0"))) {
                 System.err.println("Invalid VTF file " + path);
@@ -308,82 +309,107 @@ public class VtfLoader {
             vtf.thumbWidth = readUChar(file);
             vtf.thumbHeight = readUChar(file);
             vtf.depth = readUByte(file); // the 64th byte
-
-            if(vtf.format != Format.IMAGE_FORMAT_DXT1 && vtf.format != Format.IMAGE_FORMAT_DXT5) {
-                System.err.println("Unrecognised VTF format " + vtf.format);
-                return null;
-            }
+            
+            System.out.println(vtf.format);
+            
 //            System.err.println("USEMIPS=" + !((flags & Flags.TEXTUREFLAGS_NOMIP.getMask()) == 0xff));
-          if(vtf.frameCount > 1) {
-              System.err.println("FRAMES = " + vtf.frameCount); // zero indexed
-              if(vtf.frameFirst != 0) {
-                  System.err.println("FIRSTFRAME = " + vtf.frameFirst); // zero indexed
-              }
-          }
+            if(vtf.frameCount > 1) {
+                System.err.println("FRAMES = " + vtf.frameCount); // zero indexed
+                if(vtf.frameFirst != 0) {
+                    System.err.println("FIRSTFRAME = " + vtf.frameFirst); // zero indexed
+                }
+            }
           
 //          file.seek(headerSize);
-          file.skipBytes(headerSize - 64 - 8); // 64 for all the above info, 8 for CRC or other things. I have no idea what the data inbetween does          
-          
-          //<editor-fold defaultstate="collapsed" desc="CRC">
-          String crcHead = new String(new byte[] {readChar(file), readChar(file), readChar(file), readChar(file)});
-          int crc = readLong(file);
-          
-          if(!(crcHead.equals("CRC\2"))) {
-              System.err.println("CRC=" + crcHead + ", invalid");
-          } else {
-//              System.err.println("CRC=0x" + Integer.toHexString(crc).toUpperCase());
-          }
-          //</editor-fold>
-          
-          //<editor-fold defaultstate="collapsed" desc="Thumbnail">
-          byte[] thumbData = new byte[(vtf.thumbWidth * vtf.thumbHeight) / 2]; // DXT1. Each 'block' is 4*4 pixels. 16 pixels become 8 bytes
-          file.read(thumbData);
-          BufferedImage thumbImage = loadDXT1(thumbData, vtf.thumbWidth, vtf.thumbHeight);
-//          System.out.println(thumbData.length);
-          //</editor-fold>
-          
-          BufferedImage image = null;
-          
-          int scale = 2;
-          
-          int[] sizesX = new int[vtf.mipCount]; // largest -> smallest {64, 32, 16, 8, 4, 2, 1}
-          int[] sizesY = new int[vtf.mipCount];
-          for(int n = 0; n < vtf.mipCount; n++) {
-              sizesX[n] = Math.max((vtf.width >> n), 1);
-              sizesY[n] = Math.max((vtf.height >> n), 1);
-          }
-          for(int i = 0; i < vtf.mipCount; i++) {
-              int w = sizesX[vtf.mipCount - i - 1];
-              int h = sizesY[vtf.mipCount - i - 1];
-              
-              if(vtf.format == Format.IMAGE_FORMAT_DXT1) {
-                  byte[] imageData = new byte[Math.max((w * h) / 2, 8)]; // DXT1. Each 'block' is 4*4 pixels + some other data. 16 pixels become 8 bytes [64 bits] (2 * 16 bit colours, 4*4 2 bit indicies)
-                  file.read(imageData);
-                  
-                  image = new BufferedImage(w * scale, h * scale, BufferedImage.TYPE_INT_ARGB);
-                  Graphics2D g = (Graphics2D) image.getGraphics();
-                  g.drawImage(loadDXT1(imageData, w, h), 0, 0, w * scale, h * scale, null);
-//                  System.out.println(imageData.length);
-              } else if(vtf.format == Format.IMAGE_FORMAT_DXT5) {
-                  byte[] imageData = new byte[Math.max(w * h, 16)]; // DXT5. Each 'block' is 4*4 pixels + some other data. 16 pixels become 16 bytes [128 bits] (2 * 8 bit alpha values, 4x4 3 bit alpha indicies, 2 * 16 bit colours, 4*4 2 bit indicies)
-                  file.read(imageData);
-                  
-                  image = new BufferedImage(w * scale, h * scale, BufferedImage.TYPE_INT_ARGB);
-                  Graphics2D g = (Graphics2D) image.getGraphics();
-                  g.drawImage(loadDXT5(imageData, w, h), 0, 0, w * scale, h * scale, null);
-//                  System.out.println(imageData.length);
-              }
-              
-          }
-          
-          System.err.println("L:" + file.length() + ", P:" + file.getFilePointer() + ", R:" + (file.length() - file.getFilePointer()));
-          System.err.print("\n");
-          
-          file.close();
-          
-          System.out.println("Loaded " + path + "!");
-          
-          return image;
+            file.skipBytes(headerSize - 64 - 8); // 64 for all the above info, 8 for CRC or other things. I have no idea what the data inbetween does          
+
+            //<editor-fold defaultstate="collapsed" desc="CRC">
+            String crcHead = new String(new byte[] {readChar(file), readChar(file), readChar(file), readChar(file)});
+            int crc = readLong(file);
+
+            if(!(crcHead.equals("CRC\2"))) {
+                System.err.println("CRC=" + crcHead + ", invalid");
+            } else {
+//                System.err.println("CRC=0x" + Integer.toHexString(crc).toUpperCase());
+            }
+            //</editor-fold>
+
+            //<editor-fold defaultstate="collapsed" desc="Thumbnail">
+            byte[] thumbData = new byte[(vtf.thumbWidth * vtf.thumbHeight) / 2]; // DXT1. Each 'block' is 4*4 pixels. 16 pixels become 8 bytes
+            file.read(thumbData);
+            BufferedImage thumbImage = loadDXT1(thumbData, vtf.thumbWidth, vtf.thumbHeight);
+//            System.out.println(thumbData.length);
+            //</editor-fold>
+
+            BufferedImage image = null;
+
+            int scale = 2;
+
+            int[] sizesX = new int[vtf.mipCount]; // largest -> smallest {64, 32, 16, 8, 4, 2, 1}
+            int[] sizesY = new int[vtf.mipCount];
+            for(int n = 0; n < vtf.mipCount; n++) {
+                sizesX[n] = Math.max((vtf.width >> n), 1);
+                sizesY[n] = Math.max((vtf.height >> n), 1);
+            }
+            for(int i = 0; i < vtf.mipCount; i++) {
+                int w = sizesX[vtf.mipCount - i - 1];
+                int h = sizesY[vtf.mipCount - i - 1];
+
+                if(vtf.format == Format.IMAGE_FORMAT_DXT1) {
+                    byte[] imageData = new byte[Math.max((w * h) / 2, 8)]; // DXT1. Each 'block' is 4*4 pixels + some other data. 16 pixels become 8 bytes [64 bits] (2 * 16 bit colours, 4*4 2 bit indicies)
+                    file.read(imageData);
+
+                    image = new BufferedImage(w * scale, h * scale, BufferedImage.TYPE_INT_ARGB);
+                    Graphics2D g = (Graphics2D) image.getGraphics();
+                    g.drawImage(loadDXT1(imageData, w, h), 0, 0, w * scale, h * scale, null);
+//                    System.out.println(imageData.length);
+                } else if(vtf.format == Format.IMAGE_FORMAT_DXT5) {
+                    byte[] imageData = new byte[Math.max(w * h, 16)]; // DXT5. Each 'block' is 4*4 pixels + some other data. 16 pixels become 16 bytes [128 bits] (2 * 8 bit alpha values, 4x4 3 bit alpha indicies, 2 * 16 bit colours, 4*4 2 bit indicies)
+                    file.read(imageData);
+
+                    image = new BufferedImage(w * scale, h * scale, BufferedImage.TYPE_INT_ARGB);
+                    Graphics2D g = (Graphics2D) image.getGraphics();
+                    g.drawImage(loadDXT5(imageData, w, h), 0, 0, w * scale, h * scale, null);
+//                    System.out.println(imageData.length);
+                } else if(vtf.format == Format.IMAGE_FORMAT_BGRA8888) {
+                    byte[] imageData = new byte[w * h * 4]; // BGRA8888. Each pixel is 4 bytes -  r g b a
+                    file.read(imageData);
+
+                    image = new BufferedImage(w * scale, h * scale, BufferedImage.TYPE_INT_ARGB);
+                    Graphics2D g = (Graphics2D) image.getGraphics();
+                    g.drawImage(loadBGRA(imageData, w, h), 0, 0, w * scale, h * scale, null);
+//                    System.out.println(imageData.length);
+                } else if(vtf.format == Format.IMAGE_FORMAT_BGR888) {
+                    byte[] imageData = new byte[w * h * 3]; // BGR888. Each pixel is 3 bytes -  r g b
+                    file.read(imageData);
+
+                    image = new BufferedImage(w * scale, h * scale, BufferedImage.TYPE_INT_ARGB);
+                    Graphics2D g = (Graphics2D) image.getGraphics();
+                    g.drawImage(loadBGR(imageData, w, h), 0, 0, w * scale, h * scale, null);
+//                    System.out.println(imageData.length);
+                } else if(vtf.format == Format.IMAGE_FORMAT_UV88) {
+                    byte[] imageData = new byte[w * h * 2]; // BGR888. Each pixel is 3 bytes -  r g b
+                    file.read(imageData);
+
+                    image = new BufferedImage(w * scale, h * scale, BufferedImage.TYPE_INT_ARGB);
+                    Graphics2D g = (Graphics2D) image.getGraphics();
+                    g.drawImage(loadUV(imageData, w, h), 0, 0, w * scale, h * scale, null);
+//                    System.out.println(imageData.length);
+                } else {
+                    System.err.println("Unrecognised VTF format " + vtf.format);
+                    return null;
+                }
+
+            }
+
+            //          System.err.println("L:" + file.length() + ", P:" + file.getFilePointer() + ", R:" + (file.length() - file.getFilePointer()));
+            //          System.err.print("\n");
+
+            file.close();
+
+            //          System.out.println("Loaded " + path + "!");
+
+            return image;
         } catch (Exception e) {
             e.printStackTrace();
             return null;
@@ -439,25 +465,25 @@ public class VtfLoader {
                 Color c1, c2;
                 
                 if(color_0 < color_1) { // 3 colours + transparency : 5551 rgba
-                    red1   = (int) (((color_0 & red_mask_555) >> 10) << 3);
-                    green1 = (int) (((color_0 & green_mask_555) >> 5) << 3);
+                    red1   = (int) (((color_0 & red_mask_555) >>> 10) << 3);
+                    green1 = (int) (((color_0 & green_mask_555) >>> 5) << 3);
                     blue1  = (int) ((color_0 & blue_mask_555) << 3);
                     int alpha1 = (int) ((color_0 & alpha_mask_555) << 7);
                     c1 = new Color(red1, green1, blue1, alpha1);
 
-                    red2   = (int) (((color_1 & red_mask_555) >> 10) << 3);
-                    green2 = (int) (((color_1 & green_mask_555) >> 5) << 3);
+                    red2   = (int) (((color_1 & red_mask_555) >>> 10) << 3);
+                    green2 = (int) (((color_1 & green_mask_555) >>> 5) << 3);
                     blue2  = (int) ((color_1 & alpha_mask_555) << 7);
                     int alpha2 = 0;
                     c2 = new Color(red2, green2, blue2, alpha2);
                 } else { // 4 colours : 565 rgb
-                    red1   = (int) (((color_0 & red_mask_565) >> 11) << 3);
-                    green1 = (int) (((color_0 & green_mask_565) >> 5) << 2);
+                    red1   = (int) (((color_0 & red_mask_565) >>> 11) << 3);
+                    green1 = (int) (((color_0 & green_mask_565) >>> 5) << 2);
                     blue1  = (int) ((color_0 & blue_mask_565) << 3);
                     c1 = new Color(red1, green1, blue1);
 
-                    red2   = (int) (((color_1 & red_mask_565) >> 11) << 3);
-                    green2 = (int) (((color_1 & green_mask_565) >> 5) << 2);
+                    red2   = (int) (((color_1 & red_mask_565) >>> 11) << 3);
+                    green2 = (int) (((color_1 & green_mask_565) >>> 5) << 2);
                     blue2  = (int) ((color_1 & blue_mask_565) << 3);
                     c2 = new Color(red2, green2, blue2);
                 }
@@ -467,7 +493,7 @@ public class VtfLoader {
                 // remaining 4 bytes
                 for(int y1 = 0; y1 < 4; y1++) { // 16 bits / 4 lines = 4 bits/line = 1 byte/line
                     byte next4 = b[pos++];
-                    int[] bits = new int[]{(next4 & bits_12) >> 6, (next4 & bits_34) >> 4, (next4 & bits_56) >> 2, next4 & bits_78};
+                    int[] bits = new int[]{(next4 & bits_12) >>> 6, (next4 & bits_34) >>> 4, (next4 & bits_56) >>> 2, next4 & bits_78};
                     
                     for(int i = 0; i < 4; i++) { // horizontal scan
                         int bit = bits[i];
@@ -520,7 +546,7 @@ public class VtfLoader {
      * 
      * TODO: fully implement correct colours
      */
-    BufferedImage loadDXT5(byte[] b, int width, int height) {
+    BufferedImage loadDXT3(byte[] b, int width, int height) {
         BufferedImage bi = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
         Graphics2D g = (Graphics2D) bi.getGraphics();
         int pos = 0;
@@ -595,6 +621,177 @@ public class VtfLoader {
                                    (x * 4) + 4 - i, (y * 4) + y1);
                     }
                 }
+            }
+        }
+        return bi;
+    }
+    
+    /**
+     * http://en.wikipedia.org/wiki/S3_Texture_Compression
+     * http://www.fsdeveloper.com/wiki/index.php?title=DXT_compression_explained
+     * http://msdn.microsoft.com/en-us/library/aa920432.aspx
+     * 
+     * 8 bytes for alpha channel, additional 8 per 4*4 chunk
+     * 
+     * TODO: fully implement correct colours
+     */
+    BufferedImage loadDXT5(byte[] b, int width, int height) {
+        BufferedImage bi = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
+        Graphics2D g = (Graphics2D) bi.getGraphics();
+        g.setComposite(AlphaComposite.Src);
+        int pos = 0;
+        
+        int red_mask_565 = 0xF800; // first 5 bits
+        int green_mask_565 = 0x7E0; // next 6 bits
+        int blue_mask_565 = 0x1F;
+        
+        int bits_12 = 0xC0; // first 2 bits
+        int bits_34 = 0x30; // next 2 bits
+        int bits_56 = 0xC; // next 2 bits
+        int bits_78 = 0x3; // last 2 bits
+//        RGB 565: WORD pixel565 = (red_value << 11) | (green_value << 5) | blue_value;
+        
+        int xBlocks = (width / 4);
+        if(xBlocks < 1) {
+            xBlocks = 1;
+        }
+        int yBlocks = (height / 4);
+        if(yBlocks < 1) {
+            yBlocks = 1;
+        }
+        
+//        System.err.println("SIZE="+xBlocks+", "+yBlocks+" = " + b.length);
+        for(int y = 0; y < yBlocks; y++) {
+            for(int x = 0; x < xBlocks; x++) {                
+                int alpha_0 = (b[pos] & 0xff); // 64 bits of alpha channel data (two 8 bit alpha values and a 4x4 3 bit lookup table) 
+                pos += 1;
+                int alpha_1 = (b[pos] & 0xff);
+                pos += 1;
+                
+                int[] a = new int[8];
+                a[0] = alpha_0;
+                a[1] = alpha_1;
+                
+                if(alpha_0 > alpha_1) {
+                    a[2] = (int)(((6 * alpha_0) + (1 * alpha_1)) / 7.0);
+                    a[3] = (int)(((5 * alpha_0) + (2 * alpha_1)) / 7.0);
+                    a[4] = (int)(((4 * alpha_0) + (3 * alpha_1)) / 7.0);
+                    a[5] = (int)(((3 * alpha_0) + (4 * alpha_1)) / 7.0);
+                    a[6] = (int)(((2 * alpha_0) + (5 * alpha_1)) / 7.0);
+                    a[7] = (int)(((1 * alpha_0) + (6 * alpha_1)) / 7.0);
+                } else {
+                    a[2] = (int)(((4 * alpha_0) + (1 * alpha_1)) / 5.0);
+                    a[3] = (int)(((3 * alpha_0) + (2 * alpha_1)) / 5.0);
+                    a[4] = (int)(((2 * alpha_0) + (3 * alpha_1)) / 5.0);
+                    a[5] = (int)(((1 * alpha_0) + (4 * alpha_1)) / 5.0);
+                    a[6] = 0;
+                    a[7] = 255;
+                }
+                
+                int[][] alpha = new int[4][4];
+                
+                // remaining 6 bytes over 4 lines = 12 bits per line, 1.5 bytes
+                short[] alphaPallete = {(short) ((b[pos] << 4) | (b[pos+1] & 0xf0) >> 4), (short) (((b[pos+1] & 0xf) << 8) | (b[pos+2])), (short) ((b[pos+3] << 4) | ((b[pos+4] & 0xf0) >>> 4)), (short) (((b[pos+4] & 0xf) << 8) | (b[pos+5]))};
+                pos += 6;
+                for(int y1 = 0; y1 < 4; y1++) {
+                    int[] bits = new int[]{(alphaPallete[y1] & 0xE00) >>> 9, (alphaPallete[y1] & 0x1C0) >>> 6, (alphaPallete[y1] & 0x38) >>> 3, alphaPallete[y1] & 0x7};
+                    
+                    for(int i = 0; i < 4; i++) { // horizontal scan
+                        int bit = bits[i];
+                        alpha[y1][i] = a[bit];
+                    }
+                }                
+                
+                int color_0 = (b[pos] & 0xff) + ((b[pos+1] & 0xff) << 8); // 2 bytes
+                pos += 2;
+                int color_1 = (b[pos] & 0xff) + ((b[pos+1] & 0xff) << 8); // 2 bytes
+                pos += 2;
+                
+                int red1, green1, blue1, red2, green2, blue2;
+                Color c1, c2;
+                
+                red1 = (int) (((color_0 & red_mask_565) >>> 11) << 3);
+                green1 = (int) (((color_0 & green_mask_565) >>> 5) << 2);
+                blue1 = (int) ((color_0 & blue_mask_565) << 3);
+                c1 = new Color(red1, green1, blue1);
+
+                red2 = (int) (((color_1 & red_mask_565) >>> 11) << 3);
+                green2 = (int) (((color_1 & green_mask_565) >>> 5) << 2);
+                blue2 = (int) ((color_1 & blue_mask_565) << 3);
+                c2 = new Color(red2, green2, blue2);
+                
+                // remaining 4 bytes
+                byte[] next4 = {b[pos], b[pos+1], b[pos+2], b[pos+3]};
+                pos += 4;
+                for(int y1 = 0; y1 < 4; y1++) { // 16 bits / 4 lines = 4 bits/line = 1 byte/line
+                    int[] bits = new int[]{(next4[y1] & bits_12) >> 6, (next4[y1] & bits_34) >> 4, (next4[y1] & bits_56) >> 2, next4[y1] & bits_78};
+                    
+                    for(int i = 0; i < 4; i++) { // horizontal scan
+                        int bit = bits[i];
+                        if(bit == 0) {
+                            g.setColor(new Color(c1.getRed(), c1.getGreen(), c1.getBlue(), alpha[y1][i]));
+                        } else if(bit == 1) {
+                            g.setColor(new Color(c2.getRed(), c2.getGreen(), c2.getBlue(), alpha[y1][i]));
+                        } else if(bit == 2) {                            
+                            int cred = (int)(((2 * c1.getRed()) + c2.getRed()) / 3.0);
+                            int cgrn = (int)(((2 * c1.getGreen()) + c2.getGreen()) / 3.0);
+                            int cblu = (int)(((2 * c1.getBlue()) + c2.getBlue()) / 3.0);
+                            Color c = new Color(cred, cgrn, cblu, alpha[y1][i]);
+                            g.setColor(c);
+                        } else if(bit == 3) {
+                            int cred = (int)(((2 * c2.getRed()) + c1.getRed()) / 3.0);
+                            int cgrn = (int)(((2 * c2.getGreen()) + c1.getGreen()) / 3.0);
+                            int cblu = (int)(((2 * c2.getBlue()) + c1.getBlue()) / 3.0);
+                            Color c = new Color(cred, cgrn, cblu, alpha[y1][i]);
+                            g.setColor(c);
+                        }
+                        g.drawLine((x * 4) + 4 - i, (y * 4) + y1,
+                                   (x * 4) + 4 - i, (y * 4) + y1);
+                    }
+                }
+            }
+        }
+        return bi;
+    }
+    
+    BufferedImage loadUV(byte[] b, int width, int height) {
+        BufferedImage bi = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
+        Graphics2D g = (Graphics2D) bi.getGraphics();
+        int pos = 0;
+        for(int y = 0; y < height; y++) {
+            for(int x = 0; x < width; x++) {
+                g.setColor(new Color((b[pos] & 0xff) + ((b[pos+1] & 0xff) << 16) + ((255 & 0xff) << 24)));
+                pos += 2;
+                g.drawLine(x, y, x, y);
+            }
+        }
+        return bi;
+    }
+    
+    BufferedImage loadBGR(byte[] b, int width, int height) {
+        BufferedImage bi = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
+        Graphics2D g = (Graphics2D) bi.getGraphics();
+        int pos = 0;
+        for(int y = 0; y < height; y++) {
+            for(int x = 0; x < width; x++) {
+                g.setColor(new Color((b[pos] & 0xff) + ((b[pos+1] & 0xff) << 8) + ((b[pos+2] & 0xff) << 16) + ((255 & 0xff) << 24)));
+                pos += 3;
+                g.drawLine(x, y, x, y);
+            }
+        }
+        return bi;
+    }
+    
+    BufferedImage loadBGRA(byte[] b, int width, int height) {
+        BufferedImage bi = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
+        Graphics2D g = (Graphics2D) bi.getGraphics();
+        g.setComposite(AlphaComposite.Src);
+        int pos = 0;
+        for(int y = 0; y < height; y++) {
+            for(int x = 0; x < width; x++) {
+                g.setColor(new Color((b[pos+2] & 0xff), (b[pos+1] & 0xff), (b[pos] & 0xff), (b[pos+3] & 0xff)));
+                pos += 4;
+                g.drawLine(x, y, x, y);
             }
         }
         return bi;
