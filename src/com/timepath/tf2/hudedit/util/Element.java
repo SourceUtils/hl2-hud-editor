@@ -1,7 +1,7 @@
 package com.timepath.tf2.hudedit.util;
 
 import com.timepath.tf2.hudedit.loaders.ResLoader;
-import com.timepath.tf2.hudedit.loaders.VtfLoader;
+import com.timepath.tf2.hudedit.loaders.VtfFile;
 import com.timepath.tf2.hudedit.swing.EditorFrame;
 import com.timepath.tf2.hudedit.swing.EditorCanvas;
 import java.awt.Color;
@@ -9,6 +9,7 @@ import java.awt.Font;
 import java.awt.Image;
 import java.awt.Rectangle;
 import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
@@ -374,7 +375,11 @@ public class Element {
                     this.setFont(f);
                 }
             } else if("image".equalsIgnoreCase(k)) {
-                this.setImage(new VtfLoader().load("./res/vtf/hud/" + v + ".vtf"));
+                try {
+                    this.setImage(VtfFile.load("./res/vtf/hud/" + v + ".vtf").getImage(0));
+                } catch (IOException ex) {
+                    Logger.getLogger(Element.class.getName()).log(Level.SEVERE, null, ex);
+                }
             } else {
 //                System.out.println("Other property: " + k);
             }
