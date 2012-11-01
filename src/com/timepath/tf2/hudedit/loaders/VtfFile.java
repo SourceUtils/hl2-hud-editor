@@ -224,7 +224,7 @@ public class VtfFile {
             vtf.thumbFormat = Format.getEnumForIndex(readUInt(rf));
             vtf.thumbWidth = readUChar(rf);
             vtf.thumbHeight = readUChar(rf);
-            vtf.depth = readUByte(rf); // the 64th byte
+            vtf.depth = readUShort(rf); // the docs say that there are 64 bytes for this section, but I count 64. Should this be a single byte?
             
 //            System.out.println(vtf.format);
             
@@ -256,8 +256,8 @@ public class VtfFile {
         
         for(int y = 0; y < height; y+=4) {
             for(int x = 0; x < width; x+=4) {
-                int color_0 = (b[pos++] & 0xff) + ((b[pos++] & 0xff) << 8); // 2 bytes
-                int color_1 = (b[pos++] & 0xff) + ((b[pos++] & 0xff) << 8); // 2 bytes
+                int color_0 = ((b[pos++] & 0xFF) + ((b[pos++] & 0xFF) << 8)) & 0xFFFF; // 2 bytes
+                int color_1 = ((b[pos++] & 0xFF) + ((b[pos++] &0xFF) << 8)) & 0xFFFF; // 2 bytes
                 Color[] colour = new Color[4];
                 
                 if(color_0 > color_1) {
@@ -396,44 +396,43 @@ public class VtfFile {
         g.setComposite(AlphaComposite.Src);
         int pos = 0;
         
-        int[] bitmask = {0xC0, 0x30, 0xC, 0x3};
-        
         for(int y = 0; y < height; y+=4) {
             for(int x = 0; x < width; x+=4) {
                 
                 int[] a = new int[8];
-                a[0] = (b[pos++]); // 64 bits of alpha channel data (two 8 bit alpha values and a 4x4 3 bit lookup table)
-                a[1] = (b[pos++]);
+                a[0] = (b[pos++] & 0xff); // 64 bits of alpha channel data (two 8 bit alpha values and a 4x4 3 bit lookup table)
+                a[1] = (b[pos++] & 0xff);
                 if(a[0] > a[1]) {
-                    a[2] = (6*a[0] + 1*a[1])/7;
-                    a[3] = (5*a[0] + 2*a[1])/7;
-                    a[4] = (4*a[0] + 3*a[1])/7;
-                    a[5] = (3*a[0] + 4*a[1])/7;
-                    a[6] = (2*a[0] + 5*a[1])/7;
-                    a[7] = (1*a[0] + 6*a[1])/7;
+                    a[2] = Math.round((6*a[0] + 1*a[1])/7);
+                    a[3] = Math.round((5*a[0] + 2*a[1])/7);
+                    a[4] = Math.round((4*a[0] + 3*a[1])/7);
+                    a[5] = Math.round((3*a[0] + 4*a[1])/7);
+                    a[6] = Math.round((2*a[0] + 5*a[1])/7);
+                    a[7] = Math.round((1*a[0] + 6*a[1])/7);
                 } else {
-                    a[2] = (4*a[0] + 1*a[1])/5;
-                    a[3] = (3*a[0] + 2*a[1])/5;
-                    a[4] = (2*a[0] + 3*a[1])/5;
-                    a[5] = (1*a[0] + 4*a[1])/5;
+                    a[2] = Math.round((4*a[0] + 1*a[1])/5);
+                    a[3] = Math.round((3*a[0] + 2*a[1])/5);
+                    a[4] = Math.round((2*a[0] + 3*a[1])/5);
+                    a[5] = Math.round((1*a[0] + 4*a[1])/5);
                     a[6] = 0;
                     a[7] = 255;
                 }
 
-                int[][] alphas = new int[4][4]; // FIXME: currently not loading correctly
+                int[][] alphas = new int[4][4];
                 if(alphaEnabled) {
-                    // remaining 6 bytes over 4 lines = 12 bits per line, 1.5 bytes
-                    long sel = (b[pos++]);
-                         sel |= (b[pos++] << 8);
-                         sel |= (b[pos++] << 16);
-                         sel |= (b[pos++] << 24);
-                         sel |= (b[pos++] << 32);
-                         sel |= (b[pos++] << 40);
-
-                    for(int yi = 0; yi < 4; yi++) {
+                    int[] alphaByte = {b[pos++] & 0xFF, b[pos++] & 0xFF, b[pos++] & 0xFF, b[pos++] & 0xFF, b[pos++] & 0xFF, b[pos++] & 0xFF};
+                    int sel1 = (((alphaByte[2] << 16) & 0xFF0000) | ((alphaByte[1] << 8) & 0xFF00) | alphaByte[0]) & 0xFFFFFF;
+                    int sel2 = (((alphaByte[5] << 16) & 0xFF0000) | ((alphaByte[4] << 8) & 0xFF00) | alphaByte[3]) & 0xFFFFFF;
+                    for(int yi = 0; yi < 2; yi++) {
                         for(int xi = 0; xi < 4; xi++) {
-                            alphas[yi][xi] = a[(int)(sel & 0x7)];
-                            sel >>= 3;
+                            alphas[yi][xi] = a[((sel1) & 0x7)];
+                            sel1 >>= 3;
+                        }
+                    }
+                    for(int yi = 0; yi < 2; yi++) {
+                        for(int xi = 0; xi < 4; xi++) {
+                            alphas[2+yi][xi] = a[((sel2) & 0x7)];
+                            sel2 >>= 3;
                         }
                     }
                 } else {
@@ -456,9 +455,11 @@ public class VtfFile {
                 if(width >= 4 && height >= 4) {
                     for(int y1 = 0; y1 < 4; y1++) { // 16 bits / 4 rows = 4 bits/line = 1 byte/row
                         int rowData = b[pos++] & 0xff;
-                        int[] rowBits = {(rowData & bitmask[0]) >>> 6, (rowData & bitmask[1]) >>> 4, (rowData & bitmask[2]) >>> 2, rowData & bitmask[3]};
+                        int[] rowBits = {(rowData & 0xC0) >>> 6, (rowData & 0x30) >>> 4, (rowData & 0xC) >>> 2, rowData & 0x3};
 
                         for(int x1 = 0; x1 < 4; x1++) { // column scan
+//                            if(alphas[y1][x1] > 0)
+//                                System.out.println(alphas[y1][x1]);
                             Color col = new Color(colour[rowBits[3-x1]].getRed(), colour[rowBits[3-x1]].getGreen(), colour[rowBits[3-x1]].getBlue(), alphas[y1][x1]); // c is taken from 3 to ensure everything is drawn the correct way around
                             bi.setRGB((x+x1), (y+y1), col.getRGB());
 //                            System.out.println("(" + y + "," + x + ") = " + (y1) + ":" + (x1) + " = (" + (y+y1) + "," + (x+x1) + ")");
@@ -621,9 +622,18 @@ public class VtfFile {
         IMAGE_FORMAT_RGB888(2),
         IMAGE_FORMAT_BGR888(3),
         IMAGE_FORMAT_RGB565(4),
+        /**
+         * One value, 8 bits
+         */
         IMAGE_FORMAT_I8(5),
+        /**
+         * One value + alpha, 16 bits
+         */
         IMAGE_FORMAT_IA88(6),
         IMAGE_FORMAT_P8(7),
+        /**
+         * One alpha value, 8 bits. (colour is 255, 255, 255, a)
+         */
         IMAGE_FORMAT_A8(8),
         IMAGE_FORMAT_RGB888_BLUESCREEN(9),
         IMAGE_FORMAT_BGR888_BLUESCREEN(10),

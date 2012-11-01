@@ -40,7 +40,7 @@ public class VtfLoader {
             
             private int width, height;
             private Image image;
-            private static final int ACCSIZE = 256;
+            private static final int ACCSIZE = 128;
             private Color bg;
             
             public ImagePreviewPanel() {
@@ -138,7 +138,7 @@ public class VtfLoader {
             
             @Override
             public boolean accept(File file) {
-                return (file.isDirectory() || file.getName().toLowerCase().endsWith(".vtf")) && (vtfFormat == VtfFile.Format.IMAGE_FORMAT_NONE || VtfFile.load(file).format == vtfFormat);
+                return (file.isDirectory() || (file.getName().toLowerCase().endsWith(".vtf") && (vtfFormat == VtfFile.Format.IMAGE_FORMAT_NONE || VtfFile.load(file).format == vtfFormat)));
             }
             
             @Override
