@@ -35,7 +35,7 @@ import javax.swing.filechooser.FileFilter;
  */
 public class VtfLoader {
     
-    public void test() {
+    public void test1() {
         class ImagePreviewPanel extends JPanel implements PropertyChangeListener {
             
             private int width, height;
@@ -165,6 +165,7 @@ public class VtfLoader {
         
         JScrollPane jsp = new JScrollPane();
         jsp.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
+        jsp.getVerticalScrollBar().setUnitIncrement(64);
         f.add(jsp);
         JPanel pane = new JPanel();
         pane.setLayout(new BoxLayout(pane, BoxLayout.PAGE_AXIS));
@@ -176,13 +177,17 @@ public class VtfLoader {
         for(int i = 0; i < subs.length; i++) {
             if(subs[i].getName().endsWith(".vtf")) {
                 try {
-                    Image image = VtfFile.load(subs[i]).getImage(0);
+                    VtfFile v = VtfFile.load(subs[i]);
+                    Image image = null;
+                    if(v != null) {
+                        image = v.getImage(0);
+                    }
                     if(image != null) {
                         JPanel p = new JPanel(new BorderLayout());
-                        p.setBackground(Color.GRAY);
+                        p.setBackground(Color.MAGENTA.darker().darker());
                         p.setSize(image.getWidth(null), image.getHeight(null));
                         JLabel l = new JLabel();
-                        p.setToolTipText(subs[i].getName());
+                        l.setToolTipText(subs[i].getName());
                         l.setIcon(new ImageIcon(image));
                         p.add(l, BorderLayout.CENTER);
                         p.setBorder(BorderFactory.createLineBorder(Color.BLACK));
@@ -191,12 +196,11 @@ public class VtfLoader {
                         jsp.validate();
                         jsp.repaint();
                         
-                        if(!init) {
-                            f.setVisible(true);
-                            f.pack();
-                            init = true;
-                        }
-                        //                    Thread.sleep(5000);
+//                        if(!init) {
+//                            f.setVisible(true);
+//                            f.pack();
+//                            init = true;
+//                        }
                     }
                 } catch (IOException ex) {
                     Logger.getLogger(VtfLoader.class.getName()).log(Level.SEVERE, null, ex);
@@ -211,7 +215,7 @@ public class VtfLoader {
     }
     
     public static void main(String... args) throws InterruptedException {
-        new VtfLoader().test();
+        new VtfLoader().test2();
     }
 
 }

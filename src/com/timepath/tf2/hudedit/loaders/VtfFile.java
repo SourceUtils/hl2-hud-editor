@@ -16,10 +16,6 @@ import java.io.RandomAccessFile;
  */
 public class VtfFile {
     
-    public VtfFile() {
-        
-    }
-    
     public VtfFile(RandomAccessFile file) {
         this.file = file;
     }
@@ -120,7 +116,7 @@ public class VtfFile {
         }
     }
 
-//        private int _thumbLength = Math.max(thumbWidth, 4) * Math.max(thumbHeight, 4) / 2;
+//    private int _thumbLength = Math.max(thumbWidth, 4) * Math.max(thumbHeight, 4) / 2;
 
     public Image getThumbImage() throws IOException {
         file.seek(this.headerSize);
@@ -191,10 +187,8 @@ public class VtfFile {
     
     // STATIC METHODS
     
-    private static VtfFile nullVtf = new VtfFile();
-    
     public static VtfFile load(String path) {
-        return load(new File(path));
+        return VtfFile.load(new File(path));
     }
         
     public static VtfFile load(File file) {
@@ -205,7 +199,7 @@ public class VtfFile {
             String signature = new String(new byte[] {readChar(rf), readChar(rf), readChar(rf), readChar(rf)});
             if(!(signature.equals("VTF\0"))) {
                 System.err.println("Invalid VTF file " + file);
-                return nullVtf;
+                return null;
             }
             VtfFile vtf = new VtfFile(rf);
             vtf.version = new int[] {readUInt(rf), readUInt(rf)};
@@ -238,7 +232,7 @@ public class VtfFile {
             return vtf;
         } catch (Exception e) {
             e.printStackTrace();
-            return nullVtf;
+            return null;
         }
     }
     
@@ -251,7 +245,7 @@ public class VtfFile {
      * 8 bytes per 4*4
      */
     private static BufferedImage loadDXT1(byte[] b, int width, int height) {
-        BufferedImage bi = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
+        BufferedImage bi = new BufferedImage(Math.max(width, 4), Math.max(height, 4), BufferedImage.TYPE_INT_ARGB);
         int pos = 0;
         
         for(int y = 0; y < height; y+=4) {
@@ -389,7 +383,6 @@ public class VtfFile {
      * TODO: fully implement correct colours
      */
     private static BufferedImage loadDXT5(byte[] b, int width, int height) {
-//        System.out.println(width + "x" + height);
         boolean alphaEnabled = true;
         BufferedImage bi = new BufferedImage(Math.max(width, 4), Math.max(height, 4), BufferedImage.TYPE_INT_ARGB);
         Graphics2D g = (Graphics2D) bi.getGraphics();
