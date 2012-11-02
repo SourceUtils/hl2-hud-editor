@@ -35,7 +35,18 @@ import javax.swing.filechooser.FileFilter;
  */
 public class VtfLoader {
     
-    public void test1() {
+    public static void test1() {
+        final JFrame f = new JFrame("Vtf Loader");
+        f.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        
+        JScrollPane jsp = new JScrollPane();
+        jsp.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
+        jsp.getVerticalScrollBar().setUnitIncrement(64);
+        f.add(jsp);
+        JPanel pane = new JPanel();
+        pane.setLayout(new BoxLayout(pane, BoxLayout.PAGE_AXIS));
+        jsp.setViewportView(pane);
+        
         class ImagePreviewPanel extends JPanel implements PropertyChangeListener {
             
             private int width, height;
@@ -68,7 +79,15 @@ public class VtfLoader {
                      */
                     if((name != null) && name.toLowerCase().endsWith(".vtf")) {
                         try {
-                            Image i = VtfFile.load(selection).getImage(0);
+                            VtfFile v = VtfFile.load(selection);
+                            if(v == null) {
+                                return;
+                            }
+                            Image i = v.getImage(0);
+                            if(i == null) {
+                                return;
+                            }
+                            f.setIconImage(VtfFile.load(selection).getThumbImage());
                             image = (i != null ? i : new BufferedImage(128, 128, BufferedImage.TYPE_INT_ARGB));
                             scaleImage();
                             repaint();
@@ -154,22 +173,8 @@ public class VtfLoader {
         ImagePreviewPanel preview = new ImagePreviewPanel();
         chooser.setAccessory(preview);
         chooser.addPropertyChangeListener(preview);
-        chooser.showOpenDialog(null);
-    }
-    
-    public void test2() {
-        JFrame f = new JFrame("Vtf Loader");
-        f.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        //        f.setLayout(new FlowLayout(FlowLayout.LEFT));
-        //        f.setPreferredSize(Toolkit.getDefaultToolkit().getScreenSize());
-        
-        JScrollPane jsp = new JScrollPane();
-        jsp.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
-        jsp.getVerticalScrollBar().setUnitIncrement(64);
-        f.add(jsp);
-        JPanel pane = new JPanel();
-        pane.setLayout(new BoxLayout(pane, BoxLayout.PAGE_AXIS));
-        jsp.setViewportView(pane);
+        chooser.setControlButtonsAreShown(false);
+        pane.add(chooser);
         
         boolean init = false;
         File root = new File("./res/vtf/hud/");
@@ -196,11 +201,11 @@ public class VtfLoader {
                         jsp.validate();
                         jsp.repaint();
                         
-//                        if(!init) {
-//                            f.setVisible(true);
-//                            f.pack();
-//                            init = true;
-//                        }
+                        if(!init) {
+                            f.setVisible(true);
+                            f.pack();
+                            init = true;
+                        }
                     }
                 } catch (IOException ex) {
                     Logger.getLogger(VtfLoader.class.getName()).log(Level.SEVERE, null, ex);
@@ -212,10 +217,15 @@ public class VtfLoader {
             f.pack();
             init = true;
         }
+        
     }
     
-    public static void main(String... args) throws InterruptedException {
-        new VtfLoader().test2();
+    public static void main(String... args) {
+        new Thread(new Runnable() {
+            public void run() {
+                test1();
+            }
+        }).start();
     }
 
 }

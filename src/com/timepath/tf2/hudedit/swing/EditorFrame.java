@@ -6,6 +6,7 @@ import com.timepath.tf2.hudedit.temp.OSXAdapter;
 import com.timepath.tf2.hudedit.Main.OS;
 import com.timepath.tf2.hudedit.swing.EditorPropertiesTablePane.EditorPropertiesTable;
 import com.timepath.tf2.hudedit.loaders.ResLoader;
+import com.timepath.tf2.hudedit.loaders.VtfLoader;
 import java.awt.BorderLayout;
 import java.awt.Cursor;
 import java.awt.Desktop;
@@ -798,15 +799,10 @@ public class EditorFrame extends JFrame {
             return;
         }
         if(!file.exists()) {
-            error("Could not access file " + file + "\nSorry mac users! Currently working on a fix. For now, drag and drop the hud folder onto the program.ma");
+            error("Could not access file " + file);
         }
         lastLoaded = file;
         System.out.println("You have selected: " + file.getAbsolutePath());
-        try {
-            System.out.println("You have canonical: " + file.getCanonicalPath());
-        } catch (IOException ex) {
-            Logger.getLogger(EditorFrame.class.getName()).log(Level.SEVERE, null, ex);
-        }
         
         if(file.getName().endsWith(".zip")) {
             try {
@@ -995,6 +991,8 @@ public class EditorFrame extends JFrame {
         private JMenuItem updateItem;
         private JMenuItem aboutItem;
         private JMenuItem changeLogItem;
+        
+        private JMenuItem vtfItem;
 
         EditorMenuBar() {
             super();
@@ -1176,6 +1174,14 @@ public class EditorFrame extends JFrame {
                 aboutItem.addActionListener(al);
                 helpMenu.add(aboutItem);
             }
+            
+            JMenu extrasMenu = new JMenu("Extras");
+            extrasMenu.setMnemonic(KeyEvent.VK_X);
+            this.add(extrasMenu);
+
+            vtfItem = new JMenuItem("VTF Loader", KeyEvent.VK_V);
+            vtfItem.addActionListener(al);
+            extrasMenu.add(vtfItem);
         }
         
         private class EditorActionListener implements ActionListener {
@@ -1212,11 +1218,10 @@ public class EditorFrame extends JFrame {
                     EditorFrame.this.checkForUpdates();
                 } else if(cmd == changeLogItem) {
                     changelog();
+                } else if(cmd == vtfItem) {
+                    VtfLoader.main("");
                 }
             }
-
         }
-        
     }
-
 }

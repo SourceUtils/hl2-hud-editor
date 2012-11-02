@@ -188,7 +188,11 @@ public class VtfFile {
     // STATIC METHODS
     
     public static VtfFile load(String path) {
-        return VtfFile.load(new File(path));
+        File f = new File(path);
+        if(!f.exists() || !f.canRead()) {
+            return null;
+        }
+        return VtfFile.load(f);
     }
         
     public static VtfFile load(File file) {
@@ -393,8 +397,8 @@ public class VtfFile {
             for(int x = 0; x < width; x+=4) {
                 
                 int[] a = new int[8];
-                a[0] = (b[pos++] & 0xff); // 64 bits of alpha channel data (two 8 bit alpha values and a 4x4 3 bit lookup table)
-                a[1] = (b[pos++] & 0xff);
+                a[0] = (b[pos++] & 0xFF); // 64 bits of alpha channel data (two 8 bit alpha values and a 4x4 3 bit lookup table)
+                a[1] = (b[pos++] & 0xFF);
                 if(a[0] > a[1]) {
                     a[2] = Math.round((6*a[0] + 1*a[1])/7);
                     a[3] = Math.round((5*a[0] + 2*a[1])/7);

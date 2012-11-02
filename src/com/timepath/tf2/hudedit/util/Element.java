@@ -374,9 +374,17 @@ public class Element {
                 if(f != null) {
                     this.setFont(f);
                 }
-            } else if("image".equalsIgnoreCase(k)) {
+            } else if("image".equalsIgnoreCase(k) || "icon".equalsIgnoreCase(k)) {
                 try {
-                    this.setImage(VtfFile.load("./res/vtf/hud/" + v + ".vtf").getImage(0));
+                    VtfFile vtf = VtfFile.load("./res/vtf/hud/" + v.replaceAll("\"", "") + ".vtf");
+                    if(vtf == null) {
+                        continue;
+                    }
+                    Image img = vtf.getImage(0);
+                    if(i == null) {
+                        continue;
+                    }
+                    this.setImage(img);
                 } catch (IOException ex) {
                     Logger.getLogger(Element.class.getName()).log(Level.SEVERE, null, ex);
                 }
