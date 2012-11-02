@@ -20,8 +20,8 @@
     <target name="-post-jar">
         <echo message="Packaging ${application.title} into a single JAR at ${store.jar.dated}"/>
         <mkdir dir="${store.dir}"/>
-        <delete file="${store.jar.dated}"/>
-        <mkdir dir="dist/lib"/> <!-- Just in case no external libraries are in use and we don't want the packagint ot fail -->
+        <delete file="${store.jar.dated}"/> <!-- Just in it already exists for some reason -->
+        <mkdir dir="dist/lib"/> <!-- Just in case no external libraries are in use and we don't want the packaging to fail -->
         <jar destfile="${archive.dir}/temp_final.jar" filesetmanifest="skip">
             <zipgroupfileset dir="dist" includes="*.jar"/>
             <zipgroupfileset dir="dist/lib" includes="*.jar" excludes="AppleJavaExtensions.jar"/>

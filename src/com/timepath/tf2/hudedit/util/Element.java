@@ -117,10 +117,10 @@ public class Element {
     }
 
     public Rectangle getBounds() {
-        int minX = (int)Math.round(this.getX() * ((double)canvas.hudRes.width / (double)canvas.internalRes.width) * canvas.scale);
-        int minY = (int)Math.round(this.getY() * ((double)canvas.hudRes.height / (double)canvas.internalRes.height) * canvas.scale);
-        int maxX = (int)Math.round(this.getWidth() * ((double)canvas.hudRes.width / (double)canvas.internalRes.width) * canvas.scale);
-        int maxY = (int)Math.round(this.getHeight() * ((double)canvas.hudRes.height / (double)canvas.internalRes.height) * canvas.scale);
+        int minX = (int)Math.round(this.getX() * ((double)canvas.screen.width / (double)canvas.internal.width) * canvas.scale);
+        int minY = (int)Math.round(this.getY() * ((double)canvas.screen.height / (double)canvas.internal.height) * canvas.scale);
+        int maxX = (int)Math.round(this.getWidth() * ((double)canvas.screen.width / (double)canvas.internal.width) * canvas.scale);
+        int maxY = (int)Math.round(this.getHeight() * ((double)canvas.screen.height / (double)canvas.internal.height) * canvas.scale);
         return new Rectangle(minX, minY, maxX + 1, maxY + 1);
     }
 
@@ -130,65 +130,65 @@ public class Element {
         return name + displayInfo;
     }
     // Properties
-    private int xPos;
+    private double xPos;
 
     public int getLocalX() {
-        return xPos;
+        return (int) Math.round(xPos);
     }
 
-    public void setLocalX(int x) {
+    public void setLocalX(double x) {
         this.xPos = x;
     }
 
     public int getX() {
         if (parent == null || parent.name.replaceAll("\"", "").endsWith(".res")) {
             if (this.getXAlignment() == Element.Alignment.Center) {
-                return (xPos + Math.round(853 / 2));
+                return (getLocalX() + Math.round(853 / 2));
             } else if (this.getXAlignment() == Element.Alignment.Right) {
-                return (853 - xPos);
+                return (853 - getLocalX());
             } else {
-                return xPos;
+                return getLocalX();
             }
         } else {
             int x;
             if (this.getXAlignment() == Element.Alignment.Center) {
-                x = (parent.getWidth() / 2) + xPos;
+                x = (parent.getWidth() / 2) + getLocalX();
             } else if (this.getXAlignment() == Element.Alignment.Right) {
-                x = (parent.getWidth()) - xPos;
+                x = (parent.getWidth()) - getLocalX();
             } else {
-                x = xPos;
+                x = getLocalX();
             }
             return x + parent.getX();
         }
     }
 
-    private int yPos;
+    private double yPos;
 
     public int getLocalY() {
-        return yPos;
+        return (int) Math.round(yPos);
     }
 
-    public void setLocalY(int y) {
+    public void setLocalY(double y) {
         this.yPos = y;
     }
 
     public int getY() {
         if (parent == null || parent.name.replaceAll("\"", "").endsWith(".res")) {
             if (this.getYAlignment() == Element.Alignment.Center) {
-                return (yPos + Math.round(480 / 2));
+                return (getLocalY() + Math.round(480 / 2));
             } else if (this.getYAlignment() == Element.Alignment.Right) {
-                return (480 - yPos);
+                return (480 - getLocalY());
             } else {
-                return yPos;
+                return getLocalY();
             }
         }
         int y;
         if (this.getYAlignment() == Element.Alignment.Center) {
-            y = (parent.getHeight() / 2) + yPos;
+            y = (parent.getHeight() / 2) + getLocalY();
         } else if (this.getYAlignment() == Element.Alignment.Right) {
-            y = parent.getHeight() - yPos;
+            y = parent.getHeight() - getLocalY();
         } else {
-            y = yPos;
+            y = getLocalY();
         }
         return y + parent.getY();
     }
@@ -218,7 +218,7 @@ public class Element {
 //            if(this.parent !hudRes= null) {
 //                return this.parent.getWidth() - wide;
 //            } else {
-            return canvas.internalRes.width - wide;
+            return canvas.internal.width - wide;
 //            }
         } else {
             return wide;
@@ -245,7 +245,7 @@ public class Element {
     }
 
     public int getHeight() {
-        return (this.getHeightMode() == DimensionMode.Mode2 ? (this.parent != null ? this.parent.getHeight() - tall : canvas.internalRes.height - tall) : tall);
+        return (this.getHeightMode() == DimensionMode.Mode2 ? (this.parent != null ? this.parent.getHeight() - tall : canvas.internal.height - tall) : tall);
     }
     
     private DimensionMode _tallMode = DimensionMode.Mode1;
@@ -298,7 +298,7 @@ public class Element {
     public void validateLoad() {
         for (int n = 0; n < this.getProps().size(); n++) {
             Property entry = this.getProps().get(n);
-            String k = entry.getKey();
+            String k = entry.getKey().toLowerCase();
             if (k != null && k.contains("\"")) { // assumes one set of quotes
                 k = k.substring(1, k.length() - 1);
                 k = k.replaceAll("\"", "").trim();
@@ -375,13 +375,17 @@ public class Element {
                     this.setFont(f);
                 }
             } else if("image".equalsIgnoreCase(k) || "icon".equalsIgnoreCase(k)) {
+                v = v.replaceAll("\"", "");
+                if("".equals(v)) {
+                    continue;
+                }
                 try {
-                    VtfFile vtf = VtfFile.load("./res/vtf/hud/" + v.replaceAll("\"", "") + ".vtf");
+                    VtfFile vtf = VtfFile.load("res/vtf/hud/" + v + ".vtf");
                     if(vtf == null) {
                         continue;
                     }
                     Image img = vtf.getImage(0);
-                    if(i == null) {
+                    if(img == null) {
                         continue;
                     }
                     this.setImage(img);

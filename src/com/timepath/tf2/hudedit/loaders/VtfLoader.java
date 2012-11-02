@@ -37,7 +37,7 @@ public class VtfLoader {
     
     public static void test1() {
         final JFrame f = new JFrame("Vtf Loader");
-        f.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        f.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         
         JScrollPane jsp = new JScrollPane();
         jsp.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
@@ -157,7 +157,20 @@ public class VtfLoader {
             
             @Override
             public boolean accept(File file) {
-                return (file.isDirectory() || (file.getName().toLowerCase().endsWith(".vtf") && (vtfFormat == VtfFile.Format.IMAGE_FORMAT_NONE || VtfFile.load(file).format == vtfFormat)));
+                if(file.isDirectory()) {
+                    return true;
+                }
+                if(!file.getName().toLowerCase().endsWith(".vtf")) {
+                    return false;
+                }
+                VtfFile v = VtfFile.load(file);
+                if(v == null) {
+                    return false;
+                }
+                if(vtfFormat == VtfFile.Format.IMAGE_FORMAT_NONE) {
+                    return true;
+                }
+                return (v.format == vtfFormat);
             }
             
             @Override
@@ -166,10 +179,12 @@ public class VtfLoader {
             }
         }
         
-        JFileChooser chooser = new JFileChooser("./res/vtf/hud/");
-        chooser.setFileFilter(new VtfFileFilter(Format.IMAGE_FORMAT_NONE));
+        JFileChooser chooser = new JFileChooser("res/vtf/hud/");
+        FileFilter generic = new VtfFileFilter(Format.IMAGE_FORMAT_NONE);
+        chooser.addChoosableFileFilter(generic);
         chooser.addChoosableFileFilter(new VtfFileFilter(Format.IMAGE_FORMAT_DXT1));
         chooser.addChoosableFileFilter(new VtfFileFilter(Format.IMAGE_FORMAT_DXT5));
+        chooser.setFileFilter(generic);
         ImagePreviewPanel preview = new ImagePreviewPanel();
         chooser.setAccessory(preview);
         chooser.addPropertyChangeListener(preview);
@@ -177,7 +192,7 @@ public class VtfLoader {
         pane.add(chooser);
         
         boolean init = false;
-        File root = new File("./res/vtf/hud/");
+        File root = new File("res/vtf/hud/");
         File[] subs = root.listFiles();
         for(int i = 0; i < subs.length; i++) {
             if(subs[i].getName().endsWith(".vtf")) {

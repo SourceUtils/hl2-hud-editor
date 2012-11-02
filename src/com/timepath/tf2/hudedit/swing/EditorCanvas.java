@@ -40,8 +40,8 @@ public class EditorCanvas extends JPanel implements MouseListener, MouseMotionLi
         loadBackground();
     }
     
-    public Dimension internalRes;
-    public Dimension hudRes;
+    public Dimension internal;
+    public Dimension screen;
     public double scale = 1;
 
     //<editor-fold defaultstate="collapsed" desc="Background image">
@@ -60,16 +60,16 @@ public class EditorCanvas extends JPanel implements MouseListener, MouseMotionLi
         
         currentbg = null;
         gridbg = null;
-        hudRes = preferredSize;
+        screen = preferredSize;
         
 //        long gcm = gcm(hudRes.width, hudRes.height);
-        long resX = hudRes.width;
-        long resY = hudRes.height;
+        long resX = screen.width;
+        long resY = screen.height;
         double m = (double)resX / (double)resY;
 //        System.out.println(resX + "/" + resY + "=" + m);
 //        System.out.println((resX / gcm) + ":" + (resY / gcm) + " = " + Math.round(m * 480) + "x" + 480);
 
-        internalRes = new Dimension((int)Math.round(m * 480), 480);
+        internal = new Dimension((int)Math.round(m * 480), 480);
         this.repaint();
     }
     
@@ -120,7 +120,7 @@ public class EditorCanvas extends JPanel implements MouseListener, MouseMotionLi
             g.drawImage(currentbg, offX, offY, this);
         } else {
             g.setColor(BG_COLOR);
-            g.fillRect(offX, offY, (int)Math.round(hudRes.width * scale), (int)Math.round(hudRes.height * scale));
+            g.fillRect(offX, offY, (int)Math.round(screen.width * scale), (int)Math.round(screen.height * scale));
         }
         if(true) {
             if(gridbg == null) {
@@ -153,8 +153,8 @@ public class EditorCanvas extends JPanel implements MouseListener, MouseMotionLi
     };
     
     private Image resizeImage(Image i) { // TODO: aspect ratio tuning
-        int w = hudRes.width;
-        int h = hudRes.height;        
+        int w = screen.width;
+        int h = screen.height;        
         int type = BufferedImage.TYPE_INT_ARGB;
 
         BufferedImage resizedImage = new BufferedImage(w, h, type);
@@ -177,7 +177,7 @@ public class EditorCanvas extends JPanel implements MouseListener, MouseMotionLi
     
     // as soon as the height drops below 480, stops rendering
     private Image drawGrid() {
-        BufferedImage img = new BufferedImage(hudRes.width, hudRes.height, BufferedImage.TYPE_INT_ARGB);
+        BufferedImage img = new BufferedImage(screen.width, screen.height, BufferedImage.TYPE_INT_ARGB);
         Graphics2D g = img.createGraphics();
 
 //        g.setComposite(AlphaComposite.Src);
@@ -186,21 +186,21 @@ public class EditorCanvas extends JPanel implements MouseListener, MouseMotionLi
         
         g.setColor(GRID_COLOR);
         
-        int w = hudRes.width;
-        int h = hudRes.height;
+        int w = screen.width;
+        int h = screen.height;
         int i = minGridSpacing; 
         if(i < 0) {
             return img;
         }
         if(i < 2) { // optimize for small numbers, stop division by zero
-            g.fillRect(offX, offY, hudRes.width, hudRes.height);
+            g.fillRect(offX, offY, screen.width, screen.height);
             return img;
         }
         int cross = 0;
         int maxX = w - (w % i);
         int maxY = h - (h % i);
-        double multX = (hudRes.width / internalRes.width);
-        double multY = (hudRes.height / internalRes.height);
+        double multX = (screen.width / internal.width);
+        double multY = (screen.height / internal.height);
         for(int y = 0; y <= (maxY / i); y++) {
             for(int x = 0; x <= (maxX / i); x++) {
                 int dx = (int) Math.round(((maxX * x * i * multX) / maxX) + offX);
@@ -215,10 +215,10 @@ public class EditorCanvas extends JPanel implements MouseListener, MouseMotionLi
     
     private void paintElement(Element e, Graphics2D g) {
         if(e.getWidth() > 0 && e.getHeight() > 0) { // invisible? don't waste time
-            int elementX = (int) Math.round((double) e.getX() * ((double)hudRes.width / (double)internalRes.width) * scale);
-            int elementY = (int) Math.round((double) e.getY() * ((double)hudRes.height / (double)internalRes.height) * scale);
-            int elementW = (int) Math.round((double) e.getWidth() * ((double)hudRes.width / (double)internalRes.width) * scale);
-            int elementH = (int) Math.round((double) e.getHeight() * ((double)hudRes.height / (double)internalRes.height) * scale);
+            int elementX = (int) Math.round((double) e.getX() * ((double)screen.width / (double)internal.width) * scale);
+            int elementY = (int) Math.round((double) e.getY() * ((double)screen.height / (double)internal.height) * scale);
+            int elementW = (int) Math.round((double) e.getWidth() * ((double)screen.width / (double)internal.width) * scale);
+            int elementH = (int) Math.round((double) e.getHeight() * ((double)screen.height / (double)internal.height) * scale);
             
             if(e.getFgColor() != null) {
                 g.setColor(e.getFgColor());
@@ -333,8 +333,7 @@ public class EditorCanvas extends JPanel implements MouseListener, MouseMotionLi
     @Override
     public void mouseDragged(MouseEvent event) { 
         Point p = new Point(event.getPoint());
-        p.translate(-EditorCanvas.offX, -EditorCanvas.offY);
-        int button = event.getButton();
+        p.translate(-EditorCanvas.offX, -EditorCanvas.offY); // relative to top left of canvas
         
         //        if(button == MouseEvent.BUTTON1) {
         if(isDragSelecting) {
@@ -558,7 +557,7 @@ public class EditorCanvas extends JPanel implements MouseListener, MouseMotionLi
         }
     }
     
-    public void translate(Element e, int dx, int dy) { // todo: scaling (scale 5 = 5 pixels to move 1 x/y co-ord)
+    public void translate(Element e, double dx, double dy) { // todo: scaling (scale 5 = 5 pixels to move 1 x/y co-ord)
 //        Rectangle originalBounds = new Rectangle(e.getBounds());
         if(e.getXAlignment() == Element.Alignment.Right) {
             dx *= -1;
@@ -566,8 +565,12 @@ public class EditorCanvas extends JPanel implements MouseListener, MouseMotionLi
         if(e.getYAlignment() == Element.Alignment.Right) {
             dy *= -1;
         }
-        e.setLocalX(e.getLocalX() + (int)(dx / scale));
-        e.setLocalY(e.getLocalY() + (int)(dy / scale));
+        double scaleX = ((double)screen.width / (double)internal.width);
+        dx /= scaleX;
+        double scaleY = ((double)screen.height / (double)internal.height);
+        dy /= scaleY;
+        e.setLocalX(e.getLocalX() + dx);
+        e.setLocalY(e.getLocalY() + dy);
 //        this.doRepaint(originalBounds);
 //        this.doRepaint(e.getBounds());
         this.repaint(); // helps

@@ -57,30 +57,32 @@ public class HudFont {
         try {
             System.out.println("Loading font "+name+"... ("+_name+")");
             f1 = fontFileForName(_name);
+            if(f1 == null) {
+                return null;
+            }
             ge.registerFont(f1); // for some reason, this works but the bottom return does not
             return new Font(name, Font.PLAIN, fontSize);
         } catch (Exception ex) {
             Logger.getLogger(HudFont.class.getName()).log(Level.SEVERE, null, ex);
-        }
-        if(f1 == null) {
-            return null;
         }
         System.out.println("Loaded!");
         return f1.deriveFont(fontSize);
     }
     
     public static Font fontFileForName(String name) throws Exception {
-        File[] files = new File("/home/andrew/TF2 HUDS/frankenhudr47/resource/").listFiles(new FilenameFilter() { // hardcoded
+        File[] files = new File("/home/andrew/TF2 HUDS/frankenhudr47/resource/").listFiles(new FilenameFilter() { // XXX: hardcoded
             public boolean accept(File file, String string) {
                 return string.endsWith(".ttf");
             }
         });
-        for(int t = 0; t < files.length; t++) {
-            Font f = Font.createFont(Font.TRUETYPE_FONT, files[t]);
-//            System.out.println(f.getFamily().toLowerCase());
-            if(f.getFamily().toLowerCase().equals(name.toLowerCase())) {
-                System.out.println("Found font for " + name);
-                return f;
+        if(files != null) {
+            for(int t = 0; t < files.length; t++) {
+                Font f = Font.createFont(Font.TRUETYPE_FONT, files[t]);
+    //            System.out.println(f.getFamily().toLowerCase());
+                if(f.getFamily().toLowerCase().equals(name.toLowerCase())) {
+                    System.out.println("Found font for " + name);
+                    return f;
+                }
             }
         }
         return null;

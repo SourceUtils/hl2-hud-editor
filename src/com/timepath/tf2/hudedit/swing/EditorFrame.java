@@ -912,7 +912,7 @@ public class EditorFrame extends JFrame {
     
     private void changeResolution() {
         if(spinnerWidth == null) {
-            spinnerWidth = new JSpinner(new SpinnerNumberModel(canvas.hudRes.width, 640, 7680, 1)); // WHUXGA
+            spinnerWidth = new JSpinner(new SpinnerNumberModel(canvas.screen.width, 640, 7680, 1)); // WHUXGA
 //            NumberEditor jsWidth = (NumberEditor) spinnerWidth.getEditor();
 //            final Document jsWidthDoc = jsWidth.getTextField().getDocument();
 //            if(jsWidthDoc instanceof PlainDocument) {
@@ -932,7 +932,7 @@ public class EditorFrame extends JFrame {
 //            }
         }
         if(spinnerHeight == null) {
-            spinnerHeight = new JSpinner(new SpinnerNumberModel(canvas.hudRes.height, 480, 4800, 1)); // WHUXGA
+            spinnerHeight = new JSpinner(new SpinnerNumberModel(canvas.screen.height, 480, 4800, 1)); // WHUXGA
 //            NumberEditor jsHeight = (NumberEditor) spinnerHeight.getEditor();
 //            final Document jsHeightDoc = jsHeight.getTextField().getDocument();
 //            if(jsHeightDoc instanceof PlainDocument) {

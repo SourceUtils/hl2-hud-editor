@@ -8,9 +8,10 @@ import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
+import java.util.HashMap;
 
 /**
- * TODO: .360.vtf files seem to be a slightly different format...
+ * TODO: .360.vtf files seem to be a slightly different format... and LZMA compressed.
  * 
  * @author andrew
  */
@@ -118,11 +119,16 @@ public class VtfFile {
 
 //    private int _thumbLength = Math.max(thumbWidth, 4) * Math.max(thumbHeight, 4) / 2;
 
+    private Image thumbImage;
+    
     public Image getThumbImage() throws IOException {
-        file.seek(this.headerSize);
-        byte[] thumbData = new byte[Math.max(this.thumbWidth, 4) * Math.max(this.thumbHeight, 4) / 2]; // DXT1. Each 'block' is 4*4 pixels. 16 pixels become 8 bytes
-        file.read(thumbData);
-        return loadDXT1(thumbData, this.thumbWidth, this.thumbHeight);
+        if(thumbImage == null) {
+            file.seek(this.headerSize);
+            byte[] thumbData = new byte[Math.max(this.thumbWidth, 4) * Math.max(this.thumbHeight, 4) / 2]; // DXT1. Each 'block' is 4*4 pixels. 16 pixels become 8 bytes
+            file.read(thumbData);
+            thumbImage = loadDXT1(thumbData, this.thumbWidth, this.thumbHeight);
+        }
+        return thumbImage;
     }
 
     public Image getImage(int level) throws IOException {
@@ -189,13 +195,21 @@ public class VtfFile {
     
     public static VtfFile load(String path) {
         File f = new File(path);
-        if(!f.exists() || !f.canRead()) {
-            return null;
-        }
+        System.out.println("Loading " + f);
         return VtfFile.load(f);
     }
+    
+    private static HashMap<File, VtfFile> cache = new HashMap<File, VtfFile>();
         
     public static VtfFile load(File file) {
+        file = file.getAbsoluteFile();
+        
+        if(cache.containsKey(file)) {
+            return cache.get(file);
+        }
+        if(file == null || !file.exists() || !file.canRead()) {
+            return null;
+        }
         RandomAccessFile rf;
         try {
             rf = new RandomAccessFile(file, "r");
@@ -203,6 +217,7 @@ public class VtfFile {
             String signature = new String(new byte[] {readChar(rf), readChar(rf), readChar(rf), readChar(rf)});
             if(!(signature.equals("VTF\0"))) {
                 System.err.println("Invalid VTF file " + file);
+                cache.put(file, null);
                 return null;
             }
             VtfFile vtf = new VtfFile(rf);
@@ -233,6 +248,7 @@ public class VtfFile {
                     System.err.println("FIRSTFRAME = " + vtf.frameFirst); // zero indexed
                 }
             }
+            cache.put(file, vtf);
             return vtf;
         } catch (Exception e) {
             e.printStackTrace();
