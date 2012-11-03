@@ -58,7 +58,10 @@ public class Main {
             System.setProperty("com.apple.mrj.application.live-resize", "true");
         } else if(os == OS.Linux) {
             shortcutKey = ActionEvent.CTRL_MASK;
-            System.setProperty("jayatana.force", "true");
+            boolean force = "Unity".equals(System.getenv("XDG_CURRENT_DESKTOP"));
+            if(force) {
+                System.setProperty("jayatana.force", "true");
+            }
             System.setProperty("jayatana.startupWMClass", "com-timepath-tf2-hudedit");
             
             try {

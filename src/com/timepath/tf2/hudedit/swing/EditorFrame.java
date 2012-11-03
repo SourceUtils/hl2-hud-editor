@@ -549,8 +549,12 @@ public class EditorFrame extends JFrame {
         JMenuBar jmb = new EditorMenuBar();
         this.setJMenuBar(jmb);
         if(AyatanaDesktop.isSupported()) {
-            ApplicationMenu.tryInstall(this, jmb);
-            this.setJMenuBar(null);
+            boolean worked = ApplicationMenu.tryInstall(this, jmb);
+            if(worked) {
+                this.setJMenuBar(null);
+            } else {
+                error("AyatanaDesktop failed to load" + "\n" + System.getenv("XDG_CURRENT_DESKTOP"));
+            }
         }
     }
     
