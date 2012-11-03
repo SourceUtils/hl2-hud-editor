@@ -78,6 +78,8 @@ import javax.swing.table.DefaultTableModel;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
 import net.tomahawk.XFileDialog;
+import org.java.ayatana.ApplicationMenu;
+import org.java.ayatana.AyatanaDesktop;
 //</editor-fold>
 
 /**
@@ -456,8 +458,6 @@ public class EditorFrame extends JFrame {
         this.setPreferredSize(new Dimension((int) (d.getWidth() / 1.5), (int) (d.getHeight() / 1.5)));
         
         this.setLocation((d.getWidth() / 2) - (this.getPreferredSize().width / 2), (d.getHeight() / 2) - (this.getPreferredSize().height / 2));
-
-        this.setJMenuBar(new EditorMenuBar());
         
         this.setDropTarget(new DropTarget() {
             @Override
@@ -533,10 +533,6 @@ public class EditorFrame extends JFrame {
         browser.setResizeWeight(0.5);
         splitPane.setRightComponent(browser);
         
-        if(Main.os == OS.Mac) {
-            createMacMenus();
-        }
-        
         this.getContentPane().add(splitPane);
 
         this.pack();
@@ -549,36 +545,12 @@ public class EditorFrame extends JFrame {
 //                System.exit(0);
             }
         });
-    }
-    
-    private void createMacMenus() {
-        if(Main.os != OS.Mac) {
-            return;
-        }
-        try {
-            OSXAdapter.setQuitHandler(this, getClass().getDeclaredMethod("quit", (Class[])null));
-            OSXAdapter.setAboutHandler(this, getClass().getDeclaredMethod("about", (Class[])null));
-//            OSXAdapter.setPreferencesHandler(this, getClass().getDeclaredMethod("preferences", (Class[])null));
-//            OSXAdapter.setFileHandler(this, getClass().getDeclaredMethod("loadImageFile", new Class[] { String.class }));
-
-//            com.apple.eawt.Application app = com.apple.eawt.Application.getApplication();
-    //        app.setEnabledPreferencesMenu(true);
-    //        app.setEnabledAboutMenu(true);
-//            app.setQuitStrategy(QuitStrategy.CLOSE_ALL_WINDOWS);
-//            app.setAboutHandler(new com.apple.eawt.AboutHandler() {
-//                public void handleAbout(AboutEvent e) {
-//                    about();
-//                }
-//            });
-//            app.setQuitHandler(new com.apple.eawt.QuitHandler() {
-//                public void handleQuitRequestWith(QuitEvent qe, QuitResponse qr) {
-//                    quit();
-//                }
-//            });
-//            ImageIcon icon = ... // your code to load your icon
-//            application.setDockIconImage(icon.getImage());
-        } catch(Exception e) {
-            e.printStackTrace();
+        
+        JMenuBar jmb = new EditorMenuBar();
+        this.setJMenuBar(jmb);
+        if(AyatanaDesktop.isSupported()) {
+            ApplicationMenu.tryInstall(this, jmb);
+            this.setJMenuBar(null);
         }
     }
     
@@ -1182,6 +1154,38 @@ public class EditorFrame extends JFrame {
             vtfItem = new JMenuItem("VTF Loader", KeyEvent.VK_V);
             vtfItem.addActionListener(al);
             extrasMenu.add(vtfItem);
+            
+            if(Main.os == OS.Mac) {
+                createMacMenus();
+            }
+        }
+        
+        private void createMacMenus() {
+            try {
+                OSXAdapter.setQuitHandler(this, getClass().getDeclaredMethod("quit", (Class[])null));
+                OSXAdapter.setAboutHandler(this, getClass().getDeclaredMethod("about", (Class[])null));
+    //            OSXAdapter.setPreferencesHandler(this, getClass().getDeclaredMethod("preferences", (Class[])null));
+    //            OSXAdapter.setFileHandler(this, getClass().getDeclaredMethod("loadImageFile", new Class[] { String.class }));
+
+    //            com.apple.eawt.Application app = com.apple.eawt.Application.getApplication();
+        //        app.setEnabledPreferencesMenu(true);
+        //        app.setEnabledAboutMenu(true);
+    //            app.setQuitStrategy(QuitStrategy.CLOSE_ALL_WINDOWS);
+    //            app.setAboutHandler(new com.apple.eawt.AboutHandler() {
+    //                public void handleAbout(AboutEvent e) {
+    //                    about();
+    //                }
+    //            });
+    //            app.setQuitHandler(new com.apple.eawt.QuitHandler() {
+    //                public void handleQuitRequestWith(QuitEvent qe, QuitResponse qr) {
+    //                    quit();
+    //                }
+    //            });
+    //            ImageIcon icon = ... // your code to load your icon
+    //            application.setDockIconImage(icon.getImage());
+            } catch(Exception e) {
+                e.printStackTrace();
+            }
         }
         
         private class EditorActionListener implements ActionListener {

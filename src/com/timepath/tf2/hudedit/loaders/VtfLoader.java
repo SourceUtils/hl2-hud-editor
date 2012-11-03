@@ -35,7 +35,7 @@ import javax.swing.filechooser.FileFilter;
  */
 public class VtfLoader {
     
-    public static void test1() {
+    public static void test() {
         final JFrame f = new JFrame("Vtf Loader");
         f.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         
@@ -238,7 +238,7 @@ public class VtfLoader {
     public static void main(String... args) {
         new Thread(new Runnable() {
             public void run() {
-                test1();
+                test();
             }
         }).start();
     }

@@ -215,20 +215,23 @@ public class EditorCanvas extends JPanel implements MouseListener, MouseMotionLi
     
     private void paintElement(Element e, Graphics2D g) {
         if(e.getWidth() > 0 && e.getHeight() > 0) { // invisible? don't waste time
-            int elementX = (int) Math.round((double) e.getX() * ((double)screen.width / (double)internal.width) * scale);
-            int elementY = (int) Math.round((double) e.getY() * ((double)screen.height / (double)internal.height) * scale);
+            int elementX = (int) Math.round((double) e.getX() * ((double)screen.width / (double)internal.width) * scale) + offX;
+            int elementY = (int) Math.round((double) e.getY() * ((double)screen.height / (double)internal.height) * scale) + offY;
             int elementW = (int) Math.round((double) e.getWidth() * ((double)screen.width / (double)internal.width) * scale);
             int elementH = (int) Math.round((double) e.getHeight() * ((double)screen.height / (double)internal.height) * scale);
-            
+            if(selectedElements.contains(e)) {
+                elementX += _offX;
+                elementY += _offY;
+            }
             if(e.getFgColor() != null) {
                 g.setColor(e.getFgColor());
                 if(e.getLabelText() == null) {
-                    g.fillRect(elementX + offX, elementY + offY, elementW - 1, elementH - 1);
+                    g.fillRect(elementX, elementY, elementW - 1, elementH - 1);
                 }
             }
             
             if(e.getImage() != null) {
-                g.drawImage(e.getImage(), elementX + offX, elementY + offY, elementW, elementH, this);
+                g.drawImage(e.getImage(), elementX, elementY, elementW, elementH, this);
             }
             
             if(selectedElements.contains(e)) {
@@ -236,13 +239,13 @@ public class EditorCanvas extends JPanel implements MouseListener, MouseMotionLi
             } else {
                 g.setColor(Color.GREEN);
             }
-            g.drawRect(elementX + offX, elementY + offY, elementW - 1, elementH - 1);
+            g.drawRect(elementX, elementY, elementW - 1, elementH - 1);
             
             
             if(hoveredElement == e) {
                 g.setColor(new Color(255-g.getColor().getRed(), 255-g.getColor().getGreen(), 255-g.getColor().getBlue()));
                 //                g.drawRect(elementX + offX, elementY + offY, e.getWidth() - 1, e.getHeight() - 1); // border
-                g.drawRect(elementX + offX + 1, elementY + offY + 1, elementW - 3, elementH - 3); // inner
+                g.drawRect(elementX + 1, elementY + 1, elementW - 3, elementH - 3); // inner
                 //                g.drawRect(elementX + offX - 1, elementY + offY - 1, e.getWidth() + 1, e.getHeight() + 1); // outer
             }
             
@@ -254,7 +257,7 @@ public class EditorCanvas extends JPanel implements MouseListener, MouseMotionLi
                 int fontSize = (int)Math.round(12.0 * screenRes / 72.0);
                 g.setFont(e.getFont());
                 g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-                g.drawString(e.getLabelText(), elementX + offX, elementY + offY + fontSize);
+                g.drawString(e.getLabelText(), elementX, elementY + fontSize);
             }
         }
         
@@ -326,9 +329,21 @@ public class EditorCanvas extends JPanel implements MouseListener, MouseMotionLi
             Rectangle original = new Rectangle(selectRect);
             selectRect.width = 0;
             selectRect.height = 0;
+            for(int i = 0; i < selectedElements.size(); i++) {
+                Element e = selectedElements.get(i);
+                if(selectedElements.contains(e.getParent()) && !e.getParent().getName().replaceAll("\"", "").endsWith(".res")) { // XXX: hacky
+                    continue;
+                }
+                translate(e, _offX, _offY);
+            }
+            _offX = 0;
+            _offY = 0;
             doRepaint(new Rectangle(original.x, original.y, original.width + 1, original.height + 1));
         }
     }
+    
+    private int _offX;
+    private int _offY;
     
     @Override
     public void mouseDragged(MouseEvent event) { 
@@ -339,13 +354,9 @@ public class EditorCanvas extends JPanel implements MouseListener, MouseMotionLi
         if(isDragSelecting) {
             select(dragStart, p, event.isControlDown());
         } else if(isDragMoving) {
-            for(int i = 0; i < selectedElements.size(); i++) {
-                Element e = selectedElements.get(i);
-                if(selectedElements.contains(e.getParent()) && !e.getParent().getName().replaceAll("\"", "").endsWith(".res")) { // XXX: hacky
-                    continue;
-                }
-                translate(e, p.x - dragStart.x, p.y - dragStart.y);
-            }
+            _offX += p.x - dragStart.x;
+            _offY += p.y - dragStart.y;
+            this.repaint();
             dragStart = p; // hacky
         }
         //        }
@@ -562,14 +573,14 @@ public class EditorCanvas extends JPanel implements MouseListener, MouseMotionLi
         if(e.getXAlignment() == Element.Alignment.Right) {
             dx *= -1;
         }
+        double scaleX = ((double)screen.width / (double)internal.width);
+        dx = Math.round(dx / scaleX);
+        e.setLocalX(e.getLocalX() + dx);
         if(e.getYAlignment() == Element.Alignment.Right) {
             dy *= -1;
         }
-        double scaleX = ((double)screen.width / (double)internal.width);
-        dx /= scaleX;
         double scaleY = ((double)screen.height / (double)internal.height);
-        dy /= scaleY;
-        e.setLocalX(e.getLocalX() + dx);
+        dy = Math.round(dy / scaleY);
         e.setLocalY(e.getLocalY() + dy);
 //        this.doRepaint(originalBounds);
 //        this.doRepaint(e.getBounds());
