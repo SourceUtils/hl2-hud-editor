@@ -194,36 +194,38 @@ public class VtfLoader {
         boolean init = false;
         File root = new File("res/vtf/hud/");
         File[] subs = root.listFiles();
-        for(int i = 0; i < subs.length; i++) {
-            if(subs[i].getName().endsWith(".vtf")) {
-                try {
-                    VtfFile v = VtfFile.load(subs[i]);
-                    Image image = null;
-                    if(v != null) {
-                        image = v.getImage(0);
-                    }
-                    if(image != null) {
-                        JPanel p = new JPanel(new BorderLayout());
-                        p.setBackground(Color.MAGENTA.darker().darker());
-                        p.setSize(image.getWidth(null), image.getHeight(null));
-                        JLabel l = new JLabel();
-                        l.setToolTipText(subs[i].getName());
-                        l.setIcon(new ImageIcon(image));
-                        p.add(l, BorderLayout.CENTER);
-                        p.setBorder(BorderFactory.createLineBorder(Color.BLACK));
-                        pane.add(p);
-                        jsp.invalidate();
-                        jsp.validate();
-                        jsp.repaint();
-                        
-                        if(!init) {
-                            f.setVisible(true);
-                            f.pack();
-                            init = true;
+        if(subs != null) {
+            for(int i = 0; i < subs.length; i++) {
+                if(subs[i].getName().endsWith(".vtf")) {
+                    try {
+                        VtfFile v = VtfFile.load(subs[i]);
+                        Image image = null;
+                        if(v != null) {
+                            image = v.getImage(0);
                         }
+                        if(image != null) {
+                            JPanel p = new JPanel(new BorderLayout());
+                            p.setBackground(Color.MAGENTA.darker().darker());
+                            p.setSize(image.getWidth(null), image.getHeight(null));
+                            JLabel l = new JLabel();
+                            l.setToolTipText(subs[i].getName());
+                            l.setIcon(new ImageIcon(image));
+                            p.add(l, BorderLayout.CENTER);
+                            p.setBorder(BorderFactory.createLineBorder(Color.BLACK));
+                            pane.add(p);
+                            jsp.invalidate();
+                            jsp.validate();
+                            jsp.repaint();
+
+                            if(!init) {
+                                f.setVisible(true);
+                                f.pack();
+                                init = true;
+                            }
+                        }
+                    } catch (IOException ex) {
+                        Logger.getLogger(VtfLoader.class.getName()).log(Level.SEVERE, null, ex);
                     }
-                } catch (IOException ex) {
-                    Logger.getLogger(VtfLoader.class.getName()).log(Level.SEVERE, null, ex);
                 }
             }
         }

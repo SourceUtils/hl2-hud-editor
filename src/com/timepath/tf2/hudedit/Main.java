@@ -7,9 +7,13 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.net.ServerSocket;
+import java.net.Socket;
+import java.net.SocketTimeoutException;
 import java.nio.channels.FileChannel;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.prefs.Preferences;
 
 /**
  *
@@ -19,9 +23,15 @@ public class Main {
     
     public final static String appName = "TF2 HUD Editor";
     
+    public final static String projectName = "tf2-hud-editor";
+    
+    public final static String javaName = "com-timepath-tf2-hudedit";
+    
     public final static OS os;
 
     public final static int shortcutKey;
+    
+    private static Preferences p = Preferences.userRoot().node(projectName);
 
     public enum OS {
 
@@ -43,10 +53,11 @@ public class Main {
             System.out.println("Unrecognised OS: " + osVer);
         }
         
+        shortcutKey = Toolkit.getDefaultToolkit().getMenuShortcutKeyMask();
+        
         if(os == OS.Windows) {
-            shortcutKey = ActionEvent.CTRL_MASK;
+            
         } else if(os == OS.Mac) {
-            shortcutKey = ActionEvent.META_MASK;
             System.setProperty("apple.awt.brushMetalLook", "false"); // looks stupid
             System.setProperty("apple.awt.showGrowBox", "false"); // looks stupid
             System.setProperty("apple.laf.useScreenMenuBar", "true");
@@ -57,18 +68,19 @@ public class Main {
             System.setProperty("com.apple.mrj.application.growbox.intrudes", "false");
             System.setProperty("com.apple.mrj.application.live-resize", "true");
         } else if(os == OS.Linux) {
-            shortcutKey = ActionEvent.CTRL_MASK;
             boolean force = "Unity".equals(System.getenv("XDG_CURRENT_DESKTOP"));
             if(force) {
                 System.setProperty("jayatana.force", "true");
             }
-            System.setProperty("jayatana.startupWMClass", "com-timepath-tf2-hudedit");
+            System.setProperty("jayatana.startupWMClass", javaName);
+            
+            // http://www.ailis.de/~k/archives/67-Workaround-for-borderless-Java-Swing-menus-on-Linux.html
             
             try {
                 Toolkit xToolkit = Toolkit.getDefaultToolkit();
                 java.lang.reflect.Field awtAppClassNameField = xToolkit.getClass().getDeclaredField("awtAppClassName");
                 awtAppClassNameField.setAccessible(true);
-                awtAppClassNameField.set(xToolkit, "com-timepath-tf2-hudedit");
+                awtAppClassNameField.set(xToolkit, javaName);
             } catch (IllegalArgumentException ex) {
                 Logger.getLogger(Main.class.getName()).log(Level.SEVERE, null, ex);
             } catch (IllegalAccessException ex) {
@@ -80,13 +92,13 @@ public class Main {
             }
             createLinuxLauncher();
         } else {
-            shortcutKey = ActionEvent.CTRL_MASK;
+            
         }
     }
     
     private static void createLinuxLauncher() {
-        File src = new File("res/bin/com-timepath-tf2-hudedit.desktop");
-        File dest = new File(System.getProperty("user.home") + "/.local/share/applications/com-timepath-tf2-hudedit.desktop");
+        File src = new File("res/bin/" + javaName + ".desktop");
+        File dest = new File(System.getProperty("user.home") + "/.local/share/applications/" + javaName + ".desktop");
         if(src.exists() && !dest.exists()) {
             try {
                 copyFile(src, dest);
@@ -120,13 +132,73 @@ public class Main {
         }
     }
     
-    public static void main(final String[] args) {
+    private static void startServer(int port, String[] args) {        
+        try {
+            final ServerSocket server = new ServerSocket(port);
+//            server.setSoTimeout(1);
+            port = server.getLocalPort(); // if the port was 0, update it
+            p.putInt("port", port);
+            
+            Runtime.getRuntime().addShutdownHook(new Thread() {
+                @Override
+                public void run() {
+                    System.out.println("Shutting down...");
+//                    System.exit(0);
+                }
+            });
+            
+            startProgram(args);
+            
+            Thread listener = new Thread(new Runnable() {
+                public void run() {
+                    while(!server.isClosed()) {
+                        try {
+                            server.accept();
+                            System.out.println("A client connected!");
+                            startProgram("noupdate");
+                        } catch(SocketTimeoutException e) {
+                            
+                        } catch(IOException ex) {
+                            Logger.getLogger(Main.class.getName()).log(Level.SEVERE, null, ex);
+                        }
+                    }
+                }
+            });
+            listener.setDaemon(true);
+            listener.start();
+            
+        } catch (IOException ex) {
+//            Logger.getLogger(Main.class.getName()).log(Level.SEVERE, null, ex);
+            System.out.println("Program already running, communicating...");
+            startClient(port, args);
+        }
+    }
+    
+    private static void startClient(int port, String[] args) {
+        try {
+            Socket client = new Socket("localhost", port);
+            client.sendUrgentData(1);
+        } catch (IOException ex) {
+//            Logger.getLogger(Main.class.getName()).log(Level.SEVERE, null, ex1);
+            System.out.println("Program closed suddenly");
+            startServer(port, args);
+        }
+    }
+    
+    private static void startProgram(String... args) {
         JarClassLoader cl = new JarClassLoader();
         try {
             cl.invokeMain("com.timepath.tf2.hudedit.swing.EditorFrame", args);
         } catch(Throwable e) {
             e.printStackTrace();
         }
+    }
+    
+    public static void main(String[] args) {
+        // http://www.ailis.de/~k/archives/64-How-to-implement-a-Single-Instance-Application-in-Java.html
+        // http://stackoverflow.com/questions/62289/read-write-to-windows-registry-using-java
+        // http://www.javaworld.com/jw-12-1996/jw-12-sockets.html?page=3
+        startServer(p.getInt("port", 0), args);
     }
     
 }

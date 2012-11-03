@@ -112,6 +112,13 @@ public class EditorFrame extends JFrame {
     
     public static void main(String[] args) {
         
+        for(int i = 0; i < args.length; i++) {
+            String cmd = args[i].toLowerCase();
+            if("noupdate".equals(cmd)) {
+                autoCheck = false;
+            }
+        }
+        
         if(Main.os == OS.Windows) {
             try {
                 XFileDialog.setTraceLevel(0);
@@ -164,6 +171,8 @@ public class EditorFrame extends JFrame {
     private String runPath;
     
     private String myMD5 = "";
+    
+    private static boolean autoCheck = true;
     
     private boolean isMD5(String str) {
         return str.matches("[a-fA-F0-9]{32}");
@@ -434,7 +443,8 @@ public class EditorFrame extends JFrame {
     public void quit() {
         if(!updating) {
             System.out.println("Quitting...");
-            System.exit(0);
+            // TODO: Mac support (all windows closed, app bar remaining)
+            this.dispose();
         }
     }
 
@@ -538,14 +548,6 @@ public class EditorFrame extends JFrame {
         this.pack();
         this.setFocusableWindowState(true);
         
-        Runtime.getRuntime().addShutdownHook(new Thread() {
-            @Override
-            public void run() {
-                System.out.println("Shutting down...");
-//                System.exit(0);
-            }
-        });
-        
         JMenuBar jmb = new EditorMenuBar();
         this.setJMenuBar(jmb);
         if(AyatanaDesktop.isSupported()) {
@@ -562,7 +564,7 @@ public class EditorFrame extends JFrame {
     public void setVisible(boolean b) {
         super.setVisible(b);
         this.createBufferStrategy(3); // Triple buffered, any more sees minimal gain.
-        if(!indev) {
+        if(!indev && autoCheck) {
             this.checkForUpdates();
         }
     }
