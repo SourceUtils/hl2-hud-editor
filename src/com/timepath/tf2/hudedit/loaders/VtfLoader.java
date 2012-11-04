@@ -1,7 +1,6 @@
 package com.timepath.tf2.hudedit.loaders;
 
 import com.timepath.tf2.hudedit.loaders.VtfFile.Format;
-import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Graphics;
@@ -13,12 +12,9 @@ import java.io.File;
 import java.io.IOException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import javax.swing.BorderFactory;
 import javax.swing.BoxLayout;
-import javax.swing.ImageIcon;
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
-import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.filechooser.FileFilter;
@@ -40,7 +36,7 @@ public class VtfLoader {
         f.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         
         JScrollPane jsp = new JScrollPane();
-        jsp.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
+        jsp.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
         jsp.getVerticalScrollBar().setUnitIncrement(64);
         f.add(jsp);
         JPanel pane = new JPanel();
@@ -179,7 +175,7 @@ public class VtfLoader {
             }
         }
         
-        JFileChooser chooser = new JFileChooser("res/vtf/hud/");
+        JFileChooser chooser = new JFileChooser();
         FileFilter generic = new VtfFileFilter(Format.IMAGE_FORMAT_NONE);
         chooser.addChoosableFileFilter(generic);
         chooser.addChoosableFileFilter(new VtfFileFilter(Format.IMAGE_FORMAT_DXT1));
@@ -190,51 +186,44 @@ public class VtfLoader {
         chooser.addPropertyChangeListener(preview);
         chooser.setControlButtonsAreShown(false);
         pane.add(chooser);
-        
-        boolean init = false;
-        File root = new File("res/vtf/hud/");
-        File[] subs = root.listFiles();
-        if(subs != null) {
-            for(int i = 0; i < subs.length; i++) {
-                if(subs[i].getName().endsWith(".vtf")) {
-                    try {
-                        VtfFile v = VtfFile.load(subs[i]);
-                        Image image = null;
-                        if(v != null) {
-                            image = v.getImage(0);
-                        }
-                        if(image != null) {
-                            JPanel p = new JPanel(new BorderLayout());
-                            p.setBackground(Color.MAGENTA.darker().darker());
-                            p.setSize(image.getWidth(null), image.getHeight(null));
-                            JLabel l = new JLabel();
-                            l.setToolTipText(subs[i].getName());
-                            l.setIcon(new ImageIcon(image));
-                            p.add(l, BorderLayout.CENTER);
-                            p.setBorder(BorderFactory.createLineBorder(Color.BLACK));
-                            pane.add(p);
-                            jsp.invalidate();
-                            jsp.validate();
-                            jsp.repaint();
-
-                            if(!init) {
+//        boolean init = false;
+//        File root = new File("res/vtf/hud/");
+//        File[] subs = root.listFiles();
+//        if(subs != null) {
+//            for(int i = 0; i < subs.length; i++) {
+//                if(subs[i].getName().endsWith(".vtf")) {
+//                    try {
+//                        VtfFile v = VtfFile.load(subs[i]);
+//                        Image image = null;
+//                        if(v != null) {
+//                            image = v.getImage(0);
+//                        }
+//                        if(image != null) {
+//                            JPanel p = new JPanel(new BorderLayout());
+//                            p.setBackground(Color.MAGENTA.darker().darker());
+//                            p.setSize(image.getWidth(null), image.getHeight(null));
+//                            JLabel l = new JLabel();
+//                            l.setToolTipText(subs[i].getName());
+//                            l.setIcon(new ImageIcon(image));
+//                            p.add(l, BorderLayout.CENTER);
+//                            p.setBorder(BorderFactory.createLineBorder(Color.BLACK));
+//                            pane.add(p);
+//                            jsp.invalidate();
+//                            jsp.validate();
+//                            jsp.repaint();
+//
+//                            if(!init) {
                                 f.setVisible(true);
                                 f.pack();
-                                init = true;
-                            }
-                        }
-                    } catch (IOException ex) {
-                        Logger.getLogger(VtfLoader.class.getName()).log(Level.SEVERE, null, ex);
-                    }
-                }
-            }
-        }
-        if(!init) {
-            f.setVisible(true);
-            f.pack();
-            init = true;
-        }
-        
+//                                init = true;
+//                            }
+//                        }
+//                    } catch (IOException ex) {
+//                        Logger.getLogger(VtfLoader.class.getName()).log(Level.SEVERE, null, ex);
+//                    }
+//                }
+//            }
+//        }
     }
     
     public static void main(String... args) {
