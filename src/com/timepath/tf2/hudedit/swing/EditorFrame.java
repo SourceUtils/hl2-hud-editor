@@ -31,6 +31,7 @@ import java.awt.event.WindowEvent;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.FilenameFilter;
 import java.io.IOException;
 import java.io.InputStream;
@@ -110,60 +111,6 @@ import org.java.ayatana.AyatanaDesktop;
 @SuppressWarnings("serial")
 public class EditorFrame extends JFrame {
     
-    public static void main(String[] args) {
-        
-        for(int i = 0; i < args.length; i++) {
-            String cmd = args[i].toLowerCase();
-            if("noupdate".equals(cmd)) {
-                autoCheck = false;
-            }
-        }
-        
-        if(Main.os == OS.Windows) {
-            try {
-                XFileDialog.setTraceLevel(0);
-            } catch(UnsatisfiedLinkError e) {
-                System.out.println("java.library.path = " + System.getProperty("java.library.path"));
-            }
-        }
-    
-//        Toolkit.getDefaultToolkit().setDynamicLayout(true);
-        initialLaf();
-        
-        SwingUtilities.invokeLater(new Runnable() { // SwingUtilities vs EventQueue?
-            
-            @Override
-            public void run() {
-                EditorFrame frame = new EditorFrame();
-                frame.setVisible(true);
-            }
-            
-        });
-        
-    }
-    
-    private static void initialLaf() {
-        try {
-            for(UIManager.LookAndFeelInfo info : UIManager.getInstalledLookAndFeels()) {
-                if("Nimbus".equals(info.getName())) {
-                    UIManager.setLookAndFeel(info.getClassName());
-                    return;
-                }
-            }
-            systemLaf();
-        } catch(Exception ex) {
-            Logger.getLogger(EditorFrame.class.getName()).log(Level.WARNING, null, ex);
-        }
-    }
-    
-    private static void systemLaf() {
-        try {
-            UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
-        } catch(Exception ex) {
-            Logger.getLogger(EditorFrame.class.getName()).log(Level.WARNING, null, ex);
-        }
-    }
-    
     private boolean indev;
     
     private boolean updating;
@@ -172,7 +119,7 @@ public class EditorFrame extends JFrame {
     
     private String myMD5 = "";
     
-    private static boolean autoCheck = true;
+    public boolean autoCheck = true;
     
     private boolean isMD5(String str) {
         return str.matches("[a-fA-F0-9]{32}");
@@ -306,7 +253,7 @@ public class EditorFrame extends JFrame {
                             InputStream in = latest.openStream();
                             
                             
-                            //                            FileOutputStream writer = new FileOutputStream(runPath); // TODO: stop closing when this happens. Maybe make a backup..
+                            FileOutputStream writer = new FileOutputStream(runPath); // TODO: stop closing when this happens. Maybe make a backup..
                             byte[] buffer = new byte[153600]; // 150KB
                             int totalBytesRead = 0;
                             int bytesRead;
@@ -316,7 +263,7 @@ public class EditorFrame extends JFrame {
                             updating = true;
                             
                             while((bytesRead = in.read(buffer)) > 0) {
-                                //                               writer.write(buffer, 0, bytesRead); // I don't want to write directly over the top until I have all the data..
+                                writer.write(buffer, 0, bytesRead); // I don't want to write directly over the top until I have all the data..
                                 buffer = new byte[153600];
                                 totalBytesRead += bytesRead;
                                 pb.setValue(totalBytesRead);
@@ -325,7 +272,7 @@ public class EditorFrame extends JFrame {
                             long endTime = System.currentTimeMillis();
                             
                             System.out.println("Done. " + (new Integer(totalBytesRead).toString()) + " bytes read (" + (new Long(endTime - startTime).toString()) + " millseconds).\n");
-                            //                            writer.close();
+                            writer.close();
                             in.close();
                             
                             dialog.dispose();
@@ -443,7 +390,13 @@ public class EditorFrame extends JFrame {
     public void quit() {
         if(!updating) {
             System.out.println("Quitting...");
-            // TODO: Mac support (all windows closed, app bar remaining)
+            if(Main.os == OS.Mac) {
+                JFrame f = new JFrame();
+                f.setUndecorated(true);
+                f.setJMenuBar(this.getJMenuBar());
+                f.setLocation(-Integer.MAX_VALUE, -Integer.MAX_VALUE); // Hacky - should just use the Application calls...
+                f.setVisible(true);
+            }
             this.dispose();
         }
     }
@@ -550,13 +503,53 @@ public class EditorFrame extends JFrame {
         
         JMenuBar jmb = new EditorMenuBar();
         this.setJMenuBar(jmb);
-        if(AyatanaDesktop.isSupported()) {
-            boolean worked = ApplicationMenu.tryInstall(this, jmb);
-            if(worked) {
-                this.setJMenuBar(null);
-            } else {
-                error("AyatanaDesktop failed to load" + "\n" + System.getenv("XDG_CURRENT_DESKTOP"));
+        
+        if(Main.os == OS.Mac) {
+            createMacMenus();
+        } else if(Main.os == OS.Linux) {
+            try {
+                if(AyatanaDesktop.isSupported()) {
+                    boolean worked = ApplicationMenu.tryInstall(this, jmb);
+                    if(worked) {
+                        this.setJMenuBar(null);
+                    } else {
+                        error("AyatanaDesktop failed to load" + "\n" + System.getenv("XDG_CURRENT_DESKTOP"));
+                    }
+                }
+            } catch(UnsupportedClassVersionError e) { // crashes earlier versions of the JVM - particularly old macs
+    //            e.printStackTrace();
             }
+        }
+    }
+    
+    /**
+     * http://alvinalexander.com/java/mac-java-default-osx-menubar-without-jframe
+     */
+    private void createMacMenus() {
+        try {
+            OSXAdapter.setQuitHandler(this, getClass().getDeclaredMethod("quit", (Class[])null));
+            OSXAdapter.setAboutHandler(this, getClass().getDeclaredMethod("about", (Class[])null));
+//            OSXAdapter.setPreferencesHandler(this, getClass().getDeclaredMethod("preferences", (Class[])null));
+//            OSXAdapter.setFileHandler(this, getClass().getDeclaredMethod("loadImageFile", new Class[] { String.class }));
+
+//            com.apple.eawt.Application app = com.apple.eawt.Application.getApplication();
+    //        app.setEnabledPreferencesMenu(true);
+    //        app.setEnabledAboutMenu(true);
+//            app.setQuitStrategy(QuitStrategy.CLOSE_ALL_WINDOWS);
+//            app.setAboutHandler(new com.apple.eawt.AboutHandler() {
+//                public void handleAbout(AboutEvent e) {
+//                    about();
+//                }
+//            });
+//            app.setQuitHandler(new com.apple.eawt.QuitHandler() {
+//                public void handleQuitRequestWith(QuitEvent qe, QuitResponse qr) {
+//                    quit();
+//                }
+//            });
+//            ImageIcon icon = ... // your code to load your icon
+//            application.setDockIconImage(icon.getImage());
+        } catch(Exception e) {
+            e.printStackTrace();
         }
     }
     
@@ -672,34 +665,86 @@ public class EditorFrame extends JFrame {
      * mac = ?
      */
     private void locateHudDirectory() {
+        if(Main.os == OS.Mac) {
+            locateMac();
+        } else if(Main.os == OS.Windows) {
+            try {
+                new Thread(new Runnable() {
+                    public void run() {
+                        String selection = null;
+                        try {
+                            XFileDialog fd = new XFileDialog(EditorFrame.this);
+                            fd.setTitle("Open a HUD folder");
+                            selection = fd.getFolder();
+                            fd.dispose();
+                        } catch(UnsupportedClassVersionError e) {
+
+                        }
+                        if(selection != null) {
+                            final File f = new File(selection);
+                //                    new Thread() {
+                //                        @Override
+                //                        public void run() {
+                                    loadHud(f);
+                //                        }
+                //                    }.start();
+                        } else {
+                            // Throw error or load archive
+                        }
+                    }
+                }).start();
+            } catch(UnsupportedClassVersionError e) {
+                
+            }
+        } else {
+            locate();
+        }
+    }
+    
+    private void locateMac() {
         new Thread(new Runnable() {
             public void run() {
                 String selection = null;
-                if(Main.os == OS.Mac) {
-                    System.setProperty("apple.awt.fileDialogForDirectories", "true");
-                    FileDialog fd = new FileDialog(EditorFrame.this, "Open a HUD folder");
-                    if(hudSelectionDir != null) {
-                        fd.setDirectory(hudSelectionDir);
+                System.setProperty("apple.awt.fileDialogForDirectories", "true");
+                FileDialog fd = new FileDialog(EditorFrame.this, "Open a HUD folder");
+                if(hudSelectionDir != null) {
+                    fd.setDirectory(hudSelectionDir);
+                }
+                fd.setFilenameFilter(new FilenameFilter() {
+                    public boolean accept(File dir, String name) {
+                        return new File(dir, name).isDirectory();
                     }
-                    fd.setFilenameFilter(new FilenameFilter() {
-                        public boolean accept(File dir, String name) {
-                            return new File(dir, name).isDirectory();
-                        }
-                    });
-                    fd.setMode(FileDialog.LOAD);
-                    fd.setVisible(true);
-                    String file = fd.getDirectory() + fd.getFile();
-                    if(file != null) {
-                        hudSelectionDir = new File(file).getParent();
-                        selection = file;
-                    }
-                } else
-                if(Main.os == OS.Windows) {
-                    XFileDialog fd = new XFileDialog(EditorFrame.this);
-                    fd.setTitle("Open a HUD folder");
-                    selection = fd.getFolder();
-                    fd.dispose();
-        //        } else
+                });
+                fd.setMode(FileDialog.LOAD);
+                fd.setVisible(true);
+                if(fd.getDirectory() == null || fd.getFile() == null) {
+                    return;
+                }
+                String file = fd.getDirectory() + fd.getFile();
+                if(file != null) {
+                    hudSelectionDir = new File(file).getParent();
+                    selection = file;
+                }
+
+                if(selection != null) {
+                    final File f = new File(selection);
+//                    new Thread() {
+//                        @Override
+//                        public void run() {
+                            loadHud(f);
+//                        }
+//                    }.start();
+                } else {
+                    // Throw error or load archive
+                }
+            }
+        }).start();
+    }
+    
+    private void locate() {
+        new Thread(new Runnable() {
+            public void run() {
+                String selection = null;
         //        if(HudEditor.os == OS.Linux) {
         //            EditorFrame.systemLaf();
         //            UIManager.put("FileChooserUI", "eu.kostia.gtkjfilechooser.ui.GtkFileChooserUI");
@@ -714,7 +759,7 @@ public class EditorFrame extends JFrame {
         //            }
         //            EditorFrame.initialLaf();
         //            UIManager.put("FileChooserUI", initFCUILinux);
-                } else { // Fall back to swing
+        //        } else { // Fall back to swing
                     JFileChooser fd = new JFileChooser();
                     fd.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
                     if(hudSelectionDir != null) {
@@ -724,19 +769,19 @@ public class EditorFrame extends JFrame {
                         hudSelectionDir = fd.getSelectedFile().getParent();
                         selection = fd.getSelectedFile().getPath();
                     }
-                }
-
+        //        }
                 if(selection != null) {
                     final File f = new File(selection);
-//                    new Thread() {
-//                        @Override
-//                        public void run() {
+        //                    new Thread() {
+        //                        @Override
+        //                        public void run() {
                             loadHud(f);
-//                        }
-//                    }.start();
+        //                        }
+        //                    }.start();
                 } else {
                     // Throw error or load archive
                 }
+        
             }
         }).start();
     }
@@ -1160,38 +1205,6 @@ public class EditorFrame extends JFrame {
             vtfItem = new JMenuItem("VTF Loader", KeyEvent.VK_V);
             vtfItem.addActionListener(al);
             extrasMenu.add(vtfItem);
-            
-            if(Main.os == OS.Mac) {
-                createMacMenus();
-            }
-        }
-        
-        private void createMacMenus() {
-            try {
-                OSXAdapter.setQuitHandler(this, getClass().getDeclaredMethod("quit", (Class[])null));
-                OSXAdapter.setAboutHandler(this, getClass().getDeclaredMethod("about", (Class[])null));
-    //            OSXAdapter.setPreferencesHandler(this, getClass().getDeclaredMethod("preferences", (Class[])null));
-    //            OSXAdapter.setFileHandler(this, getClass().getDeclaredMethod("loadImageFile", new Class[] { String.class }));
-
-    //            com.apple.eawt.Application app = com.apple.eawt.Application.getApplication();
-        //        app.setEnabledPreferencesMenu(true);
-        //        app.setEnabledAboutMenu(true);
-    //            app.setQuitStrategy(QuitStrategy.CLOSE_ALL_WINDOWS);
-    //            app.setAboutHandler(new com.apple.eawt.AboutHandler() {
-    //                public void handleAbout(AboutEvent e) {
-    //                    about();
-    //                }
-    //            });
-    //            app.setQuitHandler(new com.apple.eawt.QuitHandler() {
-    //                public void handleQuitRequestWith(QuitEvent qe, QuitResponse qr) {
-    //                    quit();
-    //                }
-    //            });
-    //            ImageIcon icon = ... // your code to load your icon
-    //            application.setDockIconImage(icon.getImage());
-            } catch(Exception e) {
-                e.printStackTrace();
-            }
         }
         
         private class EditorActionListener implements ActionListener {
