@@ -23,17 +23,13 @@ import net.tomahawk.XFileDialog;
  */
 public class Main {
     
+    private static final Logger LOG = Logger.getLogger(Main.class.getName());
+    
     public final static String appName = "TF2 HUD Editor";
     
     public final static String javaName = "com-timepath-tf2-hudedit";
     
     public final static String projectName = "tf2-hud-editor";
-    
-    public enum OS {
-
-        Windows, Mac, Linux, Other
-
-    }
     
     public final static OS os;
     
@@ -47,7 +43,7 @@ public class Main {
             os = OS.Linux;
         } else {
             os = OS.Other;
-            System.out.println("Unrecognised OS: " + osVer);
+            LOG.log(Level.WARNING, "Unrecognised OS: {0}", osVer);
         }
         
         if(os == OS.Mac) {

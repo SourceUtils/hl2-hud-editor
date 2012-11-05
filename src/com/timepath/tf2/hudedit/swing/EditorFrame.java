@@ -3,7 +3,7 @@ package com.timepath.tf2.hudedit.swing;
 //<editor-fold defaultstate="collapsed" desc="imports">
 import com.timepath.tf2.hudedit.Main;
 import com.timepath.tf2.hudedit.temp.OSXAdapter;
-import com.timepath.tf2.hudedit.Main.OS;
+import com.timepath.tf2.hudedit.OS;
 import com.timepath.tf2.hudedit.swing.EditorPropertiesTablePane.EditorPropertiesTable;
 import com.timepath.tf2.hudedit.loaders.ResLoader;
 import com.timepath.tf2.hudedit.loaders.VtfLoader;
