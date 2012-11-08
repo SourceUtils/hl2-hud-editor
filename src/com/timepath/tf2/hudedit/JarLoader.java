@@ -1,6 +1,7 @@
 package com.timepath.tf2.hudedit;
 
 import com.timepath.tf2.hudedit.temp.JarClassLoader;
+import java.util.logging.Logger;
 
 /**
  *
@@ -13,8 +14,10 @@ public class JarLoader {
         try {
             cl.invokeMain("com.timepath.tf2.hudedit.Main", args);
         } catch(Throwable e) {
-            e.printStackTrace();
+            LOG.severe(e.toString());
         }
     }
+    
+    private static final Logger LOG = Logger.getLogger(JarLoader.class.getName());
     
 }

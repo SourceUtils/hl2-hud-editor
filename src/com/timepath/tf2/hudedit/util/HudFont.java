@@ -87,5 +87,6 @@ public class HudFont {
         }
         return null;
     }
+    private static final Logger LOG = Logger.getLogger(HudFont.class.getName());
     
 }

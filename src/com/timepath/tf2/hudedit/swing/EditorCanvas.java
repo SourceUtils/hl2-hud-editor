@@ -1,5 +1,6 @@
 package com.timepath.tf2.hudedit.swing;
 
+import com.timepath.tf2.hudedit.util.Alignment;
 import com.timepath.tf2.hudedit.util.Element;
 import java.awt.AlphaComposite;
 import java.awt.Color;
@@ -19,6 +20,7 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.logging.Logger;
 import javax.swing.JPanel;
 
 /**
@@ -570,13 +572,13 @@ public class EditorCanvas extends JPanel implements MouseListener, MouseMotionLi
     
     public void translate(Element e, double dx, double dy) { // todo: scaling (scale 5 = 5 pixels to move 1 x/y co-ord)
 //        Rectangle originalBounds = new Rectangle(e.getBounds());
-        if(e.getXAlignment() == Element.Alignment.Right) {
+        if(e.getXAlignment() == Alignment.Right) {
             dx *= -1;
         }
         double scaleX = ((double)screen.width / (double)internal.width);
         dx = Math.round(dx / scaleX);
         e.setLocalX(e.getLocalX() + dx);
-        if(e.getYAlignment() == Element.Alignment.Right) {
+        if(e.getYAlignment() == Alignment.Right) {
             dy *= -1;
         }
         double scaleY = ((double)screen.height / (double)internal.height);
@@ -596,5 +598,6 @@ public class EditorCanvas extends JPanel implements MouseListener, MouseMotionLi
         }   
     }
     //</editor-fold>
+    private static final Logger LOG = Logger.getLogger(EditorCanvas.class.getName());
 
 }

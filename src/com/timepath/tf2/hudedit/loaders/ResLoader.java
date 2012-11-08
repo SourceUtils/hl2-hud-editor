@@ -120,7 +120,7 @@ public class ResLoader {
                 info = val.substring(idx).trim();
                 val = val.substring(0, idx).trim();
             }
-            if(val.equals("")) { // very good assumption
+            if(val.length() == 0) { // very good assumption
                 val = "{";
             }
             
@@ -137,7 +137,7 @@ public class ResLoader {
                 }
                 logger.log(Level.FINE, "Returning");
                 break;
-            } else if(line.equals("")) {
+            } else if(line.length() == 0) {
                 p.setKey("\\n");
                 p.setValue("\\n");
                 p.setInfo("");
@@ -148,7 +148,7 @@ public class ResLoader {
                 continue;
             } else if(line.startsWith("#")) {
                 p.setKey("#");
-                p.setValue(line.substring(line.indexOf("#") + 1));
+                p.setValue(line.substring(line.indexOf('#') + 1));
                 p.setInfo("");
                 logger.log(Level.INFO, "Carrying: {0}", line);
                 carried.add(p);

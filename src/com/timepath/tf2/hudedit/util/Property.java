@@ -1,5 +1,7 @@
 package com.timepath.tf2.hudedit.util;
 
+import java.util.logging.Logger;
+
 /**
  *
  * @author andrew
@@ -48,5 +50,6 @@ public class Property {
     public String toString() {
         return key + ":" + value + ":" + info;
     }
+    private static final Logger LOG = Logger.getLogger(Property.class.getName());
 
 }

@@ -42,7 +42,7 @@ public class Element {
         // preceding header
         for(int i = 0; i < this.propMap.size(); i++) {
             Property p = this.propMap.get(i);
-            if(p.getValue().equals("")) {
+            if(p.getValue().length() == 0) {
                 if(p.getKey().equals("\\n")) {
                     str += "\n";
                 }
@@ -55,7 +55,7 @@ public class Element {
         str += "{\n";
         for(int i = 0; i < this.propMap.size(); i++) {
             Property p = this.propMap.get(i);
-            if(!p.getValue().equals("")) {
+            if(p.getValue().length() != 0) {
                 if(p.getKey().equals("\\n")) {
                     str += "\t    \n";
                 } else {
@@ -142,18 +142,18 @@ public class Element {
 
     public int getX() {
         if (parent == null || parent.name.replaceAll("\"", "").endsWith(".res")) {
-            if (this.getXAlignment() == Element.Alignment.Center) {
+            if (this.getXAlignment() == Alignment.Center) {
                 return (getLocalX() + Math.round(853 / 2));
-            } else if (this.getXAlignment() == Element.Alignment.Right) {
+            } else if (this.getXAlignment() == Alignment.Right) {
                 return (853 - getLocalX());
             } else {
                 return getLocalX();
             }
         } else {
             int x;
-            if (this.getXAlignment() == Element.Alignment.Center) {
+            if (this.getXAlignment() == Alignment.Center) {
                 x = (parent.getWidth() / 2) + getLocalX();
-            } else if (this.getXAlignment() == Element.Alignment.Right) {
+            } else if (this.getXAlignment() == Alignment.Right) {
                 x = (parent.getWidth()) - getLocalX();
             } else {
                 x = getLocalX();
@@ -174,18 +174,18 @@ public class Element {
 
     public int getY() {
         if (parent == null || parent.name.replaceAll("\"", "").endsWith(".res")) {
-            if (this.getYAlignment() == Element.Alignment.Center) {
+            if (this.getYAlignment() == Alignment.Center) {
                 return (getLocalY() + Math.round(480 / 2));
-            } else if (this.getYAlignment() == Element.Alignment.Right) {
+            } else if (this.getYAlignment() == Alignment.Right) {
                 return (480 - getLocalY());
             } else {
                 return getLocalY();
             }
         }
         int y;
-        if (this.getYAlignment() == Element.Alignment.Center) {
+        if (this.getYAlignment() == Alignment.Center) {
             y = (parent.getHeight() / 2) + getLocalY();
-        } else if (this.getYAlignment() == Element.Alignment.Right) {
+        } else if (this.getYAlignment() == Alignment.Right) {
             y = parent.getHeight() - getLocalY();
         } else {
             y = getLocalY();
@@ -635,16 +635,6 @@ public class Element {
     public String getFile() {
         return fileName;
     }
-    
-    public static enum Alignment {
-
-        Left, Center, Right
-    }
-
-    public static enum DimensionMode {
-
-        Mode1, Mode2
-    }
     private Alignment _xAlignment = Alignment.Left;
 
     public Alignment getXAlignment() {
@@ -681,6 +671,5 @@ public class Element {
     public void setImage(Image image) {
         this.image = image;
     }
-//    private boolean scaleImage;
-//    private boolean pinCorner;
+    
 }

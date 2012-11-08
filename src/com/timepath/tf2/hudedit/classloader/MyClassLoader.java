@@ -4,6 +4,7 @@ import java.io.File;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
+import java.util.logging.Logger;
 
 /**
  *
@@ -67,6 +68,7 @@ public class MyClassLoader extends ClassLoader {
         file.setReadable(true, false);
         file.setWritable(true, false);
         file.setExecutable(true, false);
-    }   
+    }
+    private static final Logger LOG = Logger.getLogger(MyClassLoader.class.getName());
     
 }

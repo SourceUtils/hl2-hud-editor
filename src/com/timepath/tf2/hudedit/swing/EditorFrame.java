@@ -4,7 +4,7 @@ package com.timepath.tf2.hudedit.swing;
 import com.timepath.tf2.hudedit.Main;
 import com.timepath.tf2.hudedit.temp.OSXAdapter;
 import com.timepath.tf2.hudedit.OS;
-import com.timepath.tf2.hudedit.swing.EditorPropertiesTablePane.EditorPropertiesTable;
+import com.timepath.tf2.hudedit.swing.EditorPropertiesTable;
 import com.timepath.tf2.hudedit.loaders.ResLoader;
 import com.timepath.tf2.hudedit.loaders.VtfLoader;
 import java.awt.BorderLayout;
@@ -108,8 +108,8 @@ import org.java.ayatana.AyatanaDesktop;
  *
  * @author andrew
  */
-@SuppressWarnings("serial")
 public class EditorFrame extends JFrame {
+    private static final long serialVersionUID = 1L;
     
     private boolean indev;
     
@@ -423,6 +423,7 @@ public class EditorFrame extends JFrame {
         this.setLocation((d.getWidth() / 2) - (this.getPreferredSize().width / 2), (d.getHeight() / 2) - (this.getPreferredSize().height / 2));
         
         this.setDropTarget(new DropTarget() {
+            private static final long serialVersionUID = 1L;
             @Override
             public void drop(DropTargetDropEvent e) {
                 try {
@@ -549,7 +550,7 @@ public class EditorFrame extends JFrame {
 //            ImageIcon icon = ... // your code to load your icon
 //            application.setDockIconImage(icon.getImage());
         } catch(Exception e) {
-            e.printStackTrace();
+            LOG.severe(e.toString());
         }
     }
     
@@ -656,6 +657,18 @@ public class EditorFrame extends JFrame {
     //            }
     //    }
     //</editor-fold>
+    
+    /**
+     * Prefix
+     * Win = %PROGRAMFILES(X86)% or %PROGRAMFILES%
+     * Mac = ~/Library/Application Support/
+     * Nix = ~/
+     * 
+     * Suffix = Steam/SteamApps/<username>/Team Fortress 2/tf/
+     */
+    private String locateSteamDirectory() {
+        return null;
+    }
 
     /**
      * Start in the home directory
@@ -992,6 +1005,7 @@ public class EditorFrame extends JFrame {
     
     
     private class EditorMenuBar extends JMenuBar {
+        private static final long serialVersionUID = 1L;
         
         private JMenuItem newItem;
         private JMenuItem openItem;
@@ -1247,4 +1261,5 @@ public class EditorFrame extends JFrame {
             }
         }
     }
+    private static final Logger LOG = Logger.getLogger(EditorFrame.class.getName());
 }

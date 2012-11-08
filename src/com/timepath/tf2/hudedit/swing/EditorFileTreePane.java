@@ -4,7 +4,6 @@
  */
 package com.timepath.tf2.hudedit.swing;
 
-import com.timepath.tf2.hudedit.swing.EditorPropertiesTablePane.EditorPropertiesTable;
 import com.timepath.tf2.hudedit.util.Element;
 import com.timepath.tf2.hudedit.util.Property;
 import java.awt.Color;
@@ -12,6 +11,7 @@ import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.Rectangle;
 import java.io.File;
+import java.util.logging.Logger;
 import javax.swing.Icon;
 import javax.swing.JFileChooser;
 import javax.swing.JScrollPane;
@@ -29,6 +29,7 @@ import javax.swing.tree.TreeSelectionModel;
  * @author Andrew
  */
 public class EditorFileTreePane extends JScrollPane {
+    private static final long serialVersionUID = 1L;
 
     public EditorFileTreePane(final EditorCanvas canvas, final EditorPropertiesTable propTable,final JTree fileSystem) {
         super();
@@ -75,6 +76,7 @@ public class EditorFileTreePane extends JScrollPane {
     }
     
     private class CustomTreeCellRenderer extends DefaultTreeCellRenderer {
+        private static final long serialVersionUID = 1L;
 
         CustomTreeCellRenderer() {
             super();
@@ -146,5 +148,6 @@ public class EditorFileTreePane extends JScrollPane {
             return this;
         }
     }
+    private static final Logger LOG = Logger.getLogger(EditorFileTreePane.class.getName());
     
 }

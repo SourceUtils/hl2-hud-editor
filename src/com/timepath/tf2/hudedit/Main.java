@@ -188,7 +188,7 @@ public class Main {
                     }
                 }
             });
-            listener.setDaemon(os != os.Mac); // non-daemon threads work in the background. Stick around if on a mac until manually terminated
+            listener.setDaemon(os != OS.Mac); // non-daemon threads work in the background. Stick around if on a mac until manually terminated
             listener.start();
         } catch (IOException ex) {
 //            Logger.getLogger(Main.class.getName()).log(Level.SEVERE, null, ex);

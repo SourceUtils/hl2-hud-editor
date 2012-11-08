@@ -48,13 +48,14 @@ public class VtfLoader {
         jsp.setViewportView(pane);
         
         class ImagePreviewPanel extends JPanel implements PropertyChangeListener {
+            private static final long serialVersionUID = 1L;
             
             private int width, height;
             private Image image;
             private static final int ACCSIZE = 128;
             private Color bg;
             
-            public ImagePreviewPanel() {
+            ImagePreviewPanel() {
                 setPreferredSize(new Dimension(ACCSIZE, -1));
                 bg = getBackground();
             }
@@ -244,5 +245,6 @@ public class VtfLoader {
             }
         }).start();
     }
+    private static final Logger LOG = Logger.getLogger(VtfLoader.class.getName());
 
 }

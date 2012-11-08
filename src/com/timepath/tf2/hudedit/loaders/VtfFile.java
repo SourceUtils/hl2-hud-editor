@@ -1,5 +1,6 @@
 package com.timepath.tf2.hudedit.loaders;
 
+import com.timepath.tf2.hudedit.util.DataUtils;
 import java.awt.AlphaComposite;
 import java.awt.Color;
 import java.awt.Graphics2D;
@@ -9,6 +10,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.util.HashMap;
+import java.util.logging.Logger;
 
 /**
  * TODO: .360.vtf files seem to be a slightly different format... and LZMA compressed.
@@ -107,8 +109,8 @@ public class VtfFile {
     public void getControls() throws IOException {
         file.seek(this.headerSize - 8); // 8 bytes for CRC or other things. I have no idea what the data after the first 64 bytes up until here are for
 
-        String crcHead = new String(new byte[] {readChar(file), readChar(file), readChar(file), readChar(file)});
-        int crc = readLong(file);
+        String crcHead = new String(new byte[] {DataUtils.readChar(file), DataUtils.readChar(file), DataUtils.readChar(file), DataUtils.readChar(file)});
+        int crc = DataUtils.readLong(file);
 
         if(!(crcHead.equals("CRC\2"))) {
             System.err.println("CRC=" + crcHead + ", invalid");
@@ -214,30 +216,30 @@ public class VtfFile {
         try {
             rf = new RandomAccessFile(file, "r");
 //            System.out.println("Loading " + path + "...");
-            String signature = new String(new byte[] {readChar(rf), readChar(rf), readChar(rf), readChar(rf)});
+            String signature = new String(new byte[] {DataUtils.readChar(rf), DataUtils.readChar(rf), DataUtils.readChar(rf), DataUtils.readChar(rf)});
             if(!(signature.equals("VTF\0"))) {
                 System.err.println("Invalid VTF file " + file);
                 cache.put(file, null);
                 return null;
             }
             VtfFile vtf = new VtfFile(rf);
-            vtf.version = new int[] {readUInt(rf), readUInt(rf)};
-            vtf.headerSize = readUInt(rf);
-            vtf.width = readUShort(rf);
-            vtf.height = readUShort(rf);
-            vtf.flags = readUInt(rf);
-            vtf.frameCount = readUShort(rf);
-            vtf.frameFirst = readUShort(rf);
+            vtf.version = new int[] {DataUtils.readUInt(rf), DataUtils.readUInt(rf)};
+            vtf.headerSize = DataUtils.readUInt(rf);
+            vtf.width = DataUtils.readUShort(rf);
+            vtf.height = DataUtils.readUShort(rf);
+            vtf.flags = DataUtils.readUInt(rf);
+            vtf.frameCount = DataUtils.readUShort(rf);
+            vtf.frameFirst = DataUtils.readUShort(rf);
             rf.skipBytes(4); // padding
-            vtf.reflectivity = new float[] {readFloat(rf), readFloat(rf), readFloat(rf)};
+            vtf.reflectivity = new float[] {DataUtils.readFloat(rf), DataUtils.readFloat(rf), DataUtils.readFloat(rf)};
             rf.skipBytes(4); // padding
-            vtf.bumpScale = readFloat(rf);
-            vtf.format = Format.getEnumForIndex(readUInt(rf));
-            vtf.mipCount = readUChar(rf);
-            vtf.thumbFormat = Format.getEnumForIndex(readUInt(rf));
-            vtf.thumbWidth = readUChar(rf);
-            vtf.thumbHeight = readUChar(rf);
-            vtf.depth = readUShort(rf); // the docs say that there are 64 bytes for this section, but I count 64. Should this be a single byte?
+            vtf.bumpScale = DataUtils.readFloat(rf);
+            vtf.format = Format.getEnumForIndex(DataUtils.readUInt(rf));
+            vtf.mipCount = DataUtils.readUChar(rf);
+            vtf.thumbFormat = Format.getEnumForIndex(DataUtils.readUInt(rf));
+            vtf.thumbWidth = DataUtils.readUChar(rf);
+            vtf.thumbHeight = DataUtils.readUChar(rf);
+            vtf.depth = DataUtils.readUShort(rf); // the docs say that there are 64 bytes for this section, but I count 64. Should this be a single byte?
             
 //            System.out.println(vtf.format);
             
@@ -251,7 +253,7 @@ public class VtfFile {
             cache.put(file, vtf);
             return vtf;
         } catch (Exception e) {
-            e.printStackTrace();
+            LOG.severe(e.toString());
             return null;
         }
     }
@@ -575,59 +577,6 @@ public class VtfFile {
     }
     //</editor-fold>
     
-    //<editor-fold defaultstate="collapsed" desc="Data helpers">
-    private static byte readByte(RandomAccessFile f) throws IOException {
-        byte b = f.readByte();
-        //        System.err.println(Integer.toHexString(new Byte(b)).toUpperCase());
-        return b;
-    }
-    
-    private static int readUByte(RandomAccessFile f) throws IOException {
-        return readByte(f) & 0xff;
-    }
-    
-    private static byte readChar(RandomAccessFile f) throws IOException {
-        return readByte(f);
-    }
-    
-    private static int readUChar(RandomAccessFile f) throws IOException {
-        return readUByte(f);
-    }
-    
-    /**
-     * all Little endian - least significant bits first
-     * @param f
-     * @return
-     * @throws IOException
-     */
-    private static int readUInt(RandomAccessFile f) throws IOException {
-        return readUByte(f) + (readUByte(f) << 8) + (readUByte(f) << 16) + (readUByte(f) << 24);
-    }
-    
-    private static float readFloat(RandomAccessFile f) throws IOException {
-        int intBits = readUByte(f) + (readUByte(f) << 8) + (readUByte(f) << 16) + (readUByte(f) << 24);
-        return Float.intBitsToFloat(intBits);
-    }
-    
-    private static int readUShort(RandomAccessFile f) throws IOException {
-        return readUByte(f) + (readUByte(f) << 8);
-    }
-    
-    private static int readLong(RandomAccessFile f) throws IOException {
-        return readByte(f) + (readByte(f) << 8) + (readByte(f) << 16) + (readByte(f) << 24);
-    }
-    
-    private static String toBinaryString(short n) {
-        StringBuilder sb = new StringBuilder("0000000000000000");
-        for (int bit = 0; bit < 16; bit++) {
-            if (((n >> bit) & 1) > 0) {
-                sb.setCharAt(15 - bit, '1');
-            }
-        }
-        return sb.toString();
-    }
-    //</editor-fold>
-    
     public static enum Format {
         IMAGE_FORMAT_NONE(-1),
         IMAGE_FORMAT_RGBA8888(0),
@@ -759,5 +708,6 @@ public class VtfFile {
         }
     }
     //</editor-fold>
+    private static final Logger LOG = Logger.getLogger(VtfFile.class.getName());
     
 }
