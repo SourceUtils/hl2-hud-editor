@@ -120,6 +120,7 @@ public class EditorFrame extends JFrame {
     private String myMD5 = "";
     
     public boolean autoCheck = true;
+    private final EditorMenuBar jmb;
     
     private boolean isMD5(String str) {
         return str.matches("[a-fA-F0-9]{32}");
@@ -305,6 +306,15 @@ public class EditorFrame extends JFrame {
                 doCheckForUpdates();
             }
         }.start();
+    }
+    
+    public void preferences() {
+        String aboutText = "This is where preferences will go for the editor.\n";
+        aboutText += "There are currently none at the moment";
+        final JEditorPane panel = new JEditorPane("text/html", aboutText);
+        panel.setEditable(false);
+        panel.setOpaque(false);
+        info(panel, "About");
     }
     
     public void about() {
@@ -502,7 +512,7 @@ public class EditorFrame extends JFrame {
         this.pack();
         this.setFocusableWindowState(true);
         
-        JMenuBar jmb = new EditorMenuBar();
+        jmb = new EditorMenuBar();
         this.setJMenuBar(jmb);
         
         if(Main.os == OS.Mac) {
@@ -530,7 +540,7 @@ public class EditorFrame extends JFrame {
         try {
             OSXAdapter.setQuitHandler(this, getClass().getDeclaredMethod("quit", (Class[])null));
             OSXAdapter.setAboutHandler(this, getClass().getDeclaredMethod("about", (Class[])null));
-//            OSXAdapter.setPreferencesHandler(this, getClass().getDeclaredMethod("preferences", (Class[])null));
+            OSXAdapter.setPreferencesHandler(this, getClass().getDeclaredMethod("preferences", (Class[])null));
 //            OSXAdapter.setFileHandler(this, getClass().getDeclaredMethod("loadImageFile", new Class[] { String.class }));
 
 //            com.apple.eawt.Application app = com.apple.eawt.Application.getApplication();
@@ -578,7 +588,7 @@ public class EditorFrame extends JFrame {
     
     private String hudSelectionDir;
     
-    private File lastLoaded = new File("/home/andrew/TF2 HUDS/frankenhudr47"); // convenience
+    private File lastLoaded; // convenience
     
     //<editor-fold defaultstate="collapsed" desc="Broesel's stuff">
     //    private void selectSteamLocation() {
@@ -837,7 +847,7 @@ public class EditorFrame extends JFrame {
         if(!file.exists()) {
             error("Could not access file " + file);
         }
-        lastLoaded = file;
+        setLastLoaded(file);
         System.out.println("You have selected: " + file.getAbsolutePath());
         
         if(file.getName().endsWith(".zip")) {
@@ -1001,8 +1011,11 @@ public class EditorFrame extends JFrame {
             }
         }
     }
-    
-    
+
+    private void setLastLoaded(File file) {
+        lastLoaded = file;
+        jmb.reloadItem.setEnabled(file != null);
+    }
     
     private class EditorMenuBar extends JMenuBar {
         private static final long serialVersionUID = 1L;
@@ -1078,6 +1091,7 @@ public class EditorFrame extends JFrame {
             fileMenu.add(saveAsItem);
             
             reloadItem = new JMenuItem("Revert", KeyEvent.VK_R);
+            reloadItem.setEnabled(false);
             reloadItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_F5, 0));
             reloadItem.addActionListener(al);
             fileMenu.add(reloadItem);
@@ -1147,11 +1161,10 @@ public class EditorFrame extends JFrame {
             selectAllItem.addActionListener(al);
             editMenu.add(selectAllItem);
             
-            if(Main.os == OS.Mac) {
+            if(Main.os != OS.Mac) {
                 editMenu.addSeparator();
 
                 preferencesItem = new JMenuItem("Preferences", KeyEvent.VK_E);
-                preferencesItem.setEnabled(false);
                 preferencesItem.addActionListener(al);
                 editMenu.add(preferencesItem);
             }
@@ -1251,6 +1264,8 @@ public class EditorFrame extends JFrame {
                     }
                 } else if(cmd == aboutItem) {
                     about();
+                } else if(cmd == preferencesItem) {
+                    preferences();
                 } else if(cmd == updateItem) {
                     EditorFrame.this.checkForUpdates();
                 } else if(cmd == changeLogItem) {
