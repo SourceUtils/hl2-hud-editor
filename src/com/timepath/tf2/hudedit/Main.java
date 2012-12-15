@@ -1,15 +1,24 @@
 package com.timepath.tf2.hudedit;
 
+import com.timepath.tf2.hudedit.plaf.linux.GtkFixer;
 import com.timepath.tf2.hudedit.swing.EditorFrame;
 import java.awt.Toolkit;
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.PrintWriter;
+import java.io.UnsupportedEncodingException;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.SocketTimeoutException;
+import java.net.URLDecoder;
 import java.nio.channels.FileChannel;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.prefs.Preferences;
@@ -90,6 +99,8 @@ public class Main {
         } else {
             
         }
+        
+        calcMD5();
     }
     
     public static void main(String[] args) {
@@ -105,6 +116,43 @@ public class Main {
         
         } else { // TODO: should loop infinitely
             startClient(port, args);
+        }
+    }
+    
+    public static boolean indev;
+    
+    public static String runPath;
+    
+    public static String myMD5 = "indev";
+    
+    private static void calcMD5() {
+        try {
+            runPath = URLDecoder.decode(EditorFrame.class.getProtectionDomain().getCodeSource().getLocation().getPath(), "UTF-8");
+            if(!runPath.endsWith(".jar")) {
+                indev = true;
+                return;
+            }
+            InputStream fis = new FileInputStream(runPath);
+            byte[] buffer = new byte[8192]; // 8K buffer
+            MessageDigest md = MessageDigest.getInstance("MD5");
+            int numRead;
+            do {
+                numRead = fis.read(buffer);
+                if(numRead > 0) {
+                    md.update(buffer, 0, numRead);
+                }
+            } while(numRead != -1);
+            fis.close();
+            byte[] b = md.digest();
+            for(int i = 0; i < b.length; i++) {
+                myMD5 += Integer.toString((b[i] & 255) + 256, 16).substring(1);
+            }
+        } catch (NoSuchAlgorithmException ex) {
+            Logger.getLogger(EditorFrame.class.getName()).log(Level.SEVERE, null, ex);
+        } catch (UnsupportedEncodingException ex) {
+            Logger.getLogger(EditorFrame.class.getName()).log(Level.SEVERE, null, ex);
+        } catch (IOException ex) {
+            Logger.getLogger(EditorFrame.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
     
@@ -145,6 +193,10 @@ public class Main {
     private static Preferences p = Preferences.userRoot().node(projectName);
     
     private static void initLaf() {
+        if(System.getProperty("swing.defaultlaf") != null) { // Do not ovveride user specified theme
+            GtkFixer.installGtkPopupBugWorkaround();
+            return;
+        }
         try {
             for(UIManager.LookAndFeelInfo info : UIManager.getInstalledLookAndFeels()) {
                 if("Nimbus".equals(info.getName())) {
@@ -156,6 +208,7 @@ public class Main {
         } catch(Exception ex) {
             Logger.getLogger(EditorFrame.class.getName()).log(Level.WARNING, null, ex);
         }
+        GtkFixer.installGtkPopupBugWorkaround();
     }
     
     private static boolean startServer(int port, final String[] args) {        
@@ -177,9 +230,20 @@ public class Main {
                 public void run() {
                     while(!server.isClosed()) {
                         try {
-                            server.accept();
+                            Socket client = server.accept();
+                            BufferedReader in = new BufferedReader(new InputStreamReader(client.getInputStream()));
+                            PrintWriter out = new PrintWriter(client.getOutputStream(), true);
+                            
+                            String iMD5 = in.readLine();
                             System.out.println("A client connected!");
-                            createUI(args);
+                            if(iMD5.equals("indev")) {
+                                server.close();
+                                out.println("indev");
+                                System.exit(0);
+                            }
+                            if(iMD5.equals(myMD5)) {
+                                createUI(args);
+                            }
                         } catch(SocketTimeoutException e) {
                             
                         } catch(IOException ex) {
@@ -201,7 +265,14 @@ public class Main {
         System.out.println("Program already running, communicating...");
         try {
             Socket client = new Socket("localhost", port);
-//            client.sendUrgentData(1);
+            BufferedReader in = new BufferedReader(new InputStreamReader(client.getInputStream()));
+            PrintWriter out = new PrintWriter(client.getOutputStream(), true);
+            out.println(myMD5); // -1 = close
+            String returnCode = in.readLine(); // for dev purposes
+            System.out.println(returnCode);
+            if(returnCode.equals("indev")) {
+                main(new String[] {""}); // should carry args
+            }
         } catch (IOException ex) {
 //            Logger.getLogger(Main.class.getName()).log(Level.SEVERE, null, ex1);
             System.out.println("Program closed suddenly");

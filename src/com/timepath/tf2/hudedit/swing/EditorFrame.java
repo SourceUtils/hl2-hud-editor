@@ -2,11 +2,10 @@ package com.timepath.tf2.hudedit.swing;
 
 //<editor-fold defaultstate="collapsed" desc="imports">
 import com.timepath.tf2.hudedit.Main;
-import com.timepath.tf2.hudedit.temp.OSXAdapter;
 import com.timepath.tf2.hudedit.OS;
-import com.timepath.tf2.hudedit.swing.EditorPropertiesTable;
 import com.timepath.tf2.hudedit.loaders.ResLoader;
 import com.timepath.tf2.hudedit.loaders.VtfLoader;
+import com.timepath.tf2.hudedit.temp.OSXAdapter;
 import java.awt.BorderLayout;
 import java.awt.Cursor;
 import java.awt.Desktop;
@@ -72,7 +71,6 @@ import javax.swing.KeyStroke;
 import javax.swing.ScrollPaneConstants;
 import javax.swing.SpinnerNumberModel;
 import javax.swing.SwingUtilities;
-import javax.swing.UIManager;
 import javax.swing.event.HyperlinkEvent;
 import javax.swing.event.HyperlinkListener;
 import javax.swing.table.DefaultTableModel;
@@ -87,7 +85,7 @@ import org.java.ayatana.AyatanaDesktop;
  *
  * libs:
  * http://code.google.com/p/xfiledialog/ - windows "open folder" dialog
- * http://java.dzone.com/news/native-dialogs-swing-little - more native file dialogs on linux
+ * http://java.dzone.com/news/native-dialogs-swing-little - more native file dialogs on linux (also zenity, xenity, etc)
  * http://java-gnome.sourceforge.net/get/
  * http://developer.apple.com/legacy/mac/library/#samplecode/OSXAdapter/Introduction/Intro.html#//apple_ref/doc/uid/DTS10000685-Intro-DontLinkElementID_2 - mac integration
  * 
@@ -111,13 +109,7 @@ import org.java.ayatana.AyatanaDesktop;
 public class EditorFrame extends JFrame {
     private static final long serialVersionUID = 1L;
     
-    private boolean indev;
-    
     private boolean updating;
-    
-    private String runPath;
-    
-    private String myMD5 = "";
     
     public boolean autoCheck = true;
     private final EditorMenuBar jmb;
@@ -143,12 +135,12 @@ public class EditorFrame extends JFrame {
                     BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getInputStream()));
                     String line;
                     while((line = reader.readLine()) != null) {
-                        if(!indev && line.contains(myMD5)) { // dev build cannot MD5
-                            String[] parts = line.split(myMD5);
+                        if(!Main.indev && line.contains(Main.myMD5)) { // dev build cannot MD5
+                            String[] parts = line.split(Main.myMD5);
                             if(parts[0] != null) {
                                 text += parts[0];
                             }
-                            text += "<b><u>" + myMD5 + "</u></b>";
+                            text += "<b><u>" + Main.myMD5 + "</u></b>";
                             if(parts[1] != null) {
                                 text += parts[1];
                             }
@@ -193,9 +185,9 @@ public class EditorFrame extends JFrame {
     }
     
     private void checkForUpdates() {
-        //        if(inDev) {
-        //            return;
-        //        }
+        if(Main.indev) {
+            return;
+        }
         new Thread() {
             
             int retries = 3;
@@ -218,9 +210,9 @@ public class EditorFrame extends JFrame {
                     }
                     reader.close();
                     
-                    boolean equal = md5.equals(myMD5);
+                    boolean equal = md5.equals(Main.myMD5);
                     
-                    System.out.println(md5 + " =" + (equal ? "" : "/") + "= " + myMD5);
+                    System.out.println(md5 + " =" + (equal ? "" : "/") + "= " + Main.myMD5);
                     
                     if(!equal) {
                         int returnCode = JOptionPane.showConfirmDialog(null, "Would you like to update to the latest version?", "A new update is available", JOptionPane.YES_NO_OPTION);
@@ -254,7 +246,7 @@ public class EditorFrame extends JFrame {
                             InputStream in = latest.openStream();
                             
                             
-                            FileOutputStream writer = new FileOutputStream(runPath); // TODO: stop closing when this happens. Maybe make a backup..
+                            FileOutputStream writer = new FileOutputStream(Main.runPath); // TODO: stop closing when this happens. Maybe make a backup..
                             byte[] buffer = new byte[153600]; // 150KB
                             int totalBytesRead = 0;
                             int bytesRead;
@@ -325,7 +317,7 @@ public class EditorFrame extends JFrame {
         aboutText += "<p>Source available on <a href=\"http://code.google.com/p/tf2-hud-editor/\">Google code</a></p>";
         aboutText += "<p>I have an <a href=\"http://code.google.com/feeds/p/tf2-hud-editor/hgchanges/basic\">Atom feed</a> set up listing source commits</p>";
         aboutText += "<p>Please give feedback or suggestions on <a href=\""+latestThread+"\">the latest update thread</a></p>";
-        aboutText += "<p>Current version: " + myMD5 + "</p>";
+        aboutText += "<p>Current version: " + Main.myMD5 + "</p>";
         aboutText += "</html>";
         final JEditorPane panel = new JEditorPane("text/html", aboutText);
         panel.setEditable(false);
@@ -366,36 +358,7 @@ public class EditorFrame extends JFrame {
         System.exit(0);
     }
     
-    private void calcMD5() {
-        try {
-            runPath = URLDecoder.decode(EditorFrame.class.getProtectionDomain().getCodeSource().getLocation().getPath(), "UTF-8");
-            if(!runPath.endsWith(".jar")) {
-                indev = true;
-                return;
-            }
-            InputStream fis = new FileInputStream(runPath);
-            byte[] buffer = new byte[8192]; // 8K buffer
-            MessageDigest md = MessageDigest.getInstance("MD5");
-            int numRead;
-            do {
-                numRead = fis.read(buffer);
-                if(numRead > 0) {
-                    md.update(buffer, 0, numRead);
-                }
-            } while(numRead != -1);
-            fis.close();
-            byte[] b = md.digest();
-            for(int i = 0; i < b.length; i++) {
-                myMD5 += Integer.toString((b[i] & 255) + 256, 16).substring(1);
-            }
-        } catch (NoSuchAlgorithmException ex) {
-            Logger.getLogger(EditorFrame.class.getName()).log(Level.SEVERE, null, ex);
-        } catch (UnsupportedEncodingException ex) {
-            Logger.getLogger(EditorFrame.class.getName()).log(Level.SEVERE, null, ex);
-        } catch (IOException ex) {
-            Logger.getLogger(EditorFrame.class.getName()).log(Level.SEVERE, null, ex);
-        }
-    }
+    
     
     public void quit() {
         if(!updating) {
@@ -411,9 +374,7 @@ public class EditorFrame extends JFrame {
         }
     }
 
-    public EditorFrame() {
-        calcMD5();
-        
+    public EditorFrame() {        
         this.setTitle(ResourceBundle.getBundle("com/timepath/tf2/hudedit/internationalization/lang").getString("Title"));
         this.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
         this.addWindowListener(new WindowAdapter() {
@@ -482,20 +443,7 @@ public class EditorFrame extends JFrame {
             }
         });
         
-        final JSplitPane splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT);
-        splitPane.setResizeWeight(0.8);
-        
-        canvas = new EditorCanvas();
-        canvasPane = new JScrollPane(canvas);
-        if(Main.os == OS.Mac) {
-            canvasPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
-            canvasPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_ALWAYS);
-        } else {
-            canvasPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
-            canvasPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_ALWAYS);
-        }
-        splitPane.setLeftComponent(canvasPane);
-        
+        //<editor-fold defaultstate="collapsed" desc="Tree">
         EditorPropertiesTablePane propTablePane = new EditorPropertiesTablePane();
         propTable = propTablePane.getPropTable();
         
@@ -505,8 +453,22 @@ public class EditorFrame extends JFrame {
         
         JSplitPane browser = new JSplitPane(JSplitPane.VERTICAL_SPLIT, fileTreePane, propTablePane);
         browser.setResizeWeight(0.5);
-        splitPane.setRightComponent(browser);
+        //</editor-fold>
         
+        //<editor-fold defaultstate="collapsed" desc="Canvas">
+        canvas = new EditorCanvas();
+        canvasPane = new JScrollPane(canvas);
+        if(Main.os == OS.Mac) {
+            canvasPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
+            canvasPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_ALWAYS);
+        } else {
+            canvasPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
+            canvasPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_ALWAYS);
+        }
+        //</editor-fold>
+        
+        final JSplitPane splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, browser, canvasPane);
+        splitPane.setResizeWeight(0.2);
         this.getContentPane().add(splitPane);
 
         this.pack();
@@ -568,7 +530,7 @@ public class EditorFrame extends JFrame {
     public void setVisible(boolean b) {
         super.setVisible(b);
         this.createBufferStrategy(3); // Triple buffered, any more sees minimal gain.
-        if(!indev && autoCheck) {
+        if(!Main.indev && autoCheck) {
             this.checkForUpdates();
         }
     }
@@ -1043,11 +1005,11 @@ public class EditorFrame extends JFrame {
         private JMenuItem changeLogItem;
         
         private JMenuItem vtfItem;
+        
+        EditorActionListener al = new EditorActionListener();
 
         EditorMenuBar() {
             super();
-            
-            EditorActionListener al = new EditorActionListener();
             
             JMenu fileMenu = new JMenu("File");
             fileMenu.setMnemonic(KeyEvent.VK_F);
@@ -1205,6 +1167,8 @@ public class EditorFrame extends JFrame {
             viewItem4.setEnabled(false);
             viewItem4.addActionListener(al);
             viewMenu.add(viewItem4);
+            
+            extras();
 
             JMenu helpMenu = new JMenu("Help");
             helpMenu.setMnemonic(KeyEvent.VK_H);
@@ -1224,7 +1188,9 @@ public class EditorFrame extends JFrame {
                 aboutItem.addActionListener(al);
                 helpMenu.add(aboutItem);
             }
-            
+        }
+        
+        private void extras() {
             JMenu extrasMenu = new JMenu("Extras");
             extrasMenu.setMnemonic(KeyEvent.VK_X);
             this.add(extrasMenu);
