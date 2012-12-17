@@ -43,10 +43,10 @@
         
         <echo message="Testing ${application.title} (${store.jar.dated})"/>
         
-        <exec executable="java">
+<!--        <exec executable="java">
           <arg value="-jar"/>
           <arg value="${store.jar.dated}"/>
-        </exec>
+        </exec>-->
           
     </target>
     
