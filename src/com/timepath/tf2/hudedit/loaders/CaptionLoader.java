@@ -3,9 +3,11 @@ package com.timepath.tf2.hudedit.loaders;
 import com.timepath.tf2.hudedit.util.DataUtils;
 import java.io.IOException;
 import java.io.RandomAccessFile;
+import java.util.ArrayList;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.zip.CRC32;
+import javax.swing.JFrame;
 
 /**
  *
@@ -16,11 +18,18 @@ public class CaptionLoader {
     private static final Logger logger = Logger.getLogger(CaptionLoader.class.getName());
     
     public static void main(String... args) {
+        makeGUI();
         new CaptionLoader().load("./res/closecaption_english.dat");
         logger.info(takeCRC32("Spy.ThanksForTheTeleporter01"));
     }
     
-    private static String takeCRC32(String in) {
+    public static void makeGUI() {
+        JFrame f = new JFrame();
+        
+        f.setVisible(true);
+    }
+    
+    public static String takeCRC32(String in) {
         CRC32 crc = new CRC32();
         crc.update(in.toLowerCase().getBytes());
         return Long.toHexString(crc.getValue()).toUpperCase();
@@ -67,7 +76,11 @@ public class CaptionLoader {
         
     }
 
-    public void load(String file) {
+    public ArrayList<String> load(String file) {
+        if(file == null) {
+            return null;
+        }
+        ArrayList<String> s = new ArrayList<String>();
         try {
             RandomAccessFile rf = new RandomAccessFile(file, "r");
             String magic = new String(new byte[] {DataUtils.readChar(rf), DataUtils.readChar(rf), DataUtils.readChar(rf),DataUtils.readChar(rf)});
@@ -90,11 +103,14 @@ public class CaptionLoader {
                 }
                 rf.skipBytes(2); // 0 padding
                 logger.log(Level.INFO, "{0} = {1}", new Object[]{entries[i], sb.toString()});
+                s.add(Integer.toHexString(entries[i].hash).toUpperCase());
+                s.add(sb.toString());
             }
             rf.close(); // The rest of the file is garbage
         } catch (IOException ex) {
             logger.log(Level.SEVERE, null, ex);
         }
+        return s;
     }
     
 }

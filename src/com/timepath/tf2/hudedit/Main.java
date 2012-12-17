@@ -239,22 +239,27 @@ public class Main {
     private static Preferences p = Preferences.userRoot().node(projectName);
     
     private static void initLaf() {
-        if(System.getProperty("swing.defaultlaf") != null) { // Do not ovveride user specified theme
-            GtkFixer.installGtkPopupBugWorkaround();
-            return;
-        }
-        try {
-            for(UIManager.LookAndFeelInfo info : UIManager.getInstalledLookAndFeels()) {
-                if("Nimbus".equals(info.getName())) {
-                    UIManager.setLookAndFeel(info.getClassName());
-                    return;
+        if(System.getProperty("swing.defaultlaf") == null) { // Do not ovveride user specified theme
+            try {
+                if(os == OS.Mac) {
+                    UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName()); // TODO: quaqua
+                } else if(os == OS.Linux) {
+                    UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+                    GtkFixer.installGtkPopupBugWorkaround();
+                } else {
+                    UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
                 }
+                // Will eventually be removed in favour of native appearance
+                for(UIManager.LookAndFeelInfo info : UIManager.getInstalledLookAndFeels()) {
+                    if("Nimbus".equals(info.getName())) {
+                        UIManager.setLookAndFeel(info.getClassName());
+                        break;
+                    }
+                }
+            } catch(Exception ex) {
+                Logger.getLogger(EditorFrame.class.getName()).log(Level.WARNING, null, ex);
             }
-            UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
-        } catch(Exception ex) {
-            Logger.getLogger(EditorFrame.class.getName()).log(Level.WARNING, null, ex);
         }
-        GtkFixer.installGtkPopupBugWorkaround();
     }
     
     private static boolean startServer(int port, final String[] args) {        

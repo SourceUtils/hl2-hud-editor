@@ -3,6 +3,7 @@ package com.timepath.tf2.hudedit.swing;
 //<editor-fold defaultstate="collapsed" desc="imports">
 import com.timepath.tf2.hudedit.Main;
 import com.timepath.tf2.hudedit.OS;
+import com.timepath.tf2.hudedit.loaders.CaptionLoaderFrame;
 import com.timepath.tf2.hudedit.loaders.ResLoader;
 import com.timepath.tf2.hudedit.loaders.VtfLoader;
 import com.timepath.tf2.hudedit.temp.OSXAdapter;
@@ -35,14 +36,10 @@ import java.io.FilenameFilter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.io.UnsupportedEncodingException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.URLConnection;
-import java.net.URLDecoder;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -1005,6 +1002,7 @@ public class EditorFrame extends JFrame {
         private JMenuItem changeLogItem;
         
         private JMenuItem vtfItem;
+        private JMenuItem captionItem;
         
         EditorActionListener al = new EditorActionListener();
 
@@ -1198,6 +1196,10 @@ public class EditorFrame extends JFrame {
             vtfItem = new JMenuItem("VTF Loader", KeyEvent.VK_V);
             vtfItem.addActionListener(al);
             extrasMenu.add(vtfItem);
+            
+            captionItem = new JMenuItem("Caption Viewer", KeyEvent.VK_C);
+            captionItem.addActionListener(al);
+            extrasMenu.add(captionItem);
         }
         
         private class EditorActionListener implements ActionListener {
@@ -1238,6 +1240,8 @@ public class EditorFrame extends JFrame {
                     changelog();
                 } else if(cmd == vtfItem) {
                     VtfLoader.main("");
+                } else if(cmd == captionItem) {
+                    CaptionLoaderFrame.main("");
                 }
             }
         }
