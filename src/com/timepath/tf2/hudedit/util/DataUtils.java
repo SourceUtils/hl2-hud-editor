@@ -32,13 +32,17 @@ public class DataUtils {
         return readUByte(f);
     }
     
+    public static char readUTFChar(RandomAccessFile f) throws IOException {
+        return (char)(readByte(f) + (readByte(f) << 8));
+    }
+    
     /**
      * aka DWORD
      * @param f
      * @return
      * @throws IOException
      */
-    public static int readUInt(RandomAccessFile f) throws IOException {
+    public static int readLEInt(RandomAccessFile f) throws IOException {
         return readUByte(f) + (readUByte(f) << 8) + (readUByte(f) << 16) + (readUByte(f) << 24);
     }
     

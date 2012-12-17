@@ -223,20 +223,20 @@ public class VtfFile {
                 return null;
             }
             VtfFile vtf = new VtfFile(rf);
-            vtf.version = new int[] {DataUtils.readUInt(rf), DataUtils.readUInt(rf)};
-            vtf.headerSize = DataUtils.readUInt(rf);
+            vtf.version = new int[] {DataUtils.readLEInt(rf), DataUtils.readLEInt(rf)};
+            vtf.headerSize = DataUtils.readLEInt(rf);
             vtf.width = DataUtils.readUShort(rf);
             vtf.height = DataUtils.readUShort(rf);
-            vtf.flags = DataUtils.readUInt(rf);
+            vtf.flags = DataUtils.readLEInt(rf);
             vtf.frameCount = DataUtils.readUShort(rf);
             vtf.frameFirst = DataUtils.readUShort(rf);
             rf.skipBytes(4); // padding
             vtf.reflectivity = new float[] {DataUtils.readFloat(rf), DataUtils.readFloat(rf), DataUtils.readFloat(rf)};
             rf.skipBytes(4); // padding
             vtf.bumpScale = DataUtils.readFloat(rf);
-            vtf.format = Format.getEnumForIndex(DataUtils.readUInt(rf));
+            vtf.format = Format.getEnumForIndex(DataUtils.readLEInt(rf));
             vtf.mipCount = DataUtils.readUChar(rf);
-            vtf.thumbFormat = Format.getEnumForIndex(DataUtils.readUInt(rf));
+            vtf.thumbFormat = Format.getEnumForIndex(DataUtils.readLEInt(rf));
             vtf.thumbWidth = DataUtils.readUChar(rf);
             vtf.thumbHeight = DataUtils.readUChar(rf);
             vtf.depth = DataUtils.readUShort(rf); // the docs say that there are 64 bytes for this section, but I count 64. Should this be a single byte?

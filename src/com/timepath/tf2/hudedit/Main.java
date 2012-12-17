@@ -22,6 +22,7 @@ import java.security.NoSuchAlgorithmException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.prefs.Preferences;
+import javax.swing.JFileChooser;
 import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
 import net.tomahawk.XFileDialog;
@@ -48,7 +49,7 @@ public class Main {
             os = OS.Windows;
         } else if(osVer.indexOf("OS X") != -1 || osVer.indexOf("mac") != -1) {
             os = OS.Mac;
-        } else if(osVer.indexOf("linux") != -1) {
+        } else if(osVer.indexOf("nix") != -1 || osVer.indexOf("nux") != -1) {
             os = OS.Linux;
         } else {
             os = OS.Other;
@@ -56,12 +57,12 @@ public class Main {
         }
         
         if(os == OS.Mac) {
-            System.setProperty("apple.awt.brushMetalLook", "false"); // looks stupid
-            System.setProperty("apple.awt.showGrowBox", "false"); // looks stupid
+            System.setProperty("apple.awt.brushMetalLook", "false");
+            System.setProperty("apple.awt.showGrowBox", "true");
             System.setProperty("apple.laf.useScreenMenuBar", "true");
             System.setProperty("com.apple.macos.smallTabs", "true");
             System.setProperty("com.apple.macos.use-file-dialog-packages", "true");
-            System.setProperty("com.apple.mrj.application.apple.menu.about.name", appName); // -Xdock:name="TF2 HUD Editor"
+            System.setProperty("com.apple.mrj.application.apple.menu.about.name", appName);
             System.setProperty("com.apple.mrj.application.growbox.intrudes", "false");
             System.setProperty("com.apple.mrj.application.live-resize", "true");
         } else if(os == OS.Windows) {
@@ -99,11 +100,10 @@ public class Main {
         } else {
             
         }
-        
-        calcMD5();
     }
     
     public static void main(String[] args) {
+        System.out.println("Reading: " + System.getenv());
         // http://www.ailis.de/~k/archives/64-How-to-implement-a-Single-Instance-Application-in-Java.html
         // http://stackoverflow.com/questions/62289/read-write-to-windows-registry-using-java
         // http://www.javaworld.com/jw-12-1996/jw-12-sockets.html?page=3
@@ -123,14 +123,15 @@ public class Main {
     
     public static String runPath;
     
-    public static String myMD5 = "indev";
+    public static String myMD5 = calcMD5();
     
-    private static void calcMD5() {
+    private static String calcMD5() {
+        String md5 = "";
         try {
             runPath = URLDecoder.decode(EditorFrame.class.getProtectionDomain().getCodeSource().getLocation().getPath(), "UTF-8");
             if(!runPath.endsWith(".jar")) {
                 indev = true;
-                return;
+                return "indev";
             }
             InputStream fis = new FileInputStream(runPath);
             byte[] buffer = new byte[8192]; // 8K buffer
@@ -145,7 +146,7 @@ public class Main {
             fis.close();
             byte[] b = md.digest();
             for(int i = 0; i < b.length; i++) {
-                myMD5 += Integer.toString((b[i] & 255) + 256, 16).substring(1);
+                md5 += Integer.toString((b[i] & 255) + 256, 16).substring(1);
             }
         } catch (NoSuchAlgorithmException ex) {
             Logger.getLogger(EditorFrame.class.getName()).log(Level.SEVERE, null, ex);
@@ -154,6 +155,7 @@ public class Main {
         } catch (IOException ex) {
             Logger.getLogger(EditorFrame.class.getName()).log(Level.SEVERE, null, ex);
         }
+        return md5;
     }
     
     private static void createLinuxLauncher() {
@@ -186,6 +188,50 @@ public class Main {
                 Logger.getLogger(Main.class.getName()).log(Level.SEVERE, null, ex);
             }
         }
+    }
+    
+    private File fileSelection(boolean savemode) {
+        String os = System.getProperty("os.name");
+        File input = null;
+        String zenity = "zenity --file-selection --title=Open";
+        String filestring;
+        if ((os.indexOf("nix")!=-1 || os.indexOf("nux")!=-1)) {
+            //Use native Linux file selection.
+            try {
+                if (savemode) {
+                    zenity = "zenity --file-selection --title=Save --save";
+                }
+                Process p = Runtime.getRuntime().exec(zenity);  
+                BufferedReader br = new BufferedReader(new InputStreamReader(p.getInputStream()));  
+                StringBuffer sb = new StringBuffer();  
+                String line;
+                /*while ((line = br.readLine()) != null) {  
+                  sb.append(line).append("\n");  
+                } */
+                sb.append(br.readLine());
+                filestring = sb.toString();  
+                if (filestring.equals("null")) {
+                    return null;
+                }
+                System.out.println(filestring);
+                input = new File(filestring);
+            } catch (IOException e1) {
+                // TODO Auto-generated catch block
+                e1.printStackTrace();
+            }
+        } else {
+            final JFileChooser fc = new JFileChooser();
+            int returnVal;
+            if (savemode) {
+                returnVal = fc.showSaveDialog(fc);
+            } else {
+                returnVal = fc.showOpenDialog(fc);  
+            }
+            if (returnVal == JFileChooser.APPROVE_OPTION) {
+                input = fc.getSelectedFile();
+            }
+        }
+        return input;
     }
 
     public final static int shortcutKey = Toolkit.getDefaultToolkit().getMenuShortcutKeyMask();

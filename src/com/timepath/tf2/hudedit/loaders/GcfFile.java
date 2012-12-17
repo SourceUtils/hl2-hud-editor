@@ -153,30 +153,30 @@ public class GcfFile {
         //<editor-fold defaultstate="collapsed" desc="Header">
         LOG.info("Loading Header");
         header = new Header();
-        header.dummy0 = DataUtils.readUInt(rf);
-        header.dummy1 = DataUtils.readUInt(rf);
-        header.dummy2 = DataUtils.readUInt(rf);
-        header.CacheId = DataUtils.readUInt(rf);
-        header.gcfVersion = DataUtils.readUInt(rf);
-        header.dummy3 = DataUtils.readUInt(rf);
-        header.dummy4 = DataUtils.readUInt(rf);
-        header.fileSize = DataUtils.readUInt(rf);
-        header.blockSize = DataUtils.readUInt(rf);
-        header.blockCount = DataUtils.readUInt(rf);
-        header.dummy5 = DataUtils.readUInt(rf);
+        header.dummy0 = DataUtils.readLEInt(rf);
+        header.dummy1 = DataUtils.readLEInt(rf);
+        header.dummy2 = DataUtils.readLEInt(rf);
+        header.CacheId = DataUtils.readLEInt(rf);
+        header.gcfVersion = DataUtils.readLEInt(rf);
+        header.dummy3 = DataUtils.readLEInt(rf);
+        header.dummy4 = DataUtils.readLEInt(rf);
+        header.fileSize = DataUtils.readLEInt(rf);
+        header.blockSize = DataUtils.readLEInt(rf);
+        header.blockCount = DataUtils.readLEInt(rf);
+        header.dummy5 = DataUtils.readLEInt(rf);
         //</editor-fold>
 
         //<editor-fold defaultstate="collapsed" desc="Blocks">
         LOG.info("Loading Blocks");
         blockHeader = new BlockHeader();
-        blockHeader.blockCount = DataUtils.readUInt(rf);
-        blockHeader.blocksUsed = DataUtils.readUInt(rf);
-        blockHeader.dummy0 = DataUtils.readUInt(rf);
-        blockHeader.dummy1 = DataUtils.readUInt(rf);
-        blockHeader.dummy2 = DataUtils.readUInt(rf);
-        blockHeader.dummy3 = DataUtils.readUInt(rf);
-        blockHeader.dummy4 = DataUtils.readUInt(rf);
-        blockHeader.checksum = DataUtils.readUInt(rf);
+        blockHeader.blockCount = DataUtils.readLEInt(rf);
+        blockHeader.blocksUsed = DataUtils.readLEInt(rf);
+        blockHeader.dummy0 = DataUtils.readLEInt(rf);
+        blockHeader.dummy1 = DataUtils.readLEInt(rf);
+        blockHeader.dummy2 = DataUtils.readLEInt(rf);
+        blockHeader.dummy3 = DataUtils.readLEInt(rf);
+        blockHeader.dummy4 = DataUtils.readLEInt(rf);
+        blockHeader.checksum = DataUtils.readLEInt(rf);
 
         boolean skipBlocks = true;
         if(skipBlocks) {
@@ -188,13 +188,13 @@ public class GcfFile {
                     LOG.log(Level.INFO, "Loading block {0}/{1}", new Object[]{i + 1, blockHeader.blockCount});
                 }
                 Block b = new Block();
-                b.entryType = DataUtils.readUInt(rf);
-                b.fileDataOffset = DataUtils.readUInt(rf);
-                b.fileDataSize = DataUtils.readUInt(rf);
-                b.firstDataBlockIndex = DataUtils.readUInt(rf);
-                b.nextBlockEntryIndex = DataUtils.readUInt(rf);
-                b.previousBlockEntryIndex = DataUtils.readUInt(rf);
-                b.directoryIndex = DataUtils.readUInt(rf);
+                b.entryType = DataUtils.readLEInt(rf);
+                b.fileDataOffset = DataUtils.readLEInt(rf);
+                b.fileDataSize = DataUtils.readLEInt(rf);
+                b.firstDataBlockIndex = DataUtils.readLEInt(rf);
+                b.nextBlockEntryIndex = DataUtils.readLEInt(rf);
+                b.previousBlockEntryIndex = DataUtils.readLEInt(rf);
+                b.directoryIndex = DataUtils.readLEInt(rf);
                 
                 blocks[i] = b;
             }
@@ -204,10 +204,10 @@ public class GcfFile {
         //<editor-fold defaultstate="collapsed" desc="Fragmap">
         LOG.info("Loading Fragmap");
         fragMapHeader = new GcfFragMapHeader();
-        fragMapHeader.blockCount = DataUtils.readUInt(rf);
-        fragMapHeader.dummy0 = DataUtils.readUInt(rf);
-        fragMapHeader.dummy1 = DataUtils.readUInt(rf);
-        fragMapHeader.checksum = DataUtils.readUInt(rf);
+        fragMapHeader.blockCount = DataUtils.readLEInt(rf);
+        fragMapHeader.dummy0 = DataUtils.readLEInt(rf);
+        fragMapHeader.dummy1 = DataUtils.readLEInt(rf);
+        fragMapHeader.checksum = DataUtils.readLEInt(rf);
         
         boolean skipFrag = true;
         if(skipFrag) {
@@ -219,7 +219,7 @@ public class GcfFile {
                     LOG.log(Level.INFO, "Loading fragmap {0}/{1}", new Object[]{i + 1, fragMapHeader.blockCount});
                 }
                 GcfFragMapEntry f = new GcfFragMapEntry();
-                f.nextDataBlockIndex = DataUtils.readUInt(rf);
+                f.nextDataBlockIndex = DataUtils.readLEInt(rf);
                 
                 fragMapEntries[i] = f;
             }
@@ -230,20 +230,20 @@ public class GcfFile {
         LOG.info("Loading Directories");
         
         directoryHeader = new GcfDirectoryHeader();
-        directoryHeader.dummy0 = DataUtils.readUInt(rf);
-        directoryHeader.cacheId = DataUtils.readUInt(rf);
-        directoryHeader.gcfVersion = DataUtils.readUInt(rf);
-        directoryHeader.itemCount = DataUtils.readUInt(rf);
-        directoryHeader.fileCount = DataUtils.readUInt(rf);
-        directoryHeader.dummy1 = DataUtils.readUInt(rf);
-        directoryHeader.directorySize = DataUtils.readUInt(rf);
-        directoryHeader.nameSize = DataUtils.readUInt(rf);
-        directoryHeader.info1Count = DataUtils.readUInt(rf);
-        directoryHeader.copyCount = DataUtils.readUInt(rf);
-        directoryHeader.localCount = DataUtils.readUInt(rf);
-        directoryHeader.dummy2 = DataUtils.readUInt(rf);
-        directoryHeader.dummy3 = DataUtils.readUInt(rf);
-        directoryHeader.checksum = DataUtils.readUInt(rf);
+        directoryHeader.dummy0 = DataUtils.readLEInt(rf);
+        directoryHeader.cacheId = DataUtils.readLEInt(rf);
+        directoryHeader.gcfVersion = DataUtils.readLEInt(rf);
+        directoryHeader.itemCount = DataUtils.readLEInt(rf);
+        directoryHeader.fileCount = DataUtils.readLEInt(rf);
+        directoryHeader.dummy1 = DataUtils.readLEInt(rf);
+        directoryHeader.directorySize = DataUtils.readLEInt(rf);
+        directoryHeader.nameSize = DataUtils.readLEInt(rf);
+        directoryHeader.info1Count = DataUtils.readLEInt(rf);
+        directoryHeader.copyCount = DataUtils.readLEInt(rf);
+        directoryHeader.localCount = DataUtils.readLEInt(rf);
+        directoryHeader.dummy2 = DataUtils.readLEInt(rf);
+        directoryHeader.dummy3 = DataUtils.readLEInt(rf);
+        directoryHeader.checksum = DataUtils.readLEInt(rf);
         
         // TODO: entries
         rf.skipBytes(directoryHeader.directorySize - (14 * 4)); // from start of directoryHeader
