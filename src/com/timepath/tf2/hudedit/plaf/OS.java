@@ -1,8 +1,8 @@
-package com.timepath.tf2.hudedit;
+package com.timepath.tf2.hudedit.plaf;
 
 /**
  *
- * @author andrew
+ * @author TimePath
  */
 public enum OS {
     

@@ -1,23 +1,23 @@
 package com.timepath.tf2.hudedit;
 
-import com.timepath.tf2.hudedit.temp.JarClassLoader;
+import com.jdotsoft.jarloader.JarClassLoader;
 import java.util.logging.Logger;
 
 /**
  *
- * @author andrew
+ * @author TimePath
  */
-public class JarLoader {
+public class Wrapper {
+    
+    private static final Logger logger = Logger.getLogger(Wrapper.class.getName());
     
     public static void main(String[] args) {
         JarClassLoader cl = new JarClassLoader();
         try {
             cl.invokeMain("com.timepath.tf2.hudedit.Main", args);
         } catch(Throwable e) {
-            LOG.severe(e.toString());
+            logger.severe(e.toString());
         }
     }
-    
-    private static final Logger LOG = Logger.getLogger(JarLoader.class.getName());
     
 }

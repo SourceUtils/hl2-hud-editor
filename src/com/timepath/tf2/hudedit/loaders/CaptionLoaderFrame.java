@@ -1,7 +1,3 @@
-/*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
- */
 package com.timepath.tf2.hudedit.loaders;
 
 import java.io.File;
@@ -14,7 +10,7 @@ import javax.swing.table.DefaultTableModel;
 
 /**
  *
- * @author andrew
+ * @author TimePath
  */
 public class CaptionLoaderFrame extends javax.swing.JFrame {
 
@@ -143,7 +139,7 @@ public class CaptionLoaderFrame extends javax.swing.JFrame {
         
         FileFilter filter = new FileFilter() {
             public boolean accept(File file) {
-                return file.getName().endsWith(".dat");
+                return file.getName().endsWith(".dat") || file.isDirectory();
             }
             public String getDescription() {
                 return "VCCD Files";

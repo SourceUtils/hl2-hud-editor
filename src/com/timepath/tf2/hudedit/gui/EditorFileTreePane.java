@@ -1,8 +1,4 @@
-/*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
- */
-package com.timepath.tf2.hudedit.swing;
+package com.timepath.tf2.hudedit.gui;
 
 import com.timepath.tf2.hudedit.util.Element;
 import com.timepath.tf2.hudedit.util.Property;
@@ -26,7 +22,7 @@ import javax.swing.tree.TreeSelectionModel;
 
 /**
  *
- * @author Andrew
+ * @author TimePath
  */
 public class EditorFileTreePane extends JScrollPane {
     private static final long serialVersionUID = 1L;

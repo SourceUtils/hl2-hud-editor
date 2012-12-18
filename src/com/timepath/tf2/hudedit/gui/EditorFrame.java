@@ -1,18 +1,19 @@
-package com.timepath.tf2.hudedit.swing;
+package com.timepath.tf2.hudedit.gui;
 
 //<editor-fold defaultstate="collapsed" desc="imports">
 import com.timepath.tf2.hudedit.Main;
-import com.timepath.tf2.hudedit.OS;
+import com.timepath.tf2.hudedit.plaf.OS;
 import com.timepath.tf2.hudedit.loaders.CaptionLoaderFrame;
 import com.timepath.tf2.hudedit.loaders.ResLoader;
 import com.timepath.tf2.hudedit.loaders.VtfLoader;
-import com.timepath.tf2.hudedit.temp.OSXAdapter;
+import com.timepath.tf2.hudedit.plaf.mac.OSXAdapter;
 import java.awt.BorderLayout;
 import java.awt.Cursor;
 import java.awt.Desktop;
 import java.awt.Dimension;
 import java.awt.DisplayMode;
 import java.awt.FileDialog;
+import java.awt.GraphicsDevice;
 import java.awt.GraphicsEnvironment;
 import java.awt.Toolkit;
 import java.awt.datatransfer.DataFlavor;
@@ -63,11 +64,13 @@ import javax.swing.JProgressBar;
 import javax.swing.JScrollPane;
 import javax.swing.JSpinner;
 import javax.swing.JSplitPane;
+import javax.swing.JToolBar;
 import javax.swing.JTree;
 import javax.swing.KeyStroke;
 import javax.swing.ScrollPaneConstants;
 import javax.swing.SpinnerNumberModel;
 import javax.swing.SwingUtilities;
+import javax.swing.border.EmptyBorder;
 import javax.swing.event.HyperlinkEvent;
 import javax.swing.event.HyperlinkListener;
 import javax.swing.table.DefaultTableModel;
@@ -101,7 +104,7 @@ import org.java.ayatana.AyatanaDesktop;
  * http://img13.imageshack.us/img13/210/hudmanagerss.png
  * http://plrf.org/superhudeditor/screens/0.3.0/superhudeditor-0.3.0-linux.jpg
  *
- * @author andrew
+ * @author TimePath
  */
 public class EditorFrame extends JFrame {
     private static final long serialVersionUID = 1L;
@@ -372,7 +375,7 @@ public class EditorFrame extends JFrame {
     }
 
     public EditorFrame() {        
-        this.setTitle(ResourceBundle.getBundle("com/timepath/tf2/hudedit/internationalization/lang").getString("Title"));
+        this.setTitle(ResourceBundle.getBundle("lang").getString("Title"));
         this.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
         this.addWindowListener(new WindowAdapter() {
 
@@ -450,6 +453,9 @@ public class EditorFrame extends JFrame {
         
         JSplitPane browser = new JSplitPane(JSplitPane.VERTICAL_SPLIT, fileTreePane, propTablePane);
         browser.setResizeWeight(0.5);
+        browser.setMinimumSize(new Dimension(100, 0));
+        browser.setPreferredSize(new Dimension(300, 0));
+        browser.setSize(browser.getPreferredSize());
         //</editor-fold>
         
         //<editor-fold defaultstate="collapsed" desc="Canvas">
@@ -465,7 +471,8 @@ public class EditorFrame extends JFrame {
         //</editor-fold>
         
         final JSplitPane splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, browser, canvasPane);
-        splitPane.setResizeWeight(0.2);
+        splitPane.setDividerSize(3);
+        splitPane.setResizeWeight(0);
         this.getContentPane().add(splitPane);
 
         this.pack();
@@ -490,6 +497,18 @@ public class EditorFrame extends JFrame {
     //            e.printStackTrace();
             }
         }
+        
+        JToolBar statusBar = new JToolBar();
+        statusBar.setFloatable(false);
+        
+        JPanel p = new JPanel();
+        p.setLayout(new BorderLayout());
+        p.setBorder(new EmptyBorder(3, 5, 2, 12));
+        statusBar.add(p);
+        
+        p.add(new JLabel("Test"), BorderLayout.CENTER);
+        
+        this.add(statusBar, java.awt.BorderLayout.SOUTH);
     }
     
     /**
@@ -627,16 +646,21 @@ public class EditorFrame extends JFrame {
     //    }
     //</editor-fold>
     
-    /**
-     * Prefix
-     * Win = %PROGRAMFILES(X86)% or %PROGRAMFILES%
-     * Mac = ~/Library/Application Support/
-     * Nix = ~/
-     * 
-     * Suffix = Steam/SteamApps/<username>/Team Fortress 2/tf/
-     */
-    private String locateSteamDirectory() {
-        return null;
+    public static String locateSteamAppsDirectory() {
+        String str;
+        if(Main.os == OS.Windows) {
+            str = System.getenv("PROGRAMFILES(x86)");
+            if(str == null) {
+                str = System.getenv("PROGRAMFILES");
+            }
+        } else if(Main.os == OS.Mac) {
+            str = "~/Library/Application Support";
+        } else if(Main.os == OS.Linux) {
+            str = System.getenv("HOME") + "/.local/share"; // XDG_DATA_HOME ?
+        } else {
+            return null;
+        }
+        return str + "/Steam/SteamApps/";
     }
 
     /**
@@ -647,6 +671,21 @@ public class EditorFrame extends JFrame {
      * mac = ?
      */
     private void locateHudDirectory() {
+//        NativeFileChooser nc = new NativeFileChooser(EditorFrame.this, "Open a HUD folder", hudSelectionDir);
+//        final File selection = nc.getFolder();
+//        if(selection != null) {
+//            hudSelectionDir = selection.getParent();
+//
+//            new Thread() {
+//                @Override
+//                public void run() {
+//                    loadHud(selection);
+//                }
+//            }.start();
+//        } else {
+//            // Throw error or load archive
+//        }
+        
         if(Main.os == OS.Mac) {
             locateMac();
         } else if(Main.os == OS.Windows) {
@@ -683,6 +722,7 @@ public class EditorFrame extends JFrame {
         }
     }
     
+    //<editor-fold defaultstate="collapsed" desc="Locate">
     private void locateMac() {
         new Thread(new Runnable() {
             public void run() {
@@ -707,15 +747,15 @@ public class EditorFrame extends JFrame {
                     hudSelectionDir = new File(file).getParent();
                     selection = file;
                 }
-
+                
                 if(selection != null) {
                     final File f = new File(selection);
-//                    new Thread() {
-//                        @Override
-//                        public void run() {
-                            loadHud(f);
-//                        }
-//                    }.start();
+                    //                    new Thread() {
+                    //                        @Override
+                    //                        public void run() {
+                    loadHud(f);
+                    //                        }
+                    //                    }.start();
                 } else {
                     // Throw error or load archive
                 }
@@ -727,46 +767,47 @@ public class EditorFrame extends JFrame {
         new Thread(new Runnable() {
             public void run() {
                 String selection = null;
-        //        if(HudEditor.os == OS.Linux) {
-        //            EditorFrame.systemLaf();
-        //            UIManager.put("FileChooserUI", "eu.kostia.gtkjfilechooser.ui.GtkFileChooserUI");
-        //            JFileChooser fd = new JFileChooser();
-        //            fd.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
-        //            if(hudSelectionDir != null) {
-        //                fd.setCurrentDirectory(new File(hudSelectionDir));
-        //            }
-        //            if(fd.showOpenDialog(EditorFrame.this) == JFileChooser.APPROVE_OPTION) {
-        //                hudSelectionDir = fd.getSelectedFile().getParent();
-        //                selection = fd.getSelectedFile().getPath();
-        //            }
-        //            EditorFrame.initialLaf();
-        //            UIManager.put("FileChooserUI", initFCUILinux);
-        //        } else { // Fall back to swing
-                    JFileChooser fd = new JFileChooser();
-                    fd.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
-                    if(hudSelectionDir != null) {
-                        fd.setCurrentDirectory(new File(hudSelectionDir));
-                    }
-                    if(fd.showOpenDialog(EditorFrame.this) == JFileChooser.APPROVE_OPTION) {
-                        hudSelectionDir = fd.getSelectedFile().getParent();
-                        selection = fd.getSelectedFile().getPath();
-                    }
-        //        }
+                //        if(HudEditor.os == OS.Linux) {
+                //            EditorFrame.systemLaf();
+                //            UIManager.put("FileChooserUI", "eu.kostia.gtkjfilechooser.ui.GtkFileChooserUI");
+                //            JFileChooser fd = new JFileChooser();
+                //            fd.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+                //            if(hudSelectionDir != null) {
+                //                fd.setCurrentDirectory(new File(hudSelectionDir));
+                //            }
+                //            if(fd.showOpenDialog(EditorFrame.this) == JFileChooser.APPROVE_OPTION) {
+                //                hudSelectionDir = fd.getSelectedFile().getParent();
+                //                selection = fd.getSelectedFile().getPath();
+                //            }
+                //            EditorFrame.initialLaf();
+                //            UIManager.put("FileChooserUI", initFCUILinux);
+                //        } else { // Fall back to swing
+                JFileChooser fd = new JFileChooser();
+                fd.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+                if(hudSelectionDir != null) {
+                    fd.setCurrentDirectory(new File(hudSelectionDir));
+                }
+                if(fd.showOpenDialog(EditorFrame.this) == JFileChooser.APPROVE_OPTION) {
+                    hudSelectionDir = fd.getSelectedFile().getParent();
+                    selection = fd.getSelectedFile().getPath();
+                }
+                //        }
                 if(selection != null) {
                     final File f = new File(selection);
-        //                    new Thread() {
-        //                        @Override
-        //                        public void run() {
-                            loadHud(f);
-        //                        }
-        //                    }.start();
+                    //                    new Thread() {
+                    //                        @Override
+                    //                        public void run() {
+                    loadHud(f);
+                    //                        }
+                    //                    }.start();
                 } else {
                     // Throw error or load archive
                 }
-        
+                
             }
         }).start();
     }
+    //</editor-fold>
     
     private void error(Object msg) {
         error(msg, "Error");
@@ -958,6 +999,15 @@ public class EditorFrame extends JFrame {
         }
         Object[] message = {"Width: ", spinnerWidth, "Height: ", spinnerHeight};
         
+        GraphicsEnvironment env = GraphicsEnvironment.getLocalGraphicsEnvironment();
+        GraphicsDevice[] devices = env.getScreenDevices();
+        for (int i = 0; i < devices.length; i++) {
+            DisplayMode[] resolutions = devices[i].getDisplayModes();
+            for(int j = 0; j < resolutions.length; j++) {
+                System.out.println(resolutions[j].getWidth() + "x" + resolutions[j].getHeight());
+            }
+        }
+        
         final JOptionPane optionPane = new JOptionPane(message, JOptionPane.PLAIN_MESSAGE, JOptionPane.OK_CANCEL_OPTION, null, null);
         final JDialog dialog = optionPane.createDialog(this, "Change resolution...");
         dialog.setContentPane(optionPane);
@@ -1015,18 +1065,18 @@ public class EditorFrame extends JFrame {
             
             newItem = new JMenuItem("New", KeyEvent.VK_N);
             newItem.setEnabled(false);
-            newItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_N, Main.shortcutKey));
+            newItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_N, Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()));
             newItem.addActionListener(al);
             fileMenu.add(newItem);
             
             openItem = new JMenuItem("Open...", KeyEvent.VK_O);
-            openItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_O, Main.shortcutKey));
+            openItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_O, Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()));
             openItem.addActionListener(al);
             fileMenu.add(openItem);
             
             openZippedItem = new JMenuItem("Open Zip...", KeyEvent.VK_Z);
             openZippedItem.setEnabled(false);
-            openZippedItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_O, Main.shortcutKey + ActionEvent.SHIFT_MASK));
+            openZippedItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_O, Toolkit.getDefaultToolkit().getMenuShortcutKeyMask() + ActionEvent.SHIFT_MASK));
             openZippedItem.addActionListener(al);
             fileMenu.add(openZippedItem);
             
@@ -1034,19 +1084,19 @@ public class EditorFrame extends JFrame {
                 fileMenu.addSeparator();
             
                 closeItem = new JMenuItem("Close", KeyEvent.VK_C);
-                closeItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_W, Main.shortcutKey));
+                closeItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_W, Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()));
                 closeItem.addActionListener(al);
                 fileMenu.add(closeItem);
             }
             
             saveItem = new JMenuItem("Save", KeyEvent.VK_S);
-            saveItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_S, Main.shortcutKey));
+            saveItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_S, Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()));
             saveItem.addActionListener(al);
             fileMenu.add(saveItem);
             
             saveAsItem = new JMenuItem("Save As...", KeyEvent.VK_A);
             saveAsItem.setEnabled(false);
-            saveAsItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_S, Main.shortcutKey + ActionEvent.SHIFT_MASK));
+            saveAsItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_S, Toolkit.getDefaultToolkit().getMenuShortcutKeyMask() + ActionEvent.SHIFT_MASK));
             saveAsItem.addActionListener(al);
             fileMenu.add(saveAsItem);
             
@@ -1060,14 +1110,14 @@ public class EditorFrame extends JFrame {
                 fileMenu.addSeparator();
                 
                 closeItem = new JMenuItem("Close", KeyEvent.VK_C);
-                closeItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_W, Main.shortcutKey));
+                closeItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_W, Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()));
                 closeItem.addActionListener(al);
                 fileMenu.add(closeItem);
             
                 fileMenu.addSeparator();
 
                 exitItem = new JMenuItem("Exit", KeyEvent.VK_X);
-                exitItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_Q, Main.shortcutKey));
+                exitItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_Q, Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()));
                 exitItem.addActionListener(al);
                 fileMenu.add(exitItem);
             }
@@ -1078,13 +1128,13 @@ public class EditorFrame extends JFrame {
             
             undoItem = new JMenuItem("Undo", KeyEvent.VK_U);
             undoItem.setEnabled(false);
-            undoItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_Z, Main.shortcutKey));
+            undoItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_Z, Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()));
             undoItem.addActionListener(al);
             editMenu.add(undoItem);
             
             redoItem = new JMenuItem("Redo", KeyEvent.VK_R);
             redoItem.setEnabled(false);
-            redoItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_Z, Main.shortcutKey + ActionEvent.SHIFT_MASK));
+            redoItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_Z, Toolkit.getDefaultToolkit().getMenuShortcutKeyMask() + ActionEvent.SHIFT_MASK));
             redoItem.addActionListener(al);
             editMenu.add(redoItem);
             
@@ -1092,19 +1142,19 @@ public class EditorFrame extends JFrame {
             
             cutItem = new JMenuItem("Cut", KeyEvent.VK_T);
             cutItem.setEnabled(false);
-            cutItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_X, Main.shortcutKey));
+            cutItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_X, Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()));
             cutItem.addActionListener(al);
             editMenu.add(cutItem);
             
             copyItem = new JMenuItem("Copy", KeyEvent.VK_C);
             copyItem.setEnabled(false);
-            copyItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_C, Main.shortcutKey));
+            copyItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_C, Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()));
             copyItem.addActionListener(al);
             editMenu.add(copyItem);
             
             pasteItem = new JMenuItem("Paste", KeyEvent.VK_P);
             pasteItem.setEnabled(false);
-            pasteItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_V, Main.shortcutKey));
+            pasteItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_V, Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()));
             pasteItem.addActionListener(al);
             editMenu.add(pasteItem);
             
@@ -1117,7 +1167,7 @@ public class EditorFrame extends JFrame {
             editMenu.addSeparator();
 
             selectAllItem = new JMenuItem("Select All", KeyEvent.VK_A);
-            selectAllItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_A, Main.shortcutKey));
+            selectAllItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_A, Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()));
             selectAllItem.addActionListener(al);
             editMenu.add(selectAllItem);
             
@@ -1134,7 +1184,7 @@ public class EditorFrame extends JFrame {
             this.add(viewMenu);
 
             resolutionItem = new JMenuItem("Change Resolution", KeyEvent.VK_R);
-            resolutionItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_R, Main.shortcutKey));
+            resolutionItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_R, Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()));
             resolutionItem.addActionListener(al);
             viewMenu.add(resolutionItem);
             

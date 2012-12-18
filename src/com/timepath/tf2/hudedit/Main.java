@@ -1,12 +1,13 @@
 package com.timepath.tf2.hudedit;
 
+//<editor-fold defaultstate="collapsed" desc="imports">
+import com.timepath.tf2.hudedit.gui.EditorFrame;
+import com.timepath.tf2.hudedit.plaf.OS;
 import com.timepath.tf2.hudedit.plaf.linux.GtkFixer;
-import com.timepath.tf2.hudedit.swing.EditorFrame;
+import com.timepath.tf2.hudedit.plaf.linux.LinuxDesktopLauncher;
 import java.awt.Toolkit;
 import java.io.BufferedReader;
-import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -16,24 +17,23 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.SocketTimeoutException;
 import java.net.URLDecoder;
-import java.nio.channels.FileChannel;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.prefs.Preferences;
-import javax.swing.JFileChooser;
 import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
 import net.tomahawk.XFileDialog;
+//</editor-fold>
 
 /**
  *
- * @author andrew
+ * @author TimePath
  */
 public class Main {
     
-    private static final Logger LOG = Logger.getLogger(Main.class.getName());
+    private static final Logger logger = Logger.getLogger(Main.class.getName());
     
     public final static String appName = "TF2 HUD Editor";
     
@@ -53,11 +53,12 @@ public class Main {
             os = OS.Linux;
         } else {
             os = OS.Other;
-            LOG.log(Level.WARNING, "Unrecognised OS: {0}", osVer);
+            logger.log(Level.WARNING, "Unrecognised OS: {0}", osVer);
         }
         
         if(os == OS.Mac) {
             System.setProperty("apple.awt.brushMetalLook", "false");
+            System.setProperty("apple.awt.graphics.EnableQ2DX", "true"); 
             System.setProperty("apple.awt.showGrowBox", "true");
             System.setProperty("apple.laf.useScreenMenuBar", "true");
             System.setProperty("com.apple.macos.smallTabs", "true");
@@ -69,9 +70,8 @@ public class Main {
             try {
                 XFileDialog.setTraceLevel(0);
             } catch(UnsatisfiedLinkError e) {
-                System.out.println("java.library.path = " + System.getProperty("java.library.path"));
+                logger.warning(e.toString());
             } catch(UnsupportedClassVersionError e) {
-                
             }
         } else if(os == OS.Linux) {
             boolean force = "Unity".equals(System.getenv("XDG_CURRENT_DESKTOP"));
@@ -79,8 +79,6 @@ public class Main {
                 System.setProperty("jayatana.force", "true");
             }
             System.setProperty("jayatana.startupWMClass", javaName);
-            
-            // http://www.ailis.de/~k/archives/67-Workaround-for-borderless-Java-Swing-menus-on-Linux.html
             
             try {
                 Toolkit xToolkit = Toolkit.getDefaultToolkit();
@@ -96,24 +94,19 @@ public class Main {
             } catch (SecurityException ex) {
                 Logger.getLogger(Main.class.getName()).log(Level.SEVERE, null, ex);
             }
-            createLinuxLauncher();
+            LinuxDesktopLauncher.create();
         } else {
-            
+            // Nothing special -- unsupported OS
         }
     }
     
     public static void main(String[] args) {
         System.out.println("Reading: " + System.getenv());
         // http://www.ailis.de/~k/archives/64-How-to-implement-a-Single-Instance-Application-in-Java.html
-        // http://stackoverflow.com/questions/62289/read-write-to-windows-registry-using-java
-        // http://www.javaworld.com/jw-12-1996/jw-12-sockets.html?page=3
         int port = p.getInt("port", 0);
         if(startServer(port, args)) { // If this was the first instance
-        
             initLaf();
-
             createUI(args);
-        
         } else { // TODO: should loop infinitely
             startClient(port, args);
         }
@@ -134,7 +127,7 @@ public class Main {
                 return "indev";
             }
             InputStream fis = new FileInputStream(runPath);
-            byte[] buffer = new byte[8192]; // 8K buffer
+            byte[] buffer = new byte[8192];
             MessageDigest md = MessageDigest.getInstance("MD5");
             int numRead;
             do {
@@ -158,94 +151,16 @@ public class Main {
         return md5;
     }
     
-    private static void createLinuxLauncher() {
-        File sourceFile = new File("res/bin/" + javaName + ".desktop");
-        File destFile = new File(System.getProperty("user.home") + "/.local/share/applications/" + javaName + ".desktop");
-        if(sourceFile.exists() && !destFile.exists()) {
-            try {
-                if(!destFile.exists()) {
-                    destFile.createNewFile();
-                }
-
-                FileChannel source = null;
-                FileChannel destination = null;
-
-                try {
-                    source = new FileInputStream(sourceFile).getChannel();
-                    destination = new FileOutputStream(destFile).getChannel();
-                    destination.transferFrom(source, 0, source.size());
-                }
-                finally {
-                    if(source != null) {
-                        source.close();
-                    }
-                    if(destination != null) {
-                        destination.close();
-                    }
-                    destFile.setExecutable(false);
-                }
-            } catch (IOException ex) {
-                Logger.getLogger(Main.class.getName()).log(Level.SEVERE, null, ex);
-            }
-        }
-    }
-    
-    private File fileSelection(boolean savemode) {
-        String os = System.getProperty("os.name");
-        File input = null;
-        String zenity = "zenity --file-selection --title=Open";
-        String filestring;
-        if ((os.indexOf("nix")!=-1 || os.indexOf("nux")!=-1)) {
-            //Use native Linux file selection.
-            try {
-                if (savemode) {
-                    zenity = "zenity --file-selection --title=Save --save";
-                }
-                Process p = Runtime.getRuntime().exec(zenity);  
-                BufferedReader br = new BufferedReader(new InputStreamReader(p.getInputStream()));  
-                StringBuffer sb = new StringBuffer();  
-                String line;
-                /*while ((line = br.readLine()) != null) {  
-                  sb.append(line).append("\n");  
-                } */
-                sb.append(br.readLine());
-                filestring = sb.toString();  
-                if (filestring.equals("null")) {
-                    return null;
-                }
-                System.out.println(filestring);
-                input = new File(filestring);
-            } catch (IOException e1) {
-                // TODO Auto-generated catch block
-                e1.printStackTrace();
-            }
-        } else {
-            final JFileChooser fc = new JFileChooser();
-            int returnVal;
-            if (savemode) {
-                returnVal = fc.showSaveDialog(fc);
-            } else {
-                returnVal = fc.showOpenDialog(fc);  
-            }
-            if (returnVal == JFileChooser.APPROVE_OPTION) {
-                input = fc.getSelectedFile();
-            }
-        }
-        return input;
-    }
-
-    public final static int shortcutKey = Toolkit.getDefaultToolkit().getMenuShortcutKeyMask();
-    
     private static Preferences p = Preferences.userRoot().node(projectName);
     
     private static void initLaf() {
-        if(System.getProperty("swing.defaultlaf") == null) { // Do not ovveride user specified theme
+        if(System.getProperty("swing.defaultlaf") == null) { // Do not override user specified theme
             try {
                 if(os == OS.Mac) {
-                    UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName()); // TODO: quaqua
-                } else if(os == OS.Linux) {
                     UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
-                    GtkFixer.installGtkPopupBugWorkaround();
+                    UIManager.setLookAndFeel("ch.randelshofer.quaqua.QuaquaLookAndFeel");
+                } else if(os == OS.Linux) {
+                    UIManager.setLookAndFeel("com.sun.java.swing.plaf.gtk.GTKLookAndFeel");
                 } else {
                     UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
                 }
@@ -260,6 +175,7 @@ public class Main {
                 Logger.getLogger(EditorFrame.class.getName()).log(Level.WARNING, null, ex);
             }
         }
+        GtkFixer.installGtkPopupBugWorkaround();
     }
     
     private static boolean startServer(int port, final String[] args) {        

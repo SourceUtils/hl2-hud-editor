@@ -27,7 +27,7 @@ import javax.swing.filechooser.FileFilter;
  * http://atlantica.wikia.com/wiki/Forum:Ndoors_DDS_image_format_dissection
  * http://doc.51windows.net/Directx9_SDK/?url=/directx9_sdk/graphics/reference/DDSFileReference/ddstextures.htm
  * 
- * @author andrew
+ * @author TimePath
  */
 public class VtfLoader {
     

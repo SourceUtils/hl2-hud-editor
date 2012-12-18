@@ -11,7 +11,7 @@ import java.util.logging.Logger;
 
 /**
  *
- * @author andrew
+ * @author TimePath
  */
 public class HudFont {
     

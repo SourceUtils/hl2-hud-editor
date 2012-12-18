@@ -1,8 +1,4 @@
-/*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
- */
-package com.timepath.tf2.hudedit.swing;
+package com.timepath.tf2.hudedit.gui;
 
 import java.util.logging.Logger;
 import javax.swing.JTable;
@@ -13,7 +9,7 @@ import javax.swing.table.TableCellRenderer;
 
 /**
  *
- * @author andrew
+ * @author TimePath
  */
 public class EditorPropertiesTable extends JTable {
     private static final long serialVersionUID = 1L;

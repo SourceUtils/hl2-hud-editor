@@ -15,7 +15,7 @@ import java.util.logging.Logger;
 /**
  * TODO: .360.vtf files seem to be a slightly different format... and LZMA compressed.
  * 
- * @author andrew
+ * @author TimePath
  */
 public class VtfFile {
     

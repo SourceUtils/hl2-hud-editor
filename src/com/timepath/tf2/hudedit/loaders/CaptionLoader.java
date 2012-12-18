@@ -11,7 +11,7 @@ import javax.swing.JFrame;
 
 /**
  *
- * @author andrew
+ * @author TimePath
  */
 public class CaptionLoader {
     

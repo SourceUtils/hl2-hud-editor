@@ -1,4 +1,4 @@
-package com.timepath.tf2.hudedit.swing;
+package com.timepath.tf2.hudedit.gui;
 
 import com.timepath.tf2.hudedit.util.Alignment;
 import com.timepath.tf2.hudedit.util.Element;
@@ -25,7 +25,7 @@ import javax.swing.JPanel;
 
 /**
  *
- * @author andrew
+ * @author TimePath
  */
 @SuppressWarnings("serial")
 public class EditorCanvas extends JPanel implements MouseListener, MouseMotionListener {

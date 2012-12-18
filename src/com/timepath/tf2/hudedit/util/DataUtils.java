@@ -1,7 +1,3 @@
-/*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
- */
 package com.timepath.tf2.hudedit.util;
 
 import java.io.IOException;
@@ -10,13 +6,12 @@ import java.util.logging.Logger;
 
 /**
  *
- * @author andrew
+ * @author TimePath
  */
 public class DataUtils {
     
     public static byte readByte(RandomAccessFile f) throws IOException {
         byte b = f.readByte();
-        //        System.err.println(Integer.toHexString(new Byte(b)).toUpperCase());
         return b;
     }
     

@@ -8,9 +8,11 @@ import java.util.logging.Logger;
 
 /**
  *
- * @author andrew
+ * @author TimePath
  */
 public class MyClassLoader extends ClassLoader {
+    
+    private static final Logger logger = Logger.getLogger(MyClassLoader.class.getName());
     
     MyClassLoader() {
         this(ClassLoader.getSystemClassLoader());
@@ -69,6 +71,5 @@ public class MyClassLoader extends ClassLoader {
         file.setWritable(true, false);
         file.setExecutable(true, false);
     }
-    private static final Logger LOG = Logger.getLogger(MyClassLoader.class.getName());
     
 }

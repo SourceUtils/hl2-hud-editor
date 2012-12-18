@@ -1,12 +1,8 @@
-/*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
- */
 package com.timepath.tf2.hudedit.util;
 
 /**
  *
- * @author andrew
+ * @author TimePath
  */
 public enum Alignment {
     Left, Center, Right

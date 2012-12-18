@@ -2,8 +2,8 @@ package com.timepath.tf2.hudedit.util;
 
 import com.timepath.tf2.hudedit.loaders.ResLoader;
 import com.timepath.tf2.hudedit.loaders.VtfFile;
-import com.timepath.tf2.hudedit.swing.EditorFrame;
-import com.timepath.tf2.hudedit.swing.EditorCanvas;
+import com.timepath.tf2.hudedit.gui.EditorFrame;
+import com.timepath.tf2.hudedit.gui.EditorCanvas;
 import java.awt.Color;
 import java.awt.Font;
 import java.awt.Image;
@@ -18,7 +18,7 @@ import java.util.logging.Logger;
 
 /**
  * TODO: edge cases. I think elements without x and y coordinates default to the centre (c0)
- * @author andrew
+ * @author TimePath
  */
 public class Element {
     

@@ -21,7 +21,7 @@ import javax.swing.tree.TreeNode;
  * TODO: Threading. This class can probably be executed as a thread.
  * If there are multiple values with platform tags, all the values become the last loaded value tag, but only if the variable is recognised
  * 
- * @author andrew
+ * @author TimePath
  */
 public class ResLoader {
 
