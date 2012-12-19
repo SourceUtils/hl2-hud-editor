@@ -13,6 +13,7 @@ import javax.swing.table.DefaultTableModel;
  * @author TimePath
  */
 public class CaptionLoaderFrame extends javax.swing.JFrame {
+    private final CaptionLoader cl;
 
     /**
      * Creates new form CaptionLoaderFrame
@@ -35,6 +36,8 @@ public class CaptionLoaderFrame extends javax.swing.JFrame {
                 jTextField4.setText(CaptionLoader.takeCRC32(jTextField3.getText()));
             }
         });
+        
+        cl = new CaptionLoader();
     }
 
     /**
@@ -63,7 +66,7 @@ public class CaptionLoaderFrame extends javax.swing.JFrame {
 
             },
             new String [] {
-                "CRC32 of Key", "Value"
+                "Key (or CRC32)", "Value"
             }
         ) {
             boolean[] canEdit = new boolean [] {
@@ -128,7 +131,7 @@ public class CaptionLoaderFrame extends javax.swing.JFrame {
                 .addContainerGap()
                 .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 423, Short.MAX_VALUE))
+                .addComponent(jScrollPane1))
         );
 
         pack();
@@ -151,7 +154,7 @@ public class CaptionLoaderFrame extends javax.swing.JFrame {
 
         if (returnVal == JFileChooser.APPROVE_OPTION) {
             File file = fc.getSelectedFile();
-            ArrayList<String> s = new CaptionLoader().load(file.getAbsolutePath().toString());
+            ArrayList<String> s = cl.load(file.getAbsolutePath().toString());
             DefaultTableModel model = (DefaultTableModel) jTable1.getModel();
             for(int i = model.getRowCount() - 1; i >= 0 ; i--) {
                 model.removeRow(i);

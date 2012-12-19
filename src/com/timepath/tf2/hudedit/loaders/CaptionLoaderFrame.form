@@ -55,7 +55,7 @@
               <EmptySpace min="-2" max="-2" attributes="0"/>
               <Component id="jPanel1" min="-2" max="-2" attributes="0"/>
               <EmptySpace min="-2" max="-2" attributes="0"/>
-              <Component id="jScrollPane1" pref="425" max="32767" attributes="0"/>
+              <Component id="jScrollPane1" max="32767" attributes="0"/>
           </Group>
       </Group>
     </DimensionLayout>
@@ -72,7 +72,7 @@
           <Properties>
             <Property name="model" type="javax.swing.table.TableModel" editor="org.netbeans.modules.form.editors2.TableModelEditor">
               <Table columnCount="2" rowCount="0">
-                <Column editable="false" title="CRC32 of Key" type="java.lang.Object"/>
+                <Column editable="false" title="Key (or CRC32)" type="java.lang.Object"/>
                 <Column editable="false" title="Value" type="java.lang.Object"/>
               </Table>
             </Property>

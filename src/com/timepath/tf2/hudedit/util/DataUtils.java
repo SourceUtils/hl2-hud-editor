@@ -62,8 +62,8 @@ public class DataUtils {
      * @return
      * @throws IOException 
      */
-    public static int readLong(RandomAccessFile f) throws IOException {
-        return readByte(f) + (readByte(f) << 8) + (readByte(f) << 16) + (readByte(f) << 24);
+    public static int readULong(RandomAccessFile f) throws IOException {
+        return readUByte(f) + (readUByte(f) << 8) + (readUByte(f) << 16) + (readUByte(f) << 24);
     }
     
     public static String toBinaryString(short n) {

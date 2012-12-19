@@ -110,7 +110,7 @@ public class VtfFile {
         file.seek(this.headerSize - 8); // 8 bytes for CRC or other things. I have no idea what the data after the first 64 bytes up until here are for
 
         String crcHead = new String(new byte[] {DataUtils.readChar(file), DataUtils.readChar(file), DataUtils.readChar(file), DataUtils.readChar(file)});
-        int crc = DataUtils.readLong(file);
+        int crc = DataUtils.readULong(file);
 
         if(!(crcHead.equals("CRC\2"))) {
             System.err.println("CRC=" + crcHead + ", invalid");
