@@ -75,7 +75,7 @@ public class CaptionLoader {
     private void generateHash() {
         logger.info("Generating hash codes ...");
         try {
-            GcfFile gcf = GcfFile.load(new File(EditorFrame.locateSteamAppsDirectory() + "team fortress 2 contesnt.gcf"));
+            GcfFile gcf = GcfFile.load(new File(EditorFrame.locateSteamAppsDirectory() + "team fortress 2 content.gcf"));
         
             CRC32 crc = new CRC32();
 
