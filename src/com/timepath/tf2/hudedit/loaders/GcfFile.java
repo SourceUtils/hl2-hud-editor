@@ -240,7 +240,7 @@ public class GcfFile {
         
         @Override
         public String toString() {
-            return "v:" + GCFRevision + ", blocks:" + BlockCount + ", size:" + BlockSize + ", ofset:0x" + Long.toHexString(FirstBlockOffset) + ", used:" + BlocksUsed + ", check:" + Checksum;
+            return "v:" + GCFRevision + ", blocks:" + BlockCount + ", size:" + BlockSize + ", ofset:0x" + Integer.toHexString(FirstBlockOffset) + ", used:" + BlocksUsed + ", check:" + Checksum;
         }
     }
     //</editor-fold>

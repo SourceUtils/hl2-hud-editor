@@ -22,7 +22,7 @@ public class CaptionLoader {
     public static String takeCRC32(String in) {
         CRC32 crc = new CRC32();
         crc.update(in.toLowerCase().getBytes());
-        return Long.toHexString(crc.getValue()).toUpperCase();
+        return Integer.toHexString((int)crc.getValue()).toUpperCase();
     }
     
     private static String captionId = "VCCD";
@@ -74,56 +74,55 @@ public class CaptionLoader {
     
     private void generateHash() {
         logger.info("Generating hash codes ...");
-        GcfFile gcf = null;
         try {
-            gcf = GcfFile.load(new File(EditorFrame.locateSteamAppsDirectory() + "team fortress 2 content.gcf"));
+            GcfFile gcf = GcfFile.load(new File(EditorFrame.locateSteamAppsDirectory() + "team fortress 2 contesnt.gcf"));
+        
+            CRC32 crc = new CRC32();
+
+            String all = new String(gcf.ls);
+            String[] ls = all.split("\0");
+            for(int i = 0; i < ls.length; i++) {
+                int end = ls[i].length();
+                int ext = ls[i].lastIndexOf(".");
+                if(ext != -1) {
+                    end = ext;
+                }
+                String sp = ls[i].substring(0, end);
+                if(ls[i].toLowerCase().endsWith(".wav") || ls[i].toLowerCase().endsWith(".mp3")// || 
+    //                    ls[i].toLowerCase().endsWith(".vcd") || ls[i].toLowerCase().endsWith(".bsp") || 
+    //                    ls[i].toLowerCase().endsWith(".mp3") || ls[i].toLowerCase().endsWith(".bat") ||
+    //                    ls[i].toLowerCase().endsWith(".doc") || ls[i].toLowerCase().endsWith(".raw") ||
+    //                    ls[i].toLowerCase().endsWith(".pcf") || ls[i].toLowerCase().endsWith(".cfg") ||
+    //                    ls[i].toLowerCase().endsWith(".vbsp") || ls[i].toLowerCase().endsWith(".inf") ||
+    //                    ls[i].toLowerCase().endsWith(".rad") || ls[i].toLowerCase().endsWith(".vdf") ||
+    //                    ls[i].toLowerCase().endsWith(".ctx") || ls[i].toLowerCase().endsWith(".vdf") ||
+    //                    ls[i].toLowerCase().endsWith(".lst") || ls[i].toLowerCase().endsWith(".res") ||
+    //                    ls[i].toLowerCase().endsWith(".pop") || ls[i].toLowerCase().endsWith(".dll") ||
+    //                    ls[i].toLowerCase().endsWith(".dylib") || ls[i].toLowerCase().endsWith(".so") ||
+    //                    ls[i].toLowerCase().endsWith(".scr") || ls[i].toLowerCase().endsWith(".rc") ||
+    //                    ls[i].toLowerCase().endsWith(".vfe") || ls[i].toLowerCase().endsWith(".pre") ||
+    //                    ls[i].toLowerCase().endsWith(".cache") || ls[i].toLowerCase().endsWith(".nav") ||
+    //                    ls[i].toLowerCase().endsWith(".lmp") || ls[i].toLowerCase().endsWith(".bik") ||
+    //                    ls[i].toLowerCase().endsWith(".mov") || ls[i].toLowerCase().endsWith(".snd") ||
+    //                    ls[i].toLowerCase().endsWith(".midi") || ls[i].toLowerCase().endsWith(".png") ||
+    //                    ls[i].toLowerCase().endsWith(".ttf") || ls[i].toLowerCase().endsWith(".ico") ||
+    //                    ls[i].toLowerCase().endsWith(".dat") || ls[i].toLowerCase().endsWith(".pl") ||
+    //                    ls[i].toLowerCase().endsWith(".ain") || ls[i].toLowerCase().endsWith(".db") ||
+    //                    ls[i].toLowerCase().endsWith(".py") || ls[i].toLowerCase().endsWith(".xsc") ||
+    //                    ls[i].toLowerCase().endsWith(".bmp") || ls[i].toLowerCase().endsWith(".icns") ||
+    //                    ls[i].toLowerCase().endsWith(".txt") || ls[i].toLowerCase().endsWith(".manifest")
+                     ) {
+                    String str = sp.replaceAll("_", ".").replaceAll(" ", "");// + "\0";
+                    crc.update(str.toLowerCase().getBytes());
+                    hashmap.put((int)crc.getValue(), str); // HASH >
+//                    logger.log(Level.INFO, "{0} > {1}", new Object[]{crc.getValue(), str});
+                    crc.reset();
+                } else {
+    //                logger.info(ls[i]);
+                }
+            }
         } catch (IOException ex) {
-            Logger.getLogger(CaptionLoader.class.getName()).log(Level.SEVERE, null, ex);
-        }
-        
-        CRC32 crc = new CRC32();
-        
-        String all = new String(gcf.ls);
-        String[] ls = all.split("\0");
-        for(int i = 0; i < ls.length; i++) {
-            int end = ls[i].length();
-            int ext = ls[i].lastIndexOf(".");
-            if(ext != -1) {
-                end = ext;
-            }
-            String sp = ls[i].substring(0, end);
-            if(ls[i].toLowerCase().endsWith(".wav") || ls[i].toLowerCase().endsWith(".mp3")// || 
-//                    ls[i].toLowerCase().endsWith(".vcd") || ls[i].toLowerCase().endsWith(".bsp") || 
-//                    ls[i].toLowerCase().endsWith(".mp3") || ls[i].toLowerCase().endsWith(".bat") ||
-//                    ls[i].toLowerCase().endsWith(".doc") || ls[i].toLowerCase().endsWith(".raw") ||
-//                    ls[i].toLowerCase().endsWith(".pcf") || ls[i].toLowerCase().endsWith(".cfg") ||
-//                    ls[i].toLowerCase().endsWith(".vbsp") || ls[i].toLowerCase().endsWith(".inf") ||
-//                    ls[i].toLowerCase().endsWith(".rad") || ls[i].toLowerCase().endsWith(".vdf") ||
-//                    ls[i].toLowerCase().endsWith(".ctx") || ls[i].toLowerCase().endsWith(".vdf") ||
-//                    ls[i].toLowerCase().endsWith(".lst") || ls[i].toLowerCase().endsWith(".res") ||
-//                    ls[i].toLowerCase().endsWith(".pop") || ls[i].toLowerCase().endsWith(".dll") ||
-//                    ls[i].toLowerCase().endsWith(".dylib") || ls[i].toLowerCase().endsWith(".so") ||
-//                    ls[i].toLowerCase().endsWith(".scr") || ls[i].toLowerCase().endsWith(".rc") ||
-//                    ls[i].toLowerCase().endsWith(".vfe") || ls[i].toLowerCase().endsWith(".pre") ||
-//                    ls[i].toLowerCase().endsWith(".cache") || ls[i].toLowerCase().endsWith(".nav") ||
-//                    ls[i].toLowerCase().endsWith(".lmp") || ls[i].toLowerCase().endsWith(".bik") ||
-//                    ls[i].toLowerCase().endsWith(".mov") || ls[i].toLowerCase().endsWith(".snd") ||
-//                    ls[i].toLowerCase().endsWith(".midi") || ls[i].toLowerCase().endsWith(".png") ||
-//                    ls[i].toLowerCase().endsWith(".ttf") || ls[i].toLowerCase().endsWith(".ico") ||
-//                    ls[i].toLowerCase().endsWith(".dat") || ls[i].toLowerCase().endsWith(".pl") ||
-//                    ls[i].toLowerCase().endsWith(".ain") || ls[i].toLowerCase().endsWith(".db") ||
-//                    ls[i].toLowerCase().endsWith(".py") || ls[i].toLowerCase().endsWith(".xsc") ||
-//                    ls[i].toLowerCase().endsWith(".bmp") || ls[i].toLowerCase().endsWith(".icns") ||
-//                    ls[i].toLowerCase().endsWith(".txt") || ls[i].toLowerCase().endsWith(".manifest")
-                 ) {
-                String str = sp.replaceAll("_", ".").replaceAll(" ", "");// + "\0";
-                crc.update(str.toLowerCase().getBytes());
-                hashmap.put((int)crc.getValue(), str); // HASH >
-                logger.log(Level.INFO, "{0} > {1}", new Object[]{crc.getValue(), str});
-                crc.reset();
-            } else {
-//                logger.info(ls[i]);
-            }
+            Logger.getLogger(CaptionLoader.class.getName()).log(Level.WARNING, "Error generating hash codes", ex);
         }
     }
     
@@ -131,8 +130,8 @@ public class CaptionLoader {
         if(hashmap.containsKey(hash)) {
             return hashmap.get(hash);
         } else {
-            logger.log(Level.INFO, "hashmap does not contain {0}", hash);
-            return Long.toHexString(hash).toUpperCase();
+//            logger.log(Level.INFO, "hashmap does not contain {0}", hash);
+            return Integer.toHexString(hash).toUpperCase();
         }
     }
 
