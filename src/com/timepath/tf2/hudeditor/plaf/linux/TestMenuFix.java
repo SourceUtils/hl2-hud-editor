@@ -1,4 +1,4 @@
-package com.timepath.tf2.hudeditor;
+package com.timepath.tf2.hudeditor.plaf.linux;
 
 import java.awt.Color;
 import java.awt.Dimension;
@@ -11,7 +11,7 @@ import javax.swing.UIManager;
 import javax.swing.UIManager.LookAndFeelInfo;
 import javax.swing.UnsupportedLookAndFeelException;
 
-public class Test extends JFrame {
+public class TestMenuFix extends JFrame {
 
     public static void main(String[] args) {
                 try {
@@ -25,7 +25,7 @@ public class Test extends JFrame {
             @Override
             public void run() {
 
-                Test test = new Test();
+                TestMenuFix test = new TestMenuFix();
                 test.setDefaultCloseOperation(EXIT_ON_CLOSE);
                 test.setPreferredSize(new Dimension(400, 300));
                 test.pack();

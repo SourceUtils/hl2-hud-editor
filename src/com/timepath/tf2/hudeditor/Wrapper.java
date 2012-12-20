@@ -17,7 +17,7 @@ public class Wrapper {
         try {
             cl.invokeMain("com.timepath.tf2.hudeditor.Main", args);
         } catch(Throwable e) {
-            logger.log(Level.SEVERE, null, e);
+            logger.log(Level.SEVERE, "Uncaught Exception", e);
         }
     }
     

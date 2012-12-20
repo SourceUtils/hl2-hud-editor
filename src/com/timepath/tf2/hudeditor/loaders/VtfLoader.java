@@ -20,13 +20,7 @@ import javax.swing.JScrollPane;
 import javax.swing.filechooser.FileFilter;
 
 /**
- * http://www.piksel.org/frei0r/1.1/spec/group__COLOR__MODEL.html
- * http://code.google.com/p/gimp-vtf/source/browse/trunk/gimp-vtf/?r=16
- * http://msdn.microsoft.com/en-us/library/windows/desktop/bb205578(v=vs.85).aspx
- * http://msdn.microsoft.com/en-us/library/aa920432.aspx
- * http://atlantica.wikia.com/wiki/Forum:Ndoors_DDS_image_format_dissection
- * http://doc.51windows.net/Directx9_SDK/?url=/directx9_sdk/graphics/reference/DDSFileReference/ddstextures.htm
- * 
+ *
  * @author TimePath
  */
 public class VtfLoader {

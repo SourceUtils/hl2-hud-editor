@@ -43,10 +43,11 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.URLConnection;
+import java.text.MessageFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
-import java.util.ResourceBundle;
 import java.util.StringTokenizer;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -85,27 +86,6 @@ import org.java.ayatana.AyatanaDesktop;
 //</editor-fold>
 
 /**
- *
- * libs:
- * http://code.google.com/p/xfiledialog/ - windows "open folder" dialog
- * http://java.dzone.com/news/native-dialogs-swing-little - more native file dialogs on linux (also zenity, xenity, etc)
- * http://java-gnome.sourceforge.net/get/
- * http://developer.apple.com/legacy/mac/library/#samplecode/OSXAdapter/Introduction/Intro.html#//apple_ref/doc/uid/DTS10000685-Intro-DontLinkElementID_2 - mac integration
- * 
- * Interface design:
- * http://stackoverflow.com/questions/1004239/swing-tweaks-for-mac-os-x
- * http://developer.apple.com/library/mac/#documentation/Java/Conceptual/Java14Development/07-NativePlatformIntegration/NativePlatformIntegration.html
- * http://today.java.net/pub/a/today/2003/12/08/swing.html
- * 
- * Deployment:
- * http://www2.sys-con.com/itsg/virtualcd/java/archives/0801/mcfarland/index.html
- *
- * Reference editors:
- * https://developers.google.com/java-dev-tools/wbpro/
- * http://visualhud.pk69.com/
- * http://gamebanana.com/css/tools/4483
- * http://img13.imageshack.us/img13/210/hudmanagerss.png
- * http://plrf.org/superhudeditor/screens/0.3.0/superhudeditor-0.3.0-linux.jpg
  *
  * @author TimePath
  */
@@ -166,7 +146,7 @@ public class EditorFrame extends JFrame {
                         public void hyperlinkUpdate(HyperlinkEvent he) {
                             if (he.getEventType().equals(HyperlinkEvent.EventType.ACTIVATED)) {
                                 try {
-                                    Desktop.getDesktop().browse(he.getURL().toURI()); // http://stackoverflow.com/questions/5116473/linux-command-to-open-url-in-default-browser
+                                    Desktop.getDesktop().browse(he.getURL().toURI());
                                 } catch(Exception e) {
                                     //                                e.printStackTrace();
                                 }
@@ -403,8 +383,6 @@ public class EditorFrame extends JFrame {
         System.exit(0);
     }
     
-    
-    
     public void quit() {
         if(!updating) {
             System.out.println("Quitting...");
@@ -420,10 +398,10 @@ public class EditorFrame extends JFrame {
     }
 
     public EditorFrame() {
-        URL url = getClass().getResource("/Icon.png");
+        URL url = getClass().getResource("/com/timepath/tf2/hudeditor/resources/Icon.png");
         Image icon = Toolkit.getDefaultToolkit().getImage(url);
         this.setIconImage(icon);
-        this.setTitle(ResourceBundle.getBundle("com/timepath/tf2/hudeditor/resources/lang").getString("Title"));
+        this.setTitle(Main.rb.getString("Title"));
         this.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
         this.addWindowListener(new WindowAdapter() {
 
@@ -558,7 +536,7 @@ public class EditorFrame extends JFrame {
         
         statusBar.add(new JLabel("By TimePath"));
         
-        updateButton = new JButton("Update");
+        updateButton = new JButton(Main.rb.getString("Update"));
         updateButton.setEnabled(false);
         
         statusBar.add(updateButton, BorderLayout.EAST);
@@ -568,14 +546,11 @@ public class EditorFrame extends JFrame {
         this.add(panel);
     }
     
-    /**
-     * http://alvinalexander.com/java/mac-java-default-osx-menubar-without-jframe
-     */
     private void createMacMenus() {
         try {
-            OSXAdapter.setQuitHandler(this, getClass().getDeclaredMethod("quit", (Class[])null));
-            OSXAdapter.setAboutHandler(this, getClass().getDeclaredMethod("about", (Class[])null));
-            OSXAdapter.setPreferencesHandler(this, getClass().getDeclaredMethod("preferences", (Class[])null));
+            OSXAdapter.setQuitHandler(this, getClass().getDeclaredMethod("quit", (Class[]) null));
+            OSXAdapter.setAboutHandler(this, getClass().getDeclaredMethod("about", (Class[]) null));
+            OSXAdapter.setPreferencesHandler(this, getClass().getDeclaredMethod("preferences", (Class[]) null));
 //            OSXAdapter.setFileHandler(this, getClass().getDeclaredMethod("loadImageFile", new Class[] { String.class }));
 
 //            com.apple.eawt.Application app = com.apple.eawt.Application.getApplication();
@@ -752,7 +727,7 @@ public class EditorFrame extends JFrame {
                         String selection = null;
                         try {
                             XFileDialog fd = new XFileDialog(EditorFrame.this);
-                            fd.setTitle("Open a HUD folder");
+                            fd.setTitle(Main.rb.getString("LoadHudDir"));
                             selection = fd.getFolder();
                             fd.dispose();
                         } catch(UnsupportedClassVersionError e) {
@@ -785,7 +760,7 @@ public class EditorFrame extends JFrame {
             public void run() {
                 String selection = null;
                 System.setProperty("apple.awt.fileDialogForDirectories", "true");
-                FileDialog fd = new FileDialog(EditorFrame.this, "Open a HUD folder");
+                FileDialog fd = new FileDialog(EditorFrame.this, Main.rb.getString("LoadHudDir"));
                 if(hudSelectionDir != null) {
                     fd.setDirectory(hudSelectionDir);
                 }
@@ -840,6 +815,7 @@ public class EditorFrame extends JFrame {
                 //            UIManager.put("FileChooserUI", initFCUILinux);
                 //        } else { // Fall back to swing
                 JFileChooser fd = new JFileChooser();
+                fd.setDialogTitle(Main.rb.getString("LoadHudDir"));
                 fd.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
                 if(hudSelectionDir != null) {
                     fd.setCurrentDirectory(new File(hudSelectionDir));
@@ -867,7 +843,7 @@ public class EditorFrame extends JFrame {
     //</editor-fold>
     
     private void error(Object msg) {
-        error(msg, "Error");
+        error(msg, Main.rb.getString("Error"));
     }
     
     private void error(Object msg, String title) {
@@ -875,7 +851,7 @@ public class EditorFrame extends JFrame {
     }
     
     private void info(Object msg) {
-        info(msg, "Info");
+        info(msg, Main.rb.getString("Info"));
     }
     
     private void info(Object msg, String title) {
@@ -902,7 +878,7 @@ public class EditorFrame extends JFrame {
             return;
         }
         if(!file.exists()) {
-            error("Could not access file " + file);
+            error(new MessageFormat(Main.rb.getString("FileAccessError")).format(new Object[]{file}));
         }
         setLastLoaded(file);
         System.out.println("You have selected: " + file.getAbsolutePath());

@@ -10,8 +10,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
- * http://www.wunderboy.org/docs/gcfformat.php
- * 
+ *
  * @author TimePath
  */
 public class GcfFile {

@@ -260,10 +260,6 @@ public class VtfFile {
     
     
     /**
-     * http://en.wikipedia.org/wiki/S3_Texture_Compression
-     * http://www.fsdeveloper.com/wiki/index.php?title=DXT_compression_explained
-     * http://msdn.microsoft.com/en-us/library/aa920432.aspx
-     * 
      * 8 bytes per 4*4
      */
     private static BufferedImage loadDXT1(byte[] b, int width, int height) {
@@ -310,9 +306,6 @@ public class VtfFile {
     
     //<editor-fold defaultstate="collapsed" desc="Currently unimplemented">
     /**
-     * http://en.wikipedia.org/wiki/S3_Texture_Compression
-     * http://www.fsdeveloper.com/wiki/index.php?title=DXT_compression_explained
-     * http://msdn.microsoft.com/en-us/library/aa920432.aspx
      *
      * 8 bytes for alpha channel, additional 8 per 4*4 chunk
      *
@@ -396,9 +389,6 @@ public class VtfFile {
     //</editor-fold>
     
     /**
-     * http://en.wikipedia.org/wiki/S3_Texture_Compression
-     * http://www.fsdeveloper.com/wiki/index.php?title=DXT_compression_explained
-     * http://msdn.microsoft.com/en-us/library/aa920432.aspx
      * 
      * 8 bytes for alpha channel, additional 8 per 4*4 chunk
      * 

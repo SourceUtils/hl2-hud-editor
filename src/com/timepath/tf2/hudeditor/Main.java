@@ -19,6 +19,7 @@ import java.net.SocketTimeoutException;
 import java.net.URLDecoder;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.ResourceBundle;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.prefs.Preferences;
@@ -28,7 +29,8 @@ import net.tomahawk.XFileDialog;
 //</editor-fold>
 
 /**
- *
+ * Link dump: https://docs.google.com/document/d/19jk3L-kyduz_AvTOhMXk4agh5gUYM9gWQCHafbMl3wY/edit
+ * 
  * @author TimePath
  */
 public class Main {
@@ -99,6 +101,8 @@ public class Main {
             // Nothing special -- unsupported OS
         }
     }
+    
+    public static final ResourceBundle rb = ResourceBundle.getBundle("com/timepath/tf2/hudeditor/resources/lang");
     
     public static void main(String[] args) {
         System.out.println("Reading: " + System.getenv());
