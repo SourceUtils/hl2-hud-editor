@@ -37,7 +37,7 @@ public class Main {
     
     public final static String appName = "TF2 HUD Editor";
     
-    public final static String javaName = "com-timepath-tf2-hudedit";
+    public final static String javaName = "com-timepath-tf2-hudeditor";
     
     public final static String projectName = "tf2-hud-editor";
     
