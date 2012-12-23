@@ -112,7 +112,11 @@ public class CaptionLoader {
     //                    ls[i].toLowerCase().endsWith(".bmp") || ls[i].toLowerCase().endsWith(".icns") ||
     //                    ls[i].toLowerCase().endsWith(".txt") || ls[i].toLowerCase().endsWith(".manifest")
                      ) {
-                    String str = sp.replaceAll("_", ".").replaceAll(" ", "");// + "\0";
+                    String str = sp;
+                    if(str.split("_").length == 2) {
+                        str = str.replaceAll("_", ".").replaceAll(" ", "");// + "\0";
+                    }
+                    System.out.println(str);
                     crc.update(str.toLowerCase().getBytes());
                     hashmap.put((int)crc.getValue(), str); // HASH >
 //                    logger.log(Level.INFO, "{0} > {1}", new Object[]{crc.getValue(), str});

@@ -56,7 +56,7 @@ public class NativeFileChooser {
             selection = fd.getDirectory() + fd.getFile();
         } else if(Main.os == OS.Linux) {
             File input = null;
-            String zenity = "zenity --file-selection --title=Open";
+            String zenity = "zenity --file-selection --directory --title=Open --class="+Main.appName.replaceAll(" ", "\\ ")+" --name="+Main.appName.replaceAll(" ", "\\ ")+""; // --window-icon, --ok-label=TEXT, --cancel-label=TEXT
             try {
                 Process proc = Runtime.getRuntime().exec(zenity);  
                 BufferedReader br = new BufferedReader(new InputStreamReader(proc.getInputStream()));  
@@ -74,9 +74,6 @@ public class NativeFileChooser {
             if(fd.showOpenDialog(parent) == JFileChooser.APPROVE_OPTION) {
                 selection = fd.getSelectedFile().getPath();
             }
-        }
-        if(selection.equals("null")) {
-            selection = null;
         }
         if(selection != null) {
             f = new File(selection);

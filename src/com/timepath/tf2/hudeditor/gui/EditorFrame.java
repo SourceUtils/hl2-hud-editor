@@ -16,6 +16,8 @@ import java.awt.FileDialog;
 import java.awt.GraphicsDevice;
 import java.awt.GraphicsEnvironment;
 import java.awt.Image;
+import java.awt.Point;
+import java.awt.Rectangle;
 import java.awt.Toolkit;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.Transferable;
@@ -27,6 +29,8 @@ import java.awt.dnd.DropTargetDropEvent;
 import java.awt.dnd.InvalidDnDOperationException;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.ComponentAdapter;
+import java.awt.event.ComponentEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
@@ -45,7 +49,6 @@ import java.net.URL;
 import java.net.URLConnection;
 import java.text.MessageFormat;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
 import java.util.StringTokenizer;
@@ -98,6 +101,7 @@ public class EditorFrame extends JFrame {
     private final EditorMenuBar jmb;
     private final JButton updateButton;
     private final JToolBar statusBar;
+    private final boolean continuousLayout = true;
     
     private boolean isMD5(String str) {
         return str.matches("[a-fA-F0-9]{32}");
@@ -412,6 +416,58 @@ public class EditorFrame extends JFrame {
 
         });
         
+        //<editor-fold defaultstate="collapsed" desc="Menu fix for window managers that don't set position on resize">
+        if(Main.os == OS.Linux) {
+            this.addComponentListener(new ComponentAdapter() {
+
+                boolean moved;
+                Point real = new Point();
+                boolean updateReal = true;
+
+                /**
+                 * When maximizing windows on linux under gnome-shell, the JMenuBar
+                 * menus appear not to work. This is because the position of the
+                 * window never updates. This is an attempt to make them usable again.
+                 */
+                @Override
+                public void componentResized(ComponentEvent e) {
+                    Rectangle b = EditorFrame.this.getBounds();
+                    Rectangle s = EditorFrame.this.getGraphicsConfiguration().getBounds();
+
+                    if(moved) {
+                        moved = false;
+                        return;
+                    }
+
+                    if(updateReal) {
+                        real.x = b.x;
+                        real.y = b.y;
+                    }
+                    updateReal = true;
+                    b.x = real.x;
+                    b.y = real.y;
+                    if(b.x + b.width > s.width) {
+                        b.x -= ((b.x + b.width) - s.width);
+                        updateReal = false;
+                    }
+                    if(b.y + b.height > s.height) {
+                        b.y = 0;
+                        updateReal = false;
+                    }
+                    EditorFrame.this.setBounds(b);
+                }
+
+                @Override
+                public void componentMoved(ComponentEvent e) {
+                    Rectangle b = EditorFrame.this.getBounds();
+                    moved = true;
+                    real.x = b.x;
+                    real.y = b.y;
+                }
+            });
+        }
+        //</editor-fold>
+        
         DisplayMode d = GraphicsEnvironment.getLocalGraphicsEnvironment().getDefaultScreenDevice().getDisplayMode();
         
         this.setMinimumSize(new Dimension(640, 480));
@@ -483,6 +539,7 @@ public class EditorFrame extends JFrame {
         EditorFileTreePane fileTreePane = new EditorFileTreePane(canvas, propTable, fileSystem);
         
         JSplitPane browser = new JSplitPane(JSplitPane.VERTICAL_SPLIT, fileTreePane, propTablePane);
+        browser.setContinuousLayout(continuousLayout);
         browser.setResizeWeight(0.5);
         browser.setMinimumSize(new Dimension(100, 0));
         browser.setPreferredSize(new Dimension(300, 0));
@@ -502,6 +559,7 @@ public class EditorFrame extends JFrame {
         //</editor-fold>
         
         final JSplitPane splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, browser, canvasPane);
+        splitPane.setContinuousLayout(continuousLayout);
         splitPane.setDividerSize(3);
         splitPane.setResizeWeight(0);
         panel.add(splitPane, BorderLayout.CENTER);
@@ -679,20 +737,19 @@ public class EditorFrame extends JFrame {
     //</editor-fold>
     
     public static String locateSteamAppsDirectory() {
-        String str;
         if(Main.os == OS.Windows) {
-            str = System.getenv("PROGRAMFILES(x86)");
+            String str = System.getenv("PROGRAMFILES(x86)");
             if(str == null) {
                 str = System.getenv("PROGRAMFILES");
             }
+            return str + "/Steam/steamapps/";
         } else if(Main.os == OS.Mac) {
-            str = "~/Library/Application Support";
+            return "~/Library/Application Support/Steam/SteamApps/";
         } else if(Main.os == OS.Linux) {
-            str = System.getenv("HOME") + "/.local/share"; // XDG_DATA_HOME ?
+            return System.getenv("HOME") + "/.steam/root/SteamApps/";
         } else {
             return null;
         }
-        return str + "/Steam/SteamApps/";
     }
 
     /**
@@ -1222,8 +1279,7 @@ public class EditorFrame extends JFrame {
             viewMenu.add(resolutionItem);
             
             previewItem = new JMenuItem("Full Screen Preview", KeyEvent.VK_F);
-            previewItem.setEnabled(false);
-//            previewItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_R, shortcutKey)); // alt + shift + enter on linux
+            previewItem.setAccelerator(KeyStroke.getKeyStroke("F11")); // alt + shift + enter on linux
             previewItem.addActionListener(al);
             viewMenu.add(previewItem);
             
@@ -1286,6 +1342,7 @@ public class EditorFrame extends JFrame {
         }
         
         private class EditorActionListener implements ActionListener {
+            private boolean fullscreen;
         
             EditorActionListener() {
 
@@ -1325,6 +1382,14 @@ public class EditorFrame extends JFrame {
                     VtfLoader.main("");
                 } else if(cmd == captionItem) {
                     CaptionLoaderFrame.main("");
+            } else if(cmd == previewItem) {
+                    EditorFrame.this.dispose();
+                    EditorFrame.this.setUndecorated(!fullscreen);
+                    EditorFrame.this.setExtendedState(fullscreen ? JFrame.NORMAL : JFrame.MAXIMIZED_BOTH);
+                    EditorFrame.this.setVisible(true);
+                    EditorFrame.this.pack();
+                    EditorFrame.this.toFront();
+                    fullscreen = !fullscreen;
                 }
             }
         }

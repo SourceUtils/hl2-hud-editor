@@ -2,6 +2,7 @@ package com.timepath.tf2.hudeditor;
 
 //<editor-fold defaultstate="collapsed" desc="imports">
 import com.timepath.tf2.hudeditor.gui.EditorFrame;
+import com.timepath.tf2.hudeditor.plaf.NativeFileChooser;
 import com.timepath.tf2.hudeditor.plaf.OS;
 import com.timepath.tf2.hudeditor.plaf.linux.GtkFixer;
 import com.timepath.tf2.hudeditor.plaf.linux.LinuxDesktopLauncher;
@@ -37,10 +38,15 @@ public class Main {
     
     private static final Logger logger = Logger.getLogger(Main.class.getName());
     
+    /**
+     * The window class on Linux systems
+     * The app name on Mac systems
+     */
     public final static String appName = "TF2 HUD Editor";
     
-    public final static String javaName = "com-timepath-tf2-hudeditor";
-    
+    /**
+     * Used for storing preferences
+     */
     public final static String projectName = "tf2-hud-editor";
     
     public final static OS os;
@@ -80,13 +86,13 @@ public class Main {
             if(force) {
                 System.setProperty("jayatana.force", "true");
             }
-            System.setProperty("jayatana.startupWMClass", javaName);
+            System.setProperty("jayatana.startupWMClass", appName);
             
             try {
                 Toolkit xToolkit = Toolkit.getDefaultToolkit();
                 java.lang.reflect.Field awtAppClassNameField = xToolkit.getClass().getDeclaredField("awtAppClassName");
                 awtAppClassNameField.setAccessible(true);
-                awtAppClassNameField.set(xToolkit, javaName);
+                awtAppClassNameField.set(xToolkit, appName);
             } catch (IllegalArgumentException ex) {
                 Logger.getLogger(Main.class.getName()).log(Level.SEVERE, null, ex);
             } catch (IllegalAccessException ex) {
@@ -105,8 +111,13 @@ public class Main {
     public static final ResourceBundle rb = ResourceBundle.getBundle("com/timepath/tf2/hudeditor/resources/lang");
     
     public static void main(String[] args) {
+        new NativeFileChooser(null, "Title", null).getFolder();
         System.out.println("Reading: " + System.getenv());
-        // http://www.ailis.de/~k/archives/64-How-to-implement-a-Single-Instance-Application-in-Java.html
+         // -Dawt.useSystemAAFontSettings=on -Dswing.aatext=true -Dswing.defaultlaf=com.sun.java.swing.plaf.gtk.GTKLookAndFeel -Dswing.crossplatformlaf=com.sun.java.swing.plaf.gtk.GTKLookAndFeel
+        System.out.println("Reading awt.useSystemAAFontSettings: " + System.getProperty("awt.useSystemAAFontSettings", ""));
+        System.out.println("Reading swing.aatext: " + System.getProperty("swing.aatext", "")); 
+        System.out.println("Reading swing.defaultlaf: " + System.getProperty("swing.defaultlaf", UIManager.getLookAndFeel().toString()));
+        System.out.println("Reading swing.crossplatformlaf: " + System.getProperty("swing.crossplatformlaf", UIManager.getCrossPlatformLookAndFeelClassName()));
         int port = p.getInt("port", 0);
         if(startServer(port, args)) { // If this was the first instance
             initLaf();
