@@ -2,10 +2,10 @@ package com.timepath.tf2.hudeditor;
 
 //<editor-fold defaultstate="collapsed" desc="imports">
 import com.timepath.tf2.hudeditor.gui.EditorFrame;
-import com.timepath.tf2.hudeditor.plaf.NativeFileChooser;
 import com.timepath.tf2.hudeditor.plaf.OS;
 import com.timepath.tf2.hudeditor.plaf.linux.GtkFixer;
 import com.timepath.tf2.hudeditor.plaf.linux.LinuxDesktopLauncher;
+import java.awt.EventQueue;
 import java.awt.Toolkit;
 import java.io.BufferedReader;
 import java.io.FileInputStream;
@@ -14,9 +14,10 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.io.UnsupportedEncodingException;
+import java.lang.reflect.Field;
+import java.net.BindException;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.net.SocketTimeoutException;
 import java.net.URLDecoder;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -24,7 +25,6 @@ import java.util.ResourceBundle;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.prefs.Preferences;
-import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
 import net.tomahawk.XFileDialog;
 //</editor-fold>
@@ -36,7 +36,7 @@ import net.tomahawk.XFileDialog;
  */
 public class Main {
     
-    private static final Logger logger = Logger.getLogger(Main.class.getName());
+    public static final ResourceBundle rb = ResourceBundle.getBundle("com/timepath/tf2/hudeditor/resources/lang");
     
     /**
      * The window class on Linux systems
@@ -45,11 +45,17 @@ public class Main {
     public final static String appName = "TF2 HUD Editor";
     
     /**
-     * Used for storing preferences
+     * Used for storing preferences. Do not localize
      */
     public final static String projectName = "tf2-hud-editor";
     
     public final static OS os;
+    
+    private final static int arch;
+    
+    private static final Logger logger = Logger.getLogger(Main.class.getName());
+    
+    private static Preferences p = Preferences.userRoot().node(projectName);
     
     static {
         String osVer = System.getProperty("os.name").toLowerCase();
@@ -64,7 +70,15 @@ public class Main {
             logger.log(Level.WARNING, "Unrecognised OS: {0}", osVer);
         }
         
-        if(os == OS.Mac) {
+        if(System.getProperty("os.arch").indexOf("64") >= 0) {
+            arch = 64;
+        } else {
+            arch = 32;
+        }
+        
+        if(os == OS.Windows) {
+            XFileDialog.setTraceLevel(0);
+        } else if(os == OS.Mac) {
             System.setProperty("apple.awt.brushMetalLook", "false");
             System.setProperty("apple.awt.graphics.EnableQ2DX", "true"); 
             System.setProperty("apple.awt.showGrowBox", "true");
@@ -74,64 +88,53 @@ public class Main {
             System.setProperty("com.apple.mrj.application.apple.menu.about.name", appName);
             System.setProperty("com.apple.mrj.application.growbox.intrudes", "false");
             System.setProperty("com.apple.mrj.application.live-resize", "true");
-        } else if(os == OS.Windows) {
-            try {
-                XFileDialog.setTraceLevel(0);
-            } catch(UnsatisfiedLinkError e) {
-                logger.warning(e.toString());
-            } catch(UnsupportedClassVersionError e) {
-            }
         } else if(os == OS.Linux) {
-            boolean force = "Unity".equals(System.getenv("XDG_CURRENT_DESKTOP"));
-            if(force) {
+//            boolean force = "Unity".equals(System.getenv("XDG_CURRENT_DESKTOP"));
+//            if(force) {
                 System.setProperty("jayatana.force", "true");
-            }
+//            }
             System.setProperty("jayatana.startupWMClass", appName);
             
             try {
                 Toolkit xToolkit = Toolkit.getDefaultToolkit();
-                java.lang.reflect.Field awtAppClassNameField = xToolkit.getClass().getDeclaredField("awtAppClassName");
+                Field awtAppClassNameField = xToolkit.getClass().getDeclaredField("awtAppClassName");
                 awtAppClassNameField.setAccessible(true);
                 awtAppClassNameField.set(xToolkit, appName);
-            } catch (IllegalArgumentException ex) {
-                Logger.getLogger(Main.class.getName()).log(Level.SEVERE, null, ex);
-            } catch (IllegalAccessException ex) {
-                Logger.getLogger(Main.class.getName()).log(Level.SEVERE, null, ex);
-            } catch (NoSuchFieldException ex) {
-                Logger.getLogger(Main.class.getName()).log(Level.SEVERE, null, ex);
-            } catch (SecurityException ex) {
+            } catch (Exception ex) {
                 Logger.getLogger(Main.class.getName()).log(Level.SEVERE, null, ex);
             }
             LinuxDesktopLauncher.create();
-        } else {
-            // Nothing special -- unsupported OS
         }
     }
     
-    public static final ResourceBundle rb = ResourceBundle.getBundle("com/timepath/tf2/hudeditor/resources/lang");
+    public static void main(String... args) {
+        logger.log(Level.INFO, "Env: {0}", System.getenv());
+        logger.log(Level.INFO, "awt.useSystemAAFontSettings: {0}", System.getProperty("awt.useSystemAAFontSettings", ""));
+        logger.log(Level.INFO, "swing.aatext: {0}", System.getProperty("swing.aatext", "")); 
+        logger.log(Level.INFO, "swing.defaultlaf: {0}", System.getProperty("swing.defaultlaf", UIManager.getLookAndFeel().toString()));
+        logger.log(Level.INFO, "swing.crossplatformlaf: {0}", System.getProperty("swing.crossplatformlaf", UIManager.getCrossPlatformLookAndFeelClassName()));
+        
+        init(args);
+    }
     
-    public static void main(String[] args) {
-        new NativeFileChooser(null, "Title", null).getFolder();
-        System.out.println("Reading: " + System.getenv());
-         // -Dawt.useSystemAAFontSettings=on -Dswing.aatext=true -Dswing.defaultlaf=com.sun.java.swing.plaf.gtk.GTKLookAndFeel -Dswing.crossplatformlaf=com.sun.java.swing.plaf.gtk.GTKLookAndFeel
-        System.out.println("Reading awt.useSystemAAFontSettings: " + System.getProperty("awt.useSystemAAFontSettings", ""));
-        System.out.println("Reading swing.aatext: " + System.getProperty("swing.aatext", "")); 
-        System.out.println("Reading swing.defaultlaf: " + System.getProperty("swing.defaultlaf", UIManager.getLookAndFeel().toString()));
-        System.out.println("Reading swing.crossplatformlaf: " + System.getProperty("swing.crossplatformlaf", UIManager.getCrossPlatformLookAndFeelClassName()));
+    private static void init(String... args) {
         int port = p.getInt("port", 0);
-        if(startServer(port, args)) { // If this was the first instance
-            initLaf();
-            createUI(args);
-        } else { // TODO: should loop infinitely
-            startClient(port, args);
+        if(startServer(port, args)) {
+            lookAndFeel();
+            start(args);
+            return;
+        }
+        if(!startClient(port, args)) {
+            init(args);
         }
     }
     
+    //<editor-fold defaultstate="collapsed" desc="TODO: Replace with timestamp system">
     public static boolean indev;
     
     public static String runPath;
     
-    public static String myMD5 = calcMD5();
+    public static String myVer = calcMD5();
     
     private static String calcMD5() {
         String md5 = "";
@@ -165,39 +168,37 @@ public class Main {
         }
         return md5;
     }
+    //</editor-fold>
     
-    private static Preferences p = Preferences.userRoot().node(projectName);
-    
-    private static void initLaf() {
+    private static void lookAndFeel() {
         if(System.getProperty("swing.defaultlaf") == null) { // Do not override user specified theme
             try {
+                UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
                 if(os == OS.Mac) {
-                    UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
-                    UIManager.setLookAndFeel("ch.randelshofer.quaqua.QuaquaLookAndFeel");
+                    UIManager.setLookAndFeel("ch.randelshofer.quaqua.QuaquaLookAndFeel"); // Apply quaqua if available
                 } else if(os == OS.Linux) {
-                    UIManager.setLookAndFeel("com.sun.java.swing.plaf.gtk.GTKLookAndFeel");
-                } else {
-                    UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+                    UIManager.setLookAndFeel("com.sun.java.swing.plaf.gtk.GTKLookAndFeel"); // Apply gtk+ theme if available
                 }
-//                 Will eventually be removed in favour of native appearance
+                
+                //<editor-fold defaultstate="collapsed" desc="Nimbus will eventually be removed in favour of native appearance">
                 for(UIManager.LookAndFeelInfo info : UIManager.getInstalledLookAndFeels()) {
                     if("Nimbus".equals(info.getName())) {
                         UIManager.setLookAndFeel(info.getClassName());
                         break;
                     }
                 }
+                //</editor-fold>
             } catch(Exception ex) {
-                Logger.getLogger(EditorFrame.class.getName()).log(Level.WARNING, null, ex);
+                logger.log(Level.WARNING, null, ex);
             }
         }
-        GtkFixer.installGtkPopupBugWorkaround();
+        GtkFixer.installGtkPopupBugWorkaround(); // Apply clearlooks java menu fix if applicable
     }
     
-    private static boolean startServer(int port, final String[] args) {        
+    private static boolean startServer(int port, final String... args) {        
         try {
-            final ServerSocket server = new ServerSocket(port);
-//            server.setSoTimeout(1);
-            port = server.getLocalPort(); // if the port was 0, update it
+            final ServerSocket sock = new ServerSocket(port);
+            port = sock.getLocalPort();
             p.putInt("port", port);
             
             Runtime.getRuntime().addShutdownHook(new Thread() {
@@ -208,66 +209,71 @@ public class Main {
                 }
             });
             
-            Thread listener = new Thread(new Runnable() {
+            Thread server = new Thread(new Runnable() {
                 public void run() {
-                    while(!server.isClosed()) {
+                    while(!sock.isClosed()) {
                         try {
-                            Socket client = server.accept();
+                            Socket client = sock.accept();
                             BufferedReader in = new BufferedReader(new InputStreamReader(client.getInputStream()));
                             PrintWriter out = new PrintWriter(client.getOutputStream(), true);
                             
-                            String iMD5 = in.readLine();
-                            System.out.println("A client connected!");
-                            if(iMD5.equals("indev")) {
-                                server.close();
-                                out.println("indev");
-                                System.exit(0);
-                            }
-                            if(iMD5.equals(myMD5)) {
-                                createUI(args);
-                            }
-                        } catch(SocketTimeoutException e) {
+                            String cVer = in.readLine();
+                            logger.log(Level.INFO, "client {0} vs host {1}", new Object[] {cVer, myVer});
+                            String request = "-noupdate " + in.readLine();
+                            logger.log(Level.INFO, "Request: {0}", request);
+                            out.println(myVer);
                             
-                        } catch(IOException ex) {
-                            Logger.getLogger(Main.class.getName()).log(Level.SEVERE, null, ex);
+                            if(cVer.equals("indev") || !cVer.equals(myVer)) { // Or if timestamp is greater when timestamps are implemented
+                                sock.close();
+                                System.exit(0);
+                            } else {
+                                start(request.split(" "));
+                            }
+                        } catch(Exception ex) {
+                            logger.log(Level.SEVERE, null, ex);
                         }
                     }
                 }
             });
-            listener.setDaemon(os != OS.Mac); // non-daemon threads work in the background. Stick around if on a mac until manually terminated
-            listener.start();
-        } catch (IOException ex) {
-//            Logger.getLogger(Main.class.getName()).log(Level.SEVERE, null, ex);
+            server.setDaemon(os != OS.Mac); // non-daemon threads work in the background. Stick around if on a mac until manually terminated
+            server.start();
+        } catch(BindException ex) {
+            return false;
+        } catch(Exception ex) {
+            logger.log(Level.SEVERE, null, ex);
             return false;
         }
         return true;
     }
     
-    private static boolean startClient(int port, String[] args) {
-        System.out.println("Program already running, communicating...");
+    private static boolean startClient(int port, String... args) {
+        logger.info("Communicating with other running instance");
         try {
             Socket client = new Socket("localhost", port);
             BufferedReader in = new BufferedReader(new InputStreamReader(client.getInputStream()));
             PrintWriter out = new PrintWriter(client.getOutputStream(), true);
-            out.println(myMD5); // -1 = close
-            String returnCode = in.readLine(); // for dev purposes
-            System.out.println(returnCode);
-            if(returnCode.equals("indev")) {
-                main(new String[] {""}); // should carry args
+            out.println(myVer);
+            StringBuilder sb = new StringBuilder();
+            for(int i = 0; i < args.length; i++) {
+                sb.append(args[i]).append(" ");
+            }
+            out.println(sb.toString());
+            String sVer = in.readLine();
+            if(sVer.equals("indev") || !sVer.equals(myVer)) {
+                main(args);
             }
         } catch (IOException ex) {
-//            Logger.getLogger(Main.class.getName()).log(Level.SEVERE, null, ex1);
-            System.out.println("Program closed suddenly");
+            logger.log(Level.SEVERE, null, ex);
             return false;
         }
         return true;
     }
     
-    private static void createUI(String[] args) {
+    private static void start(String... args) {
         boolean flag = true;
         for(int i = 0; i < args.length; i++) {
             String cmd = args[i].toLowerCase();
-            if("noupdate".equals(cmd)) {
+            if("-noupdate".equals(cmd)) {
                 flag = false;
                 break;
             }
@@ -275,7 +281,7 @@ public class Main {
 
         final boolean autoCheck = flag;
 
-        SwingUtilities.invokeLater(new Runnable() { // SwingUtilities vs EventQueue?
+        EventQueue.invokeLater(new Runnable() {
 
             @Override
             public void run() {

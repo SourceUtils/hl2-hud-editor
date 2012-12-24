@@ -47,6 +47,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.URLConnection;
+import java.net.UnknownHostException;
 import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -124,12 +125,12 @@ public class EditorFrame extends JFrame {
                     BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getInputStream()));
                     String line;
                     while((line = reader.readLine()) != null) {
-                        if(!Main.indev && line.contains(Main.myMD5)) { // dev build cannot MD5
-                            String[] parts = line.split(Main.myMD5);
+                        if(!Main.indev && line.contains(Main.myVer)) { // dev build cannot MD5
+                            String[] parts = line.split(Main.myVer);
                             if(parts[0] != null) {
                                 text += parts[0];
                             }
-                            text += "<b><u>" + Main.myMD5 + "</u></b>";
+                            text += "<b><u>" + Main.myVer + "</u></b>";
                             if(parts[1] != null) {
                                 text += parts[1];
                             }
@@ -186,9 +187,17 @@ public class EditorFrame extends JFrame {
                     String md5;
                     URL url = new URL("https://dl.dropbox.com/u/42745598/tf/Hud%20Editor/TF2%20HUD%20Editor.jar.MD5");
                     URLConnection connection = url.openConnection();
+
+                    InputStream is;
+                    try {
+                        is = connection.getInputStream();
+                    } catch(UnknownHostException ex) {
+                        logger.info("No internet connection");
+                        return;
+                    }
                     
                     // read from internet
-                    BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getInputStream()));
+                    BufferedReader reader = new BufferedReader(new InputStreamReader(is));
                     String line = reader.readLine();
                     if(line != null && isMD5(line)) { // MD5's are only 32 characters long
                         md5 = line;
@@ -199,9 +208,9 @@ public class EditorFrame extends JFrame {
                     }
                     reader.close();
                     
-                    boolean equal = md5.equals(Main.myMD5);
+                    boolean equal = md5.equals(Main.myVer);
                     
-                    logger.log(Level.INFO, "{0} ={1}= {2}", new Object[]{md5, equal ? "" : "/", Main.myMD5});
+                    logger.log(Level.INFO, "{0} ={1}= {2}", new Object[]{md5, equal ? "" : "/", Main.myVer});
                     
                     if(!equal) {
                         updateButton.setEnabled(true);
@@ -311,7 +320,7 @@ public class EditorFrame extends JFrame {
                     } else {
                         info("You have the latest version.");
                     }
-                } catch (IOException ex) {
+                } catch(IOException ex) {
                     retries--;
                     if(retries > 0) {
                         doCheckForUpdates();
@@ -346,7 +355,7 @@ public class EditorFrame extends JFrame {
         aboutText += "<p>Source available on <a href=\"http://code.google.com/p/tf2-hud-editor/\">Google code</a></p>";
         aboutText += "<p>I have an <a href=\"http://code.google.com/feeds/p/tf2-hud-editor/hgchanges/basic\">Atom feed</a> set up listing source commits</p>";
         aboutText += "<p>Please give feedback or suggestions on <a href=\""+latestThread+"\">the latest update thread</a></p>";
-        aboutText += "<p>Current version: " + Main.myMD5 + "</p>";
+        aboutText += "<p>Current version: " + Main.myVer + "</p>";
         aboutText += "</html>";
         final JEditorPane panel = new JEditorPane("text/html", aboutText);
         panel.setEditable(false);
@@ -804,7 +813,7 @@ public class EditorFrame extends JFrame {
                     }
                 }).start();
             } catch(UnsupportedClassVersionError e) {
-                
+                e.printStackTrace();
             }
         } else {
             locate();
