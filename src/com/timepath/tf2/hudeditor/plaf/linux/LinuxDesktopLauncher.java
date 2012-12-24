@@ -23,7 +23,7 @@ public class LinuxDesktopLauncher {
     }
     
     private static void createLauncher() {
-        File destFile = new File(System.getenv("XDG_DATA_HOME") + "/applications/" + Main.appName + ".desktop");
+        File destFile = new File(System.getenv("XDG_DATA_HOME") + "/applications/" + Main.projectName + ".desktop");
         try {
             destFile.delete();
             destFile.createNewFile();
@@ -33,9 +33,9 @@ public class LinuxDesktopLauncher {
                 destination = new PrintWriter(new FileOutputStream(destFile));
                 destination.println("[Desktop Entry]");
                 destination.println("Version=1.0");
-                destination.println("StartupWMClass=" + Main.appName);
+                destination.println("StartupWMClass=" + Main.projectName);
                 destination.println("Exec=java -jar Dropbox/Public/tf/Hud\\ Editor/TF2\\ HUD\\ Editor.jar %U"); // TODO: fixme. Get a dedicated install directory.
-                destination.println("Icon=" + Main.appName);
+                destination.println("Icon=" + Main.projectName);
                 destination.println("Type=Application");
                 destination.println("StartupNotify=true");
                 destination.println("Terminal=false");
@@ -63,7 +63,7 @@ public class LinuxDesktopLauncher {
         String[] icons = {"png", "svg"};
         for(int i = 0; i < icons.length; i++) {
             try {
-                File destFile = new File(System.getenv("XDG_DATA_HOME") + "/icons/" + Main.appName + "." + icons[i]);
+                File destFile = new File(System.getenv("XDG_DATA_HOME") + "/icons/" + Main.projectName + "." + icons[i]);
 
                 if(!destFile.getParentFile().exists()) {
                     destFile.getParentFile().mkdirs();

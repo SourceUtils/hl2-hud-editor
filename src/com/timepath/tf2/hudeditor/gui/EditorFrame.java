@@ -2,9 +2,11 @@ package com.timepath.tf2.hudeditor.gui;
 
 //<editor-fold defaultstate="collapsed" desc="imports">
 import com.timepath.tf2.hudeditor.Main;
+import com.timepath.tf2.hudeditor.Utils;
 import com.timepath.tf2.hudeditor.loaders.CaptionLoaderFrame;
 import com.timepath.tf2.hudeditor.loaders.ResLoader;
 import com.timepath.tf2.hudeditor.loaders.VtfLoader;
+import com.timepath.tf2.hudeditor.plaf.NativeFileChooser;
 import com.timepath.tf2.hudeditor.plaf.OS;
 import com.timepath.tf2.hudeditor.plaf.mac.OSXAdapter;
 import java.awt.BorderLayout;
@@ -12,7 +14,6 @@ import java.awt.Cursor;
 import java.awt.Desktop;
 import java.awt.Dimension;
 import java.awt.DisplayMode;
-import java.awt.FileDialog;
 import java.awt.GraphicsDevice;
 import java.awt.GraphicsEnvironment;
 import java.awt.Image;
@@ -58,10 +59,11 @@ import java.util.logging.Logger;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 import javax.swing.Action;
+import javax.swing.BoxLayout;
 import javax.swing.JButton;
+import javax.swing.JComboBox;
 import javax.swing.JDialog;
 import javax.swing.JEditorPane;
-import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JMenu;
@@ -84,7 +86,6 @@ import javax.swing.event.HyperlinkListener;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
-import net.tomahawk.XFileDialog;
 import org.java.ayatana.ApplicationMenu;
 import org.java.ayatana.AyatanaDesktop;
 //</editor-fold>
@@ -94,7 +95,10 @@ import org.java.ayatana.AyatanaDesktop;
  * @author TimePath
  */
 public class EditorFrame extends JFrame {
+    
     private static final long serialVersionUID = 1L;
+    
+    private static final Logger logger = Logger.getLogger(EditorFrame.class.getName());
     
     private boolean updating;
     
@@ -103,6 +107,25 @@ public class EditorFrame extends JFrame {
     private final JButton updateButton;
     private final JToolBar statusBar;
     private final boolean continuousLayout = true;
+    
+    private JScrollPane canvasPane;
+    
+    public static EditorCanvas canvas; // should not be static
+
+    private ResLoader resloader;
+
+    private JTree fileSystem;
+
+    private DefaultMutableTreeNode hudFilesRoot;
+
+    private EditorPropertiesTable propTable;
+    
+    private String hudSelectionDir;
+    
+    private File lastLoaded; // convenience
+    
+    private JSpinner spinnerWidth;
+    private JSpinner spinnerHeight;
     
     private boolean isMD5(String str) {
         return str.matches("[a-fA-F0-9]{32}");
@@ -398,15 +421,17 @@ public class EditorFrame extends JFrame {
     
     public void quit() {
         if(!updating) {
-            System.out.println("Quitting...");
+            logger.info("Quitting...");
+            this.dispose();
             if(Main.os == OS.Mac) {
                 JFrame f = new JFrame();
                 f.setUndecorated(true);
                 f.setJMenuBar(this.getJMenuBar());
                 f.setLocation(-Integer.MAX_VALUE, -Integer.MAX_VALUE); // Hacky - should just use the Application calls...
                 f.setVisible(true);
+            } else {
+                System.exit(0);
             }
-            this.dispose();
         }
     }
 
@@ -588,7 +613,8 @@ public class EditorFrame extends JFrame {
                     if(worked) {
                         this.setJMenuBar(null);
                     } else {
-                        error("AyatanaDesktop failed to load" + "\n" + System.getenv("XDG_CURRENT_DESKTOP"));
+                        // I think this one is safe to ignore
+//                        error("AyatanaDesktop failed to load" + "\n" + System.getenv("XDG_CURRENT_DESKTOP"));
                     }
                 }
             } catch(UnsupportedClassVersionError e) { // crashes earlier versions of the JVM - particularly old macs
@@ -650,115 +676,48 @@ public class EditorFrame extends JFrame {
         }
     }
     
-    
-    private JScrollPane canvasPane;
-    
-    public static EditorCanvas canvas; // should not be static
-
-    private ResLoader resloader;
-
-    private JTree fileSystem;
-
-    private DefaultMutableTreeNode hudFilesRoot;
-
-    private EditorPropertiesTable propTable;
-    
-    private String hudSelectionDir;
-    
-    private File lastLoaded; // convenience
-    
-    //<editor-fold defaultstate="collapsed" desc="Broesel's stuff">
-    //    private void selectSteamLocation() {
-    //        boolean installPathValid = false;
-    //            File steamFolder = new File("");
-    //        File installDir;
-    //            if (installDir != null && installDir.exists()) {
-    //                    steamFolder = installDir.getParentFile().getParentFile().getParentFile().getParentFile();
-    //            }
-    //            final JFileChooser chooser = new JFileChooser(steamFolder);
-    //            chooser.setDialogTitle("Select Steam\\ folder");
-    //            chooser.setToolTipText("Please select you Steam\\ folder! Not any subfolders of it.");
-    //            chooser.setDialogType(JFileChooser.OPEN_DIALOG);
-    //            chooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
-    //
-    //            final int returnVal = chooser.showOpenDialog(this);
-    //        File zipFile = null;
-    //            if (returnVal == JFileChooser.APPROVE_OPTION) {
-    //                    final File steamappsFolder = new File(chooser.getSelectedFile(), "SteamApps");
-    //                    if (!steamappsFolder.exists()) {
-    //                            showErrorDialog("Invalid path to ...\\Steam\\SteamApps\\: " + steamappsFolder.getAbsolutePath(), "No SteamApps\\ Folder");
-    //                    }
-    //                    else if (!steamappsFolder.isDirectory()) {
-    //                            showErrorDialog("The entered path is not a folder: " + steamappsFolder.getAbsolutePath(), "This is not a Folder");
-    //                    }
-    //                    else {
-    //                            // Steam-User ausw�hlen lassen
-    //                            // DropDown erstellen
-    //                            final JComboBox dropDown = new JComboBox();
-    //                            final File[] userFolders = steamappsFolder.listFiles();
-    //                            for (int i = 0; i < userFolders.length; i++) {
-    //                                    if (userFolders[i].isDirectory() && !userFolders[i].getName().equalsIgnoreCase("common")
-    //                                                    && !userFolders[i].getName().equalsIgnoreCase("sourcemods")) {
-    //                                            // �berpr�fen, ob in dem User-Ordner ein tf2 Ordner
-    //                                            // vorhanden ist
-    //                                            final Collection<String> gameFolders = Arrays.asList(userFolders[i].list());
-    //                                            if (gameFolders.contains("team fortress 2")) {
-    //                                                    dropDown.addItem(userFolders[i].getName());
-    //                                            }
-    //                                    }
-    //                            }
-    //
-    //                            // �berpr�fen ob dropdown elemente hat und dialog anzeigen
-    //                            if (dropDown.getItemCount() > 0) {
-    //                                    final JPanel dialogPanel = new JPanel();
-    //                                    dialogPanel.setLayout(new BoxLayout(dialogPanel, BoxLayout.Y_AXIS));
-    //                                    dialogPanel.add(new JLabel("Please choose for which user you want to install the HUD"));
-    //                                    dialogPanel.add(dropDown);
-    //                                    JOptionPane.showMessageDialog(this, dialogPanel, "Select user", JOptionPane.QUESTION_MESSAGE);
-    //                            }
-    //                            else {
-    //                                    showErrorDialog("No users have TF2 installed!", "No TF2 found");
-    //                                    return;
-    //                            }
-    //
-    //                            installDir = new File(steamappsFolder, dropDown.getSelectedItem() + File.separator + "team fortress 2" + File.separator + "tf");
-    //                            if (installDir.isDirectory() && installDir.exists()) {
-    //                                    installPathValid = true;
-    //                                    steamInput.setText(installDir.getAbsolutePath());
-    //                                    try {
-    //                                            String zipFilePath = "";
-    //                                            if (zipFile != null && zipFileValid) {
-    //                                                    zipFilePath = zipFile.getAbsolutePath();
-    //                                            }
-    //                                            saveInstallPath(installDir.getAbsolutePath(), zipFilePath);
-    //                                    }
-    //                                    catch (final IOException e1) {
-    //                                            showErrorDialog(e1.getMessage(), "Could not save installpath");
-    //                                            e1.printStackTrace();
-    //                                    }
-    //                            }
-    //                            else {
-    //                                    showErrorDialog("This is not a valid install location for broeselhud", "No valid installpath");
-    //                            }
-    //                    }
-    //            }
-    //    }
-    //</editor-fold>
-    
-    public static String locateSteamAppsDirectory() {
-        if(Main.os == OS.Windows) {
-            String str = System.getenv("PROGRAMFILES(x86)");
-            if(str == null) {
-                str = System.getenv("PROGRAMFILES");
+    /**
+     * Based off the BroeselHud installer
+     */
+    private void locateUserDirectory() {
+        FilenameFilter dirFilter = new FilenameFilter() {
+            public boolean accept(File dir, String name) {
+                return new File(dir, name).isDirectory();
             }
-            return str + "/Steam/steamapps/";
-        } else if(Main.os == OS.Mac) {
-            return "~/Library/Application Support/Steam/SteamApps/";
-        } else if(Main.os == OS.Linux) {
-            return System.getenv("HOME") + "/.steam/root/SteamApps/";
-        } else {
-            return null;
+        };
+        
+        final JComboBox dropDown = new JComboBox();
+        File steamappsFolder = new File(Utils.locateSteamAppsDirectory());
+        final File[] userFolders = steamappsFolder.listFiles(dirFilter);
+        for(int i = 0; i < userFolders.length; i++) {
+            if(!userFolders[i].getName().equalsIgnoreCase("common") && !userFolders[i].getName().equalsIgnoreCase("sourcemods")) {
+                final File[] gameFolders = userFolders[i].listFiles(dirFilter);
+                for(int j = 0; j < gameFolders.length; j++) {
+                    if(gameFolders[j].getName().equalsIgnoreCase("Team Fortress 2")) {
+                        dropDown.addItem(userFolders[i].getName());
+                        break;
+                    }
+                }
+            }
         }
+        if(dropDown.getItemCount() > 0) {
+            final JPanel dialogPanel = new JPanel();
+            dialogPanel.setLayout(new BoxLayout(dialogPanel, BoxLayout.Y_AXIS));
+            dialogPanel.add(new JLabel("Please choose for which user you want to install the HUD"));
+            dialogPanel.add(dropDown);
+            JOptionPane.showMessageDialog(this, dialogPanel, "Select user", JOptionPane.QUESTION_MESSAGE);
+        } else {
+            error("No users have TF2 installed!", "TF2 not found");
+        }
+        
+        File installDir = new File(steamappsFolder, dropDown.getSelectedItem() + "/Team Fortress 2/tf");
+        if(installDir.isDirectory() && installDir.exists()) {
+            info("Install path: " + installDir, "Install path");
+        }
+    }
+    
+    private void locateZippedHud() {
+        
     }
 
     /**
@@ -769,144 +728,25 @@ public class EditorFrame extends JFrame {
      * mac = ?
      */
     private void locateHudDirectory() {
-//        NativeFileChooser nc = new NativeFileChooser(EditorFrame.this, "Open a HUD folder", hudSelectionDir);
-//        final File selection = nc.getFolder();
-//        if(selection != null) {
-//            hudSelectionDir = selection.getParent();
-//
-//            new Thread() {
-//                @Override
-//                public void run() {
-//                    loadHud(selection);
-//                }
-//            }.start();
-//        } else {
-//            // Throw error or load archive
-//        }
-        
-        if(Main.os == OS.Mac) {
-            locateMac();
-        } else if(Main.os == OS.Windows) {
-            try {
-                new Thread(new Runnable() {
-                    public void run() {
-                        String selection = null;
-                        try {
-                            XFileDialog fd = new XFileDialog(EditorFrame.this);
-                            fd.setTitle(Main.rb.getString("LoadHudDir"));
-                            selection = fd.getFolder();
-                            fd.dispose();
-                        } catch(UnsupportedClassVersionError e) {
+        new Thread() {
+            @Override
+            public void run() {
+                NativeFileChooser nc = new NativeFileChooser(EditorFrame.this, Main.rb.getString("LoadHudDir"), hudSelectionDir);
+                final File selection = nc.getFolder();
+                if(selection != null) {
+                    hudSelectionDir = selection.getPath();
 
+                    new Thread() {
+                        @Override
+                        public void run() {
+                            loadHud(selection);
                         }
-                        if(selection != null) {
-                            final File f = new File(selection);
-                //                    new Thread() {
-                //                        @Override
-                //                        public void run() {
-                                    loadHud(f);
-                //                        }
-                //                    }.start();
-                        } else {
-                            // Throw error or load archive
-                        }
-                    }
-                }).start();
-            } catch(UnsupportedClassVersionError e) {
-                e.printStackTrace();
-            }
-        } else {
-            locate();
-        }
-    }
-    
-    //<editor-fold defaultstate="collapsed" desc="Locate">
-    private void locateMac() {
-        new Thread(new Runnable() {
-            public void run() {
-                String selection = null;
-                System.setProperty("apple.awt.fileDialogForDirectories", "true");
-                FileDialog fd = new FileDialog(EditorFrame.this, Main.rb.getString("LoadHudDir"));
-                if(hudSelectionDir != null) {
-                    fd.setDirectory(hudSelectionDir);
-                }
-                fd.setFilenameFilter(new FilenameFilter() {
-                    public boolean accept(File dir, String name) {
-                        return new File(dir, name).isDirectory();
-                    }
-                });
-                fd.setMode(FileDialog.LOAD);
-                fd.setVisible(true);
-                if(fd.getDirectory() == null || fd.getFile() == null) {
-                    return;
-                }
-                String file = fd.getDirectory() + fd.getFile();
-                if(file != null) {
-                    hudSelectionDir = new File(file).getParent();
-                    selection = file;
-                }
-                
-                if(selection != null) {
-                    final File f = new File(selection);
-                    //                    new Thread() {
-                    //                        @Override
-                    //                        public void run() {
-                    loadHud(f);
-                    //                        }
-                    //                    }.start();
+                    }.start();
                 } else {
-                    // Throw error or load archive
                 }
             }
-        }).start();
+        }.start();
     }
-    
-    private void locate() {
-        new Thread(new Runnable() {
-            public void run() {
-                String selection = null;
-                //        if(HudEditor.os == OS.Linux) {
-                //            EditorFrame.systemLaf();
-                //            UIManager.put("FileChooserUI", "eu.kostia.gtkjfilechooser.ui.GtkFileChooserUI");
-                //            JFileChooser fd = new JFileChooser();
-                //            fd.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
-                //            if(hudSelectionDir != null) {
-                //                fd.setCurrentDirectory(new File(hudSelectionDir));
-                //            }
-                //            if(fd.showOpenDialog(EditorFrame.this) == JFileChooser.APPROVE_OPTION) {
-                //                hudSelectionDir = fd.getSelectedFile().getParent();
-                //                selection = fd.getSelectedFile().getPath();
-                //            }
-                //            EditorFrame.initialLaf();
-                //            UIManager.put("FileChooserUI", initFCUILinux);
-                //        } else { // Fall back to swing
-                JFileChooser fd = new JFileChooser();
-                fd.setDialogTitle(Main.rb.getString("LoadHudDir"));
-                fd.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
-                if(hudSelectionDir != null) {
-                    fd.setCurrentDirectory(new File(hudSelectionDir));
-                }
-                if(fd.showOpenDialog(EditorFrame.this) == JFileChooser.APPROVE_OPTION) {
-                    hudSelectionDir = fd.getSelectedFile().getParent();
-                    selection = fd.getSelectedFile().getPath();
-                }
-                //        }
-                if(selection != null) {
-                    final File f = new File(selection);
-                    //                    new Thread() {
-                    //                        @Override
-                    //                        public void run() {
-                    loadHud(f);
-                    //                        }
-                    //                    }.start();
-                } else {
-                    // Throw error or load archive
-                }
-                
-            }
-        }).start();
-    }
-    //</editor-fold>
     
     private void error(Object msg) {
         error(msg, Main.rb.getString("Error"));
@@ -1020,44 +860,43 @@ public class EditorFrame extends JFrame {
             });
         }
     }
-
-    private JSpinner spinnerWidth;
-    private JSpinner spinnerHeight;
     
-//    private static class NumericDocumentFilter extends DocumentFilter {
-//
-//        @Override
-//        public void insertString(FilterBypass fb, int offset, String string, AttributeSet attr) throws BadLocationException {
-//            if(stringContainsOnlyDigits(string)) {
-//                super.insertString(fb, offset, string, attr);
-//            }
-//        }
-//
-//        @Override
-//        public void remove(FilterBypass fb, int offset, int length) throws BadLocationException {
-//            super.remove(fb, offset, length);
-//        }
-//
-//        @Override
-//        public void replace(FilterBypass fb, int offset, int length, String text, AttributeSet attrs) throws BadLocationException {
-//            if(stringContainsOnlyDigits(text)) {
-//                super.replace(fb, offset, length, text, attrs);
-//            }
-//        }
-//
-//        private boolean stringContainsOnlyDigits(String text) {
-//            for (int i = 0; i < text.length(); i++) {
-//                if (!Character.isDigit(text.charAt(i))) {
-//                    return false;
-//                }
-//            }
-//            return true;
-//        }
-//    }
+    //<editor-fold defaultstate="collapsed" desc="Number filter">
+    //    private static class NumericDocumentFilter extends DocumentFilter {
+    //
+    //        @Override
+    //        public void insertString(FilterBypass fb, int offset, String string, AttributeSet attr) throws BadLocationException {
+    //            if(stringContainsOnlyDigits(string)) {
+    //                super.insertString(fb, offset, string, attr);
+    //            }
+    //        }
+    //
+    //        @Override
+    //        public void remove(FilterBypass fb, int offset, int length) throws BadLocationException {
+    //            super.remove(fb, offset, length);
+    //        }
+    //
+    //        @Override
+    //        public void replace(FilterBypass fb, int offset, int length, String text, AttributeSet attrs) throws BadLocationException {
+    //            if(stringContainsOnlyDigits(text)) {
+    //                super.replace(fb, offset, length, text, attrs);
+    //            }
+    //        }
+    //
+    //        private boolean stringContainsOnlyDigits(String text) {
+    //            for (int i = 0; i < text.length(); i++) {
+    //                if (!Character.isDigit(text.charAt(i))) {
+    //                    return false;
+    //                }
+    //            }
+    //            return true;
+    //        }
+    //    }
+    //</editor-fold>
     
     private void changeResolution() {
-        if(spinnerWidth == null) {
             spinnerWidth = new JSpinner(new SpinnerNumberModel(canvas.screen.width, 640, 7680, 1)); // WHUXGA
+            spinnerWidth.setEnabled(false);
 //            NumberEditor jsWidth = (NumberEditor) spinnerWidth.getEditor();
 //            final Document jsWidthDoc = jsWidth.getTextField().getDocument();
 //            if(jsWidthDoc instanceof PlainDocument) {
@@ -1075,9 +914,8 @@ public class EditorFrame extends JFrame {
 //                docWidth.setDocumentFilter(new NumericDocumentFilter());
 //                jsWidth.getTextField().setDocument(docWidth);
 //            }
-        }
-        if(spinnerHeight == null) {
             spinnerHeight = new JSpinner(new SpinnerNumberModel(canvas.screen.height, 480, 4800, 1)); // WHUXGA
+            spinnerHeight.setEnabled(false);
 //            NumberEditor jsHeight = (NumberEditor) spinnerHeight.getEditor();
 //            final Document jsHeightDoc = jsHeight.getTextField().getDocument();
 //            if(jsHeightDoc instanceof PlainDocument) {
@@ -1095,17 +933,42 @@ public class EditorFrame extends JFrame {
 //                docHeight.setDocumentFilter(new NumericDocumentFilter());
 //                jsHeight.getTextField().setDocument(docHeight);
 //            }
-        }
-        Object[] message = {"Width: ", spinnerWidth, "Height: ", spinnerHeight};
+        final JComboBox dropDown = new JComboBox();
         
         GraphicsEnvironment env = GraphicsEnvironment.getLocalGraphicsEnvironment();
         GraphicsDevice[] devices = env.getScreenDevices();
+        ArrayList<Object> listItems = new ArrayList<Object>();
         for (int i = 0; i < devices.length; i++) {
-            DisplayMode[] resolutions = devices[i].getDisplayModes();
+            DisplayMode[] resolutions = devices[i].getDisplayModes(); // TF2 has different resolutions
             for(int j = 0; j < resolutions.length; j++) {
-                System.out.println(resolutions[j].getWidth() + "x" + resolutions[j].getHeight());
+                String item = resolutions[j].getWidth() + "x" + resolutions[j].getHeight(); // TODO: Work out aspect ratios
+                if(!listItems.contains(item)) {
+                    listItems.add(item);
+                }
             }
         }
+        dropDown.addItem("Custom");
+        for(int i = 0; i < listItems.size(); i++) {
+            dropDown.addItem(listItems.get(i));
+        }
+        dropDown.setSelectedIndex(1);
+        dropDown.addActionListener(new ActionListener() {
+
+            public void actionPerformed(ActionEvent e) {
+                String item = dropDown.getSelectedItem().toString();
+                boolean isRes = item.contains("x");
+                spinnerWidth.setEnabled(!isRes);
+                spinnerHeight.setEnabled(!isRes);
+                if(isRes) {
+                    String[] xy = item.split("x");
+                    spinnerWidth.setValue(Integer.parseInt(xy[0]));
+                    spinnerHeight.setValue(Integer.parseInt(xy[1]));
+                }
+            }
+            
+        });
+        
+        Object[] message = {"Presets: ", dropDown, "Width: ", spinnerWidth, "Height: ", spinnerHeight};
         
         final JOptionPane optionPane = new JOptionPane(message, JOptionPane.PLAIN_MESSAGE, JOptionPane.OK_CANCEL_OPTION, null, null);
         final JDialog dialog = optionPane.createDialog(this, "Change resolution...");
@@ -1144,6 +1007,7 @@ public class EditorFrame extends JFrame {
         private JMenuItem deleteItem;
         private JMenuItem selectAllItem;
         private JMenuItem preferencesItem;
+        private JMenuItem locateUserItem;
         private JMenuItem resolutionItem;
         private JMenuItem previewItem;
         private JMenuItem updateItem;
@@ -1158,22 +1022,22 @@ public class EditorFrame extends JFrame {
         EditorMenuBar() {
             super();
             
-            JMenu fileMenu = new JMenu("File");
+            JMenu fileMenu = new JMenu(Main.rb.getString("File"));
             fileMenu.setMnemonic(KeyEvent.VK_F);
             this.add(fileMenu);
             
-            newItem = new JMenuItem("New", KeyEvent.VK_N);
+            newItem = new JMenuItem(Main.rb.getString("New"), KeyEvent.VK_N);
             newItem.setEnabled(false);
             newItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_N, Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()));
             newItem.addActionListener(al);
             fileMenu.add(newItem);
             
-            openItem = new JMenuItem("Open...", KeyEvent.VK_O);
+            openItem = new JMenuItem(Main.rb.getString("Open"), KeyEvent.VK_O);
             openItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_O, Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()));
             openItem.addActionListener(al);
             fileMenu.add(openItem);
             
-            openZippedItem = new JMenuItem("Open Zip...", KeyEvent.VK_Z);
+            openZippedItem = new JMenuItem(Main.rb.getString("OpenArchive"), KeyEvent.VK_Z);
             openZippedItem.setEnabled(false);
             openZippedItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_O, Toolkit.getDefaultToolkit().getMenuShortcutKeyMask() + ActionEvent.SHIFT_MASK));
             openZippedItem.addActionListener(al);
@@ -1270,13 +1134,17 @@ public class EditorFrame extends JFrame {
             selectAllItem.addActionListener(al);
             editMenu.add(selectAllItem);
             
+            editMenu.addSeparator();
+            
             if(Main.os != OS.Mac) {
-                editMenu.addSeparator();
-
                 preferencesItem = new JMenuItem("Preferences", KeyEvent.VK_E);
                 preferencesItem.addActionListener(al);
                 editMenu.add(preferencesItem);
             }
+            
+            locateUserItem = new JMenuItem("Select user folder", null);
+            locateUserItem.addActionListener(al);
+            editMenu.add(locateUserItem);
 
             JMenu viewMenu = new JMenu("View");
             viewMenu.setMnemonic(KeyEvent.VK_V);
@@ -1288,7 +1156,7 @@ public class EditorFrame extends JFrame {
             viewMenu.add(resolutionItem);
             
             previewItem = new JMenuItem("Full Screen Preview", KeyEvent.VK_F);
-            previewItem.setAccelerator(KeyStroke.getKeyStroke("F11")); // alt + shift + enter on linux
+            previewItem.setAccelerator(KeyStroke.getKeyStroke("F11"));
             previewItem.addActionListener(al);
             viewMenu.add(previewItem);
             
@@ -1361,8 +1229,12 @@ public class EditorFrame extends JFrame {
             public void actionPerformed(ActionEvent e) {
                 Object cmd = e.getSource();
                 
-                if(cmd == openItem || cmd == openZippedItem) {
+                if(cmd == openItem) {
                     locateHudDirectory();
+                } else if(cmd == openZippedItem) {
+                    locateZippedHud();
+                } else if(cmd == locateUserItem) {
+                    locateUserDirectory();
                 } else if(cmd == closeItem) {
                     closeHud();
                 } else if(cmd == saveItem) {
@@ -1403,5 +1275,5 @@ public class EditorFrame extends JFrame {
             }
         }
     }
-    private static final Logger logger = Logger.getLogger(EditorFrame.class.getName());
+    
 }

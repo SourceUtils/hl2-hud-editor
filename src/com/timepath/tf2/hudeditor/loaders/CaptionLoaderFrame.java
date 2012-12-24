@@ -1,6 +1,6 @@
 package com.timepath.tf2.hudeditor.loaders;
 
-import com.timepath.tf2.hudeditor.gui.EditorFrame;
+import com.timepath.tf2.hudeditor.Utils;
 import com.timepath.tf2.hudeditor.util.DataUtils;
 import java.awt.Dimension;
 import java.io.File;
@@ -259,7 +259,7 @@ public class CaptionLoaderFrame extends javax.swing.JFrame {
         private void generateHash() {
             logger.info("Generating hash codes ...");
             try {
-                GcfFile gcf = GcfFile.load(new File(EditorFrame.locateSteamAppsDirectory() + "team fortress 2 content.gcf"));
+                GcfFile gcf = GcfFile.load(new File(Utils.locateSteamAppsDirectory() + "team fortress 2 content.gcf"));
 
                 CRC32 crc = new CRC32();
 

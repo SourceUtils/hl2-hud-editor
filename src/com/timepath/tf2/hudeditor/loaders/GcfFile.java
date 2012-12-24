@@ -1,6 +1,6 @@
 package com.timepath.tf2.hudeditor.loaders;
 
-import com.timepath.tf2.hudeditor.gui.EditorFrame;
+import com.timepath.tf2.hudeditor.Utils;
 import com.timepath.tf2.hudeditor.util.DataUtils;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -564,7 +564,7 @@ public class GcfFile {
     
     public static void main(String[] args) {
         try {
-            load(new File(EditorFrame.locateSteamAppsDirectory() + "team fortress 2 content.gcf")).test();
+            load(new File(Utils.locateSteamAppsDirectory() + "team fortress 2 content.gcf")).test();
     //        load(new File(EditorFrame.locateSteamAppsDirectory() + "team fortress 2 materials.gcf"));
         } catch (IOException ex) {
             Logger.getLogger(GcfFile.class.getName()).log(Level.SEVERE, null, ex);

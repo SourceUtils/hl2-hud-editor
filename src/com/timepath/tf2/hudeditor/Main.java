@@ -38,14 +38,12 @@ public class Main {
     
     public static final ResourceBundle rb = ResourceBundle.getBundle("com/timepath/tf2/hudeditor/resources/lang");
     
-    /**
-     * The window class on Linux systems
-     * The app name on Mac systems
-     */
     public final static String appName = "TF2 HUD Editor";
     
     /**
      * Used for storing preferences. Do not localize
+     * The window class on Linux systems
+     * The app name on Mac systems
      */
     public final static String projectName = "tf2-hud-editor";
     
@@ -93,13 +91,13 @@ public class Main {
 //            if(force) {
                 System.setProperty("jayatana.force", "true");
 //            }
-            System.setProperty("jayatana.startupWMClass", appName);
+            System.setProperty("jayatana.startupWMClass", projectName);
             
             try {
                 Toolkit xToolkit = Toolkit.getDefaultToolkit();
                 Field awtAppClassNameField = xToolkit.getClass().getDeclaredField("awtAppClassName");
                 awtAppClassNameField.setAccessible(true);
-                awtAppClassNameField.set(xToolkit, appName);
+                awtAppClassNameField.set(xToolkit, projectName);
             } catch (Exception ex) {
                 Logger.getLogger(Main.class.getName()).log(Level.SEVERE, null, ex);
             }
@@ -204,7 +202,8 @@ public class Main {
             Runtime.getRuntime().addShutdownHook(new Thread() {
                 @Override
                 public void run() {
-                    System.out.println("Shutting down...");
+                    logger.info("Server shutting down...");
+                    p.remove("port");
 //                    System.exit(0);
                 }
             });

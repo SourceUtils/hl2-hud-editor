@@ -24,7 +24,7 @@
         <mkdir dir="dist/lib"/> <!-- Just in case no external libraries are in use and we don't want the packaging to fail -->
         <jar destfile="${archive.dir}/temp_final.jar" filesetmanifest="skip">
             <zipgroupfileset dir="dist" includes="*.jar"/>
-            <zipgroupfileset dir="dist/lib" includes="*.jar" excludes="AppleJavaExtensions.jar"/>
+            <zipgroupfileset dir="dist/lib" includes="*.jar"/>
             <!--<zipgroupfileset dir="." includes="*.dll, *.so, *.dylib"/>-->
             <manifest>
                 <attribute name="Main-Class" value="${main.class}"/>
@@ -38,15 +38,15 @@
         <copy file="${store.jar.dated}" tofile="${store.jar}"/>
         <checksum file="${store.jar}" forceOverwrite="yes"/>
         
-        <chmod file="${store.jar.dated}" perm="777"/>
+        <!--<chmod file="${store.jar.dated}" perm="777"/>-->
         <chmod file="${store.jar}" perm="777"/>
         
-<!--        <echo message="Testing ${application.title} (${store.jar.dated})"/>
+        <!--<echo message="Testing ${application.title} (${store.jar.dated})"/>-->
         
-        <exec executable="java">
-          <arg value="-jar"/>
-          <arg value="${store.jar.dated}"/>
-        </exec>-->
+        <!--<exec executable="java">-->
+          <!--<arg value="-jar"/>-->
+          <!--<arg value="${store.jar.dated}"/>-->
+        <!--</exec>-->
           
     </target>
     
