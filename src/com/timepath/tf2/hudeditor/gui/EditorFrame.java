@@ -2,10 +2,10 @@ package com.timepath.tf2.hudeditor.gui;
 
 //<editor-fold defaultstate="collapsed" desc="imports">
 import com.timepath.tf2.hudeditor.Main;
-import com.timepath.tf2.hudeditor.plaf.OS;
 import com.timepath.tf2.hudeditor.loaders.CaptionLoaderFrame;
 import com.timepath.tf2.hudeditor.loaders.ResLoader;
 import com.timepath.tf2.hudeditor.loaders.VtfLoader;
+import com.timepath.tf2.hudeditor.plaf.OS;
 import com.timepath.tf2.hudeditor.plaf.mac.OSXAdapter;
 import java.awt.BorderLayout;
 import java.awt.Cursor;
@@ -575,7 +575,7 @@ public class EditorFrame extends JFrame {
         } else if(Main.os == OS.Linux) {
             try {
                 if(AyatanaDesktop.isSupported()) {
-                    boolean worked = ApplicationMenu.tryInstall(this, jmb);
+                    boolean worked = ApplicationMenu.tryInstall(EditorFrame.this, jmb);
                     if(worked) {
                         this.setJMenuBar(null);
                     } else {

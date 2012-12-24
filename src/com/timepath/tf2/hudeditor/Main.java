@@ -179,7 +179,7 @@ public class Main {
                 } else {
                     UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
                 }
-                // Will eventually be removed in favour of native appearance
+//                 Will eventually be removed in favour of native appearance
                 for(UIManager.LookAndFeelInfo info : UIManager.getInstalledLookAndFeels()) {
                     if("Nimbus".equals(info.getName())) {
                         UIManager.setLookAndFeel(info.getClassName());
