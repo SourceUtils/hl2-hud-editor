@@ -25,35 +25,6 @@ import javax.swing.table.DefaultTableModel;
  */
 public class CaptionLoaderFrame extends javax.swing.JFrame {
     
-    private static final Logger logger = Logger.getLogger(CaptionLoaderFrame.class.getName());
-    
-    private final CaptionLoader cl;
-
-    /**
-     * Creates new form CaptionLoaderFrame
-     */
-    public CaptionLoaderFrame() {
-        initComponents();
-        
-        jTextField3.getDocument().addDocumentListener(new DocumentListener() {
-            public void changedUpdate(DocumentEvent e) {
-                update();
-            }
-            public void removeUpdate(DocumentEvent e) {
-                update();
-            }
-            public void insertUpdate(DocumentEvent e) {
-                update();
-            }
-
-            public void update() {
-                jTextField4.setText(takeCRC32(jTextField3.getText()));
-            }
-        });
-        
-        cl = new CaptionLoader();
-    }
-
     /**
      * This method is called from within the constructor to initialize the form.
      * WARNING: Do NOT modify this code. The content of this method is always
@@ -71,6 +42,7 @@ public class CaptionLoaderFrame extends javax.swing.JFrame {
         jMenuBar1 = new javax.swing.JMenuBar();
         jMenu1 = new javax.swing.JMenu();
         jMenuItem1 = new javax.swing.JMenuItem();
+        jMenuItem2 = new javax.swing.JMenuItem();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
         setTitle("Caption Reader");
@@ -82,15 +54,7 @@ public class CaptionLoaderFrame extends javax.swing.JFrame {
             new String [] {
                 "Key (or CRC32)", "Value"
             }
-        ) {
-            boolean[] canEdit = new boolean [] {
-                false, false
-            };
-
-            public boolean isCellEditable(int rowIndex, int columnIndex) {
-                return canEdit [columnIndex];
-            }
-        });
+        ));
         jTable1.setCursor(new java.awt.Cursor(java.awt.Cursor.DEFAULT_CURSOR));
         jTable1.getTableHeader().setReorderingAllowed(false);
         jScrollPane1.setViewportView(jTable1);
@@ -125,10 +89,18 @@ public class CaptionLoaderFrame extends javax.swing.JFrame {
         jMenuItem1.setText("Open");
         jMenuItem1.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                jMenuItem1ActionPerformed(evt);
+                load(evt);
             }
         });
         jMenu1.add(jMenuItem1);
+
+        jMenuItem2.setText("Save");
+        jMenuItem2.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                save(evt);
+            }
+        });
+        jMenu1.add(jMenuItem2);
 
         jMenuBar1.add(jMenu1);
 
@@ -147,18 +119,18 @@ public class CaptionLoaderFrame extends javax.swing.JFrame {
                 .addContainerGap()
                 .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 404, Short.MAX_VALUE))
+                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 406, Short.MAX_VALUE))
         );
 
         pack();
     }// </editor-fold>//GEN-END:initComponents
 
-    private void jMenuItem1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jMenuItem1ActionPerformed
+    private void load(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_load
         JFileChooser fc = new JFileChooser();
         
         FileFilter filter = new FileFilter() {
             public boolean accept(File file) {
-                return file.getName().endsWith(".dat") || file.isDirectory();
+                return (file.getName().startsWith("closecaption_") && (file.getName().endsWith(".dat") || file.getName().endsWith(".txt"))) || file.isDirectory();
             }
             public String getDescription() {
                 return "VCCD Files";
@@ -182,8 +154,53 @@ public class CaptionLoaderFrame extends javax.swing.JFrame {
         } else {
             
         }
-    }//GEN-LAST:event_jMenuItem1ActionPerformed
+    }//GEN-LAST:event_load
 
+    private void save(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_save
+        
+    }//GEN-LAST:event_save
+    
+    // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JMenu jMenu1;
+    private javax.swing.JMenuBar jMenuBar1;
+    private javax.swing.JMenuItem jMenuItem1;
+    private javax.swing.JMenuItem jMenuItem2;
+    private javax.swing.JPanel jPanel1;
+    private javax.swing.JScrollPane jScrollPane1;
+    private javax.swing.JTable jTable1;
+    private javax.swing.JTextField jTextField3;
+    private javax.swing.JTextField jTextField4;
+    // End of variables declaration//GEN-END:variables
+
+    private static final Logger logger = Logger.getLogger(CaptionLoaderFrame.class.getName());
+    
+    private final CaptionLoader cl;
+
+    /**
+     * Creates new form CaptionLoaderFrame
+     */
+    public CaptionLoaderFrame() {
+        initComponents();
+        
+        jTextField3.getDocument().addDocumentListener(new DocumentListener() {
+            public void changedUpdate(DocumentEvent e) {
+                update();
+            }
+            public void removeUpdate(DocumentEvent e) {
+                update();
+            }
+            public void insertUpdate(DocumentEvent e) {
+                update();
+            }
+
+            public void update() {
+                jTextField4.setText(takeCRC32(jTextField3.getText()));
+            }
+        });
+        
+        cl = new CaptionLoader();
+    }
+    
     /**
      * @param args the command line arguments
      */
@@ -205,31 +222,15 @@ public class CaptionLoaderFrame extends javax.swing.JFrame {
         new Thread(new Runnable() {
             @Override
             public void run() {
-//                java.awt.EventQueue.invokeLater(new Runnable() {
-//                    public void run() {
-                        CaptionLoaderFrame c = new CaptionLoaderFrame();
-                        c.setLocationRelativeTo(null);
-                        c.setVisible(true);
-                        f.dispose();
-//                    }
-//                });
+                CaptionLoaderFrame c = new CaptionLoaderFrame();
+                c.setLocationRelativeTo(null);
+                c.setVisible(true);
+                f.dispose();
             }
         }).start();
-        
-        
     }
-    // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JMenu jMenu1;
-    private javax.swing.JMenuBar jMenuBar1;
-    private javax.swing.JMenuItem jMenuItem1;
-    private javax.swing.JPanel jPanel1;
-    private javax.swing.JScrollPane jScrollPane1;
-    private javax.swing.JTable jTable1;
-    private javax.swing.JTextField jTextField3;
-    private javax.swing.JTextField jTextField4;
-    // End of variables declaration//GEN-END:variables
-
-    private static String captionId = "VCCD";
+    
+    private static byte[] captionId = "VCCD".getBytes();
     private static int captionVer = 1;
     
     public static String takeCRC32(String in) {
@@ -336,7 +337,7 @@ public class CaptionLoaderFrame extends javax.swing.JFrame {
                 int blockSize = DataUtils.readLEInt(rf);
                 int directorySize = DataUtils.readLEInt(rf);
                 int dataOffset = DataUtils.readLEInt(rf);
-    //            logger.log(Level.INFO, "Header: {0}, Version: {1}, Blocks: {2}, BlockSize: {3}, DirectorySize: {4}, DataOffset: {5}", new Object[]{magic, ver, blocks, blockSize, directorySize, dataOffset}); // blocks = currblock + 1 (from writing)
+                logger.log(Level.INFO, "Header: {0}, Version: {1}, Blocks: {2}, BlockSize: {3}, DirectorySize: {4}, DataOffset: {5}", new Object[]{magic, ver, blocks, blockSize, directorySize, dataOffset}); // blocks = currblock + 1 (from writing)
                 Entry[] entries = new Entry[directorySize];
                 for(int i = 0; i < directorySize; i++) {
                     entries[i] = new Entry(DataUtils.readULong(rf), DataUtils.readLEInt(rf), DataUtils.readUShort(rf), DataUtils.readUShort(rf));
@@ -359,7 +360,53 @@ public class CaptionLoaderFrame extends javax.swing.JFrame {
             }
             return s;
         }
-
+        
+        public void save(String file, ArrayList<String> s) {
+            if(file == null) {
+                return;
+            }
+            try {
+                int blocks = 0;
+                int blockSize = 8192;
+                int directorySize = 1;
+                int ptrAfterEntries = (6 * 4) + (directorySize * 12);
+                int dataOffset = ptrAfterEntries + ((int)alignValue(ptrAfterEntries, 512) - ptrAfterEntries);
+                
+                RandomAccessFile rf = new RandomAccessFile(file, "r");
+                rf.write(captionId); // header
+                rf.writeInt(1); // version
+                rf.writeInt(blocks);
+                rf.writeInt(blockSize);
+                rf.writeInt(directorySize);
+                rf.writeInt(dataOffset);
+                
+    //            logger.log(Level.INFO, "Header: {0}, Version: {1}, Blocks: {2}, BlockSize: {3}, DirectorySize: {4}, DataOffset: {5}", new Object[]{magic, ver, blocks, blockSize, directorySize, dataOffset}); // blocks = currblock + 1 (from writing)
+                Entry[] entries = new Entry[directorySize];
+                for(int i = 0; i < directorySize; i++) {
+                    Entry e = entries[i];
+                    e = new Entry(0, 0, 0, 5); // Hello
+                    rf.writeInt(e.hash);
+                    rf.writeInt(e.block);
+                    rf.writeShort(e.offset);
+                    rf.writeShort(e.length);
+                }
+                rf.seek(dataOffset);
+                for(int i = 0; i < directorySize; i++) {
+                    rf.seek(dataOffset + (entries[i].block * blockSize) + entries[i].offset);
+                    String string = "Hello";
+                    byte[] out = string.getBytes();
+                    for(int j = 0; j < out.length; j++) {
+                        rf.write(out[i]);
+                        rf.skipBytes(1);
+                    }
+                    rf.skipBytes(2); // \0\0 padding
+    //                logger.log(Level.INFO, "{0} = {1}", new Object[]{entries[i], sb.toString()});
+                }
+                rf.close(); // The rest of the file is garbage
+            } catch (IOException ex) {
+                logger.log(Level.SEVERE, null, ex);
+            }
+        }
     }
     
     /**

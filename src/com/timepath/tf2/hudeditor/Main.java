@@ -16,6 +16,7 @@ import java.io.PrintWriter;
 import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Field;
 import java.net.BindException;
+import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.URLDecoder;
@@ -45,7 +46,7 @@ public class Main {
      * The window class on Linux systems
      * The app name on Mac systems
      */
-    public final static String projectName = "tf2-hud-editor";
+    public final static String projectName = "tf2-hud-editor"; // in xfce, window grouping show this, unfortunately
     
     public final static OS os;
     
@@ -195,7 +196,7 @@ public class Main {
     
     private static boolean startServer(int port, final String... args) {        
         try {
-            final ServerSocket sock = new ServerSocket(port);
+            final ServerSocket sock = new ServerSocket(port, 0, InetAddress.getByName(null)); // cannot use java7 InetAddress.getLoopbackAddress(). On windows, this prevents firewall warnings. It's also good for security in general
             port = sock.getLocalPort();
             p.putInt("port", port);
             
