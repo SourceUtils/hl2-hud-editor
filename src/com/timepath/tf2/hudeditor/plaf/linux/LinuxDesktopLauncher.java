@@ -26,6 +26,7 @@ public class LinuxDesktopLauncher {
         File destFile = new File(System.getenv("XDG_DATA_HOME") + "/applications/" + Main.projectName + ".desktop");
         try {
             destFile.delete();
+            destFile.getParentFile().mkdirs();
             destFile.createNewFile();
 
             PrintWriter destination = null;

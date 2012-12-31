@@ -564,6 +564,18 @@ public class EditorFrame extends JFrame {
         
         this.getRootPane().putClientProperty("apple.awt.brushMetalLook", Boolean.TRUE);
         
+        //<editor-fold defaultstate="collapsed" desc="Canvas">
+        canvas = new EditorCanvas();
+        canvasPane = new JScrollPane(canvas);
+        if(Main.os == OS.Mac) {
+            canvasPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
+            canvasPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_ALWAYS);
+        } else {
+            canvasPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
+            canvasPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_ALWAYS);
+        }
+        //</editor-fold>
+        
         //<editor-fold defaultstate="collapsed" desc="Tree">
         EditorPropertiesTablePane propTablePane = new EditorPropertiesTablePane();
         propTable = propTablePane.getPropTable();
@@ -578,18 +590,6 @@ public class EditorFrame extends JFrame {
         browser.setMinimumSize(new Dimension(100, 0));
         browser.setPreferredSize(new Dimension(300, 0));
         browser.setSize(browser.getPreferredSize());
-        //</editor-fold>
-        
-        //<editor-fold defaultstate="collapsed" desc="Canvas">
-        canvas = new EditorCanvas();
-        canvasPane = new JScrollPane(canvas);
-        if(Main.os == OS.Mac) {
-            canvasPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
-            canvasPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_ALWAYS);
-        } else {
-            canvasPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
-            canvasPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_ALWAYS);
-        }
         //</editor-fold>
         
         final JSplitPane splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, browser, canvasPane);
