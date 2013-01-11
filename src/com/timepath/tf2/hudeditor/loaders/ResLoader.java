@@ -18,8 +18,18 @@ import javax.swing.tree.TreeNode;
 
 /**
  * 
+ * TODO: Make base VdfLoader
+ * 
  * TODO: Threading. This class can probably be executed as a thread.
- * If there are multiple values with platform tags, all the values become the last loaded value tag, but only if the variable is recognised
+ * If there are multiple values with platform tags, all the values become the last loaded value tag, but only if the variable is recognized
+ * 
+ * Some tags:
+ * $WINDOWS
+ * $WIN32
+ * $X360
+ * $POSIX
+ * $OSX
+ * $LINUX
  * 
  * @author TimePath
  */

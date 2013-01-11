@@ -18,7 +18,7 @@ public class LinuxDesktopLauncher {
     private static final Logger logger = Logger.getLogger(LinuxDesktopLauncher.class.getName());
     
     public static void create() {
-        createLauncher();
+//        createLauncher();
         createIcon();
     }
     

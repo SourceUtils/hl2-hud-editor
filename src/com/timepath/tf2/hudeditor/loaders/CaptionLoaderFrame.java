@@ -119,7 +119,7 @@ public class CaptionLoaderFrame extends javax.swing.JFrame {
                 .addContainerGap()
                 .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 406, Short.MAX_VALUE))
+                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 404, Short.MAX_VALUE))
         );
 
         pack();
@@ -172,7 +172,7 @@ public class CaptionLoaderFrame extends javax.swing.JFrame {
     private javax.swing.JTextField jTextField4;
     // End of variables declaration//GEN-END:variables
 
-    private static final Logger logger = Logger.getLogger(CaptionLoaderFrame.class.getName());
+    private static final Logger logger = Logger.getLogger(CaptionLoader.class.getName());
     
     private final CaptionLoader cl;
 
@@ -249,7 +249,7 @@ public class CaptionLoaderFrame extends javax.swing.JFrame {
         return (long) (Math.ceil(curr/round) * round);
     }
     
-    class CaptionLoader {
+    private class CaptionLoader {
 
         public CaptionLoader() {
             generateHash();
@@ -342,7 +342,7 @@ public class CaptionLoaderFrame extends javax.swing.JFrame {
                 for(int i = 0; i < directorySize; i++) {
                     entries[i] = new Entry(DataUtils.readULong(rf), DataUtils.readLEInt(rf), DataUtils.readUShort(rf), DataUtils.readUShort(rf));
                 }
-                rf.seek(dataOffset); // trustable, otherwise do: rf.seek(rf.getFilePointer() + (alignValue(rf.getFilePointer(), 512) - rf.getFilePointer()));
+                rf.seek(dataOffset);
                 for(int i = 0; i < directorySize; i++) {
                     rf.seek(dataOffset + (entries[i].block * blockSize) + entries[i].offset);
                     StringBuilder sb = new StringBuilder(entries[i].length / 2);
