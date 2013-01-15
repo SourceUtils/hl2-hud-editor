@@ -41,6 +41,17 @@ public class DataUtils {
         return readUByte(f) + (readUByte(f) << 8) + (readUByte(f) << 16) + (readUByte(f) << 24);
     }
     
+    public static void writeLEInt(RandomAccessFile f, int value) throws IOException {
+//        ByteBuffer buffer = ByteBuffer.allocate(1000);
+//        buffer.order(ByteOrder.LITTLE_ENDIAN);
+//        buffer.putInt(i);
+//        f.write(buffer.array());
+        f.writeByte(value & 0xFF);
+        f.writeByte((value >> 8) & 0xFF);
+        f.writeByte((value >> 16) & 0xFF);
+        f.writeByte((value >> 24) & 0xFF);
+    }
+    
     public static float readFloat(RandomAccessFile f) throws IOException {
         int intBits = readUByte(f) + (readUByte(f) << 8) + (readUByte(f) << 16) + (readUByte(f) << 24);
         return Float.intBitsToFloat(intBits);
@@ -56,6 +67,11 @@ public class DataUtils {
         return readUByte(f) + (readUByte(f) << 8);
     }
     
+    public static void writeUShort(RandomAccessFile f, short value) throws IOException {
+        f.writeByte(value & 0xFF);
+        f.writeByte((value >> 8) & 0xFF);
+    }
+    
     /**
      * aka DWORD
      * @param f
@@ -64,6 +80,10 @@ public class DataUtils {
      */
     public static int readULong(RandomAccessFile f) throws IOException {
         return readUByte(f) + (readUByte(f) << 8) + (readUByte(f) << 16) + (readUByte(f) << 24);
+    }
+    
+    public static void writeULong(RandomAccessFile f, int value) throws IOException {
+        writeLEInt(f, value);
     }
     
     public static String toBinaryString(short n) {
