@@ -119,7 +119,7 @@ public class ExternalScoreboard extends JFrame {
             }
             // names defended/captured 'capname' for team#
             if(s.contains(" for team #")) {
-                // team 2 = red, team 3 = blu
+                // team 0 = spectator, team 2 = red, team 3 = blu
             }
             if(s.equals("Teams have been switched.")) {
                 

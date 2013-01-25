@@ -7,7 +7,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -199,7 +199,7 @@ public class CaptionLoaderFrame extends javax.swing.JFrame {
             
             ArrayList<Entry> entries = new ArrayList<Entry>();
             DefaultTableModel model = (DefaultTableModel) jTable1.getModel();
-            for(int i = model.getRowCount() - 1; i >= 0 ; i--) {
+            for(int i = 0; i < model.getRowCount(); i++) {
                 Entry e = new Entry();
                 e.setKey(Long.parseLong(model.getValueAt(i, 0).toString().toLowerCase(), 16));
                 e.setValue(model.getValueAt(i, 2).toString());
@@ -318,7 +318,7 @@ public class CaptionLoaderFrame extends javax.swing.JFrame {
         HashMap<Integer, String> map = new HashMap<Integer, String>();
         logger.info("Generating hash codes ...");
         try {
-            GcfFile gcf = GcfFile.load(new File(Utils.locateSteamAppsDirectory() + "/games/team fortress 2 content.gcf"));
+            GcfFile gcf = GcfFile.load(new File(Utils.locateSteamAppsDirectory() + "/Team Fortress 2 Content.gcf"));
             
             CRC32 crc = new CRC32();
             
@@ -444,6 +444,7 @@ public class CaptionLoaderFrame extends javax.swing.JFrame {
                     e.setBlock(DataUtils.readLEInt(rf));
                     e.setOffset(DataUtils.readUShort(rf));
                     e.setLength(DataUtils.readUShort(rf));
+                    System.out.println("<" + i + " - " + e);
                     entries[i] = e;
                 }
                 rf.seek(dataOffset);
@@ -461,29 +462,30 @@ public class CaptionLoaderFrame extends javax.swing.JFrame {
             } catch (IOException ex) {
                 logger.log(Level.SEVERE, null, ex);
             }
-            saveFile(file + ".test", list); // debugging
+//            saveFile(file + ".test", list); // debugging
             return list;
         }
         
-        public void saveFile(String file, ArrayList<Entry> list) {
+        /**
+         * Ensure alphabetical order
+         * 
+         * @param file
+         * @param entries 
+         */
+        public void saveFile(String file, ArrayList<Entry> entries) {
             if(file == null) {
                 return;
             }
             try {
-                Entry[] entries = new Entry[list.size()];
-                list.toArray(entries);
-//                Arrays.sort(entries);
-//                Collections.sort(list);
-                
-                int directorySize = entries.length;
+                int directorySize = entries.size();
                 int blockSize = 8192;
                 int length = 0;
                 int blocks = 1;
                 for(int i = 0; i < directorySize; i++) {
-                    int eval = length + entries[i].getLength();
+                    int eval = length + entries.get(i).getLength();
                     if(eval > blockSize) {
                         blocks++;
-                        length = entries[i].getLength();
+                        length = entries.get(i).getLength();
                     } else {
                         length = eval;
                     }
@@ -504,24 +506,29 @@ public class CaptionLoaderFrame extends javax.swing.JFrame {
                 int currentBlock = 0;
                 int firstInBlock = 0;
                 for(int i = 0; i < directorySize; i++) {
-                    Entry e = entries[i];
+                    Entry e = entries.get(i);
                     e.setBlock(0);
                     e.setOffset(0);
-                    int offset = 0;
+                    
+                    int offset;
+                    
+                    int proposedOffset = 0;
                     for(int j = firstInBlock; j < i; j++) {
-                        offset += e.length;
+                        proposedOffset += entries.get(j).getLength();
                     }
-                    if((offset + e.getLength()) > ((currentBlock + 1) * blockSize)) {
-                        currentBlock++;
+                    if((proposedOffset + e.getLength()) > blockSize) {
                         offset = 0;
+                        currentBlock++;
                         firstInBlock = i;
                         System.out.println("Doesn't fit; new block");
+                    } else {
+                        offset = proposedOffset;
                     }
                     
                     e.setBlock(currentBlock);
                     e.setOffset(offset);
                     
-                    System.out.println(i + " - " + e);
+//                    System.out.println(">" + i + " - " + e);
                     
                     DataUtils.writeULong(rf, e.getKey());
                     DataUtils.writeLEInt(rf, e.getBlock());
@@ -529,26 +536,17 @@ public class CaptionLoaderFrame extends javax.swing.JFrame {
                     DataUtils.writeUShort(rf, (short)e.getLength());
                 }
                 
-                for(int i = 0; i < 10; i++) {
-                    System.out.println(entries[6]);
-                }
-                
                 rf.write(new byte[(dataOffset - (int)rf.getFilePointer())]);
                 
-//                int lastBlock = 0;
+                int lastBlock = 0;
                 for(int i = 0; i < directorySize; i++) {
-                    Entry e = entries[i];
-//                    if(e.getBlock() > lastBlock) {
-//                        lastBlock = e.getBlock();
-//                        rf.write(new byte[(dataOffset + ((e.block + 1) * blockSize) - (int)rf.getFilePointer())]);
-//                    }
-                    byte[] out = e.getValue().getBytes();
-                    for(int j = 0; j < out.length; j++) {
-                        rf.write(out[j]);
-                        rf.writeByte(0);
+                    Entry e = entries.get(i);
+                    if(e.getBlock() > lastBlock) {
+                        lastBlock = e.getBlock();
+                        rf.write(new byte[blockSize - (entries.get(i-1).getOffset() + entries.get(i-1).getLength())]);
                     }
-                    rf.writeByte(0);
-                    rf.writeByte(0);
+                    DataUtils.writeUTFChars(rf, e.getValue());
+                    DataUtils.writeUTFChar(rf, 0);
                 }
                 rf.close(); // The rest of the file is garbage
             } catch (IOException ex) {

@@ -28,7 +28,18 @@ public class DataUtils {
     }
     
     public static char readUTFChar(RandomAccessFile f) throws IOException {
-        return (char)(readByte(f) + (readByte(f) << 8));
+        return (char)(readUByte(f) + (readUByte(f) << 8));
+    }
+    
+    public static void writeUTFChar(RandomAccessFile f, int v) throws IOException {
+         f.writeByte((byte)(0xff & v));
+         f.writeByte((byte)(0xff & (v >> 8)));
+    }
+    
+    public static void writeUTFChars(RandomAccessFile f, String s) throws IOException {
+        for(int i = 0; i < s.length(); i++) {
+            writeUTFChar(f, s.charAt(i));
+        }
     }
     
     /**
