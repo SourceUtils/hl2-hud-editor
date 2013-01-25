@@ -7,11 +7,13 @@ import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.util.ArrayList;
-import java.util.Collections;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.zip.CRC32;
+import javax.swing.DefaultCellEditor;
+import javax.swing.JComboBox;
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 import javax.swing.JProgressBar;
@@ -19,6 +21,7 @@ import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import javax.swing.filechooser.FileFilter;
 import javax.swing.table.DefaultTableModel;
+import javax.swing.table.TableCellEditor;
 
 /**
  *
@@ -57,21 +60,29 @@ public class CaptionLoaderFrame extends javax.swing.JFrame {
                 "CRC32", "Key", "Value"
             }
         ) {
+            Class[] types = new Class [] {
+                java.lang.Object.class, java.lang.String.class, java.lang.String.class
+            };
             boolean[] canEdit = new boolean [] {
                 false, true, true
             };
+
+            public Class getColumnClass(int columnIndex) {
+                return types [columnIndex];
+            }
 
             public boolean isCellEditable(int rowIndex, int columnIndex) {
                 return canEdit [columnIndex];
             }
         });
         jTable1.setCursor(new java.awt.Cursor(java.awt.Cursor.DEFAULT_CURSOR));
+        jTable1.setRowHeight(24);
         jScrollPane1.setViewportView(jTable1);
         jTable1.getColumnModel().getColumn(0).setMinWidth(85);
         jTable1.getColumnModel().getColumn(0).setPreferredWidth(85);
         jTable1.getColumnModel().getColumn(0).setMaxWidth(85);
-        jTable1.getColumnModel().getColumn(1).setMinWidth(160);
         jTable1.getColumnModel().getColumn(1).setPreferredWidth(160);
+        jTable1.getColumnModel().getColumn(1).setCellEditor(getKeyEditor());
         jTable1.getColumnModel().getColumn(2).setPreferredWidth(160);
 
         jPanel1.setBorder(javax.swing.BorderFactory.createTitledBorder("CRC32"));
@@ -143,7 +154,7 @@ public class CaptionLoaderFrame extends javax.swing.JFrame {
                 .addContainerGap()
                 .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 400, Short.MAX_VALUE))
+                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 396, Short.MAX_VALUE))
         );
 
         pack();
@@ -275,8 +286,19 @@ public class CaptionLoaderFrame extends javax.swing.JFrame {
             }
         });
         
-        hashmap = generateHash();
         cl = new CaptionLoader();
+    }
+    
+    TableCellEditor getKeyEditor() {
+        JComboBox comboBox = new JComboBox();
+        comboBox.setEditable(true);
+        hashmap = generateHash();
+        Object[] vals = hashmap.values().toArray();
+        Arrays.sort(vals);
+        for(int i = 0; i < vals.length; i++) {
+            comboBox.addItem(vals[i]);
+        }
+        return new DefaultCellEditor(comboBox);
     }
     
     private static final Logger logger = Logger.getLogger(CaptionLoader.class.getName());
@@ -361,7 +383,7 @@ public class CaptionLoaderFrame extends javax.swing.JFrame {
                     }
 //                    System.out.println(str);
                     crc.update(str.toLowerCase().getBytes());
-                    map.put((int)crc.getValue(), str); // HASH >
+                    map.put((int)crc.getValue(), str.toLowerCase()); // enforce lowercase for consistency
 //                    logger.log(Level.INFO, "{0} > {1}", new Object[]{crc.getValue(), str});
                     crc.reset();
                 } else {
@@ -458,7 +480,7 @@ public class CaptionLoaderFrame extends javax.swing.JFrame {
                     entries[i].setValue(sb.toString());
                     list.add(entries[i]);
                 }
-                rf.close(); // The rest of the file is garbage
+                rf.close(); // The rest of the file is garbage, 0's or otherwise
             } catch (IOException ex) {
                 logger.log(Level.SEVERE, null, ex);
             }
@@ -495,7 +517,13 @@ public class CaptionLoaderFrame extends javax.swing.JFrame {
                 
                 int dataOffset = (int) alignValue((6 * 4) + (directorySize * 12), 512);
                 
-                RandomAccessFile rf = new RandomAccessFile(file, "rw");
+                File f = new File(file);
+                if(f.exists()) {
+                    f.delete();
+                } else {
+                    f.createNewFile();
+                }
+                RandomAccessFile rf = new RandomAccessFile(f, "rw");
                 rf.write(captionIdentifier.getBytes()); // Big endian
                 DataUtils.writeLEInt(rf, 1);
                 DataUtils.writeLEInt(rf, blocks);
@@ -548,7 +576,9 @@ public class CaptionLoaderFrame extends javax.swing.JFrame {
                     DataUtils.writeUTFChars(rf, e.getValue());
                     DataUtils.writeUTFChar(rf, 0);
                 }
-                rf.close(); // The rest of the file is garbage
+                int last = entries.size() - 1;
+                rf.write(new byte[blockSize - (entries.get(last).getOffset() + entries.get(last).getLength())]);
+                rf.close();
             } catch (IOException ex) {
                 logger.log(Level.SEVERE, null, ex);
             }
