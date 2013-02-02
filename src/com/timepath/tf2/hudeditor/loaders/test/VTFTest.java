@@ -1,6 +1,7 @@
-package com.timepath.tf2.hudeditor.loaders;
+package com.timepath.tf2.hudeditor.loaders.test;
 
-import com.timepath.tf2.hudeditor.loaders.VtfFile.Format;
+import com.timepath.tf2.hudeditor.loaders.VTF;
+import com.timepath.tf2.hudeditor.loaders.VTF.Format;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Graphics;
@@ -23,7 +24,9 @@ import javax.swing.filechooser.FileFilter;
  *
  * @author TimePath
  */
-public class VtfLoader {
+public class VTFTest {
+    
+    private static final Logger logger = Logger.getLogger(VTFTest.class.getName());
     
     public static void test() {
         final JFrame f = new JFrame("Vtf Loader");
@@ -70,7 +73,7 @@ public class VtfLoader {
                      */
                     if((name != null) && name.toLowerCase().endsWith(".vtf")) {
                         try {
-                            VtfFile v = VtfFile.load(selection);
+                            VTF v = VTF.load(selection);
                             if(v == null) {
                                 return;
                             }
@@ -78,12 +81,12 @@ public class VtfLoader {
                             if(i == null) {
                                 return;
                             }
-                            f.setIconImage(VtfFile.load(selection).getThumbImage());
+                            f.setIconImage(VTF.load(selection).getThumbImage());
                             image = (i != null ? i : new BufferedImage(128, 128, BufferedImage.TYPE_INT_ARGB));
                             scaleImage();
                             repaint();
                         } catch (IOException ex) {
-                            Logger.getLogger(VtfLoader.class.getName()).log(Level.SEVERE, null, ex);
+                            Logger.getLogger(VTFTest.class.getName()).log(Level.SEVERE, null, ex);
                         }
                     }
                 }
@@ -99,18 +102,16 @@ public class VtfLoader {
                  * vertically make sure we don't go larger than ACCSIZE when scaling
                  * vertically.
                  */
-                if (width >= height) {
+                if(width >= height) {
                     ratio = (double)(ACCSIZE-5) / width;
                     width = ACCSIZE-5;
                     height = (int)(height * ratio);
-                }
-                else {
-                    if (getHeight() > ACCSIZE) {
+                } else {
+                    if(getHeight() > ACCSIZE) {
                         ratio = (double)(ACCSIZE-5) / height;
                         height = ACCSIZE-5;
                         width = (int)(width * ratio);
-                    }
-                    else {
+                    } else {
                         ratio = (double)getHeight() / height;
                         height = getHeight();
                         width = (int)(width * ratio);
@@ -154,11 +155,11 @@ public class VtfLoader {
                 if(!file.getName().toLowerCase().endsWith(".vtf")) {
                     return false;
                 }
-                VtfFile v = VtfFile.load(file);
+                VTF v = VTF.load(file);
                 if(v == null) {
                     return false;
                 }
-                if(vtfFormat == VtfFile.Format.IMAGE_FORMAT_NONE) {
+                if(vtfFormat == VTF.Format.IMAGE_FORMAT_NONE) {
                     return true;
                 }
                 return (v.format == vtfFormat);
@@ -228,6 +229,5 @@ public class VtfLoader {
             }
         }).start();
     }
-    private static final Logger LOG = Logger.getLogger(VtfLoader.class.getName());
 
 }

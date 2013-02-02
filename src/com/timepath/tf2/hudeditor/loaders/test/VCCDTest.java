@@ -1,11 +1,15 @@
-package com.timepath.tf2.hudeditor.loaders;
+package com.timepath.tf2.hudeditor.loaders.test;
 
-import com.timepath.tf2.hudeditor.Utils;
-import com.timepath.tf2.hudeditor.util.DataUtils;
+import com.timepath.tf2.hudeditor.util.Utils;
+import com.timepath.tf2.hudeditor.loaders.GCF;
+import com.timepath.tf2.hudeditor.loaders.VCCD;
+import com.timepath.tf2.hudeditor.loaders.VCCD.Entry;
+import java.awt.Component;
 import java.awt.Dimension;
+import java.awt.FontMetrics;
+import java.awt.Graphics;
 import java.io.File;
 import java.io.IOException;
-import java.io.RandomAccessFile;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -16,18 +20,21 @@ import javax.swing.DefaultCellEditor;
 import javax.swing.JComboBox;
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
+import javax.swing.JPanel;
 import javax.swing.JProgressBar;
+import javax.swing.JTable;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import javax.swing.filechooser.FileFilter;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableCellEditor;
+import javax.swing.table.TableCellRenderer;
 
 /**
  *
  * @author TimePath
  */
-public class CaptionLoaderFrame extends javax.swing.JFrame {
+public class VCCDTest extends javax.swing.JFrame {
     
     /**
      * This method is called from within the constructor to initialize the form.
@@ -154,7 +161,7 @@ public class CaptionLoaderFrame extends javax.swing.JFrame {
                 .addContainerGap()
                 .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 396, Short.MAX_VALUE))
+                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 384, Short.MAX_VALUE))
         );
 
         pack();
@@ -211,7 +218,7 @@ public class CaptionLoaderFrame extends javax.swing.JFrame {
             ArrayList<Entry> entries = new ArrayList<Entry>();
             DefaultTableModel model = (DefaultTableModel) jTable1.getModel();
             for(int i = 0; i < model.getRowCount(); i++) {
-                Entry e = new Entry();
+                Entry e = cl.getNewEntry();
                 e.setKey(Long.parseLong(model.getValueAt(i, 0).toString().toLowerCase(), 16));
                 e.setValue(model.getValueAt(i, 2).toString());
                 entries.add(e);
@@ -263,11 +270,13 @@ public class CaptionLoaderFrame extends javax.swing.JFrame {
     private javax.swing.JTextField jTextField4;
     // End of variables declaration//GEN-END:variables
 
+    private VCCD cl;
+    
     //<editor-fold defaultstate="collapsed" desc="Entry point">
     /**
      * Creates new form CaptionLoaderFrame
      */
-    public CaptionLoaderFrame() {
+    public VCCDTest() {
         initComponents();
         
         jTextField3.getDocument().addDocumentListener(new DocumentListener() {
@@ -286,7 +295,7 @@ public class CaptionLoaderFrame extends javax.swing.JFrame {
             }
         });
         
-        cl = new CaptionLoader();
+        cl = new VCCD();
     }
     
     TableCellEditor getKeyEditor() {
@@ -301,7 +310,59 @@ public class CaptionLoaderFrame extends javax.swing.JFrame {
         return new DefaultCellEditor(comboBox);
     }
     
-    private static final Logger logger = Logger.getLogger(CaptionLoader.class.getName());
+    public class EditorPaneRenderer extends JPanel implements TableCellRenderer {
+        
+        private int curX;
+        
+        private String text;
+      
+        public EditorPaneRenderer() {
+            super();
+        }
+        
+        @Override
+        public void paint(Graphics g) {
+            g.setFont(this.getFont());
+            FontMetrics fm = g.getFontMetrics();
+            g.setColor(this.getBackground());
+            g.fillRect(0, 0, this.getWidth(), this.getHeight());
+            g.setColor(this.getForeground());
+            
+            for(int i = 0; i < text.length(); i++) {
+                if(text.charAt(i) == '<') {
+                    
+                }
+            }
+            
+            drawWords(fm, g, text);
+            curX = 0;
+        }
+        
+        public void drawWords(FontMetrics fm, Graphics g, String str) {
+            g.drawString(text, curX, fm.getHeight());
+            curX += fm.stringWidth(str);
+        }
+        
+        public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
+            setText((value == null) ? "" : value.toString());
+            if(isSelected) {
+                setForeground(table.getSelectionForeground());
+                setBackground(table.getSelectionBackground());
+            } else {
+                setForeground(table.getForeground());
+                setBackground(table.getBackground());
+            }
+            return this;
+        }
+
+        private void setText(String string) {
+            this.text = string;
+        }
+    }
+    
+    TableCellRenderer valueRenderer = new EditorPaneRenderer();
+    
+    private static final Logger logger = Logger.getLogger(VCCDTest.class.getName());
     
     /**
      * @param args the command line arguments
@@ -324,7 +385,7 @@ public class CaptionLoaderFrame extends javax.swing.JFrame {
         new Thread(new Runnable() {
             @Override
             public void run() {
-                CaptionLoaderFrame c = new CaptionLoaderFrame();
+                VCCDTest c = new VCCDTest();
                 c.setLocationRelativeTo(null);
                 c.setVisible(true);
                 f.dispose();
@@ -340,7 +401,7 @@ public class CaptionLoaderFrame extends javax.swing.JFrame {
         HashMap<Integer, String> map = new HashMap<Integer, String>();
         logger.info("Generating hash codes ...");
         try {
-            GcfFile gcf = GcfFile.load(new File(Utils.locateSteamAppsDirectory() + "/Team Fortress 2 Content.gcf"));
+            GCF gcf = GCF.load(new File(Utils.locateSteamAppsDirectory() + "/Team Fortress 2 Content.gcf"));
             
             CRC32 crc = new CRC32();
             
@@ -391,7 +452,7 @@ public class CaptionLoaderFrame extends javax.swing.JFrame {
                 }
             }
         } catch (IOException ex) {
-            Logger.getLogger(CaptionLoader.class.getName()).log(Level.WARNING, "Error generating hash codes", ex);
+            logger.log(Level.WARNING, "Error generating hash codes", ex);
         }
         return map;
     }
@@ -412,266 +473,6 @@ public class CaptionLoaderFrame extends javax.swing.JFrame {
             return null;
         }
         return hashmap.get(hash);
-    }
-    //</editor-fold>
-    
-    //<editor-fold defaultstate="collapsed" desc="CaptionWorker">
-    private CaptionLoader cl;
-    
-    /**
-     * Used for writing captions
-     * @param curr
-     * @param round
-     * @return 
-     */
-    private static int alignValue(double curr, double round) {
-        return (int)(Math.ceil(curr/round) * round);
-    }
-    
-    private static String captionIdentifier = "VCCD";
-    
-    private static int captionVer = 1;
-    
-    private class CaptionLoader {
-        
-        String currentFile;
-        
-        public CaptionLoader() {
-            
-        }
-        
-        public ArrayList<Entry> loadFile(String file) {
-            if(file == null) {
-                return null;
-            }
-            this.currentFile = file;
-            ArrayList<Entry> list = new ArrayList<Entry>();
-            try {
-                RandomAccessFile rf = new RandomAccessFile(file, "r");
-                String magic = new String(new byte[]{DataUtils.readChar(rf), DataUtils.readChar(rf), DataUtils.readChar(rf),DataUtils.readChar(rf)});
-                if(!magic.equals(captionIdentifier)) {
-                    logger.severe("Header mismatch");
-                }
-                int ver = DataUtils.readLEInt(rf);
-                int blocks = DataUtils.readLEInt(rf);
-                int blockSize = DataUtils.readLEInt(rf);
-                int directorySize = DataUtils.readLEInt(rf);
-                int dataOffset = DataUtils.readLEInt(rf);
-                logger.log(Level.INFO, "Header: {0}, Version: {1}, Blocks: {2}, BlockSize: {3}, DirectorySize: {4}, DataOffset: {5}", new Object[]{magic, ver, blocks, blockSize, directorySize, dataOffset});
-                
-                Entry[] entries = new Entry[directorySize];
-                for(int i = 0; i < directorySize; i++) {
-                    Entry e = new Entry();
-                    e.setKey(DataUtils.readULong(rf));
-                    e.setBlock(DataUtils.readLEInt(rf));
-                    e.setOffset(DataUtils.readUShort(rf));
-                    e.setLength(DataUtils.readUShort(rf));
-                    System.out.println("<" + i + " - " + e);
-                    entries[i] = e;
-                }
-                rf.seek(dataOffset);
-                for(int i = 0; i < directorySize; i++) {
-                    rf.seek(dataOffset + (entries[i].block * blockSize) + entries[i].offset);
-                    StringBuilder sb = new StringBuilder((entries[i].length / 2) - 1);
-                    for(int x = 0; x < (entries[i].length / 2) - 1; x++) {
-                        sb.append(DataUtils.readUTFChar(rf));
-                    }
-                    rf.skipBytes(2);
-                    entries[i].setValue(sb.toString());
-                    list.add(entries[i]);
-                }
-                rf.close(); // The rest of the file is garbage, 0's or otherwise
-            } catch (IOException ex) {
-                logger.log(Level.SEVERE, null, ex);
-            }
-//            saveFile(file + ".test", list); // debugging
-            return list;
-        }
-        
-        /**
-         * Ensure alphabetical order
-         * 
-         * @param file
-         * @param entries 
-         */
-        public void saveFile(String file, ArrayList<Entry> entries) {
-            if(file == null) {
-                return;
-            }
-            try {
-                int directorySize = entries.size();
-                int blockSize = 8192;
-                int length = 0;
-                int blocks = 1;
-                for(int i = 0; i < directorySize; i++) {
-                    int eval = length + entries.get(i).getLength();
-                    if(eval > blockSize) {
-                        blocks++;
-                        length = entries.get(i).getLength();
-                    } else {
-                        length = eval;
-                    }
-                }
-                
-                System.out.println("Blocks: " + blocks);
-                
-                int dataOffset = (int) alignValue((6 * 4) + (directorySize * 12), 512);
-                
-                File f = new File(file);
-                if(f.exists()) {
-                    f.delete();
-                } else {
-                    f.createNewFile();
-                }
-                RandomAccessFile rf = new RandomAccessFile(f, "rw");
-                rf.write(captionIdentifier.getBytes()); // Big endian
-                DataUtils.writeLEInt(rf, 1);
-                DataUtils.writeLEInt(rf, blocks);
-                DataUtils.writeLEInt(rf, blockSize);
-                DataUtils.writeLEInt(rf, directorySize);
-                DataUtils.writeLEInt(rf, dataOffset);
-                
-                int currentBlock = 0;
-                int firstInBlock = 0;
-                for(int i = 0; i < directorySize; i++) {
-                    Entry e = entries.get(i);
-                    e.setBlock(0);
-                    e.setOffset(0);
-                    
-                    int offset;
-                    
-                    int proposedOffset = 0;
-                    for(int j = firstInBlock; j < i; j++) {
-                        proposedOffset += entries.get(j).getLength();
-                    }
-                    if((proposedOffset + e.getLength()) > blockSize) {
-                        offset = 0;
-                        currentBlock++;
-                        firstInBlock = i;
-                        System.out.println("Doesn't fit; new block");
-                    } else {
-                        offset = proposedOffset;
-                    }
-                    
-                    e.setBlock(currentBlock);
-                    e.setOffset(offset);
-                    
-//                    System.out.println(">" + i + " - " + e);
-                    
-                    DataUtils.writeULong(rf, e.getKey());
-                    DataUtils.writeLEInt(rf, e.getBlock());
-                    DataUtils.writeUShort(rf, (short)e.getOffset());
-                    DataUtils.writeUShort(rf, (short)e.getLength());
-                }
-                
-                rf.write(new byte[(dataOffset - (int)rf.getFilePointer())]);
-                
-                int lastBlock = 0;
-                for(int i = 0; i < directorySize; i++) {
-                    Entry e = entries.get(i);
-                    if(e.getBlock() > lastBlock) {
-                        lastBlock = e.getBlock();
-                        rf.write(new byte[blockSize - (entries.get(i-1).getOffset() + entries.get(i-1).getLength())]);
-                    }
-                    DataUtils.writeUTFChars(rf, e.getValue());
-                    DataUtils.writeUTFChar(rf, 0);
-                }
-                int last = entries.size() - 1;
-                rf.write(new byte[blockSize - (entries.get(last).getOffset() + entries.get(last).getLength())]);
-                rf.close();
-            } catch (IOException ex) {
-                logger.log(Level.SEVERE, null, ex);
-            }
-            logger.log(Level.INFO, "Saved {0}", file);
-        }
-
-        private ArrayList<Entry> importFile(String file) {
-            return null;
-        }
-    }
-    //</editor-fold>
-    
-    //<editor-fold defaultstate="collapsed" desc="Entry">
-    /**
-     * Entries are stored alphabetically by original value of hash
-     */
-    private class Entry implements Comparable<Entry> {
-        
-        Entry() {
-            
-        }
-        
-        private long key;
-        
-        public int getKey() {
-            return (int) key;
-        }
-        
-        public void setKey(long key) {
-            this.key = key;
-        }
-        
-        private int block;
-        
-        public int getBlock() {
-            return block;
-        }
-        
-        public void setBlock(int block) {
-            this.block = block;
-        }
-        
-        private int offset;
-        
-        public int getOffset() {
-            return offset;
-        }
-        
-        public void setOffset(int offset) {
-            this.offset = offset;
-        }
-        
-        private int length;
-        
-        public int getLength() {
-            return length;
-        }
-        
-        private void setLength(int length) {
-            this.length = length;
-            if(this.value != null) {
-                this.value = value.substring(0, (length / 2) - 1);
-            }
-        }
-        
-        private String value;
-        
-        public String getValue() {
-            return value;
-        }
-        
-        public void setValue(String string) {
-            this.value = string;
-            this.length = (string.length() + 1) * 2;
-        }
-        
-        @Override
-        public String toString() {
-            return new StringBuilder().append("H: ").append(key).append(", b: ").append(block).append(", o: ").append(offset).append(", l: ").append(length).toString();
-        }
-
-        public int compareTo(Entry t) {
-            String e1 = attemptDecode((int)this.key);
-            if(e1 == null) {
-                e1 = "";
-            }
-            String e2 = attemptDecode((int)t.key);
-            if(e2 == null) {
-                e2 = "";
-            }
-            return e1.compareToIgnoreCase(e2);
-        }
-        
     }
     //</editor-fold>
 

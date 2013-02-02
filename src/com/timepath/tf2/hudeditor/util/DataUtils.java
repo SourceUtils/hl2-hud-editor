@@ -106,6 +106,15 @@ public class DataUtils {
         }
         return sb.toString();
     }
+ 
+    public static int updateChecksum(int value) {
+        int checksum = (value & 0xFF);
+        checksum += (value >> 8 & 0xFF);
+        checksum += (value >> 16 & 0xFF);
+        checksum += (value >> 24 & 0xFF);
+        return checksum;
+    }
+
     private static final Logger LOG = Logger.getLogger(DataUtils.class.getName());
     
 }

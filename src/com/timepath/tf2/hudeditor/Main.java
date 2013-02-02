@@ -90,7 +90,7 @@ public class Main {
         } else if(os == OS.Linux) {
 //            boolean force = "Unity".equals(System.getenv("XDG_CURRENT_DESKTOP"));
 //            if(force) {
-                System.setProperty("jayatana.force", "true");
+//                System.setProperty("jayatana.force", "true");
 //            }
             System.setProperty("jayatana.startupWMClass", projectName);
             

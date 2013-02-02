@@ -33,13 +33,13 @@ import javax.swing.tree.TreeNode;
  * 
  * @author TimePath
  */
-public class ResLoader {
+public class RES {
 
-    static final Logger logger = Logger.getLogger(ResLoader.class.getName());
+    static final Logger logger = Logger.getLogger(RES.class.getName());
 
     private String hudFolder;
 
-    public ResLoader(String hudFolder) {
+    public RES(String hudFolder) {
         this.hudFolder = hudFolder;
     }
 

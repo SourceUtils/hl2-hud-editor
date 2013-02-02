@@ -2,10 +2,10 @@ package com.timepath.tf2.hudeditor.gui;
 
 //<editor-fold defaultstate="collapsed" desc="imports">
 import com.timepath.tf2.hudeditor.Main;
-import com.timepath.tf2.hudeditor.Utils;
-import com.timepath.tf2.hudeditor.loaders.CaptionLoaderFrame;
-import com.timepath.tf2.hudeditor.loaders.ResLoader;
-import com.timepath.tf2.hudeditor.loaders.VtfLoader;
+import com.timepath.tf2.hudeditor.util.Utils;
+import com.timepath.tf2.hudeditor.loaders.RES;
+import com.timepath.tf2.hudeditor.loaders.test.VCCDTest;
+import com.timepath.tf2.hudeditor.loaders.test.VTFTest;
 import com.timepath.tf2.hudeditor.plaf.NativeFileChooser;
 import com.timepath.tf2.hudeditor.plaf.OS;
 import com.timepath.tf2.hudeditor.plaf.mac.OSXAdapter;
@@ -112,7 +112,7 @@ public class EditorFrame extends JFrame {
     
     public static EditorCanvas canvas; // should not be static
 
-    private ResLoader resloader;
+    private RES resloader;
 
     private JTree fileSystem;
 
@@ -842,7 +842,7 @@ public class EditorFrame extends JFrame {
             this.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
             final long start = System.currentTimeMillis();
 
-            resloader = new ResLoader(file.getPath());
+            resloader = new RES(file.getPath());
             hudFilesRoot.setUserObject(file.getName()); // The only time a String is added to the Tree, that way I can treat it differently
             resloader.populate(hudFilesRoot);
 
@@ -1260,9 +1260,9 @@ public class EditorFrame extends JFrame {
                 } else if(cmd == changeLogItem) {
                     changelog();
                 } else if(cmd == vtfItem) {
-                    VtfLoader.main("");
+                    VTFTest.main("");
                 } else if(cmd == captionItem) {
-                    CaptionLoaderFrame.main("");
+                    VCCDTest.main("");
             } else if(cmd == previewItem) {
                     EditorFrame.this.dispose();
                     EditorFrame.this.setUndecorated(!fullscreen);

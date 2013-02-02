@@ -15,7 +15,7 @@ public class Wrapper {
     public static void main(String[] args) {
         JarClassLoader cl = new JarClassLoader();
         try {
-            cl.invokeMain("com.timepath.tf2.hudeditor.Main", args);
+            cl.invokeMain(Main.class.getName(), args);
         } catch(Throwable e) {
             logger.log(Level.SEVERE, "Uncaught Exception", e);
         }

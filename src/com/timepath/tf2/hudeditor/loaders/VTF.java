@@ -17,9 +17,9 @@ import java.util.logging.Logger;
  * 
  * @author TimePath
  */
-public class VtfFile {
+public class VTF {
     
-    public VtfFile(RandomAccessFile file) {
+    public VTF(RandomAccessFile file) {
         this.file = file;
     }
 
@@ -78,7 +78,7 @@ public class VtfFile {
     /**
      * 4 bytes
      */
-    Format format;
+    public Format format;
 
     /**
      * 1 byte
@@ -195,15 +195,15 @@ public class VtfFile {
     
     // STATIC METHODS
     
-    public static VtfFile load(String path) {
+    public static VTF load(String path) {
         File f = new File(path);
         System.out.println("Loading " + f);
-        return VtfFile.load(f);
+        return VTF.load(f);
     }
     
-    private static HashMap<File, VtfFile> cache = new HashMap<File, VtfFile>();
+    private static HashMap<File, VTF> cache = new HashMap<File, VTF>();
         
-    public static VtfFile load(File file) {
+    public static VTF load(File file) {
         file = file.getAbsoluteFile();
         
         if(cache.containsKey(file)) {
@@ -222,7 +222,7 @@ public class VtfFile {
                 cache.put(file, null);
                 return null;
             }
-            VtfFile vtf = new VtfFile(rf);
+            VTF vtf = new VTF(rf);
             vtf.version = new int[] {DataUtils.readLEInt(rf), DataUtils.readLEInt(rf)};
             vtf.headerSize = DataUtils.readLEInt(rf);
             vtf.width = DataUtils.readUShort(rf);
@@ -698,6 +698,6 @@ public class VtfFile {
         }
     }
     //</editor-fold>
-    private static final Logger LOG = Logger.getLogger(VtfFile.class.getName());
+    private static final Logger LOG = Logger.getLogger(VTF.class.getName());
     
 }

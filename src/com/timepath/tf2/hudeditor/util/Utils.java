@@ -1,5 +1,6 @@
-package com.timepath.tf2.hudeditor;
+package com.timepath.tf2.hudeditor.util;
 
+import com.timepath.tf2.hudeditor.Main;
 import com.timepath.tf2.hudeditor.plaf.OS;
 
 /**

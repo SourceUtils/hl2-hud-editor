@@ -1,9 +1,15 @@
 package com.timepath.tf2.hudeditor.util;
 
-import com.timepath.tf2.hudeditor.loaders.ResLoader;
-import com.timepath.tf2.hudeditor.loaders.VtfFile;
-import com.timepath.tf2.hudeditor.gui.EditorFrame;
 import com.timepath.tf2.hudeditor.gui.EditorCanvas;
+import com.timepath.tf2.hudeditor.gui.EditorFrame;
+import com.timepath.tf2.hudeditor.loaders.RES;
+import com.timepath.tf2.hudeditor.loaders.RES;
+import com.timepath.tf2.hudeditor.loaders.VTF;
+import com.timepath.tf2.hudeditor.loaders.VTF;
+import com.timepath.tf2.hudeditor.util.Alignment;
+import com.timepath.tf2.hudeditor.util.DimensionMode;
+import com.timepath.tf2.hudeditor.util.HudFont;
+import com.timepath.tf2.hudeditor.util.Property;
 import java.awt.Color;
 import java.awt.Font;
 import java.awt.Image;
@@ -366,10 +372,10 @@ public class Element {
                     
                 }
             } else if("font".equalsIgnoreCase(k)) {
-                if(!ResLoader.fonts.containsKey(v)) {
+                if(!RES.fonts.containsKey(v)) {
                     continue;
                 }
-                HudFont a = ResLoader.fonts.get(v);
+                HudFont a = RES.fonts.get(v);
                 Font f = a.getFont();
                 if(f != null) {
                     this.setFont(f);
@@ -380,7 +386,7 @@ public class Element {
                     continue;
                 }
                 try {
-                    VtfFile vtf = VtfFile.load("res/vtf/hud/" + v + ".vtf");
+                    VTF vtf = VTF.load("res/vtf/hud/" + v + ".vtf");
                     if(vtf == null) {
                         continue;
                     }
