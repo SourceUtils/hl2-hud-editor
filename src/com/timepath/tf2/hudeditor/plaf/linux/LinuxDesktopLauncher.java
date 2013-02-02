@@ -18,12 +18,21 @@ public class LinuxDesktopLauncher {
     private static final Logger logger = Logger.getLogger(LinuxDesktopLauncher.class.getName());
     
     public static void create() {
-//        createLauncher();
+        createLauncher();
         createIcon();
     }
     
+    private static String getStore() {
+        String root = System.getenv("XDG_DATA_HOME");
+        if(root == null) {
+            root = System.getenv("HOME") + "/.local/share/";
+        }
+        return root;
+    }
+    
     private static void createLauncher() {
-        File destFile = new File(System.getenv("XDG_DATA_HOME") + "/applications/" + Main.projectName + ".desktop");
+        File destFile = new File(getStore() + "applications/" + Main.projectName + ".desktop");
+        logger.log(Level.INFO, "Linux .desktop file: {0}", destFile);
         try {
             destFile.delete();
             destFile.getParentFile().mkdirs();
@@ -64,7 +73,7 @@ public class LinuxDesktopLauncher {
         String[] icons = {"png", "svg"};
         for(int i = 0; i < icons.length; i++) {
             try {
-                File destFile = new File(System.getenv("XDG_DATA_HOME") + "/icons/" + Main.projectName + "." + icons[i]);
+                File destFile = new File(getStore() + "icons/" + Main.projectName + "." + icons[i]);
 
                 if(!destFile.getParentFile().exists()) {
                     destFile.getParentFile().mkdirs();

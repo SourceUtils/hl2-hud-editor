@@ -88,7 +88,7 @@ public class Main {
             System.setProperty("com.apple.mrj.application.growbox.intrudes", "false");
             System.setProperty("com.apple.mrj.application.live-resize", "true");
         } else if(os == OS.Linux) {
-//            boolean force = "Unity".equals(System.getenv("XDG_CURRENT_DESKTOP"));
+//            boolean force = "Unity".equals(System.getenv("XDG_CURRENT_DESKTOP")); // UBUNTU_MENUPROXY=libappmenu.so
 //            if(force) {
 //                System.setProperty("jayatana.force", "true");
 //            }
