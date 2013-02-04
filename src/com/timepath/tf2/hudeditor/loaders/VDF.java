@@ -13,6 +13,9 @@ import javax.swing.tree.DefaultMutableTreeNode;
 
 /**
  * 
+ * http://hpmod.googlecode.com/svn/trunk/tier1/KeyValues.cpp
+ * http://hlssmod.net/he_code/public/tier1/KeyValues.h
+ * 
  * Standard KeyValues format loader
  * 
  * @author TimePath

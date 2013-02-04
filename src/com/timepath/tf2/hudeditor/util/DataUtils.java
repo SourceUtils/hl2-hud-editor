@@ -87,6 +87,10 @@ public class DataUtils {
         return readUByte(f) + (readUByte(f) << 8) + (readUByte(f) << 16) + (readUByte(f) << 24);
     }
     
+    public static int readInt(RandomAccessFile f) throws IOException {
+        return (readUByte(f) << 24) + (readUByte(f) << 16) + (readUByte(f) << 8) + readUByte(f);
+    }
+    
     public static int readULEInt(RandomAccessFile f) throws IOException {
         return readUByte(f) + (readUByte(f) << 8) + (readUByte(f) << 16) + (readUByte(f) << 24);
     }

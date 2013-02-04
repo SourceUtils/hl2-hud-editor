@@ -5,7 +5,11 @@ import java.io.ByteArrayOutputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.RandomAccessFile;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
+import java.util.TimeZone;
 
 /**
  * See also: 
@@ -70,12 +74,24 @@ public class BinaryVDF {
                         break;
                     }
                     int size = DataUtils.readLEInt(rf);
-                    int unknown = DataUtils.readLEInt(rf);
-                    long time = DataUtils.readLEInt(rf);
-                    long unknown2 = (DataUtils.readLEInt(rf) << 32) + DataUtils.readLEInt(rf);
-                    byte[] unknown3 = new byte[20];
-                    for(int i = 0; i < unknown3.length; i++) {
-                        unknown3[i] = rf.readByte();
+                    int dummy1 = DataUtils.readLEInt(rf);
+                    long lastUpdated = DataUtils.readULEInt(rf);
+                    DateFormat df = new SimpleDateFormat("EEE, dd MMM yyyy HH:mm:ss z");
+                    df.setTimeZone(TimeZone.getTimeZone("GMT"));
+                    System.out.println(appID + " : " + df.format(new Date(lastUpdated * 1000)) + " : " + lastUpdated);
+                    long dummy2 = (DataUtils.readLEInt(rf) << 32) + DataUtils.readLEInt(rf);
+                    byte[] dummy3 = DataUtils.readBytes(rf, 20);
+                    long changeNumber = (DataUtils.readLEInt(rf) << 32) + DataUtils.readLEInt(rf);
+                    for(;;) {
+                        byte section_number = DataUtils.readByte(rf); // enum EAppInfoSection
+                        if(section_number == 0x00) // end of section data
+                            break;
+                        byte[] section_data; // section data as written by KeyValues::WriteAsBinary() (see KeyValues.cpp in Source SDK)
+                        for(;;) {
+                            if(rf.readByte() == 8) {
+                                break;
+                            }
+                        }
                     }
                 }
             } else if(magic[1] == 0x55) {

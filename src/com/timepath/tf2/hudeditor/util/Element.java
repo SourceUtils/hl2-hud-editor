@@ -1,15 +1,9 @@
 package com.timepath.tf2.hudeditor.util;
 
-import com.timepath.tf2.hudeditor.gui.EditorCanvas;
+import com.timepath.tf2.hudeditor.gui.Canvas;
 import com.timepath.tf2.hudeditor.gui.EditorFrame;
 import com.timepath.tf2.hudeditor.loaders.RES;
-import com.timepath.tf2.hudeditor.loaders.RES;
 import com.timepath.tf2.hudeditor.loaders.VTF;
-import com.timepath.tf2.hudeditor.loaders.VTF;
-import com.timepath.tf2.hudeditor.util.Alignment;
-import com.timepath.tf2.hudeditor.util.DimensionMode;
-import com.timepath.tf2.hudeditor.util.HudFont;
-import com.timepath.tf2.hudeditor.util.Property;
 import java.awt.Color;
 import java.awt.Font;
 import java.awt.Image;
@@ -31,11 +25,10 @@ public class Element {
     static final Logger logger = Logger.getLogger(Element.class.getName());
     
     public static Map<String, Element> areas = new HashMap<String, Element>();
+    
+    private Canvas canvas;
 
-    EditorCanvas canvas = EditorFrame.canvas;
-
-    public Element(EditorCanvas canvas) {
-        this.canvas = canvas;
+    public Element(Canvas canvas) {
     }
 
     public Element(String name, String info) {
@@ -600,14 +593,6 @@ public class Element {
                 entry.setValue("" + entry.getValue() + ""); // TODO: insert quotes on table
             }
         }
-    }
-
-    public EditorCanvas getCanvas() {
-        return canvas;
-    }
-
-    public void setCanvas(EditorCanvas canvas) {
-        this.canvas = canvas;
     }
 
     public Element getParent() {

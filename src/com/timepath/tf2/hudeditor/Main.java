@@ -107,12 +107,6 @@ public class Main {
     }
     
     public static void main(String... args) {
-        logger.log(Level.INFO, "Env: {0}", System.getenv());
-        logger.log(Level.INFO, "awt.useSystemAAFontSettings: {0}", System.getProperty("awt.useSystemAAFontSettings", ""));
-        logger.log(Level.INFO, "swing.aatext: {0}", System.getProperty("swing.aatext", "")); 
-        logger.log(Level.INFO, "swing.defaultlaf: {0}", System.getProperty("swing.defaultlaf", UIManager.getLookAndFeel().toString()));
-        logger.log(Level.INFO, "swing.crossplatformlaf: {0}", System.getProperty("swing.crossplatformlaf", UIManager.getCrossPlatformLookAndFeelClassName()));
-        
         init(args);
     }
     
@@ -138,7 +132,7 @@ public class Main {
     private static String calcMD5() {
         String md5 = "";
         try {
-            runPath = URLDecoder.decode(EditorFrame.class.getProtectionDomain().getCodeSource().getLocation().getPath(), "UTF-8");
+            runPath = URLDecoder.decode(Main.class.getProtectionDomain().getCodeSource().getLocation().getPath(), "UTF-8");
             if(!runPath.endsWith(".jar")) {
                 indev = true;
                 return "indev";
@@ -159,11 +153,11 @@ public class Main {
                 md5 += Integer.toString((b[i] & 255) + 256, 16).substring(1);
             }
         } catch (NoSuchAlgorithmException ex) {
-            Logger.getLogger(EditorFrame.class.getName()).log(Level.SEVERE, null, ex);
+            logger.log(Level.SEVERE, null, ex);
         } catch (UnsupportedEncodingException ex) {
-            Logger.getLogger(EditorFrame.class.getName()).log(Level.SEVERE, null, ex);
+            logger.log(Level.SEVERE, null, ex);
         } catch (IOException ex) {
-            Logger.getLogger(EditorFrame.class.getName()).log(Level.SEVERE, null, ex);
+            logger.log(Level.SEVERE, null, ex);
         }
         return md5;
     }
@@ -270,6 +264,9 @@ public class Main {
     }
     
     private static void start(String... args) {
+        logger.log(Level.INFO, "Env: {0}", System.getenv());
+        logger.log(Level.INFO, "Properties: {0}", System.getProperties());
+        
         boolean flag = true;
         for(int i = 0; i < args.length; i++) {
             String cmd = args[i].toLowerCase();
