@@ -109,7 +109,7 @@ public class VTF {
     public void getControls() throws IOException {
         file.seek(this.headerSize - 8); // 8 bytes for CRC or other things. I have no idea what the data after the first 64 bytes up until here are for
 
-        String crcHead = new String(new byte[] {DataUtils.readChar(file), DataUtils.readChar(file), DataUtils.readChar(file), DataUtils.readChar(file)});
+        String crcHead = new String(new byte[] {DataUtils.readByte(file), DataUtils.readByte(file), DataUtils.readByte(file), DataUtils.readByte(file)});
         int crc = DataUtils.readULong(file);
 
         if(!(crcHead.equals("CRC\2"))) {
@@ -216,7 +216,7 @@ public class VTF {
         try {
             rf = new RandomAccessFile(file, "r");
 //            System.out.println("Loading " + path + "...");
-            String signature = new String(new byte[] {DataUtils.readChar(rf), DataUtils.readChar(rf), DataUtils.readChar(rf), DataUtils.readChar(rf)});
+            String signature = new String(new byte[] {DataUtils.readByte(rf), DataUtils.readByte(rf), DataUtils.readByte(rf), DataUtils.readByte(rf)});
             if(!(signature.equals("VTF\0"))) {
                 System.err.println("Invalid VTF file " + file);
                 cache.put(file, null);
@@ -225,21 +225,21 @@ public class VTF {
             VTF vtf = new VTF(rf);
             vtf.version = new int[] {DataUtils.readLEInt(rf), DataUtils.readLEInt(rf)};
             vtf.headerSize = DataUtils.readLEInt(rf);
-            vtf.width = DataUtils.readUShort(rf);
-            vtf.height = DataUtils.readUShort(rf);
+            vtf.width = DataUtils.readULEShort(rf);
+            vtf.height = DataUtils.readULEShort(rf);
             vtf.flags = DataUtils.readLEInt(rf);
-            vtf.frameCount = DataUtils.readUShort(rf);
-            vtf.frameFirst = DataUtils.readUShort(rf);
+            vtf.frameCount = DataUtils.readULEShort(rf);
+            vtf.frameFirst = DataUtils.readULEShort(rf);
             rf.skipBytes(4); // padding
-            vtf.reflectivity = new float[] {DataUtils.readFloat(rf), DataUtils.readFloat(rf), DataUtils.readFloat(rf)};
+            vtf.reflectivity = new float[] {DataUtils.readLEFloat(rf), DataUtils.readLEFloat(rf), DataUtils.readLEFloat(rf)};
             rf.skipBytes(4); // padding
-            vtf.bumpScale = DataUtils.readFloat(rf);
+            vtf.bumpScale = DataUtils.readLEFloat(rf);
             vtf.format = Format.getEnumForIndex(DataUtils.readLEInt(rf));
-            vtf.mipCount = DataUtils.readUChar(rf);
+            vtf.mipCount = DataUtils.readUByte(rf);
             vtf.thumbFormat = Format.getEnumForIndex(DataUtils.readLEInt(rf));
-            vtf.thumbWidth = DataUtils.readUChar(rf);
-            vtf.thumbHeight = DataUtils.readUChar(rf);
-            vtf.depth = DataUtils.readUShort(rf); // the docs say that there are 64 bytes for this section, but I count 64. Should this be a single byte?
+            vtf.thumbWidth = DataUtils.readUByte(rf);
+            vtf.thumbHeight = DataUtils.readUByte(rf);
+            vtf.depth = DataUtils.readULEShort(rf); // the docs say that there are 64 bytes for this section, but I count 64. Should this be a single byte?
             
 //            System.out.println(vtf.format);
             

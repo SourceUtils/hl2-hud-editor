@@ -1,81 +1,31 @@
 package com.timepath.tf2.hudeditor.loaders;
 
 import com.timepath.tf2.hudeditor.util.Element;
-import com.timepath.tf2.hudeditor.util.HudFont;
 import com.timepath.tf2.hudeditor.util.Property;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.RandomAccessFile;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Comparator;
-import java.util.HashMap;
 import java.util.Scanner;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.tree.DefaultMutableTreeNode;
-import javax.swing.tree.TreeNode;
 
 /**
  * 
- * TODO: Threading. This class can probably be executed as a thread.
- * If there are multiple values with platform tags, all the values become the last loaded value tag, but only if the variable is recognized
- * 
- * Some tags:
- * $WINDOWS
- * $WIN32
- * $X360
- * $POSIX
- * $OSX
- * $LINUX
+ * Standard KeyValues format loader
  * 
  * @author TimePath
  */
-public class RES {
+public class VDF {
 
-    static final Logger logger = Logger.getLogger(RES.class.getName());
+    static final Logger logger = Logger.getLogger(VDF.class.getName());
 
-    private String hudFolder;
-
-    public RES(String hudFolder) {
-        this.hudFolder = hudFolder;
-    }
-
-    public void populate(DefaultMutableTreeNode top) {
-        processPopulate(new File(hudFolder), -1, top);
+    public VDF(String file) {
+        this.analyze(new File(file));
     }
     
-    /**
-     * @param f
-     * @param depth recursive: -1 = infinite, 0 = nothing, 1 = immediate
-     * @param top
-     */
-    private void processPopulate(File f, int depth, DefaultMutableTreeNode top) {
-        if(depth == 0) {
-            return;
-        }
-        File[] fileList = f.listFiles();
-        Arrays.sort(fileList, dirAlphaComparator);
-
-        for(int i = 0; i < fileList.length; i++) {
-            DefaultMutableTreeNode child = new DefaultMutableTreeNode();
-            child.setUserObject(fileList[i]);
-            if(fileList[i].isDirectory()) {
-                processPopulate(fileList[i], depth - 1, child);
-                if(child.getChildCount() > 0) { // got sick of seeing empty folders
-                    top.add(child);
-                }
-            } else if(fileList[i].getName().endsWith(".res")) {
-                analyze(fileList[i], child);
-                top.add(child);
-            }
-        }
-    }
-    
-    public static HashMap<String,HudFont> fonts = new HashMap<String,HudFont>(); 
-
-    // TODO: Special exceptions for *scheme.res, hudlayout.res, 
-    public void analyze(final File file, final DefaultMutableTreeNode top) {
+    public void analyze(final File file) {
         if(file.isDirectory()) {
             return;
         }
@@ -86,10 +36,8 @@ public class RES {
                 try {
                     RandomAccessFile rf = new RandomAccessFile(file.getPath(), "r");
                     s = new Scanner(rf.getChannel());
-                    processAnalyze(s, top, new ArrayList<Property>(), file);
-                    if(file.getName().equalsIgnoreCase("ClientScheme.res")) {
-                        clientScheme(top);
-                    }
+                    DefaultMutableTreeNode dmtn = new DefaultMutableTreeNode();
+                    processAnalyze(s, dmtn, new ArrayList<Property>(), file);
                 } catch(FileNotFoundException ex) {
                     logger.log(Level.SEVERE, null, ex);
                 } finally {
@@ -97,19 +45,6 @@ public class RES {
                         s.close();
                     }
                 }
-            }
-
-            private void clientScheme(DefaultMutableTreeNode props) {
-                System.out.println("Found clientscheme");
-                TreeNode fontNode = props.getChildAt(0).getChildAt(3); // XXX: hardcoded
-                for(int i = 0; i < fontNode.getChildCount(); i++) {
-                    TreeNode font = fontNode.getChildAt(i);
-                    TreeNode detailFont = font.getChildAt(0); // XXX: hardcoded detail level
-                    Element fontElement = (Element) ((DefaultMutableTreeNode) detailFont).getUserObject();
-                    String fontName = font.toString().replaceAll("\"", ""); // Some use quotes.. oh well
-                    fonts.put(fontName, new HudFont(fontName, fontElement));
-                }
-                System.out.println("Loaded clientscheme");
             }
         }.start();
     }
@@ -123,7 +58,7 @@ public class RES {
             String info = null;
             
             // not the best - what if both are used? ... splits at //, then [
-            int idx = val.contains("//") ? val.indexOf("//") : (val.contains("[") ? val.indexOf("[") : -1);
+            int idx = val.contains("//") ? val.indexOf("//") : (val.contains("[") ? val.indexOf('[') : -1);
             if(idx >= 0) {
                 info = val.substring(idx).trim();
                 val = val.substring(0, idx).trim();
@@ -203,23 +138,5 @@ public class RES {
             }
         }
     }
-
-    private static Comparator<File> dirAlphaComparator = new Comparator<File>() {
-        
-        /**
-         * Alphabetically sorts directories before files ignoring case.
-         */
-        @Override
-        public int compare(File a, File b) {
-            if(a.isDirectory() && !b.isDirectory()) {
-                return -1;
-            } else if(!a.isDirectory() && b.isDirectory()) {
-                return 1;
-            } else {
-                return a.getName().compareToIgnoreCase(b.getName());
-            }
-        }
-
-    };
 
 }

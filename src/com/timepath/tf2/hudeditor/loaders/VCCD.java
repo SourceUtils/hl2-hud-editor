@@ -44,7 +44,7 @@ public class VCCD {
         ArrayList<Entry> list = new ArrayList<Entry>();
         try {
             RandomAccessFile rf = new RandomAccessFile(file, "r");
-            String magic = new String(new byte[]{DataUtils.readChar(rf), DataUtils.readChar(rf), DataUtils.readChar(rf),DataUtils.readChar(rf)});
+            String magic = new String(new byte[]{DataUtils.readByte(rf), DataUtils.readByte(rf), DataUtils.readByte(rf),DataUtils.readByte(rf)});
             if(!magic.equals(magic)) {
                 logger.severe("Header mismatch");
             }
@@ -60,8 +60,8 @@ public class VCCD {
                 Entry e = new Entry();
                 e.setKey(DataUtils.readULong(rf));
                 e.setBlock(DataUtils.readLEInt(rf));
-                e.setOffset(DataUtils.readUShort(rf));
-                e.setLength(DataUtils.readUShort(rf));
+                e.setOffset(DataUtils.readULEShort(rf));
+                e.setLength(DataUtils.readULEShort(rf));
 //                    System.out.println("<" + i + " - " + e);
                 entries[i] = e;
             }
@@ -70,7 +70,7 @@ public class VCCD {
                 rf.seek(dataOffset + (entries[i].block * blockSize) + entries[i].offset);
                 StringBuilder sb = new StringBuilder((entries[i].length / 2) - 1);
                 for(int x = 0; x < (entries[i].length / 2) - 1; x++) {
-                    sb.append(DataUtils.readUTFChar(rf));
+                    sb.append(DataUtils.readLEChar(rf));
                 }
                 rf.skipBytes(2);
                 entries[i].setValue(sb.toString());
@@ -156,8 +156,8 @@ public class VCCD {
 
                 DataUtils.writeULong(rf, e.getKey());
                 DataUtils.writeLEInt(rf, e.getBlock());
-                DataUtils.writeUShort(rf, (short)e.getOffset());
-                DataUtils.writeUShort(rf, (short)e.getLength());
+                DataUtils.writeULEShort(rf, (short)e.getOffset());
+                DataUtils.writeULEShort(rf, (short)e.getLength());
             }
 
             rf.write(new byte[(dataOffset - (int)rf.getFilePointer())]);
@@ -169,8 +169,8 @@ public class VCCD {
                     lastBlock = e.getBlock();
                     rf.write(new byte[blockSize - (entries.get(i-1).getOffset() + entries.get(i-1).getLength())]);
                 }
-                DataUtils.writeUTFChars(rf, e.getValue());
-                DataUtils.writeUTFChar(rf, 0);
+                DataUtils.writeLEChars(rf, e.getValue());
+                DataUtils.writeLEChar(rf, 0);
             }
             int last = entries.size() - 1;
             rf.write(new byte[blockSize - (entries.get(last).getOffset() + entries.get(last).getLength())]);

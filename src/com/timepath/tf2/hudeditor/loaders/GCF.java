@@ -1,10 +1,8 @@
 package com.timepath.tf2.hudeditor.loaders;
 
 import com.timepath.tf2.hudeditor.util.DataUtils;
-import com.timepath.tf2.hudeditor.util.Utils;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
-import java.io.FilenameFilter;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.nio.ByteBuffer;
@@ -668,7 +666,8 @@ public class GCF {
         int off = directoryEntries[idx].nameOffset;
         ByteArrayOutputStream s = new ByteArrayOutputStream();
         while(b[off] != 0) {
-            s.write(b[off++]);
+            s.write(b[off]);
+            off++;
         }
         str += "/" + new String(s.toByteArray());
         return str;
@@ -730,28 +729,6 @@ public class GCF {
     
     public static GCF load(File file) throws IOException {
         return new GCF(file);
-    }
-    
-    public static void main(String[] args) {
-        try {
-            File[] f = new File(Utils.locateSteamAppsDirectory()).listFiles(new FilenameFilter() {
-
-                public boolean accept(File parent, String name) {
-                    return name.toLowerCase().endsWith(".gcf");
-                }
-                
-            });
-//            for(int i = 0; i < f.length; i++) {
-//                logger.log(Level.INFO, "loading {0}", f[i].getName());
-//                load(f[i]);//.extract();
-//                logger.info("\n");
-//            }
-            load(new File(Utils.locateSteamAppsDirectory() + "Team Fortress 2 Content.gcf"));//.extract();
-//            logger.info("----------");
-//            load(new File(Utils.locateSteamAppsDirectory() + "team fortress 2 materials.gcf"));
-        } catch (IOException ex) {
-            Logger.getLogger(GCF.class.getName()).log(Level.SEVERE, null, ex);
-        }
     }
     
 }

@@ -1,9 +1,9 @@
 package com.timepath.tf2.hudeditor.loaders.test;
 
-import com.timepath.tf2.hudeditor.util.Utils;
 import com.timepath.tf2.hudeditor.loaders.GCF;
 import com.timepath.tf2.hudeditor.loaders.VCCD;
 import com.timepath.tf2.hudeditor.loaders.VCCD.Entry;
+import com.timepath.tf2.hudeditor.util.Utils;
 import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.FontMetrics;
@@ -34,6 +34,7 @@ import javax.swing.table.TableCellRenderer;
  *
  * @author TimePath
  */
+@SuppressWarnings("serial")
 public class VCCDTest extends javax.swing.JFrame {
     
     /**

@@ -2,13 +2,13 @@ package com.timepath.tf2.hudeditor.gui;
 
 //<editor-fold defaultstate="collapsed" desc="imports">
 import com.timepath.tf2.hudeditor.Main;
-import com.timepath.tf2.hudeditor.util.Utils;
 import com.timepath.tf2.hudeditor.loaders.RES;
 import com.timepath.tf2.hudeditor.loaders.test.VCCDTest;
 import com.timepath.tf2.hudeditor.loaders.test.VTFTest;
 import com.timepath.tf2.hudeditor.plaf.NativeFileChooser;
 import com.timepath.tf2.hudeditor.plaf.OS;
 import com.timepath.tf2.hudeditor.plaf.mac.OSXAdapter;
+import com.timepath.tf2.hudeditor.util.Utils;
 import java.awt.BorderLayout;
 import java.awt.Cursor;
 import java.awt.Desktop;
@@ -688,7 +688,15 @@ public class EditorFrame extends JFrame {
         
         final JComboBox dropDown = new JComboBox();
         File steamappsFolder = new File(Utils.locateSteamAppsDirectory());
+        if(steamappsFolder == null) {
+            error("Could not find Steam install directory!", "Steam not found");
+            return;
+        }
         final File[] userFolders = steamappsFolder.listFiles(dirFilter);
+        if(userFolders == null) {
+            error("SteamApps is empty!", "Empty SteamApps directory");
+            return;
+        }
         for(int i = 0; i < userFolders.length; i++) {
             if(!userFolders[i].getName().equalsIgnoreCase("common") && !userFolders[i].getName().equalsIgnoreCase("sourcemods")) {
                 final File[] gameFolders = userFolders[i].listFiles(dirFilter);
@@ -708,6 +716,7 @@ public class EditorFrame extends JFrame {
             JOptionPane.showMessageDialog(this, dialogPanel, "Select user", JOptionPane.QUESTION_MESSAGE);
         } else {
             error("No users have TF2 installed!", "TF2 not found");
+            return;
         }
         
         File installDir = new File(steamappsFolder, dropDown.getSelectedItem() + "/Team Fortress 2/tf");
