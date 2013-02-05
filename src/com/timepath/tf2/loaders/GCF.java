@@ -1,5 +1,6 @@
 package com.timepath.tf2.loaders;
 
+//<editor-fold defaultstate="collapsed" desc="Imports">
 import com.timepath.tf2.hudeditor.util.DataUtils;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -11,17 +12,128 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.zip.Adler32;
 import java.util.zip.Checksum;
+import javax.swing.tree.DefaultMutableTreeNode;
+//</editor-fold>
 
 /**
  * 
  * http://wiki.singul4rity.com/steam:filestructures:gcf
  *
- * @author TimePath
+ * @author timepath
  */
 public class GCF {
     
     private static final Logger logger = Logger.getLogger(GCF.class.getName());
+
+    //<editor-fold defaultstate="collapsed" desc="Utils">
+    public static void analyze(File file, DefaultMutableTreeNode child) {
+        try {
+            GCF g = new GCF(file);
+            String[] entries = g.getEntries();
+            for(int i = 0; i < entries.length; i++) {
+                child.add(new DefaultMutableTreeNode(entries[i]));
+            }
+        } catch (IOException ex) {
+            logger.log(Level.SEVERE, null, ex);
+        }
+    }
     
+    public String[] getEntries() {
+        String[] out = new String[directoryEntries.length];
+        for(int i = 0; i < out.length; i++) {
+            out[i] = nameForDirectoryIndex(i);
+        }
+        return out;
+    }
+    
+    public String nameForDirectoryIndex(int idx) {
+        String str = nameForDirectoryIndexRecurse(idx);
+        return str.length() > 0 ? str : "/";
+    }
+    
+    private String nameForDirectoryIndexRecurse(int idx) {
+        String str;
+        if(idx != -1 && directoryEntries[idx].parentIndex != -1 && directoryEntries[idx].parentIndex != 0xFFFFFFFF) {
+            str = nameForDirectoryIndexRecurse(directoryEntries[idx].parentIndex);
+        } else {
+            return "";
+        }
+        int off = directoryEntries[idx].nameOffset;
+        ByteArrayOutputStream s = new ByteArrayOutputStream();
+        while(ls[off] != 0) {
+            s.write(ls[off]);
+            off++;
+        }
+        str += "/" + new String(s.toByteArray());
+        return str;
+    }
+    
+    public File extract(String search, File dest) throws IOException {
+        logger.log(Level.INFO, "Extracting {0}", name);
+        for(int i = 0; i < directoryEntries.length; i++) {
+            String str = nameForDirectoryIndex(i);
+            if(!str.equals(search)) {
+                continue;
+            }
+            return extract(i, dest);
+        }
+        logger.log(Level.INFO, "Could not extract {0}", name);
+        return null;
+    }
+    
+    public File extract(int index, File dest) throws IOException {
+        String str = nameForDirectoryIndex(index);
+        File out;
+        if(directoryEntries[index].attributes == 0) {
+            //<editor-fold defaultstate="collapsed" desc="Extract directory">
+            out = new File(dest.getPath(), str);
+            out.mkdirs();
+            //</editor-fold>
+        } else {
+            //<editor-fold defaultstate="collapsed" desc="Extract file">
+            out = new File(dest, str);
+            int idx = directoryMapEntries[index].firstBlockIndex;
+            //                logger.log(Level.INFO, "\n\np:{0}\nblockidx:{1}\n", new Object[]{f.getPath(), idx});
+            //                logger.log(Level.INFO, "\n\nb:{0}\n", new Object[]{block.toString()});
+            out.getParentFile().mkdirs();
+            out.createNewFile();
+            if(idx >= blocks.length) {
+                logger.log(Level.WARNING, "Block out of range for {0} : {1}. Is the size 0?", new Object[]{out.getPath(), index});
+                return null;
+            }
+            Block block = getBlock(idx);
+            RandomAccessFile rf = new RandomAccessFile(out, "rw");
+            int dataIdx = block.firstDataBlockIndex;
+            for(int q = 0; ; q++) {
+                long pos = ((long)dataBlockHeader.firstBlockOffset + ((long)dataIdx * (long)dataBlockHeader.blockSize));
+                rf.seek(pos);
+                byte[] buf = new byte[dataBlockHeader.blockSize];
+                if(block.fileDataOffset != 0) {
+//                    logger.log(Level.INFO, "off = {0}", block.fileDataOffset);
+                }
+                rf.read(buf);
+                rf.seek(block.fileDataOffset + (q * dataBlockHeader.blockSize));
+                if(rf.getFilePointer() + buf.length > block.fileDataSize) {
+                    rf.write(buf, 0, (block.fileDataSize % dataBlockHeader.blockSize));
+                } else {
+                    rf.write(buf);
+                }
+                if(dataIdx == 65535) {
+                    break;
+                }
+                dataIdx = fragMap.getEntry(dataIdx).nextDataBlockIndex;
+                if(dataIdx == -1) {
+                    break;
+                }
+            }
+            rf.close();
+            //</editor-fold>
+        }
+        return out;
+    }
+    //</editor-fold>
+    
+    //<editor-fold defaultstate="collapsed" desc="Reading">
     private final RandomAccessFile rf;
     
     private final String name;
@@ -315,9 +427,9 @@ public class GCF {
         Launch_File(0x2),
         Configuration_File(0x1),
         Directory(0);
-                
+        
         int flags;
-                
+        
         DirectoryEntryAttributes(int flags) {
             this.flags = flags;
         }
@@ -406,7 +518,7 @@ public class GCF {
     class ChecksumHeader {
         int headerVersion;			// Always 0x00000001
         int ChecksumSize;		// Size of LPGCFCHECKSUMHEADER & LPGCFCHECKSUMMAPHEADER & in bytes.
-                                        // the number of bytes in the checksum section (excluding this structure and the following LatestApplicationVersion structure).
+        // the number of bytes in the checksum section (excluding this structure and the following LatestApplicationVersion structure).
         
         ChecksumHeader() throws IOException {
             headerVersion = DataUtils.readLEInt(rf);
@@ -432,17 +544,17 @@ public class GCF {
     }
     
     ChecksumMapEntry[] checksumMapEntries;
+    
+    //GCF Checksum Map Entry
+    class ChecksumMapEntry {
+        int checksumCount;		// Number of checksums.
+        int firstChecksumIndex;	// Index of first checksum.
         
-        //GCF Checksum Map Entry
-        class ChecksumMapEntry {
-            int checksumCount;		// Number of checksums.
-            int firstChecksumIndex;	// Index of first checksum.
-            
-            @Override
-            public String toString() {
-                return "checkCount:" + checksumCount + ", first:" + firstChecksumIndex;
-            }
+        @Override
+        public String toString() {
+            return "checkCount:" + checksumCount + ", first:" + firstChecksumIndex;
         }
+    }
     
     ChecksumEntry[] checksumEntries;
     
@@ -458,10 +570,10 @@ public class GCF {
     //</editor-fold>
     
     //<editor-fold defaultstate="collapsed" desc="Data blocks">
-    DateBlockHeader dataBlockHeader;
+    DataBlockHeader dataBlockHeader;
     
     //GCF Data Header
-    class DateBlockHeader {
+    class DataBlockHeader {
         int gcfRevision;	// GCF file version.
         int blockCount;	// Number of data blocks.
         int blockSize;	// Size of each data block in bytes.
@@ -472,7 +584,7 @@ public class GCF {
         @Override
         public String toString() {
             int check = blockCount + blockSize + firstBlockOffset + blocksUsed;
-            return "v:" + gcfRevision + ", blocks:" + blockCount + ", size:" + blockSize + ", ofset:0x" + Integer.toHexString(firstBlockOffset) + ", used:" + blocksUsed + ", check:" + checksum + " vs " + check;
+            return "v:" + gcfRevision + ", blocks:" + blockCount + ", size:" + blockSize + ", offset:0x" + Integer.toHexString(firstBlockOffset) + ", used:" + blocksUsed + ", check:" + checksum + " vs " + check;
         }
     }
     //</editor-fold>
@@ -500,13 +612,11 @@ public class GCF {
         this.name = file.getName();
         rf = new RandomAccessFile(file, "r");
         
-        header = new GcfHeader();     
-        logger.info(header.toString());
+        header = new GcfHeader();
         blockHeader = new BlockHeader();
         fragMap = new FragMapHeader();
-
+        
         directoryHeader = new DirectoryHeader();
-        logger.info(directoryHeader.toString());
         //<editor-fold defaultstate="collapsed" desc="Directories">
         boolean skipDirs = false;
         if(skipDirs) {
@@ -514,9 +624,9 @@ public class GCF {
         } else {
             directoryEntries = new DirectoryEntry[directoryHeader.nodeCount];
             for(int i = 0; i < directoryHeader.nodeCount; i++) {
-//                if(i % 10000 == 0) {
-//                    logger.log(Level.INFO, "Loading entry {0}/{1}", new Object[]{i + 1, directoryHeader.itemCount});
-//                }
+                //                if(i % 10000 == 0) {
+                //                    logger.log(Level.INFO, "Loading entry {0}/{1}", new Object[]{i + 1, directoryHeader.itemCount});
+                //                }
                 DirectoryEntry de = new DirectoryEntry();
                 de.nameOffset = DataUtils.readLEInt(rf);
                 de.itemSize = DataUtils.readLEInt(rf);
@@ -529,15 +639,15 @@ public class GCF {
                 directoryEntries[i] = de;
             }
             
-//            logger.log(Level.INFO, "Loading names ({0}) bytes", directoryHeader.nameSize);
+            //            logger.log(Level.INFO, "Loading names ({0}) bytes", directoryHeader.nameSize);
             ls = new byte[directoryHeader.nameSize];
             rf.read(ls);
             
             info1Entries = new tagGCFDIRECTORYINFO1ENTRY[directoryHeader.hashTableKeyCount];
             for(int i = 0; i < directoryHeader.hashTableKeyCount; i++) {
-//                if(i % 10000 == 0) {
-//                    logger.log(Level.INFO, "Loading info1 {0}/{1}", new Object[]{i + 1, directoryHeader.info1Count});
-//                }
+                //                if(i % 10000 == 0) {
+                //                    logger.log(Level.INFO, "Loading info1 {0}/{1}", new Object[]{i + 1, directoryHeader.info1Count});
+                //                }
                 tagGCFDIRECTORYINFO1ENTRY f = new tagGCFDIRECTORYINFO1ENTRY();
                 f.Dummy0 = DataUtils.readLEInt(rf);
                 
@@ -546,9 +656,9 @@ public class GCF {
             
             info2Entries = new tagGCFDIRECTORYINFO2ENTRY[directoryHeader.nodeCount];
             for(int i = 0; i < directoryHeader.nodeCount; i++) {
-//                if(i % 10000 == 0) {
-//                    logger.log(Level.INFO, "Loading info1 {0}/{1}", new Object[]{i + 1, directoryHeader.itemCount});
-//                }
+                //                if(i % 10000 == 0) {
+                //                    logger.log(Level.INFO, "Loading info1 {0}/{1}", new Object[]{i + 1, directoryHeader.itemCount});
+                //                }
                 tagGCFDIRECTORYINFO2ENTRY f = new tagGCFDIRECTORYINFO2ENTRY();
                 f.Dummy0 = DataUtils.readLEInt(rf);
                 
@@ -557,9 +667,9 @@ public class GCF {
             
             copyEntries = new tagGCFDIRECTORYCOPYENTRY[directoryHeader.copyCount];
             for(int i = 0; i < directoryHeader.copyCount; i++) {
-//                if(i % 10000 == 0) {
-//                    logger.log(Level.INFO, "Loading info1 {0}/{1}", new Object[]{i + 1, directoryHeader.copyCount});
-//                }
+                //                if(i % 10000 == 0) {
+                //                    logger.log(Level.INFO, "Loading info1 {0}/{1}", new Object[]{i + 1, directoryHeader.copyCount});
+                //                }
                 tagGCFDIRECTORYCOPYENTRY f = new tagGCFDIRECTORYCOPYENTRY();
                 f.DirectoryIndex = DataUtils.readLEInt(rf);
                 
@@ -568,9 +678,9 @@ public class GCF {
             
             localEntries = new tagGCFDIRECTORYLOCALENTRY[directoryHeader.localCount];
             for(int i = 0; i < directoryHeader.localCount; i++) {
-//                if(i % 10000 == 0) {
-//                    logger.log(Level.INFO, "Loading info1 {0}/{1}", new Object[]{i + 1, directoryHeader.localCount});
-//                }
+                //                if(i % 10000 == 0) {
+                //                    logger.log(Level.INFO, "Loading info1 {0}/{1}", new Object[]{i + 1, directoryHeader.localCount});
+                //                }
                 tagGCFDIRECTORYLOCALENTRY f = new tagGCFDIRECTORYLOCALENTRY();
                 f.DirectoryIndex = DataUtils.readLEInt(rf);
                 
@@ -580,33 +690,30 @@ public class GCF {
         
         //</editor-fold>
         
-
         directoryMapHeader = new GCF.DirectoryMapHeader();
-        logger.info(directoryMapHeader.toString());
         //<editor-fold defaultstate="collapsed" desc="Directory Map">
         directoryMapEntries = new DirectoryMapEntry[directoryHeader.nodeCount];
         for(int i = 0; i < directoryHeader.nodeCount; i++) {
-//            if(i % 10000 == 0) {
-//                logger.log(Level.INFO, "Loading info1 {0}/{1}", new Object[]{i + 1, directoryHeader.itemCount});
-//            }
+            //            if(i % 10000 == 0) {
+            //                logger.log(Level.INFO, "Loading info1 {0}/{1}", new Object[]{i + 1, directoryHeader.itemCount});
+            //            }
             DirectoryMapEntry dme = new DirectoryMapEntry();
             dme.firstBlockIndex = DataUtils.readLEInt(rf);
-
+            
             directoryMapEntries[i] = dme;
         }
         //</editor-fold>
         
         checksumHeader = new GCF.ChecksumHeader();
-        logger.info(checksumHeader.toString());
         //<editor-fold defaultstate="collapsed" desc="Checksums">
-//        logger.log(Level.INFO, "csize:{0}", checksumHeader.ChecksumSize);
+        //        logger.log(Level.INFO, "csize:{0}", checksumHeader.ChecksumSize);
         
         checksumMapHeader = new GCF.ChecksumMapHeader();
         checksumMapHeader.formatCode = DataUtils.readLEInt(rf);
         checksumMapHeader.Dummy1 = DataUtils.readLEInt(rf);
         checksumMapHeader.ItemCount = DataUtils.readLEInt(rf);
         checksumMapHeader.ChecksumCount = DataUtils.readLEInt(rf);
-//        logger.log(Level.INFO, "items:{0}, checks:{1}", new Object[]{checksumMapHeader.ItemCount, checksumMapHeader.ChecksumCount});
+        //        logger.log(Level.INFO, "items:{0}, checks:{1}", new Object[]{checksumMapHeader.ItemCount, checksumMapHeader.ChecksumCount});
         
         checksumMapEntries = new ChecksumMapEntry[checksumMapHeader.ItemCount];
         for(int i = 0; i < checksumMapHeader.ItemCount; i++) {
@@ -618,25 +725,24 @@ public class GCF {
         
         checksumEntries = new ChecksumEntry[checksumMapHeader.ChecksumCount + 0x20];
         for(int i = 0; i < checksumEntries.length; i++) {
-//            if(i % 10000 == 0) {
-//                logger.log(Level.INFO, "Loading info1 {0}/{1}", new Object[]{i + 1, checksumMapEntries.ChecksumCount});
-//            }
+            //            if(i % 10000 == 0) {
+            //                logger.log(Level.INFO, "Loading info1 {0}/{1}", new Object[]{i + 1, checksumMapEntries.ChecksumCount});
+            //            }
             ChecksumEntry ce = new ChecksumEntry();
             ce.checksum = DataUtils.readLEInt(rf);
             checksumEntries[i] = ce;
         }
         //</editor-fold>
-
+        
         // TODO: Slow. Takes about 73 seconds
         //<editor-fold defaultstate="collapsed" desc="Data">
-        dataBlockHeader = new DateBlockHeader();
+        dataBlockHeader = new DataBlockHeader();
         dataBlockHeader.gcfRevision = DataUtils.readLEInt(rf);
         dataBlockHeader.blockCount = DataUtils.readLEInt(rf);
         dataBlockHeader.blockSize = DataUtils.readLEInt(rf);
         dataBlockHeader.firstBlockOffset = DataUtils.readLEInt(rf);
         dataBlockHeader.blocksUsed = DataUtils.readLEInt(rf);
         dataBlockHeader.checksum = DataUtils.readLEInt(rf);
-        logger.info(dataBlockHeader.toString());
         
         boolean skipRead = true;
         if(skipRead) {
@@ -651,84 +757,10 @@ public class GCF {
         }
         //</editor-fold>
         
-        logger.log(Level.INFO, "{0}\n{1}\n{2}", new Object[]{header.toString(), blockHeader.toString(), fragMap.toString()});
+        logger.log(Level.INFO, "{0}\n{1}\n{2}\n{3}\n{4}\n{5}\n{6}", new Object[]{header.toString(), blockHeader.toString(), fragMap.toString(), directoryHeader.toString(), directoryMapHeader.toString(), checksumHeader.toString(), dataBlockHeader.toString()});
         
-//        rf.close();
+        //        rf.close();
     }
-    
-    String nameForDirectoryIndex(byte[] b, int idx) {
-        String str;
-        if(idx != -1 && directoryEntries[idx].parentIndex != -1 && directoryEntries[idx].parentIndex != 0xFFFFFFFF) {
-            str = nameForDirectoryIndex(b, directoryEntries[idx].parentIndex);
-        } else {
-            return "/";
-        }
-        int off = directoryEntries[idx].nameOffset;
-        ByteArrayOutputStream s = new ByteArrayOutputStream();
-        while(b[off] != 0) {
-            s.write(b[off]);
-            off++;
-        }
-        str += "/" + new String(s.toByteArray());
-        return str;
-    }
-    
-    void extract() throws IOException {
-        logger.log(Level.INFO, "Extracting {0}", name);
-        File root = new File(System.getenv("HOME") + "/test");
-        if(root.exists()) {
-            root.renameTo(new File(System.getenv("HOME") + "/deleteme"));
-        }
-        root.mkdir();
-        for(int i = 0; i < directoryEntries.length; i++) {
-            String str = nameForDirectoryIndex(ls, i);
-            if(directoryEntries[i].attributes == 0) { // is a directory.
-                File dir = new File(root.getPath(), str);
-                dir.mkdirs();
-            } else {                
-                File f = new File(root, str);
-                int idx = directoryMapEntries[i].firstBlockIndex;
-//                logger.log(Level.INFO, "\n\np:{0}\nblockidx:{1}\n", new Object[]{f.getPath(), idx});
-//                logger.log(Level.INFO, "\n\nb:{0}\n", new Object[]{block.toString()});
-                f.getParentFile().mkdirs();
-                f.createNewFile();
-                if(idx >= blocks.length) {
-                    logger.log(Level.WARNING, "Block out of range for {0} : {1}. Is the size 0?", new Object[]{f.getPath(), i});
-                    continue;
-                }
-                Block block = getBlock(idx);
-                RandomAccessFile out = new RandomAccessFile(f, "rw");
-                int dataIdx = block.firstDataBlockIndex;
-                for(int q = 0; ; q++) {
-                    long pos = ((long)dataBlockHeader.firstBlockOffset + ((long)dataIdx * (long)dataBlockHeader.blockSize));
-                    rf.seek(pos);
-                    byte[] buf = new byte[dataBlockHeader.blockSize];
-                    if(block.fileDataOffset != 0) {
-                        logger.log(Level.INFO, "off = {0}", block.fileDataOffset);
-                    }
-                    rf.read(buf);
-                    out.seek(block.fileDataOffset + (q * dataBlockHeader.blockSize));
-                    if(out.getFilePointer() + buf.length > block.fileDataSize) {
-                        out.write(buf, 0, (block.fileDataSize % dataBlockHeader.blockSize));
-                    } else {
-                        out.write(buf);
-                    }
-                    if(dataIdx == 65535) {
-                        break;
-                    }
-                    dataIdx = fragMap.getEntry(dataIdx).nextDataBlockIndex;
-                    if(dataIdx == -1) {
-                        break;
-                    }
-                }
-                out.close();
-            }
-        }
-        logger.log(Level.INFO, "Extracted {0}", name);
-    }
-    
-    public static GCF load(File file) throws IOException {
-        return new GCF(file);
-    }
+    //</editor-fold>
     
 }

@@ -2,7 +2,7 @@ package com.timepath.plaf;
 
 /**
  *
- * @author TimePath
+ * @author timepath
  */
 public enum OS {
     

@@ -33,7 +33,7 @@ import net.tomahawk.XFileDialog;
 /**
  * Link dump: https://docs.google.com/document/d/19jk3L-kyduz_AvTOhMXk4agh5gUYM9gWQCHafbMl3wY/edit
  * 
- * @author TimePath
+ * @author timepath
  */
 public class Main {
     

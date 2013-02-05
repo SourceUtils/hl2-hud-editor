@@ -17,7 +17,7 @@ import java.util.logging.Logger;
 
 /**
  * TODO: edge cases. I think elements without x and y coordinates default to the center (c0)
- * @author TimePath
+ * @author timepath
  */
 public class Element {
     

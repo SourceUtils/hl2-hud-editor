@@ -22,7 +22,7 @@ import javax.swing.filechooser.FileFilter;
 
 /**
  *
- * @author TimePath
+ * @author timepath
  */
 public class VTFTest {
     

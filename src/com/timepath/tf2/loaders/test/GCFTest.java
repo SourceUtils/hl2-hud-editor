@@ -66,7 +66,7 @@ public class GCFTest extends javax.swing.JFrame {
             });
             for(int i = 0; i < f.length; i++) {
                 logger.log(Level.INFO, "loading {0}", f[i].getName());
-                GCF.load(f[i]);//.extract();
+                new GCF(f[i]);//.extract();
                 logger.info("\n");
             }
 //            GCF.load(new File(Utils.locateSteamAppsDirectory() + "Team Fortress 2 Content.gcf"));//.extract();

@@ -18,17 +18,17 @@ import javax.swing.tree.DefaultMutableTreeNode;
  * 
  * Standard KeyValues format loader
  * 
- * @author TimePath
+ * @author timepath
  */
 public class VDF {
 
     static final Logger logger = Logger.getLogger(VDF.class.getName());
 
     public VDF(String file) {
-        this.analyze(new File(file));
+        
     }
     
-    public void analyze(final File file) {
+    public static void analyze(final File file, final DefaultMutableTreeNode top) {
         if(file.isDirectory()) {
             return;
         }
@@ -39,8 +39,10 @@ public class VDF {
                 try {
                     RandomAccessFile rf = new RandomAccessFile(file.getPath(), "r");
                     s = new Scanner(rf.getChannel());
-                    DefaultMutableTreeNode dmtn = new DefaultMutableTreeNode();
-                    processAnalyze(s, dmtn, new ArrayList<Property>(), file);
+                    processAnalyze(s, top, new ArrayList<Property>(), file);
+//                    if(file.getName().equalsIgnoreCase("ClientScheme.res")) {
+//                        clientScheme(top);
+//                    }
                 } catch(FileNotFoundException ex) {
                     logger.log(Level.SEVERE, null, ex);
                 } finally {
@@ -52,7 +54,7 @@ public class VDF {
         }.start();
     }
 
-    private void processAnalyze(Scanner scanner, DefaultMutableTreeNode parent, ArrayList<Property> carried, File file) {
+    private static void processAnalyze(Scanner scanner, DefaultMutableTreeNode parent, ArrayList<Property> carried, File file) {
         while(scanner.hasNext()) {
             // Read values
             String line = scanner.nextLine().trim(); // TODO: What if the line looks like "Scheme{Colors{"? Damn you Broesel...
@@ -61,7 +63,7 @@ public class VDF {
             String info = null;
             
             // not the best - what if both are used? ... splits at //, then [
-            int idx = val.contains("//") ? val.indexOf("//") : (val.contains("[") ? val.indexOf('[') : -1);
+            int idx = val.contains("//") ? val.indexOf("//") : (val.contains("[") ? val.indexOf("[") : -1);
             if(idx >= 0) {
                 info = val.substring(idx).trim();
                 val = val.substring(0, idx).trim();
@@ -93,8 +95,9 @@ public class VDF {
             } else if(line.equals("{")) { // just a { on its own line
                 continue;
             } else if(line.startsWith("#")) {
-                p.setKey("#");
-                p.setValue(line.substring(line.indexOf('#') + 1));
+                String rest = line.substring(line.indexOf('#') + 1);
+                p.setKey("#" + rest.substring(0, rest.indexOf(" ")));
+                p.setValue(rest.substring(rest.indexOf(" ")));
                 p.setInfo("");
                 logger.log(Level.INFO, "Carrying: {0}", line);
                 carried.add(p);

@@ -1,9 +1,9 @@
 package com.timepath.tf2.loaders.test;
 
+import com.timepath.tf2.hudeditor.util.Utils;
 import com.timepath.tf2.loaders.GCF;
 import com.timepath.tf2.loaders.VCCD;
 import com.timepath.tf2.loaders.VCCD.Entry;
-import com.timepath.tf2.hudeditor.util.Utils;
 import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.FontMetrics;
@@ -32,7 +32,7 @@ import javax.swing.table.TableCellRenderer;
 
 /**
  *
- * @author TimePath
+ * @author timepath
  */
 @SuppressWarnings("serial")
 public class VCCDTest extends javax.swing.JFrame {
@@ -402,12 +402,12 @@ public class VCCDTest extends javax.swing.JFrame {
         HashMap<Integer, String> map = new HashMap<Integer, String>();
         logger.info("Generating hash codes ...");
         try {
-            GCF gcf = GCF.load(new File(Utils.locateSteamAppsDirectory() + "/Team Fortress 2 Content.gcf"));
+            GCF gcf = new GCF(new File(Utils.locateSteamAppsDirectory() + "/Team Fortress 2 Content.gcf"));
             
             CRC32 crc = new CRC32();
             
             String all = new String(gcf.ls);
-            String[] ls = all.split("\0");
+            String[] ls = gcf.getEntries();
             for(int i = 0; i < ls.length; i++) {
                 int end = ls[i].length();
                 int ext = ls[i].lastIndexOf(".");

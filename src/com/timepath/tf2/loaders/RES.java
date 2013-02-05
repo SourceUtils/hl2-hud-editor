@@ -29,7 +29,7 @@ import javax.swing.tree.TreeNode;
  * $OSX
  * $LINUX
  * 
- * @author TimePath
+ * @author timepath
  */
 public class RES {
 

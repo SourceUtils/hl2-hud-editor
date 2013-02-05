@@ -11,7 +11,7 @@ import java.util.logging.Logger;
 
 /**
  *
- * @author TimePath
+ * @author timepath
  */
 public class LinuxDesktopLauncher {
     

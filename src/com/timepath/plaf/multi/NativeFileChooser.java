@@ -14,7 +14,7 @@ import net.tomahawk.XFileDialog;
 
 /**
  *
- * @author TimePath
+ * @author timepath
  */
 public class NativeFileChooser {
     

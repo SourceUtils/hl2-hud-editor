@@ -915,15 +915,16 @@ public final class EditorFrame extends javax.swing.JFrame {
         fileTree.addTreeSelectionListener(new TreeSelectionListener() {
             @Override
             public void valueChanged(TreeSelectionEvent e) {
-                DefaultTableModel model = (DefaultTableModel) propTable.getModel();
-                model.getDataVector().removeAllElements();
-                model.insertRow(0, new String[]{"", "", ""});
-                propTable.scrollRectToVisible(new Rectangle(0, 0, 0, 0));
                 
                 DefaultMutableTreeNode node = (DefaultMutableTreeNode) fileTree.getLastSelectedPathComponent();
                 if(node == null) {
                     return;
                 }
+                
+                DefaultTableModel model = (DefaultTableModel) propTable.getModel();
+                model.getDataVector().removeAllElements();
+                model.insertRow(0, new String[]{"", "", ""});
+                propTable.scrollRectToVisible(new Rectangle(0, 0, 0, 0));
                 
                 Object nodeInfo = node.getUserObject();
                 if(nodeInfo instanceof Element) {
