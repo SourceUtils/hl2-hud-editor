@@ -1,6 +1,6 @@
 package com.timepath.tf2.loaders;
 
-import com.timepath.tf2.hudeditor.util.DataUtils;
+import com.timepath.util.DataUtils;
 import java.awt.AlphaComposite;
 import java.awt.Color;
 import java.awt.Graphics2D;

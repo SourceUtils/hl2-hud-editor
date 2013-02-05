@@ -1,6 +1,6 @@
 package com.timepath.tf2.loaders;
 
-import com.timepath.tf2.hudeditor.util.DataUtils;
+import com.timepath.util.DataUtils;
 import java.io.ByteArrayOutputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;

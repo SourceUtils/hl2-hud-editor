@@ -1,7 +1,7 @@
 package com.timepath.tf2.loaders;
 
 //<editor-fold defaultstate="collapsed" desc="Imports">
-import com.timepath.tf2.hudeditor.util.DataUtils;
+import com.timepath.util.DataUtils;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;

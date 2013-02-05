@@ -1,4 +1,4 @@
-package com.timepath.tf2.hudeditor.util;
+package com.timepath.util;
 
 import java.io.IOException;
 import java.io.RandomAccessFile;
