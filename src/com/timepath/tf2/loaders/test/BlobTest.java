@@ -1,6 +1,6 @@
-package com.timepath.tf2.hudeditor.loaders.test;
+package com.timepath.tf2.loaders.test;
 
-import com.timepath.tf2.hudeditor.loaders.Blob;
+import com.timepath.tf2.loaders.Blob;
 import java.io.File;
 
 /**

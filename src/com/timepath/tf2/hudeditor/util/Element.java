@@ -1,8 +1,8 @@
 package com.timepath.tf2.hudeditor.util;
 
 import com.timepath.tf2.hudeditor.gui.Canvas;
-import com.timepath.tf2.hudeditor.loaders.RES;
-import com.timepath.tf2.hudeditor.loaders.VTF;
+import com.timepath.tf2.loaders.RES;
+import com.timepath.tf2.loaders.VTF;
 import java.awt.Color;
 import java.awt.Font;
 import java.awt.Image;

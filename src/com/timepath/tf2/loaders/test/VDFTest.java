@@ -1,4 +1,4 @@
-package com.timepath.tf2.hudeditor.loaders.test;
+package com.timepath.tf2.loaders.test;
 
 import java.util.logging.Logger;
 import javax.swing.JFrame;

@@ -1,7 +1,7 @@
-package com.timepath.tf2.hudeditor.loaders.test;
+package com.timepath.tf2.loaders.test;
 
-import com.timepath.tf2.hudeditor.loaders.VTF;
-import com.timepath.tf2.hudeditor.loaders.VTF.Format;
+import com.timepath.tf2.loaders.VTF;
+import com.timepath.tf2.loaders.VTF.Format;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Graphics;

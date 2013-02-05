@@ -1,6 +1,6 @@
-package com.timepath.tf2.hudeditor.loaders.test;
+package com.timepath.tf2.loaders.test;
 
-import com.timepath.tf2.hudeditor.loaders.BinaryVDF;
+import com.timepath.tf2.loaders.BinaryVDF;
 import com.timepath.tf2.hudeditor.util.Utils;
 import java.io.IOException;
 

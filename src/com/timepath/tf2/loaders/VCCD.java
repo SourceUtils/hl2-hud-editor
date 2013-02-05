@@ -1,4 +1,4 @@
-package com.timepath.tf2.hudeditor.loaders;
+package com.timepath.tf2.loaders;
 
 import com.timepath.tf2.hudeditor.util.DataUtils;
 import java.io.File;

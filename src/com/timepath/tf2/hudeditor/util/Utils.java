@@ -1,9 +1,9 @@
 package com.timepath.tf2.hudeditor.util;
 
+import com.timepath.plaf.OS;
 import com.timepath.tf2.hudeditor.Main;
 import com.timepath.tf2.hudeditor.gui.EditorFrame;
-import com.timepath.tf2.hudeditor.loaders.RES;
-import com.timepath.plaf.OS;
+import com.timepath.tf2.loaders.RES;
 import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
@@ -87,7 +87,9 @@ public class Utils {
                 }
             } else {
                 parent.add(child);
-                if(fileList[i].getName().endsWith(".res")) {
+                if(fileList[i].getName().endsWith(".txt") || fileList[i].getName().endsWith(".vdf")) {
+                    RES.analyze(fileList[i], child);
+                } else if(fileList[i].getName().endsWith(".res")) {
                     RES.analyze(fileList[i], child);
                 }
             }

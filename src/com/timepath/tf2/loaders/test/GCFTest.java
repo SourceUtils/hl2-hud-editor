@@ -2,9 +2,9 @@
  * To change this template, choose Tools | Templates
  * and open the template in the editor.
  */
-package com.timepath.tf2.hudeditor.loaders.test;
+package com.timepath.tf2.loaders.test;
 
-import com.timepath.tf2.hudeditor.loaders.GCF;
+import com.timepath.tf2.loaders.GCF;
 import com.timepath.tf2.hudeditor.util.Utils;
 import java.io.File;
 import java.io.FilenameFilter;

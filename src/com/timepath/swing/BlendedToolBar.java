@@ -1,36 +1,33 @@
 package com.timepath.swing;
 
-import java.awt.Color;
+import java.awt.Component;
 import java.awt.Graphics;
-import java.awt.SystemColor;
+import javax.swing.JMenuBar;
 import javax.swing.JToolBar;
-import javax.swing.UIManager;
 
 /**
  *
  * @author timepath
  */
-public class BlendedToolBar extends JToolBar {
+public final class BlendedToolBar extends JToolBar {
 
     /**
      * Creates new form BlendedToolBar
      */
     public BlendedToolBar() {
         initComponents();
+        mb = new JMenuBar();
+        this.add(mb);
     }
+    
+    JMenuBar mb;
 
     @Override
     protected void paintComponent(Graphics g) {
-        Color c;
-        if(UIManager.getDefaults().containsKey("MenuBar.foreground")) {
-            c = UIManager.getDefaults().getColor("MenuBar.foreground");
-//        } else if(SystemColor.menu != null) {
-//            c = SystemColor.menu;
-        } else {
-            super.paintComponent(g);
-            return;
-        }
-        g.setColor(c);
+        this.setForeground(mb.getForeground());
+        this.setBackground(mb.getBackground());
+        
+        g.setColor(this.getBackground());
         g.fillRect(0, 0, this.getWidth(), this.getHeight());
     }
 

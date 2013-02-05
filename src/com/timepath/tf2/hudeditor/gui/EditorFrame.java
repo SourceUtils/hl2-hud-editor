@@ -5,11 +5,11 @@ import com.timepath.plaf.OS;
 import com.timepath.plaf.mac.OSXAdapter;
 import com.timepath.plaf.multi.NativeFileChooser;
 import com.timepath.tf2.hudeditor.Main;
-import com.timepath.tf2.hudeditor.loaders.test.VCCDTest;
-import com.timepath.tf2.hudeditor.loaders.test.VTFTest;
 import com.timepath.tf2.hudeditor.util.Element;
 import com.timepath.tf2.hudeditor.util.Property;
 import com.timepath.tf2.hudeditor.util.Utils;
+import com.timepath.tf2.loaders.test.VCCDTest;
+import com.timepath.tf2.loaders.test.VTFTest;
 import java.awt.BorderLayout;
 import java.awt.Cursor;
 import java.awt.Desktop;
@@ -1269,10 +1269,11 @@ public final class EditorFrame extends javax.swing.JFrame {
         tools.setRollover(true);
 
         rootSplit.setDividerLocation(180);
+        rootSplit.setContinuousLayout(true);
 
-        sideSplit.setDividerLocation(-1);
         sideSplit.setOrientation(javax.swing.JSplitPane.VERTICAL_SPLIT);
         sideSplit.setResizeWeight(0.5);
+        sideSplit.setContinuousLayout(true);
         rootSplit.setLeftComponent(sideSplit);
         rootSplit.setRightComponent(tabbedContent);
 

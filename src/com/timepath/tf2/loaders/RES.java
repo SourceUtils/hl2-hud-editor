@@ -1,4 +1,4 @@
-package com.timepath.tf2.hudeditor.loaders;
+package com.timepath.tf2.loaders;
 
 import com.timepath.tf2.hudeditor.util.Element;
 import com.timepath.tf2.hudeditor.util.HudFont;
@@ -124,8 +124,9 @@ public class RES {
             } else if(line.equals("{")) { // just a { on its own line
                 continue;
             } else if(line.startsWith("#")) {
-                p.setKey("#");
-                p.setValue(line.substring(line.indexOf('#') + 1));
+                String rest = line.substring(line.indexOf('#') + 1);
+                p.setKey("#" + rest.substring(0, rest.indexOf(" ")));
+                p.setValue(rest.substring(rest.indexOf(" ")));
                 p.setInfo("");
                 logger.log(Level.INFO, "Carrying: {0}", line);
                 carried.add(p);
