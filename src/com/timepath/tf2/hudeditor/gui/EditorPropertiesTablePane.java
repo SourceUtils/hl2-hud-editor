@@ -20,6 +20,6 @@ public class EditorPropertiesTablePane extends JScrollPane {
     public EditorPropertiesTable getPropTable() {
         return propTable;
     }
-    private static final Logger LOG = Logger.getLogger(EditorPropertiesTablePane.class.getName());
+    private static final Logger logger = Logger.getLogger(EditorPropertiesTablePane.class.getName());
         
 }

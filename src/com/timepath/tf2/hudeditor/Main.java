@@ -100,7 +100,7 @@ public class Main {
                 awtAppClassNameField.setAccessible(true);
                 awtAppClassNameField.set(xToolkit, projectName);
             } catch (Exception ex) {
-                Logger.getLogger(Main.class.getName()).log(Level.SEVERE, null, ex);
+                logger.log(Level.SEVERE, null, ex);
             }
             LinuxDesktopLauncher.create();
         }

@@ -389,7 +389,7 @@ public class Element {
                     }
                     this.setImage(img);
                 } catch (IOException ex) {
-                    Logger.getLogger(Element.class.getName()).log(Level.SEVERE, null, ex);
+                    logger.log(Level.SEVERE, null, ex);
                 }
             } else {
 //                System.out.println("Other property: " + k);

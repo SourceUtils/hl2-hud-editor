@@ -3,6 +3,9 @@
 <Form version="1.3" maxVersion="1.8" type="org.netbeans.modules.form.forminfo.JFrameFormInfo">
   <NonVisualComponents>
     <Menu class="javax.swing.JMenuBar" name="menuBar">
+      <AuxValues>
+        <AuxValue name="JavaCodeGenerator_CreateCodeCustom" type="java.lang.String" value="new EditorMenuBar()"/>
+      </AuxValues>
     </Menu>
   </NonVisualComponents>
   <Properties>

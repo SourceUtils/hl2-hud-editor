@@ -43,6 +43,6 @@ public class EditorPropertiesTable extends JTable {
     public TableCellRenderer getCellRenderer(int row, int column) {
         return super.getCellRenderer(row, column);
     }
-    private static final Logger LOG = Logger.getLogger(EditorPropertiesTable.class.getName());
+    private static final Logger logger = Logger.getLogger(EditorPropertiesTable.class.getName());
     
 }

@@ -67,7 +67,7 @@ public class Blob {
             RandomAccessFile rf = new RandomAccessFile(f, "r");
             this.blob = readBlob(rf);
         } catch (IOException ex) {
-            Logger.getLogger(Blob.class.getName()).log(Level.SEVERE, null, ex);
+            logger.log(Level.SEVERE, null, ex);
         }
     }
 

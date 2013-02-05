@@ -50,6 +50,6 @@ public class Property {
     public String toString() {
         return key + ":" + value + ":" + info;
     }
-    private static final Logger LOG = Logger.getLogger(Property.class.getName());
+    private static final Logger logger = Logger.getLogger(Property.class.getName());
 
 }

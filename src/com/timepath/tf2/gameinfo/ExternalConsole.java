@@ -21,6 +21,8 @@ import javax.swing.JTextField;
  */
 public class ExternalConsole extends JFrame {
     
+    private static final Logger logger = Logger.getLogger(ExternalConsole.class.getName());
+    
     JTextArea output;
     JTextField input;
     JScrollPane jsp;
@@ -81,7 +83,7 @@ public class ExternalConsole extends JFrame {
             }
             
         } catch (IOException ex) {
-            Logger.getLogger(ExternalConsole.class.getName()).log(Level.SEVERE, null, ex);
+            logger.log(Level.SEVERE, null, ex);
         }
     }
     
@@ -89,7 +91,7 @@ public class ExternalConsole extends JFrame {
         try {
             new ExternalConsole().start();
         } catch (FileNotFoundException ex) {
-            Logger.getLogger(ExternalConsole.class.getName()).log(Level.SEVERE, null, ex);
+            logger.log(Level.SEVERE, null, ex);
         }
     }
     

@@ -63,7 +63,7 @@ public class HudFont {
             ge.registerFont(f1); // for some reason, this works but the bottom return does not
             return new Font(name, Font.PLAIN, fontSize);
         } catch (Exception ex) {
-            Logger.getLogger(HudFont.class.getName()).log(Level.SEVERE, null, ex);
+            logger.log(Level.SEVERE, null, ex);
         }
         System.out.println("Loaded!");
         return f1.deriveFont(fontSize);
@@ -87,6 +87,6 @@ public class HudFont {
         }
         return null;
     }
-    private static final Logger LOG = Logger.getLogger(HudFont.class.getName());
+    private static final Logger logger = Logger.getLogger(HudFont.class.getName());
     
 }

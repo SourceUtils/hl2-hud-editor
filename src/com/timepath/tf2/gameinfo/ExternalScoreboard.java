@@ -22,6 +22,8 @@ import javax.swing.JTextField;
  */
 public class ExternalScoreboard extends JFrame {
     
+    private static final Logger logger = Logger.getLogger(ExternalConsole.class.getName());
+    
 //    @Override
 //    public void paint(Graphics graphics) {
 //        super.paint(graphics);
@@ -92,7 +94,7 @@ public class ExternalScoreboard extends JFrame {
             }
             
         } catch (IOException ex) {
-            Logger.getLogger(ExternalConsole.class.getName()).log(Level.SEVERE, null, ex);
+            logger.log(Level.SEVERE, null, ex);
         }
     }
     
@@ -178,7 +180,7 @@ public class ExternalScoreboard extends JFrame {
         try {
             new ExternalScoreboard().start();
         } catch (FileNotFoundException ex) {
-            Logger.getLogger(ExternalConsole.class.getName()).log(Level.SEVERE, null, ex);
+            logger.log(Level.SEVERE, null, ex);
         }
     }
     

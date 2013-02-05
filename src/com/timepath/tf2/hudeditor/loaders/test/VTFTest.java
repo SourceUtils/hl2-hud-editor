@@ -86,7 +86,7 @@ public class VTFTest {
                             scaleImage();
                             repaint();
                         } catch (IOException ex) {
-                            Logger.getLogger(VTFTest.class.getName()).log(Level.SEVERE, null, ex);
+                            logger.log(Level.SEVERE, null, ex);
                         }
                     }
                 }
@@ -215,7 +215,7 @@ public class VTFTest {
 //                            }
 //                        }
 //                    } catch (IOException ex) {
-//                        Logger.getLogger(VtfLoader.class.getName()).log(Level.SEVERE, null, ex);
+//                        logger.log(Level.SEVERE, null, ex);
 //                    }
 //                }
 //            }
