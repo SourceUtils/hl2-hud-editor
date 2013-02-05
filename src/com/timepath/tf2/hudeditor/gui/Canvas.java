@@ -27,7 +27,7 @@ import javax.swing.JPanel;
  *
  * @author timepath
  */
-public class Canvas extends JPanel implements MouseListener, MouseMotionListener {
+public final class Canvas extends JPanel implements MouseListener, MouseMotionListener {
 
     private static final Logger logger = Logger.getLogger(Canvas.class.getName());
     public double scale = 1;
@@ -152,8 +152,6 @@ public class Canvas extends JPanel implements MouseListener, MouseMotionListener
         internal = new Dimension((int)Math.round(m * 480), 480);
         this.repaint();
     }
-
-    
     
     //<editor-fold defaultstate="collapsed" desc="Paint methods">
     @Override
@@ -162,11 +160,11 @@ public class Canvas extends JPanel implements MouseListener, MouseMotionListener
         Graphics2D g = (Graphics2D) graphics;
         
         if(background != null) {
-//            if(currentbg == null) {
-//                currentbg = resizeImage(background);
-//            }
-//            g.drawImage(currentbg, offX, offY, this);
-            g.drawImage(background, offX, offY, this);
+            if(currentbg == null) {
+                currentbg = resizeImage(background);
+            }
+            g.drawImage(currentbg, offX, offY, this);
+//            g.drawImage(background, offX, offY, this);
         } else {
             g.setColor(BG_COLOR);
             g.fillRect(offX, offY, (int)Math.round(screen.width * scale), (int)Math.round(screen.height * scale));

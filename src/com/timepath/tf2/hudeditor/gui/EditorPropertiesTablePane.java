@@ -6,7 +6,6 @@ import java.util.logging.Logger;
 import javax.swing.JScrollPane;
 
 public class EditorPropertiesTablePane extends JScrollPane {
-    private static final long serialVersionUID = 1L;
     
     private final EditorPropertiesTable propTable;
     

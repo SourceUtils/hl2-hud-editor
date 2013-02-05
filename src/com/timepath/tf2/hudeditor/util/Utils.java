@@ -7,6 +7,9 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Comparator;
+import javax.swing.tree.DefaultMutableTreeNode;
 
 /**
  *
@@ -50,6 +53,41 @@ public class Utils {
     
     public static boolean isMD5(String str) {
         return str.matches("[a-fA-F0-9]{32}");
+    }
+    
+    public static Comparator<File> dirAlphaComparator = new Comparator<File>() {
+        
+        /**
+         * Alphabetically sorts directories before files ignoring case.
+         */
+        @Override
+        public int compare(File a, File b) {
+            if(a.isDirectory() && !b.isDirectory()) {
+                return -1;
+            } else if(!a.isDirectory() && b.isDirectory()) {
+                return 1;
+            } else {
+                return a.getName().compareToIgnoreCase(b.getName());
+            }
+        }
+
+    };
+    
+    public static void recurseDirectoryToNode(File root, DefaultMutableTreeNode parent) {
+        File[] fileList = root.listFiles();
+        Arrays.sort(fileList, Utils.dirAlphaComparator);
+        for(int i = 0; i < fileList.length; i++) {
+            DefaultMutableTreeNode child = new DefaultMutableTreeNode();
+            child.setUserObject(fileList[i]);
+            if(fileList[i].isDirectory()) {
+                recurseDirectoryToNode(fileList[i], child);
+                if(child.getChildCount() > 0) { // got sick of seeing empty folders
+                    parent.add(child);
+                }
+            } else {//if(fileList[i].getName().endsWith(".res")) {
+                parent.add(child);
+            }
+        }
     }
 
 }

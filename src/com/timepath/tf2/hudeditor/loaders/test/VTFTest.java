@@ -41,7 +41,6 @@ public class VTFTest {
         jsp.setViewportView(pane);
         
         class ImagePreviewPanel extends JPanel implements PropertyChangeListener {
-            private static final long serialVersionUID = 1L;
             
             private int width, height;
             private Image image;

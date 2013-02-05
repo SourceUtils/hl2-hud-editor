@@ -12,7 +12,6 @@ import javax.swing.table.TableCellRenderer;
  * @author TimePath
  */
 public class EditorPropertiesTable extends JTable {
-    private static final long serialVersionUID = 1L;
     EditorPropertiesTablePane outer;
 
     public EditorPropertiesTable(EditorPropertiesTablePane outer) {

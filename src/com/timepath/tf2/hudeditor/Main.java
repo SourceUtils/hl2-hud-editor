@@ -54,7 +54,7 @@ public class Main {
     
     private static final Logger logger = Logger.getLogger(Main.class.getName());
     
-    private static Preferences p = Preferences.userRoot().node(projectName);
+    private static Preferences p = Preferences.userRoot().node(projectName);;
     
     static {
         String osVer = System.getProperty("os.name").toLowerCase();

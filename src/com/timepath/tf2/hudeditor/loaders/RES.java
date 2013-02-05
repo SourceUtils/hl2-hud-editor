@@ -3,12 +3,12 @@ package com.timepath.tf2.hudeditor.loaders;
 import com.timepath.tf2.hudeditor.util.Element;
 import com.timepath.tf2.hudeditor.util.HudFont;
 import com.timepath.tf2.hudeditor.util.Property;
+import com.timepath.tf2.hudeditor.util.Utils;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.RandomAccessFile;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Scanner;
 import java.util.logging.Level;
@@ -50,12 +50,12 @@ public class RES {
      * @param depth recursive: -1 = infinite, 0 = nothing, 1 = immediate
      * @param top
      */
-    private void processPopulate(File f, int depth, DefaultMutableTreeNode top) {
+    public static void processPopulate(File f, int depth, DefaultMutableTreeNode top) {
         if(depth == 0) {
             return;
         }
         File[] fileList = f.listFiles();
-        Arrays.sort(fileList, dirAlphaComparator);
+        Arrays.sort(fileList, Utils.dirAlphaComparator);
 
         for(int i = 0; i < fileList.length; i++) {
             DefaultMutableTreeNode child = new DefaultMutableTreeNode();
@@ -75,7 +75,7 @@ public class RES {
     public static HashMap<String,HudFont> fonts = new HashMap<String,HudFont>(); 
 
     // TODO: Special exceptions for *scheme.res, hudlayout.res, 
-    public void analyze(final File file, final DefaultMutableTreeNode top) {
+    public static void analyze(final File file, final DefaultMutableTreeNode top) {
         if(file.isDirectory()) {
             return;
         }
@@ -114,7 +114,7 @@ public class RES {
         }.start();
     }
 
-    private void processAnalyze(Scanner scanner, DefaultMutableTreeNode parent, ArrayList<Property> carried, File file) {
+    private static void processAnalyze(Scanner scanner, DefaultMutableTreeNode parent, ArrayList<Property> carried, File file) {
         while(scanner.hasNext()) {
             // Read values
             String line = scanner.nextLine().trim(); // TODO: What if the line looks like "Scheme{Colors{"? Damn you Broesel...
@@ -203,23 +203,5 @@ public class RES {
             }
         }
     }
-
-    private static Comparator<File> dirAlphaComparator = new Comparator<File>() {
-        
-        /**
-         * Alphabetically sorts directories before files ignoring case.
-         */
-        @Override
-        public int compare(File a, File b) {
-            if(a.isDirectory() && !b.isDirectory()) {
-                return -1;
-            } else if(!a.isDirectory() && b.isDirectory()) {
-                return 1;
-            } else {
-                return a.getName().compareToIgnoreCase(b.getName());
-            }
-        }
-
-    };
 
 }

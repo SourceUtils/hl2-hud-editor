@@ -66,7 +66,6 @@ public class FileTree extends javax.swing.JTree {
     }
     
     private class CustomTreeCellRenderer extends DefaultTreeCellRenderer {
-        private static final long serialVersionUID = 1L;
 
         CustomTreeCellRenderer() {
             super();

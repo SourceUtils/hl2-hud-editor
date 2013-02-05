@@ -51,6 +51,7 @@ import java.net.URLConnection;
 import java.net.UnknownHostException;
 import java.text.MessageFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 import java.util.StringTokenizer;
@@ -94,17 +95,13 @@ public final class EditorFrame extends javax.swing.JFrame {
     
     //<editor-fold defaultstate="collapsed" desc="Variables">
     private static final Logger logger = Logger.getLogger(EditorFrame.class.getName());
-    public static Canvas canvas = EditorFrame.canvas;
-    private final JScrollPane canvasPane;
-    private final DefaultMutableTreeNode fileSystem;
+    public static Canvas canvas;
+    private final DefaultMutableTreeNode fileSystemRoot;
     private final FileTree fileTree;
     private final EditorPropertiesTable propTable;
+    
     private boolean updating;
     public boolean autoCheck = true;
-    
-    private RES resloader;
-    
-    private DefaultMutableTreeNode hudFilesRoot;
     
     private String hudSelectionDir;
     
@@ -520,7 +517,6 @@ public final class EditorFrame extends javax.swing.JFrame {
 //            if(jsWidthDoc instanceof PlainDocument) {
 //                AbstractDocument docWidth = new PlainDocument() {
 //
-//                    private static final long serialVersionUID = 1L;
 //
 //                    @Override
 //                    public void setDocumentFilter(DocumentFilter filter) {
@@ -539,7 +535,6 @@ public final class EditorFrame extends javax.swing.JFrame {
 //            if(jsHeightDoc instanceof PlainDocument) {
 //                AbstractDocument docHeight = new PlainDocument() {
 //
-//                    private static final long serialVersionUID = 1L;
 //
 //                    @Override
 //                    public void setDocumentFilter(DocumentFilter filter) {
@@ -662,8 +657,8 @@ public final class EditorFrame extends javax.swing.JFrame {
     private void closeHud() {
 //        canvas.removeAllElements();
         
-        hudFilesRoot.removeAllChildren();
-        hudFilesRoot.setUserObject(null);
+        fileSystemRoot.removeAllChildren();
+        fileSystemRoot.setUserObject(null);
         DefaultTreeModel model1 = (DefaultTreeModel) fileTree.getModel();
         model1.reload();
         fileTree.setSelectionRow(0);
@@ -674,19 +669,19 @@ public final class EditorFrame extends javax.swing.JFrame {
         propTable.repaint();
     }
     
-    private void loadHud(final File file) {
-        if(file == null) {
+    private void loadHud(final File rootFile) {
+        if(rootFile == null) {
             return;
         }
-        if(!file.exists()) {
-            error(new MessageFormat(Main.rb.getString("FileAccessError")).format(new Object[]{file}));
+        if(!rootFile.exists()) {
+            error(new MessageFormat(Main.rb.getString("FileAccessError")).format(new Object[]{rootFile}));
         }
-        setLastLoaded(file);
-        System.out.println("You have selected: " + file.getAbsolutePath());
+        setLastLoaded(rootFile);
+        System.out.println("You have selected: " + rootFile.getAbsolutePath());
         
-        if(file.getName().endsWith(".zip")) {
+        if(rootFile.getName().endsWith(".zip")) {
             try {
-                ZipInputStream zin = new ZipInputStream(new FileInputStream(file));
+                ZipInputStream zin = new ZipInputStream(new FileInputStream(rootFile));
                 ZipEntry entry;
                 while((entry = zin.getNextEntry()) != null) {
                     System.out.println(entry.getName());
@@ -698,9 +693,9 @@ public final class EditorFrame extends javax.swing.JFrame {
             return;
         }
         
-        if(file.isDirectory()) {
-            File[] folders = file.listFiles();
-            boolean valid = false;
+        if(rootFile.isDirectory()) {
+            File[] folders = rootFile.listFiles();
+            boolean valid = true;
             for(int i = 0; i < folders.length; i++) {
                 if(folders[i].isDirectory() && ("resource".equalsIgnoreCase(folders[i].getName()) || "scripts".equalsIgnoreCase(folders[i].getName()))) {
                     valid = true;
@@ -736,10 +731,8 @@ public final class EditorFrame extends javax.swing.JFrame {
             
             this.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
             final long start = System.currentTimeMillis();
-            
-            resloader = new RES(file.getPath());
-            hudFilesRoot.setUserObject(file.getName()); // The only time a String is added to the Tree, that way I can treat it differently
-            resloader.populate(hudFilesRoot);
+            Utils.recurseDirectoryToNode(rootFile, fileSystemRoot);
+            fileSystemRoot.setUserObject(rootFile.getName()); // The only String in the tree
             
             DefaultTreeModel model = (DefaultTreeModel) fileTree.getModel();
             model.reload();
@@ -748,9 +741,8 @@ public final class EditorFrame extends javax.swing.JFrame {
             SwingUtilities.invokeLater(new Runnable() {
                 @Override
                 public void run() {
-                    System.out.println(System.currentTimeMillis()-start);
+                    logger.log(Level.INFO, "Loaded hud - took {0}ms", (System.currentTimeMillis() - start));
                     setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
-                    System.out.println("loaded hud");
                 }
             });
         }
@@ -871,7 +863,7 @@ public final class EditorFrame extends javax.swing.JFrame {
                             }
                             try {
                                  File file = new File(new URI(token));
-//                                 loadHud(file);
+                                 loadHud(file);
                             } catch(Exception ex) {
                             }
                         }
@@ -881,7 +873,7 @@ public final class EditorFrame extends javax.swing.JFrame {
                             for( Iterator<?> it = ((List<?>)data).iterator(); it.hasNext(); ) {
                                 Object o = it.next();
                                 if(o instanceof File) {
-//                                    loadHud((File)o);
+                                    loadHud((File)o);
                                 }
                             }
                         }
@@ -902,26 +894,25 @@ public final class EditorFrame extends javax.swing.JFrame {
             }
         });
         
-//        this.setJMenuBar(new EditorMenuBar());
-        
         this.getRootPane().putClientProperty("apple.awt.brushMetalLook", Boolean.TRUE);
         statusBar.putClientProperty("Quaqua.ToolBar.style", "bottom");
         
         //<editor-fold defaultstate="collapsed" desc="Tree">
-        fileSystem = new DefaultMutableTreeNode(null);
-        fileSystem.add(new DefaultMutableTreeNode("root"));
-        fileTree = new FileTree(fileSystem);
+        fileSystemRoot = new DefaultMutableTreeNode("root");
+        fileTree = new FileTree(fileSystemRoot);
         JScrollPane fileTreePane = new JScrollPane(fileTree);
         topPanel.add(fileTreePane);
         //</editor-fold>
+        
         //<editor-fold defaultstate="collapsed" desc="Table">
         EditorPropertiesTablePane propTablePane = new EditorPropertiesTablePane();
         propTable = propTablePane.getPropTable();
         bottomPanel.add(propTable);
         //</editor-fold>
+        
         //<editor-fold defaultstate="collapsed" desc="Canvas">
         canvas = new Canvas();
-        canvasPane = new JScrollPane(canvas);
+        JScrollPane canvasPane = new JScrollPane(canvas);
         canvasPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
         canvasPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_ALWAYS);
         tabbedContent.add("Canvas", canvasPane);
@@ -1187,6 +1178,7 @@ public final class EditorFrame extends javax.swing.JFrame {
                 } else if(cmd == resolutionItem) {
                     changeResolution();
                 } else if(cmd == selectAllItem) {
+                    logger.info("Select All");
 //                    for(int i = 0; i < canvas.getElements().size(); i++) {
 //                        canvas.select(canvas.getElements().get(i));
 //                    }
@@ -1243,18 +1235,30 @@ public final class EditorFrame extends javax.swing.JFrame {
 
         statusBar.setFloatable(false);
         statusBar.setRollover(true);
+        statusBar.setFocusable(false);
+        statusBar.setRequestFocusEnabled(false);
+        statusBar.setVerifyInputWhenFocusTarget(false);
 
         toolBar.setFloatable(false);
         toolBar.setRollover(true);
+        toolBar.setFocusable(false);
+        toolBar.setRequestFocusEnabled(false);
+        toolBar.setVerifyInputWhenFocusTarget(false);
 
+        split.setDividerLocation(200);
         split.setContinuousLayout(true);
+        split.setFocusable(false);
+        split.setRequestFocusEnabled(false);
+        split.setVerifyInputWhenFocusTarget(false);
         split.setRightComponent(tabbedContent);
 
-        sideBar.setDividerLocation(100);
         sideBar.setOrientation(javax.swing.JSplitPane.VERTICAL_SPLIT);
         sideBar.setResizeWeight(0.5);
         sideBar.setToolTipText("");
         sideBar.setContinuousLayout(true);
+        sideBar.setFocusable(false);
+        sideBar.setRequestFocusEnabled(false);
+        sideBar.setVerifyInputWhenFocusTarget(false);
 
         topPanel.setLayout(new java.awt.BorderLayout());
         sideBar.setTopComponent(topPanel);
@@ -1264,6 +1268,9 @@ public final class EditorFrame extends javax.swing.JFrame {
 
         split.setLeftComponent(sideBar);
 
+        menuBar.setFocusable(false);
+        menuBar.setRequestFocusEnabled(false);
+        menuBar.setVerifyInputWhenFocusTarget(false);
         setJMenuBar(menuBar);
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
