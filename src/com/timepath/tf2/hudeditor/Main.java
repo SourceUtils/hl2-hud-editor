@@ -2,9 +2,9 @@ package com.timepath.tf2.hudeditor;
 
 //<editor-fold defaultstate="collapsed" desc="imports">
 import com.timepath.tf2.hudeditor.gui.EditorFrame;
-import com.timepath.tf2.hudeditor.plaf.OS;
-import com.timepath.tf2.hudeditor.plaf.linux.GtkFixer;
-import com.timepath.tf2.hudeditor.plaf.linux.LinuxDesktopLauncher;
+import com.timepath.plaf.OS;
+import com.timepath.plaf.linux.GtkFixer;
+import com.timepath.plaf.linux.LinuxDesktopLauncher;
 import java.awt.EventQueue;
 import java.awt.Toolkit;
 import java.io.BufferedReader;

@@ -1,13 +1,14 @@
 package com.timepath.tf2.hudeditor.gui;
 
 //<editor-fold defaultstate="collapsed" desc="Imports">
+import com.timepath.plaf.OS;
+import com.timepath.plaf.mac.OSXAdapter;
+import com.timepath.plaf.multi.NativeFileChooser;
 import com.timepath.tf2.hudeditor.Main;
-import com.timepath.tf2.hudeditor.loaders.RES;
 import com.timepath.tf2.hudeditor.loaders.test.VCCDTest;
 import com.timepath.tf2.hudeditor.loaders.test.VTFTest;
-import com.timepath.tf2.hudeditor.plaf.NativeFileChooser;
-import com.timepath.tf2.hudeditor.plaf.OS;
-import com.timepath.tf2.hudeditor.plaf.mac.OSXAdapter;
+import com.timepath.tf2.hudeditor.util.Element;
+import com.timepath.tf2.hudeditor.util.Property;
 import com.timepath.tf2.hudeditor.util.Utils;
 import java.awt.BorderLayout;
 import java.awt.Cursor;
@@ -51,7 +52,6 @@ import java.net.URLConnection;
 import java.net.UnknownHostException;
 import java.text.MessageFormat;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 import java.util.StringTokenizer;
@@ -80,6 +80,8 @@ import javax.swing.ScrollPaneConstants;
 import javax.swing.SwingUtilities;
 import javax.swing.event.HyperlinkEvent;
 import javax.swing.event.HyperlinkListener;
+import javax.swing.event.TreeSelectionEvent;
+import javax.swing.event.TreeSelectionListener;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
@@ -98,7 +100,7 @@ public final class EditorFrame extends javax.swing.JFrame {
     public static Canvas canvas;
     private final DefaultMutableTreeNode fileSystemRoot;
     private final FileTree fileTree;
-    private final EditorPropertiesTable propTable;
+    private final PropertyTable propTable;
     
     private boolean updating;
     public boolean autoCheck = true;
@@ -243,7 +245,7 @@ public final class EditorFrame extends javax.swing.JFrame {
 //                            dialog.setVisible(true);
                             
 //                            statusBar.remove(updateButton);
-                            statusBar.add(pb, BorderLayout.EAST);
+                            status.add(pb, BorderLayout.EAST);
                             
 //                            dialog.setLocationRelativeTo(null); // center on screen
 //                            dialog.toFront(); // raise above other java windows
@@ -317,8 +319,8 @@ public final class EditorFrame extends javax.swing.JFrame {
                                 }
                                 
                             });
-                            statusBar.remove(pb);
-                            statusBar.add(rb, BorderLayout.EAST);
+                            status.remove(pb);
+                            status.add(rb, BorderLayout.EAST);
                         }
                     } else {
                         info("You have the latest version.");
@@ -763,8 +765,14 @@ public final class EditorFrame extends javax.swing.JFrame {
             }
         }
     }
+    
+    private void setLastLoaded(File file) {
+        lastLoaded = file;
+//        jmb.reloadItem.setEnabled(file != null);
+    }
     //</editor-fold>
     
+    //<editor-fold defaultstate="collapsed" desc="Interface">
     /**
      * Creates new form EditorFrame
      */
@@ -778,22 +786,22 @@ public final class EditorFrame extends javax.swing.JFrame {
         this.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
         
         this.addWindowListener(new WindowAdapter() {
-
+            
             @Override
             public void windowClosing(WindowEvent e) {
                 quit();
             }
-
+            
         });
         
         //<editor-fold defaultstate="collapsed" desc="Menu fix for window managers that don't set position on resize">
         if(Main.os == OS.Linux) {
             this.addComponentListener(new ComponentAdapter() {
-
+                
                 boolean moved;
                 Point real = new Point();
                 boolean updateReal = true;
-
+                
                 /**
                  * When maximizing windows on linux under gnome-shell, the JMenuBar
                  * menus appear not to work. This is because the position of the
@@ -803,12 +811,12 @@ public final class EditorFrame extends javax.swing.JFrame {
                 public void componentResized(ComponentEvent e) {
                     Rectangle b = EditorFrame.this.getBounds();
                     Rectangle s = EditorFrame.this.getGraphicsConfiguration().getBounds();
-
+                    
                     if(moved) {
                         moved = false;
                         return;
                     }
-
+                    
                     if(updateReal) {
                         real.x = b.x;
                         real.y = b.y;
@@ -826,7 +834,7 @@ public final class EditorFrame extends javax.swing.JFrame {
                     }
                     EditorFrame.this.setBounds(b);
                 }
-
+                
                 @Override
                 public void componentMoved(ComponentEvent e) {
                     Rectangle b = EditorFrame.this.getBounds();
@@ -844,7 +852,7 @@ public final class EditorFrame extends javax.swing.JFrame {
         this.setPreferredSize(new Dimension((int) (d.getWidth() / 1.5), (int) (d.getHeight() / 1.5)));
         
         this.setLocation((d.getWidth() / 2) - (this.getPreferredSize().width / 2), (d.getHeight() / 2) - (this.getPreferredSize().height / 2));
-        
+        //<editor-fold defaultstate="collapsed" desc="Drag+drop">
         this.setDropTarget(new DropTarget() {
             @Override
             public void drop(DropTargetDropEvent e) {
@@ -858,16 +866,16 @@ public final class EditorFrame extends javax.swing.JFrame {
                         for(StringTokenizer st = new StringTokenizer(data, "\r\n"); st.hasMoreTokens();) {
                             String token = st.nextToken().trim();
                             if(token.startsWith("#") || token.isEmpty()) {
-                                 // comment line, by RFC 2483
-                                 continue;
+                                // comment line, by RFC 2483
+                                continue;
                             }
                             try {
-                                 File file = new File(new URI(token));
-                                 loadHud(file);
+                                File file = new File(new URI(token));
+                                loadHud(file);
                             } catch(Exception ex) {
                             }
                         }
-                    } else { 
+                    } else {
                         Object data = t.getTransferData(DataFlavor.javaFileListFlavor);
                         if(data instanceof List) {
                             for( Iterator<?> it = ((List<?>)data).iterator(); it.hasNext(); ) {
@@ -893,21 +901,55 @@ public final class EditorFrame extends javax.swing.JFrame {
                 }
             }
         });
-        
+        //</editor-fold>
         this.getRootPane().putClientProperty("apple.awt.brushMetalLook", Boolean.TRUE);
-        statusBar.putClientProperty("Quaqua.ToolBar.style", "bottom");
+        status.putClientProperty("Quaqua.ToolBar.style", "bottom");
+        
+        this.setJMenuBar(new EditorMenuBar());
         
         //<editor-fold defaultstate="collapsed" desc="Tree">
         fileSystemRoot = new DefaultMutableTreeNode("root");
         fileTree = new FileTree(fileSystemRoot);
         JScrollPane fileTreePane = new JScrollPane(fileTree);
-        topPanel.add(fileTreePane);
+        sideSplit.setTopComponent(fileTreePane);
+        fileTree.addTreeSelectionListener(new TreeSelectionListener() {
+            @Override
+            public void valueChanged(TreeSelectionEvent e) {
+                DefaultTableModel model = (DefaultTableModel) propTable.getModel();
+                model.getDataVector().removeAllElements();
+                model.insertRow(0, new String[]{"", "", ""});
+                propTable.scrollRectToVisible(new Rectangle(0, 0, 0, 0));
+                
+                DefaultMutableTreeNode node = (DefaultMutableTreeNode) fileTree.getLastSelectedPathComponent();
+                if(node == null) {
+                    return;
+                }
+                
+                Object nodeInfo = node.getUserObject();
+                if(nodeInfo instanceof Element) {
+                    Element element = (Element) nodeInfo;
+                    canvas.load(element);
+                    if(!element.getProps().isEmpty()) {
+                        model.getDataVector().removeAllElements();
+                        element.validateDisplay();
+                        for(int i = 0; i < element.getProps().size(); i++) {
+                            Property entry = element.getProps().get(i);
+                            if(entry.getKey().equals("\\n")) {
+                                continue;
+                            }
+                            model.insertRow(model.getRowCount(), new Object[] {entry.getKey(), entry.getValue(), entry.getInfo()});
+                        }
+                    }
+                }
+            }
+            
+        });
         //</editor-fold>
         
         //<editor-fold defaultstate="collapsed" desc="Table">
-        EditorPropertiesTablePane propTablePane = new EditorPropertiesTablePane();
-        propTable = propTablePane.getPropTable();
-        bottomPanel.add(propTable);
+        propTable = new PropertyTable();
+        JScrollPane propTablePane = new JScrollPane(propTable);
+        sideSplit.setBottomComponent(propTablePane);
         //</editor-fold>
         
         //<editor-fold defaultstate="collapsed" desc="Canvas">
@@ -919,7 +961,7 @@ public final class EditorFrame extends javax.swing.JFrame {
         //</editor-fold>
     }
     
-    private class EditorMenuBar extends JMenuBar {
+    public class EditorMenuBar extends JMenuBar {
         
         private JMenuItem newItem;
         private JMenuItem openItem;
@@ -948,7 +990,7 @@ public final class EditorFrame extends javax.swing.JFrame {
         private JMenuItem captionItem;
         
         EditorActionListener al = new EditorActionListener();
-
+        
         EditorMenuBar() {
             super();
             
@@ -975,7 +1017,7 @@ public final class EditorFrame extends javax.swing.JFrame {
             
             if(Main.os == OS.Mac) {
                 fileMenu.addSeparator();
-            
+                
                 closeItem = new JMenuItem("Close", KeyEvent.VK_C);
                 closeItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_W, Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()));
                 closeItem.addActionListener(al);
@@ -998,7 +1040,7 @@ public final class EditorFrame extends javax.swing.JFrame {
             reloadItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_F5, 0));
             reloadItem.addActionListener(al);
             fileMenu.add(reloadItem);
-
+            
             if(Main.os != OS.Mac) {
                 fileMenu.addSeparator();
                 
@@ -1006,15 +1048,15 @@ public final class EditorFrame extends javax.swing.JFrame {
                 closeItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_W, Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()));
                 closeItem.addActionListener(al);
                 fileMenu.add(closeItem);
-            
+                
                 fileMenu.addSeparator();
-
+                
                 exitItem = new JMenuItem("Exit", KeyEvent.VK_X);
                 exitItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_Q, Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()));
                 exitItem.addActionListener(al);
                 fileMenu.add(exitItem);
             }
-
+            
             JMenu editMenu = new JMenu("Edit");
             editMenu.setMnemonic(KeyEvent.VK_E);
             this.add(editMenu);
@@ -1058,7 +1100,7 @@ public final class EditorFrame extends javax.swing.JFrame {
             editMenu.add(deleteItem);
             
             editMenu.addSeparator();
-
+            
             selectAllItem = new JMenuItem("Select All", KeyEvent.VK_A);
             selectAllItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_A, Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()));
             selectAllItem.addActionListener(al);
@@ -1075,11 +1117,11 @@ public final class EditorFrame extends javax.swing.JFrame {
             locateUserItem = new JMenuItem("Select user folder", null);
             locateUserItem.addActionListener(al);
             editMenu.add(locateUserItem);
-
+            
             JMenu viewMenu = new JMenu("View");
             viewMenu.setMnemonic(KeyEvent.VK_V);
             this.add(viewMenu);
-
+            
             resolutionItem = new JMenuItem("Change Resolution", KeyEvent.VK_R);
             resolutionItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_R, Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()));
             resolutionItem.addActionListener(al);
@@ -1113,16 +1155,16 @@ public final class EditorFrame extends javax.swing.JFrame {
             viewMenu.add(viewItem4);
             
             extras();
-
+            
             JMenu helpMenu = new JMenu("Help");
             helpMenu.setMnemonic(KeyEvent.VK_H);
             this.add(helpMenu);
             
             updateItem = new JMenuItem("Check for Updates", KeyEvent.VK_U);
-//            updateItem.setEnabled(!inDev);
+            //            updateItem.setEnabled(!inDev);
             updateItem.addActionListener(al);
             helpMenu.add(updateItem);
-
+            
             changeLogItem = new JMenuItem("Changelog");
             changeLogItem.addActionListener(al);
             helpMenu.add(changeLogItem);
@@ -1138,7 +1180,7 @@ public final class EditorFrame extends javax.swing.JFrame {
             JMenu extrasMenu = new JMenu("Extras");
             extrasMenu.setMnemonic(KeyEvent.VK_X);
             this.add(extrasMenu);
-
+            
             vtfItem = new JMenuItem("VTF Loader", KeyEvent.VK_V);
             vtfItem.addActionListener(al);
             extrasMenu.add(vtfItem);
@@ -1150,11 +1192,11 @@ public final class EditorFrame extends javax.swing.JFrame {
         
         private class EditorActionListener implements ActionListener {
             private boolean fullscreen;
-        
+            
             EditorActionListener() {
-
+                
             }
-
+            
             @Override
             public void actionPerformed(ActionEvent e) {
                 Object cmd = e.getSource();
@@ -1168,9 +1210,9 @@ public final class EditorFrame extends javax.swing.JFrame {
                 } else if(cmd == closeItem) {
                     closeHud();
                 } else if(cmd == saveItem) {
-//                    if(canvas.getElements().size() > 0) {
-//                        error(canvas.getElements().get(canvas.getElements().size() - 1).save());
-//                    }
+                    //                    if(canvas.getElements().size() > 0) {
+                    //                        error(canvas.getElements().get(canvas.getElements().size() - 1).save());
+                    //                    }
                 } else if(cmd == reloadItem) {
                     loadHud(lastLoaded);
                 } else if(cmd == exitItem) {
@@ -1179,9 +1221,9 @@ public final class EditorFrame extends javax.swing.JFrame {
                     changeResolution();
                 } else if(cmd == selectAllItem) {
                     logger.info("Select All");
-//                    for(int i = 0; i < canvas.getElements().size(); i++) {
-//                        canvas.select(canvas.getElements().get(i));
-//                    }
+                    //                    for(int i = 0; i < canvas.getElements().size(); i++) {
+                    //                        canvas.select(canvas.getElements().get(i));
+                    //                    }
                 } else if(cmd == aboutItem) {
                     about();
                 } else if(cmd == preferencesItem) {
@@ -1194,7 +1236,7 @@ public final class EditorFrame extends javax.swing.JFrame {
                     VTFTest.main("");
                 } else if(cmd == captionItem) {
                     VCCDTest.main("");
-            } else if(cmd == previewItem) {
+                } else if(cmd == previewItem) {
                     EditorFrame.this.dispose();
                     EditorFrame.this.setUndecorated(!fullscreen);
                     EditorFrame.this.setExtendedState(fullscreen ? JFrame.NORMAL : JFrame.MAXIMIZED_BOTH);
@@ -1205,13 +1247,10 @@ public final class EditorFrame extends javax.swing.JFrame {
                 }
             }
         }
+        
     }
     
-    private void setLastLoaded(File file) {
-        lastLoaded = file;
-//        jmb.reloadItem.setEnabled(file != null);
-    }
-
+    //<editor-fold defaultstate="collapsed" desc="Generated Code">
     /**
      * This method is called from within the constructor to initialize the form.
      * WARNING: Do NOT modify this code. The content of this method is always
@@ -1221,88 +1260,52 @@ public final class EditorFrame extends javax.swing.JFrame {
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
-        statusBar = new javax.swing.JToolBar();
-        toolBar = new javax.swing.JToolBar();
-        split = new javax.swing.JSplitPane();
+        tools = new com.timepath.swing.BlendedToolBar();
+        rootSplit = new javax.swing.JSplitPane();
+        sideSplit = new javax.swing.JSplitPane();
         tabbedContent = new javax.swing.JTabbedPane();
-        sideBar = new javax.swing.JSplitPane();
-        topPanel = new javax.swing.JPanel();
-        bottomPanel = new javax.swing.JPanel();
-        menuBar = new EditorMenuBar();
+        status = new com.timepath.swing.StatusBar();
 
-        setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
-        setTitle("Frame");
+        tools.setRollover(true);
 
-        statusBar.setFloatable(false);
-        statusBar.setRollover(true);
-        statusBar.setFocusable(false);
-        statusBar.setRequestFocusEnabled(false);
-        statusBar.setVerifyInputWhenFocusTarget(false);
+        rootSplit.setDividerLocation(180);
 
-        toolBar.setFloatable(false);
-        toolBar.setRollover(true);
-        toolBar.setFocusable(false);
-        toolBar.setRequestFocusEnabled(false);
-        toolBar.setVerifyInputWhenFocusTarget(false);
+        sideSplit.setDividerLocation(-1);
+        sideSplit.setOrientation(javax.swing.JSplitPane.VERTICAL_SPLIT);
+        sideSplit.setResizeWeight(0.5);
+        rootSplit.setLeftComponent(sideSplit);
+        rootSplit.setRightComponent(tabbedContent);
 
-        split.setDividerLocation(200);
-        split.setContinuousLayout(true);
-        split.setFocusable(false);
-        split.setRequestFocusEnabled(false);
-        split.setVerifyInputWhenFocusTarget(false);
-        split.setRightComponent(tabbedContent);
-
-        sideBar.setOrientation(javax.swing.JSplitPane.VERTICAL_SPLIT);
-        sideBar.setResizeWeight(0.5);
-        sideBar.setToolTipText("");
-        sideBar.setContinuousLayout(true);
-        sideBar.setFocusable(false);
-        sideBar.setRequestFocusEnabled(false);
-        sideBar.setVerifyInputWhenFocusTarget(false);
-
-        topPanel.setLayout(new java.awt.BorderLayout());
-        sideBar.setTopComponent(topPanel);
-
-        bottomPanel.setLayout(new java.awt.BorderLayout());
-        sideBar.setRightComponent(bottomPanel);
-
-        split.setLeftComponent(sideBar);
-
-        menuBar.setFocusable(false);
-        menuBar.setRequestFocusEnabled(false);
-        menuBar.setVerifyInputWhenFocusTarget(false);
-        setJMenuBar(menuBar);
+        status.setRollover(true);
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(statusBar, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-            .addComponent(toolBar, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-            .addComponent(split, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, 510, Short.MAX_VALUE)
+            .addComponent(tools, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+            .addComponent(status, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+            .addComponent(rootSplit, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, 480, Short.MAX_VALUE)
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                .addComponent(toolBar, javax.swing.GroupLayout.PREFERRED_SIZE, 25, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(split, javax.swing.GroupLayout.DEFAULT_SIZE, 301, Short.MAX_VALUE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(statusBar, javax.swing.GroupLayout.PREFERRED_SIZE, 19, javax.swing.GroupLayout.PREFERRED_SIZE))
+            .addGroup(layout.createSequentialGroup()
+                .addComponent(tools, javax.swing.GroupLayout.PREFERRED_SIZE, 25, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(0, 0, 0)
+                .addComponent(rootSplit, javax.swing.GroupLayout.DEFAULT_SIZE, 310, Short.MAX_VALUE)
+                .addGap(0, 0, 0)
+                .addComponent(status, javax.swing.GroupLayout.PREFERRED_SIZE, 25, javax.swing.GroupLayout.PREFERRED_SIZE))
         );
 
         pack();
     }// </editor-fold>//GEN-END:initComponents
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JPanel bottomPanel;
-    private javax.swing.JMenuBar menuBar;
-    private javax.swing.JSplitPane sideBar;
-    private javax.swing.JSplitPane split;
-    private javax.swing.JToolBar statusBar;
+    private javax.swing.JSplitPane rootSplit;
+    private javax.swing.JSplitPane sideSplit;
+    private com.timepath.swing.StatusBar status;
     private javax.swing.JTabbedPane tabbedContent;
-    private javax.swing.JToolBar toolBar;
-    private javax.swing.JPanel topPanel;
+    private com.timepath.swing.BlendedToolBar tools;
     // End of variables declaration//GEN-END:variables
-
+    //</editor-fold>
+    //</editor-fold>
 }

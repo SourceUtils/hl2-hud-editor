@@ -1,4 +1,4 @@
-package com.timepath.tf2.hudeditor.classloader;
+package com.timepath.classloader;
 
 import java.io.File;
 import java.lang.reflect.InvocationTargetException;

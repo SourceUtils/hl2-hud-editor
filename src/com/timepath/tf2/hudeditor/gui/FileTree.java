@@ -1,7 +1,3 @@
-/*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
- */
 package com.timepath.tf2.hudeditor.gui;
 
 import com.timepath.tf2.hudeditor.util.Element;
@@ -14,7 +10,6 @@ import javax.swing.JTree;
 import javax.swing.UIManager;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeCellRenderer;
-import javax.swing.tree.TreeModel;
 import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreeSelectionModel;
 
@@ -27,42 +22,8 @@ public class FileTree extends javax.swing.JTree {
     public FileTree(TreeNode root) {
         super(root);
         initComponents();
-        setShowsRootHandles(true);
-        setSelectionRow(0);
         getSelectionModel().setSelectionMode(TreeSelectionModel.SINGLE_TREE_SELECTION);
         setCellRenderer(new CustomTreeCellRenderer());
-//        fileSystem.addTreeSelectionListener(new TreeSelectionListener() {
-//            @Override
-//            public void valueChanged(TreeSelectionEvent e) {
-//                DefaultTableModel model = (DefaultTableModel) propTable.getModel();
-//                model.getDataVector().removeAllElements();
-//                model.insertRow(0, new String[]{"", "", ""});
-//                propTable.scrollRectToVisible(new Rectangle(0, 0, 0, 0));
-//
-//                DefaultMutableTreeNode node = (DefaultMutableTreeNode) fileSystem.getLastSelectedPathComponent();
-//                if(node == null) {
-//                    return;
-//                }
-//
-//                Object nodeInfo = node.getUserObject();
-//                if(nodeInfo instanceof Element) {
-//                    Element element = (Element) nodeInfo;
-//                    canvas.load(element);
-//                    if(!element.getProps().isEmpty()) {
-//                        model.getDataVector().removeAllElements();
-//                        element.validateDisplay();
-//                        for(int i = 0; i < element.getProps().size(); i++) {
-//                            Property entry = element.getProps().get(i);
-//                            if(entry.getKey().equals("\\n")) {
-//                                continue;
-//                            }
-//                            model.insertRow(model.getRowCount(), new Object[] {entry.getKey(), entry.getValue(), entry.getInfo()});
-//                        }
-//                    }
-//                }
-//            }
-//
-//        });
     }
     
     private class CustomTreeCellRenderer extends DefaultTreeCellRenderer {
@@ -146,6 +107,8 @@ public class FileTree extends javax.swing.JTree {
     @SuppressWarnings("unchecked")
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
+
+        setBorder(javax.swing.BorderFactory.createEmptyBorder(1, 1, 1, 1));
     }// </editor-fold>//GEN-END:initComponents
     // Variables declaration - do not modify//GEN-BEGIN:variables
     // End of variables declaration//GEN-END:variables

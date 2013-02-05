@@ -40,37 +40,6 @@ public class RES {
     public RES(String hudFolder) {
         this.hudFolder = hudFolder;
     }
-
-    public void populate(DefaultMutableTreeNode top) {
-        processPopulate(new File(hudFolder), -1, top);
-    }
-    
-    /**
-     * @param f
-     * @param depth recursive: -1 = infinite, 0 = nothing, 1 = immediate
-     * @param top
-     */
-    public static void processPopulate(File f, int depth, DefaultMutableTreeNode top) {
-        if(depth == 0) {
-            return;
-        }
-        File[] fileList = f.listFiles();
-        Arrays.sort(fileList, Utils.dirAlphaComparator);
-
-        for(int i = 0; i < fileList.length; i++) {
-            DefaultMutableTreeNode child = new DefaultMutableTreeNode();
-            child.setUserObject(fileList[i]);
-            if(fileList[i].isDirectory()) {
-                processPopulate(fileList[i], depth - 1, child);
-                if(child.getChildCount() > 0) { // got sick of seeing empty folders
-                    top.add(child);
-                }
-            } else if(fileList[i].getName().endsWith(".res")) {
-                analyze(fileList[i], child);
-                top.add(child);
-            }
-        }
-    }
     
     public static HashMap<String,HudFont> fonts = new HashMap<String,HudFont>(); 
 

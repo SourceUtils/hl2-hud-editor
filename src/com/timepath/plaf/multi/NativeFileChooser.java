@@ -1,5 +1,6 @@
-package com.timepath.tf2.hudeditor.plaf;
+package com.timepath.plaf.multi;
 
+import com.timepath.plaf.OS;
 import com.timepath.tf2.hudeditor.Main;
 import java.awt.FileDialog;
 import java.awt.Frame;

@@ -1,4 +1,4 @@
-package com.timepath.tf2.hudeditor.plaf;
+package com.timepath.plaf;
 
 /**
  *

@@ -1,4 +1,4 @@
-package com.timepath.tf2.hudeditor.plaf.linux;
+package com.timepath.plaf.linux;
 
 import com.timepath.tf2.hudeditor.Main;
 import java.io.File;

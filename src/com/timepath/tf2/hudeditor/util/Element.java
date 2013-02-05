@@ -1,7 +1,6 @@
 package com.timepath.tf2.hudeditor.util;
 
 import com.timepath.tf2.hudeditor.gui.Canvas;
-import com.timepath.tf2.hudeditor.gui.EditorFrame;
 import com.timepath.tf2.hudeditor.loaders.RES;
 import com.timepath.tf2.hudeditor.loaders.VTF;
 import java.awt.Color;
@@ -17,19 +16,16 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
- * TODO: edge cases. I think elements without x and y coordinates default to the centre (c0)
+ * TODO: edge cases. I think elements without x and y coordinates default to the center (c0)
  * @author TimePath
  */
 public class Element {
     
     static final Logger logger = Logger.getLogger(Element.class.getName());
     
-    public static Map<String, Element> areas = new HashMap<String, Element>();
+    Canvas canvas = new Canvas(); // TEMP
     
-    private Canvas canvas;
-
-    public Element(Canvas canvas) {
-    }
+    public static Map<String, Element> areas = new HashMap<String, Element>();
 
     public Element(String name, String info) {
         this.name = name;

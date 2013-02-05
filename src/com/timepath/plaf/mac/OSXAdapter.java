@@ -55,7 +55,7 @@ Copyright © 2003-2007 Apple, Inc., All Rights Reserved
  
 */
  
-package com.timepath.tf2.hudeditor.plaf.mac;
+package com.timepath.plaf.mac;
  
 import java.lang.reflect.*;
  

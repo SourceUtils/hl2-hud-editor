@@ -1,4 +1,4 @@
-package com.timepath.tf2.hudeditor.plaf.win;
+package com.timepath.plaf.win;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;

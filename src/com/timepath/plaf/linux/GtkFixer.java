@@ -1,4 +1,4 @@
-package com.timepath.tf2.hudeditor.plaf.linux;
+package com.timepath.plaf.linux;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
