@@ -1,4 +1,4 @@
-package com.timepath.plaf.multi;
+package com.timepath.plaf.x;
 
 import com.timepath.plaf.OS;
 import com.timepath.tf2.hudeditor.Main;

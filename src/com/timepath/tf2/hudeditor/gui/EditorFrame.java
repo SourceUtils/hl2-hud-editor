@@ -3,7 +3,7 @@ package com.timepath.tf2.hudeditor.gui;
 //<editor-fold defaultstate="collapsed" desc="Imports">
 import com.timepath.plaf.OS;
 import com.timepath.plaf.mac.OSXAdapter;
-import com.timepath.plaf.multi.NativeFileChooser;
+import com.timepath.plaf.x.NativeFileChooser;
 import com.timepath.tf2.hudeditor.Main;
 import com.timepath.tf2.hudeditor.util.Element;
 import com.timepath.tf2.hudeditor.util.Property;

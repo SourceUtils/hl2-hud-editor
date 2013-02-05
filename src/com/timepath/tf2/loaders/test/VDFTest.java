@@ -5,7 +5,7 @@ import javax.swing.JFrame;
 
 /**
  *
- * @author andrew
+ * @author timepath
  */
 public class VDFTest {
     
