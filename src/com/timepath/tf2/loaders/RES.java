@@ -3,12 +3,10 @@ package com.timepath.tf2.loaders;
 import com.timepath.tf2.hudeditor.util.Element;
 import com.timepath.tf2.hudeditor.util.HudFont;
 import com.timepath.tf2.hudeditor.util.Property;
-import com.timepath.tf2.hudeditor.util.Utils;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.RandomAccessFile;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Scanner;
 import java.util.logging.Level;
@@ -48,7 +46,7 @@ public class RES {
         if(file.isDirectory()) {
             return;
         }
-        new Thread() { // threading this cuts loading times in half
+        Thread t = new Thread() { // threading this cuts loading times in half
             @Override
             public void run() {
                 Scanner s = null;
@@ -80,7 +78,9 @@ public class RES {
                 }
                 System.out.println("Loaded clientscheme");
             }
-        }.start();
+        };
+        t.run();
+//        t.start();
     }
 
     private static void processAnalyze(Scanner scanner, DefaultMutableTreeNode parent, ArrayList<Property> carried, File file) {

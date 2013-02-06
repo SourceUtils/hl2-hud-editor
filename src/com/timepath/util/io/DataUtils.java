@@ -1,4 +1,4 @@
-package com.timepath.util;
+package com.timepath.util.io;
 
 import java.io.IOException;
 import java.io.RandomAccessFile;
@@ -137,10 +137,14 @@ public class DataUtils {
  
     public static int updateChecksum(int value) {
         int checksum = (value & 0xFF);
-        checksum += (value >> 8 & 0xFF);
-        checksum += (value >> 16 & 0xFF);
-        checksum += (value >> 24 & 0xFF);
+        checksum += ((value >> 8) & 0xFF);
+        checksum += ((value >> 16) & 0xFF);
+        checksum += ((value >> 24) & 0xFF);
         return checksum;
+    }
+    
+    public static int updateChecksum2(int value) {
+        return value;
     }
     
 }

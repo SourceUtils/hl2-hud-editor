@@ -84,9 +84,10 @@ public class Utils {
             child.setUserObject(fileList[i]);
             if(fileList[i].isDirectory()) {
                 recurseDirectoryToNode(fileList[i], child);
-                if(child.getChildCount() > 0) { // got sick of seeing empty folders
-                    parent.add(child);
+                if(child.getChildCount() == 0) {
+                    continue;
                 }
+                parent.add(child);
             } else {
                 parent.add(child);
                 if(fileList[i].getName().endsWith(".txt") || fileList[i].getName().endsWith(".vdf")) {

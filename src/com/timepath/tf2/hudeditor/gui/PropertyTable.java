@@ -1,5 +1,6 @@
 package com.timepath.tf2.hudeditor.gui;
 
+import com.timepath.tf2.hudeditor.Main;
 import java.util.logging.Logger;
 import javax.swing.JTable;
 import javax.swing.table.DefaultTableModel;
@@ -20,9 +21,9 @@ public class PropertyTable extends JTable {
     public PropertyTable() {
         initComponents();
         DefaultTableModel model = new DefaultTableModel();
-        model.addColumn("Key");
-        model.addColumn("Value");
-        model.addColumn("Info");
+        model.addColumn(Main.rb.getString("Key"));
+        model.addColumn(Main.rb.getString("Value"));
+        model.addColumn(Main.rb.getString("Info"));
         model.insertRow(0, new String[]{"", "", ""});
         this.setModel(model);
     }

@@ -1,7 +1,7 @@
 package com.timepath.tf2.gameinfo;
 
-import com.timepath.util.FileMonitor;
-import com.timepath.util.FileChangeListener;
+import com.timepath.util.file.FileMonitor;
+import com.timepath.util.file.FileChangeListener;
 import java.awt.BorderLayout;
 import java.awt.Dimension;
 import java.awt.Font;

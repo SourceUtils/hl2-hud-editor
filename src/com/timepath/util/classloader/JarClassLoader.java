@@ -1,4 +1,4 @@
-package com.timepath.classloader;
+package com.timepath.util.classloader;
 
 import java.io.File;
 import java.lang.reflect.InvocationTargetException;
@@ -10,15 +10,15 @@ import java.util.logging.Logger;
  *
  * @author timepath
  */
-public class MyClassLoader extends ClassLoader {
+public class JarClassLoader extends ClassLoader {
     
-    private static final Logger logger = Logger.getLogger(MyClassLoader.class.getName());
+    private static final Logger logger = Logger.getLogger(JarClassLoader.class.getName());
     
-    MyClassLoader() {
+    JarClassLoader() {
         this(ClassLoader.getSystemClassLoader());
     }
     
-    MyClassLoader(ClassLoader parent) {
+    JarClassLoader(ClassLoader parent) {
         super(parent);
         
         Runtime.getRuntime().addShutdownHook(new Thread() {
@@ -31,7 +31,6 @@ public class MyClassLoader extends ClassLoader {
     
     public void run(String className, String[] args) throws Throwable {
         Class<?> clazz = loadClass(className);
-        Object instance = clazz.newInstance();
         Method method = clazz.getMethod("main", new Class<?>[] {String[].class});
         // ensure 'method' is 'public static void main(args[])'
         boolean modifiersValid = false;
@@ -44,11 +43,11 @@ public class MyClassLoader extends ClassLoader {
             returnTypeValid = (returnType == void.class);
         }
         if(method == null || !modifiersValid || !returnTypeValid) {
-            throw new NoSuchMethodException("Class \"" + className + "\" does not have a main method.");
+            throw new NoSuchMethodException("Class \"" + className + "\" does not have a main() method.");
         }
         
         try {
-            method.invoke(instance, (Object) args);
+            method.invoke(null, (Object) args);
         } catch (InvocationTargetException e) {
             throw e.getTargetException();
         }

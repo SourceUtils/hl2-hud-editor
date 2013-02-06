@@ -96,6 +96,7 @@ public final class Canvas extends JPanel implements MouseListener, MouseMotionLi
     private void loadBackground() {
         URL url = getClass().getResource("/com/timepath/tf2/hudeditor/resources/Badlands1.png");
         background = Toolkit.getDefaultToolkit().getImage(url);
+        this.prepareImage(background, this);
     }
     //</editor-fold>
     

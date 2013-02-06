@@ -1,6 +1,5 @@
 package com.timepath.swing;
 
-import java.awt.Component;
 import java.awt.Graphics;
 import javax.swing.JMenuBar;
 import javax.swing.JToolBar;
@@ -18,6 +17,7 @@ public final class BlendedToolBar extends JToolBar {
         initComponents();
         mb = new JMenuBar();
         this.add(mb);
+        mb.setVisible(false);
     }
     
     JMenuBar mb;
@@ -42,6 +42,7 @@ public final class BlendedToolBar extends JToolBar {
 
         setFloatable(false);
         setMinimumSize(new java.awt.Dimension(2, 16));
+        setPreferredSize(new java.awt.Dimension(2, 16));
     }// </editor-fold>//GEN-END:initComponents
     // Variables declaration - do not modify//GEN-BEGIN:variables
     // End of variables declaration//GEN-END:variables

@@ -375,7 +375,7 @@ public class Element {
                     continue;
                 }
                 try {
-                    VTF vtf = VTF.load("res/vtf/hud/" + v + ".vtf");
+                    VTF vtf = VTF.load("/tf/materials/HUD/" + v + ".vtf");
                     if(vtf == null) {
                         continue;
                     }

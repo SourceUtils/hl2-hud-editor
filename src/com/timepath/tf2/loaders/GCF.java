@@ -1,7 +1,7 @@
 package com.timepath.tf2.loaders;
 
 //<editor-fold defaultstate="collapsed" desc="Imports">
-import com.timepath.util.DataUtils;
+import com.timepath.util.io.DataUtils;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
@@ -69,7 +69,7 @@ public class GCF {
     }
     
     public File extract(String search, File dest) throws IOException {
-        logger.log(Level.INFO, "Extracting {0}", name);
+        logger.log(Level.INFO, "Extracting {0}", search);
         for(int i = 0; i < directoryEntries.length; i++) {
             String str = nameForDirectoryIndex(i);
             if(!str.equals(search)) {
@@ -77,46 +77,46 @@ public class GCF {
             }
             return extract(i, dest);
         }
-        logger.log(Level.INFO, "Could not extract {0}", name);
+        logger.log(Level.INFO, "Could not extract {0}", search);
         return null;
     }
     
     public File extract(int index, File dest) throws IOException {
         String str = nameForDirectoryIndex(index);
-        File out;
+        File outFile;
         if(directoryEntries[index].attributes == 0) {
             //<editor-fold defaultstate="collapsed" desc="Extract directory">
-            out = new File(dest.getPath(), str);
-            out.mkdirs();
+            outFile = new File(dest.getPath(), str);
+            outFile.mkdirs();
             //</editor-fold>
         } else {
             //<editor-fold defaultstate="collapsed" desc="Extract file">
-            out = new File(dest, str);
+            outFile = new File(dest, str);
             int idx = directoryMapEntries[index].firstBlockIndex;
             //                logger.log(Level.INFO, "\n\np:{0}\nblockidx:{1}\n", new Object[]{f.getPath(), idx});
             //                logger.log(Level.INFO, "\n\nb:{0}\n", new Object[]{block.toString()});
-            out.getParentFile().mkdirs();
-            out.createNewFile();
+            outFile.getParentFile().mkdirs();
+            outFile.createNewFile();
             if(idx >= blocks.length) {
-                logger.log(Level.WARNING, "Block out of range for {0} : {1}. Is the size 0?", new Object[]{out.getPath(), index});
+                logger.log(Level.WARNING, "Block out of range for {0} : {1}. Is the size 0?", new Object[]{outFile.getPath(), index});
                 return null;
             }
-            Block block = getBlock(idx);
-            RandomAccessFile rf = new RandomAccessFile(out, "rw");
+            Block block = blockHeader.getBlock(idx);
+            RandomAccessFile out = new RandomAccessFile(outFile, "rw");
             int dataIdx = block.firstDataBlockIndex;
             for(int q = 0; ; q++) {
                 long pos = ((long)dataBlockHeader.firstBlockOffset + ((long)dataIdx * (long)dataBlockHeader.blockSize));
-                rf.seek(pos);
+                out.seek(pos);
                 byte[] buf = new byte[dataBlockHeader.blockSize];
                 if(block.fileDataOffset != 0) {
 //                    logger.log(Level.INFO, "off = {0}", block.fileDataOffset);
                 }
-                rf.read(buf);
-                rf.seek(block.fileDataOffset + (q * dataBlockHeader.blockSize));
-                if(rf.getFilePointer() + buf.length > block.fileDataSize) {
-                    rf.write(buf, 0, (block.fileDataSize % dataBlockHeader.blockSize));
+                out.read(buf);
+                out.seek(block.fileDataOffset + (q * dataBlockHeader.blockSize));
+                if(out.getFilePointer() + buf.length > block.fileDataSize) {
+                    out.write(buf, 0, (block.fileDataSize % dataBlockHeader.blockSize));
                 } else {
-                    rf.write(buf);
+                    out.write(buf);
                 }
                 if(dataIdx == 65535) {
                     break;
@@ -126,39 +126,92 @@ public class GCF {
                     break;
                 }
             }
-            rf.close();
+            out.close();
             //</editor-fold>
         }
-        return out;
+        return outFile;
     }
     //</editor-fold>
     
     //<editor-fold defaultstate="collapsed" desc="Reading">
     private final RandomAccessFile rf;
     
-    private final String name;
+    private final File file;
     
     //<editor-fold defaultstate="collapsed" desc="Header info">
     //<editor-fold defaultstate="collapsed" desc="Header">
-    GcfHeader header;
+    public GcfHeader header;
     
-    class GcfHeader {
+    /**
+     * 
+     */
+    public class GcfHeader {
         
-        int headerVersion;     // Always 0x00000001
-        int cacheType;     // Always 0x00000001 for GCF, 2 for NCF
-        int formatVersion; // TF2 is 0x00000006
-        int applicationID; // TF2 is 440
-        int applicationVersion;
-        int isMounted; // unsure
-        int dummy0;
-        int fileSize;	// Total size of GCF file in bytes.
-        int blockSize;  // Size of each data block in bytes.
-        int blockCount; // Number of data blocks.
-        int checksum;
+        /**
+         * 11 * 4
+         */
+        public static final int SIZE = 44;
         
-        static final int size = 11 * 4;
+        public final long pos;
         
-        GcfHeader() throws IOException {
+        /**
+         * Always 0x00000001
+         */
+        public int headerVersion;
+        
+        /**
+         * Always 0x00000001 for GCF, 2 for NCF
+         */
+        public int cacheType;
+        
+        /**
+         * Container version
+         * TF2 is 0x00000006
+         */
+        public int formatVersion;
+        
+        /**
+         * TF2 is 440
+         */
+        public int applicationID;
+        
+        /**
+         * 
+         */
+        public int applicationVersion;
+        
+        /**
+         * Unsure
+         */
+        public int isMounted;
+        
+        /**
+         * 
+         */
+        public int dummy0;
+        
+        /**
+         * Total size of GCF file in bytes
+         */
+        public int fileSize;
+        
+        /**
+         * Size of each data block in bytes
+         */
+        public int blockSize;
+        
+        /**
+         * Number of data blocks
+         */
+        public int blockCount;
+        
+        /**
+         * 
+         */
+        public int checksum;
+        
+        private GcfHeader() throws IOException {
+            pos = rf.getFilePointer();
             headerVersion = DataUtils.readLEInt(rf);
             cacheType = DataUtils.readLEInt(rf);
             formatVersion = DataUtils.readLEInt(rf);
@@ -185,32 +238,71 @@ public class GCF {
             checked += DataUtils.updateChecksum(fileSize);
             checked += DataUtils.updateChecksum(blockSize);
             checked += DataUtils.updateChecksum(blockCount);
-            return "id:" + applicationID + ", ver:" + formatVersion + ", rev:" + applicationVersion + ", mounted?: " + isMounted + ", size:" + fileSize + ", blockSize:" + blockSize + ", blocks:" + blockCount + ", checksum:" + checksum + "vs" + checked;
+            String checkState = (checksum == checked) ? "OK" : checksum + "vs" + checked;
+            return "id:" + applicationID + ", ver:" + formatVersion + ", rev:" + applicationVersion + ", mounted?: " + isMounted + ", size:" + fileSize + ", blockSize:" + blockSize + ", blocks:" + blockCount + ", checksum:" + checkState;
         }
         
     }
     //</editor-fold>
     
     //<editor-fold defaultstate="collapsed" desc="Block">
-    BlockHeader blockHeader;
+    public BlockHeader blockHeader;
     
-    class BlockHeader {
+    /**
+     * 
+     */
+    public class BlockHeader {
         
-        int blockCount;	// Number of data blocks.
-        int blocksUsed;	// Number of data blocks that point to data.
-        int lastBlockUsed;
-        int dummy0;
-        int dummy1;
-        int dummy2;
-        int dummy3;
-        int checksum;   // Header checksum. The checksum is simply the sum total of all the preceeding DWORDs in the header.
+        /**
+         * 8 * 4
+         */
+        public static final int SIZE = 32;
         
-        static final int size = 8 * 4;
+        public final long pos;
         
-        final long pos;
+        /**
+         * Number of data blocks
+         */
+        public int blockCount;
         
-        BlockHeader() throws IOException {
-            this.pos = rf.getFilePointer();
+        /**
+         * Number of data blocks that point to data
+         */
+        public int blocksUsed;
+        
+        /**
+         * 
+         */
+        public int lastBlockUsed;
+        
+        /**
+         * 
+         */
+        public int dummy0;
+        
+        /**
+         * 
+         */
+        public int dummy1;
+        
+        /**
+         * 
+         */
+        public int dummy2;
+        
+        /**
+         * 
+         */
+        public int dummy3;
+        
+        /**
+         * Header checksum
+         * The checksum is simply the sum total of all the preceeding DWORDs in the header
+         */
+        public int checksum;
+        
+        private BlockHeader() throws IOException {
+            pos = rf.getFilePointer();
             blockCount = DataUtils.readLEInt(rf);
             blocksUsed = DataUtils.readLEInt(rf);
             lastBlockUsed = DataUtils.readLEInt(rf);
@@ -221,44 +313,93 @@ public class GCF {
             checksum = DataUtils.readLEInt(rf);
             
             blocks = new Block[blockCount];
-            rf.skipBytes(blockCount * Block.size);
+            rf.skipBytes(blockCount * Block.SIZE);
+        }
+        
+        public Block getBlock(int i) {
+            Block b = blocks[i];
+            if(b == null) {
+                try {
+//                    long orig = rf.getFilePointer();
+                    rf.seek((pos + SIZE) + (i * Block.SIZE));
+                    b = new Block();
+//                    rf.seek(orig);
+//                    blocks[i] = b; // ???
+                } catch(IOException ex) {
+                    ex.printStackTrace();
+                }
+            }
+            return b;
         }
         
         @Override
         public String toString() {
             int checked = 0;
-            checked += DataUtils.updateChecksum(blockCount);
-            checked += DataUtils.updateChecksum(blocksUsed);
-            checked += DataUtils.updateChecksum(lastBlockUsed);
-            checked += DataUtils.updateChecksum(dummy0);
-            checked += DataUtils.updateChecksum(dummy1);
-            checked += DataUtils.updateChecksum(dummy2);
-            checked += DataUtils.updateChecksum(dummy3);
-            return "blockCount:" + blockCount + ", blocksUsed:" + blocksUsed + ", check:" + checksum + " vs " + checked;
+            checked += DataUtils.updateChecksum2(blockCount);
+            checked += DataUtils.updateChecksum2(blocksUsed);
+            checked += DataUtils.updateChecksum2(lastBlockUsed);
+            checked += DataUtils.updateChecksum2(dummy0);
+            checked += DataUtils.updateChecksum2(dummy1);
+            checked += DataUtils.updateChecksum2(dummy2);
+            checked += DataUtils.updateChecksum2(dummy3);
+            String checkState = (checksum == checked) ? "OK" : checksum + " vs " + checked;
+            return "blockCount:" + blockCount + ", blocksUsed:" + blocksUsed + ", check:" + checkState;
         }
     }
     
-    Block[] blocks;
+    private Block[] blocks;
     
-    class Block {
+    /**
+     * 
+     */
+    public class Block {
         
-        static final int size = 7 * 4;
+        /**
+         * 7 * 4
+         */
+        public static final int SIZE = 28;
         
-        int entryType;                  // Flags for the block entry.  0x200F0000 == Not used.
-        int fileDataOffset;		// The offset for the data contained in this block entry in the file.
-        int fileDataSize;		// The length of the data in this block entry.
-        int firstDataBlockIndex;	// The index to the first data block of this block entry's data.
-        int nextBlockEntryIndex;	// The next block entry in the series.  (N/A if == BlockCount.)
-        int previousBlockEntryIndex;	// The previous block entry in the series.  (N/A if == BlockCount.)
-        int directoryIndex;		// The index of the block entry in the directory.
+//        public final long pos; // unneccesary information
         
-        private final RandomAccessFile rf;
+        /**
+         * Flags for the block entry
+         * 0x200F0000 == Not used
+         */
+        int entryType;
         
-        Block(RandomAccessFile rf) {
-            this.rf = rf;
-        }
+        /**
+         * The offset for the data contained in this block entry in the file
+         */
+        int fileDataOffset;
         
-        Block read() throws IOException {
+        /**
+         * The length of the data in this block entry
+         */
+        int fileDataSize;
+        
+        /**
+         * The index to the first data block of this block entry's data
+         */
+        int firstDataBlockIndex;
+        
+        /**
+         * The next block entry in the series
+         * (N/A if == BlockCount)
+         */
+        int nextBlockEntryIndex;
+        
+        /**
+         * The previous block entry in the series
+         * (N/A if == BlockCount)
+         */
+        int previousBlockEntryIndex;
+        
+        /**
+         * The index of the block entry in the directory
+         */
+        int directoryIndex;
+        
+        private Block() throws IOException {            
             entryType = DataUtils.readLEInt(rf);
             fileDataOffset = DataUtils.readLEInt(rf);
             fileDataSize = DataUtils.readLEInt(rf);
@@ -266,7 +407,6 @@ public class GCF {
             nextBlockEntryIndex = DataUtils.readLEInt(rf);
             previousBlockEntryIndex = DataUtils.readLEInt(rf);
             directoryIndex = DataUtils.readLEInt(rf);
-            return this;
         }
         
         @Override
@@ -278,63 +418,104 @@ public class GCF {
     //</editor-fold>
     
     //<editor-fold defaultstate="collapsed" desc="Frag Map">
-    private FragMapHeader fragMap;
+    public FragMapHeader fragMap;
     
-    private class FragMapHeader {
+    /**
+     * 
+     */
+    public class FragMapHeader {
         
-        static final int size = 4 * 4;
+        /**
+         * 4 * 4
+         */
+        public static final int SIZE = 16;
         
-        int blockCount;	// Number of data blocks.
-        int firstUnusedEntry;	// index of 1st unused GCFFRAGMAP entry?
-        int isLongTerminator; // defines the end of block chain terminator. If the value is 0, then the terminator is 0x0000FFFF; if the value is 1, then the terminator is 0xFFFFFFFF.
-        int checksum;   // Header checksum.
+        public final long pos;
         
-        private long pos;
+        /**
+         * Number of data blocks
+         */
+        public int blockCount;
         
-        FragMapHeader() throws IOException {
-            this.pos = rf.getFilePointer();
+        /**
+         * Index of 1st unused GCFFRAGMAP entry?
+         */
+        public int firstUnusedEntry;
+        
+        /**
+         * Defines the end of block chain terminator
+         * If the value is 0, then the terminator is 0x0000FFFF; if the value is 1, then the terminator is 0xFFFFFFFF
+         */
+        public int isLongTerminator;
+        
+        /**
+         * Header checksum
+         */
+        public int checksum;
+        
+        private FragMapHeader() throws IOException {
+            pos = rf.getFilePointer();
             blockCount = DataUtils.readLEInt(rf);
             firstUnusedEntry = DataUtils.readLEInt(rf);
             isLongTerminator = DataUtils.readLEInt(rf);
             checksum = DataUtils.readLEInt(rf);
             fragMapEntries = new FragMapEntry[blockCount];
-            rf.skipBytes(blockCount * FragMapEntry.size);
+            rf.skipBytes(blockCount * FragMapEntry.SIZE);
         }
         
-        FragMapEntry getEntry(int i) throws IOException {
-            if(fragMapEntries[i] != null) {
-                return fragMapEntries[i];
+        public FragMapEntry getEntry(int i) throws IOException {
+            FragMapEntry fe = fragMapEntries[i];
+            if(fe == null) {
+                rf.seek(pos + SIZE + (i * FragMapEntry.SIZE));
+                fe = new FragMapEntry();
+//                fragMapEntries[i] = fe; // ???
             }
-            rf.seek(pos + size + (i * FragMapEntry.size));
-            FragMapEntry fe = new FragMapEntry();
-            fragMapEntries[i] = fe;
             return fe;
         }
         
         @Override
         public String toString() {
-            return "blockCount:" + blockCount + ", dummy0:" + firstUnusedEntry + ", dummy1:" + isLongTerminator + ", checksum:" + checksum + " vs " + (blockCount + firstUnusedEntry + isLongTerminator);
+            int checked = 0;
+            checked += DataUtils.updateChecksum2(blockCount);
+            checked += DataUtils.updateChecksum2(firstUnusedEntry);
+            checked += DataUtils.updateChecksum2(isLongTerminator);
+            String checkState = (checksum == checked) ? "OK" : checksum + "vs" + checked;
+            return "blockCount:" + blockCount + ", firstUnusedEntry:" + firstUnusedEntry + ", isLongTerminator:" + isLongTerminator + ", checksum:" + checkState;
         }
         
     }
     
-    FragMapEntry[] fragMapEntries;
+    private FragMapEntry[] fragMapEntries;
     
-    class FragMapEntry {
+    /**
+     * 
+     */
+    public class FragMapEntry {
         
-        static final int size = 1 * 4;
+        /**
+         * 1 * 4
+         */
+        public static final int SIZE = 4;
         
-        int nextDataBlockIndex;	// The index of the next data block.
+        /**
+         * The index of the next data block
+         */
+        public int nextDataBlockIndex;
         
-        FragMapEntry() throws IOException {
+        private FragMapEntry() throws IOException {
             nextDataBlockIndex = DataUtils.readLEInt(rf);
+        }
+
+        @Override
+        public String toString() {
+            return "nextDataBlockIndex:" + nextDataBlockIndex;
         }
         
     }
     //</editor-fold>
     
     //<editor-fold defaultstate="collapsed" desc="Directories">
-    private DirectoryHeader directoryHeader;
+    public DirectoryHeader directoryHeader;
     
     enum DirectoryHeaderBitmask {
         
@@ -350,7 +531,12 @@ public class GCF {
         }
     };
     
-    private class DirectoryHeader {
+    public class DirectoryHeader {
+        
+        /**
+         * 14 * 4
+         */
+        public static final int SIZE = 56;
         
         int headerVersion;		// Always 0x00000004
         int applicationID;		// Cache ID.
@@ -386,29 +572,44 @@ public class GCF {
         
         @Override
         public String toString() {
-            ByteBuffer bb = ByteBuffer.allocate(14 * 4);
-            bb.order(ByteOrder.LITTLE_ENDIAN);
-            bb.putInt(headerVersion);
-            bb.putInt(applicationID);
-            bb.putInt(applicationVersion);
-            bb.putInt(nodeCount);
-            bb.putInt(fileCount);
-            bb.putInt(compressedBlockSize);
-            bb.putInt(binarySize);
-            bb.putInt(nameSize);
-            bb.putInt(hashTableKeyCount);
-            bb.putInt(copyCount);
-            bb.putInt(localCount);
-            bb.putInt(bitmask);
-            bb.putInt(0);
-            bb.putInt(0);
-            bb.flip();
-            byte[] bytes = bb.array();
-            Checksum adler32 = new Adler32();
-            adler32.update(bytes, 0, bytes.length);
-            long checked = adler32.getValue();
-            
-            return "id:" + applicationID + ", ver:" + applicationVersion + ", items:" + nodeCount + ", files:" + fileCount + ", dsize:" + binarySize + ", nsize:" + nameSize + ", info1:" + hashTableKeyCount + ", copy:" + copyCount + ", local:" + localCount + ", check:" + checksum + " vs " + checked;
+            int checked = 0;
+            checked += DataUtils.updateChecksum2(headerVersion);
+            checked += DataUtils.updateChecksum2(applicationID);
+            checked += DataUtils.updateChecksum2(applicationVersion);
+            checked += DataUtils.updateChecksum2(nodeCount);
+            checked += DataUtils.updateChecksum2(fileCount);
+            checked += DataUtils.updateChecksum2(compressedBlockSize);
+            checked += DataUtils.updateChecksum2(binarySize);
+            checked += DataUtils.updateChecksum2(nameSize);
+            checked += DataUtils.updateChecksum2(hashTableKeyCount);
+            checked += DataUtils.updateChecksum2(copyCount);
+            checked += DataUtils.updateChecksum2(localCount);
+            checked += DataUtils.updateChecksum2(bitmask);
+            checked += DataUtils.updateChecksum2(fingerprint);
+            checked += DataUtils.updateChecksum2(checksum);
+//            ByteBuffer bb = ByteBuffer.allocate(14 * 4);
+//            bb.order(ByteOrder.LITTLE_ENDIAN);
+//            bb.putInt(headerVersion);
+//            bb.putInt(applicationID);
+//            bb.putInt(applicationVersion);
+//            bb.putInt(nodeCount);
+//            bb.putInt(fileCount);
+//            bb.putInt(compressedBlockSize);
+//            bb.putInt(binarySize);
+//            bb.putInt(nameSize);
+//            bb.putInt(hashTableKeyCount);
+//            bb.putInt(copyCount);
+//            bb.putInt(localCount);
+//            bb.putInt(bitmask);
+//            bb.putInt(0);
+//            bb.putInt(0);
+////            bb.flip();
+//            byte[] bytes = bb.array();
+//            Checksum adler32 = new Adler32();
+//            adler32.update(bytes, 0, 14 * 4);
+//            long checked = adler32.getValue();
+            String checkState = (checksum == checked) ? "OK" : checksum + "vs" + checked;
+            return "id:" + applicationID + ", ver:" + applicationVersion + ", items:" + nodeCount + ", files:" + fileCount + ", dsize:" + binarySize + ", nsize:" + nameSize + ", info1:" + hashTableKeyCount + ", copy:" + copyCount + ", local:" + localCount + ", check:" + checkState;
         }
     }
     
@@ -570,46 +771,62 @@ public class GCF {
     //</editor-fold>
     
     //<editor-fold defaultstate="collapsed" desc="Data blocks">
-    DataBlockHeader dataBlockHeader;
+    public DataBlockHeader dataBlockHeader;
     
     //GCF Data Header
-    class DataBlockHeader {
-        int gcfRevision;	// GCF file version.
-        int blockCount;	// Number of data blocks.
-        int blockSize;	// Size of each data block in bytes.
-        int firstBlockOffset; // Offset to first data block.
-        int blocksUsed;	// Number of data blocks that contain data.
-        int checksum;		// Header checksum.
+    /**
+     * 
+     */
+    public class DataBlockHeader {
+        
+        /**
+         * GCF file version
+         */
+        public int gcfRevision;
+        
+        /**
+         * Number of data blocks
+         */
+        public int blockCount;
+        
+        /**
+         * Size of each data block in bytes
+         */
+        public int blockSize;
+        
+        /**
+         * Offset to first data block
+         */
+        public int firstBlockOffset;
+        
+        /**
+         * Number of data blocks that contain data
+         */
+        public int blocksUsed;
+        
+        /**
+         * Header checksum
+         */
+        public int checksum;
         
         @Override
         public String toString() {
-            int check = blockCount + blockSize + firstBlockOffset + blocksUsed;
-            return "v:" + gcfRevision + ", blocks:" + blockCount + ", size:" + blockSize + ", offset:0x" + Integer.toHexString(firstBlockOffset) + ", used:" + blocksUsed + ", check:" + checksum + " vs " + check;
+            int checked = 0;
+            checked += DataUtils.updateChecksum2(blockCount);
+            checked += DataUtils.updateChecksum2(blockSize);
+            checked += DataUtils.updateChecksum2(firstBlockOffset);
+            checked += DataUtils.updateChecksum2(blocksUsed);
+            String checkState = (checksum == checked) ? "OK" : checksum + "vs" + checked;
+            return "v:" + gcfRevision + ", blocks:" + blockCount + ", size:" + blockSize + ", offset:0x" + Integer.toHexString(firstBlockOffset) + ", used:" + blocksUsed + ", check:" + checkState;
         }
     }
     //</editor-fold>
     //</editor-fold>
-    
-    Block getBlock(int i) {
-        Block b = blocks[i];
-        if(b == null) {
-            try {
-                long orig = rf.getFilePointer();
-                rf.seek((blockHeader.pos + BlockHeader.size) + (i * Block.size));
-                b = new Block(rf).read();
-                rf.seek(orig);
-                blocks[i] = b;
-            } catch (IOException ex) {
-                ex.printStackTrace();
-            }
-        }
-        return b;
-    }
     
     public byte[] ls = null;
     
     public GCF(File file) throws IOException {
-        this.name = file.getName();
+        this.file = file;
         rf = new RandomAccessFile(file, "r");
         
         header = new GcfHeader();
@@ -620,7 +837,7 @@ public class GCF {
         //<editor-fold defaultstate="collapsed" desc="Directories">
         boolean skipDirs = false;
         if(skipDirs) {
-            rf.skipBytes(directoryHeader.binarySize - (14 * 4));
+            rf.skipBytes(directoryHeader.binarySize - DirectoryHeader.SIZE);
         } else {
             directoryEntries = new DirectoryEntry[directoryHeader.nodeCount];
             for(int i = 0; i < directoryHeader.nodeCount; i++) {
@@ -757,7 +974,7 @@ public class GCF {
         }
         //</editor-fold>
         
-        logger.log(Level.INFO, "{0}\n{1}\n{2}\n{3}\n{4}\n{5}\n{6}", new Object[]{header.toString(), blockHeader.toString(), fragMap.toString(), directoryHeader.toString(), directoryMapHeader.toString(), checksumHeader.toString(), dataBlockHeader.toString()});
+        logger.log(Level.INFO, "{0}\n{1}\n{2}\n{3}\n{4}\n{5}\n{6}\n{7}\n", new Object[]{file.getPath(), "header:\t" + header.toString(), "blockHchecksumeader:\t" + blockHeader.toString(), "fragMap:\t" + fragMap.toString(), "directoryHeader:\t" + directoryHeader.toString(), "directoryMapHeader:\t" + directoryMapHeader.toString(), "checksumHeader:\t" + checksumHeader.toString(), "dataBlockHeader:\t" + dataBlockHeader.toString()});
         
         //        rf.close();
     }

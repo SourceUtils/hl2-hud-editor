@@ -1,4 +1,4 @@
-package com.timepath.util;
+package com.timepath.util.swing;
 
 /*
  *	This programs uses the information found in the UIManager

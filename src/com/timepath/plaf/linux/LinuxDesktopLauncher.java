@@ -22,7 +22,7 @@ public class LinuxDesktopLauncher {
         createIcon();
     }
     
-    private static String getStore() {
+    public static String getStore() {
         String root = System.getenv("XDG_DATA_HOME");
         if(root == null) {
             root = System.getenv("HOME") + "/.local/share/";

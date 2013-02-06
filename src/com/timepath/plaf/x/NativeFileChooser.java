@@ -1,6 +1,7 @@
 package com.timepath.plaf.x;
 
 import com.timepath.plaf.OS;
+import com.timepath.plaf.linux.LinuxDesktopLauncher;
 import com.timepath.tf2.hudeditor.Main;
 import java.awt.FileDialog;
 import java.awt.Frame;
@@ -9,6 +10,8 @@ import java.io.File;
 import java.io.FilenameFilter;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.swing.JFileChooser;
 import net.tomahawk.XFileDialog;
 
@@ -18,11 +21,13 @@ import net.tomahawk.XFileDialog;
  */
 public class NativeFileChooser {
     
+    private static final Logger logger = Logger.getLogger(NativeFileChooser.class.getName());
+    
     private Frame parent;
     private String title;
-    private String directory;
+    private File directory;
     
-    public NativeFileChooser(Frame parent, String title, String directory) {
+    public NativeFileChooser(Frame parent, String title, File directory) {
         this.parent = parent;
         this.title = title;
         this.directory = directory;
@@ -33,7 +38,7 @@ public class NativeFileChooser {
         if(Main.os == OS.Windows) {
             XFileDialog fd = new XFileDialog(parent);
             fd.setTitle(title);
-            fd.setDirectory(directory);
+            fd.setDirectory(directory.getPath());
             selection = fd.getFolder();
             fd.dispose();
         } else if(Main.os == OS.Mac) {
@@ -71,14 +76,25 @@ public class NativeFileChooser {
         cmd.append("--file-selection ");
         cmd.append("--directory ");
         cmd.append("--title=Open ");
-        cmd.append(directory != null ? ("--filename=" + directory + " ") : ""); // does not work when directory has spaces
+        String folder = (directory != null ? ("--filename=" + directory.getPath()) + "" : ""); // FIXME: does not work when directory has spaces
+        String folder2 = "";
+        for(int i = 0; i < folder.length(); i++) {
+            String s = "" + folder.charAt(i);
+            if(" ".equals(s)) {
+                s = "\\ ";
+            }
+            folder2 += s;
+        }
+        folder2 += "/ ";
+        cmd.append(folder2);
         cmd.append("--class=" + Main.projectName + " ");
         cmd.append("--name=" + Main.projectName + " ");
-        cmd.append("--window-icon=").append(System.getenv("XDG_DATA_HOME")).append("/icons/" + Main.projectName + ".png");
+        cmd.append("--window-icon=").append(LinuxDesktopLauncher.getStore()).append("/icons/" + Main.projectName + ".png");
 //        cmd.append("--ok-label=TEXT ");
 //        cmd.append("--cancel-label=TEXT ");
 
         String zenity = cmd.toString();
+        logger.log(Level.INFO, "zenity: {0}", zenity);
         
         final Process proc = Runtime.getRuntime().exec(zenity);
         Runtime.getRuntime().addShutdownHook(new Thread() {
@@ -99,7 +115,7 @@ public class NativeFileChooser {
             }
         });
         if(directory != null) {
-            fd.setDirectory(directory);
+            fd.setDirectory(directory.getPath());
         }
         fd.setMode(FileDialog.LOAD);
         fd.setVisible(true);

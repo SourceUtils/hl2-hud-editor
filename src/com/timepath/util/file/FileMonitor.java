@@ -1,4 +1,4 @@
-package com.timepath.util;
+package com.timepath.util.file;
 
 /*******************************************************************************
  * Copyright (c) 2007 Pascal Essiembre.

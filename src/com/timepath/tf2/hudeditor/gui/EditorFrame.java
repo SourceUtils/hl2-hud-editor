@@ -95,18 +95,19 @@ import org.java.ayatana.AyatanaDesktop;
  */
 public final class EditorFrame extends javax.swing.JFrame {
     
-    //<editor-fold defaultstate="collapsed" desc="Variables">
     private static final Logger logger = Logger.getLogger(EditorFrame.class.getName());
-    public static Canvas canvas;
+    
+    //<editor-fold defaultstate="collapsed" desc="Variables">
+    private final EditorMenuBar jmb;
     private final DefaultMutableTreeNode fileSystemRoot;
     private final FileTree fileTree;
     private final PropertyTable propTable;
+    public static Canvas canvas;
     
     private boolean updating;
     public boolean autoCheck = true;
     
-    private String hudSelectionDir;
-    
+    private File hudSelectionDir;
     private File lastLoaded;
     
     private JSpinner spinnerWidth;
@@ -158,18 +159,14 @@ public final class EditorFrame extends javax.swing.JFrame {
                                 try {
                                     Desktop.getDesktop().browse(he.getURL().toURI());
                                 } catch(Exception e) {
-                                    //                                e.printStackTrace();
+//                                    e.printStackTrace();
                                 }
                             }
                         }
                         
                     });
                     JScrollPane window = new JScrollPane(panel);
-                    if(Main.os == OS.Mac) {
-                        window.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
-                    } else {
-                        window.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
-                    }
+                    window.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
                     info(window, "Changes");
                 } catch(IOException ex) {
                     error(ex);
@@ -345,8 +342,8 @@ public final class EditorFrame extends javax.swing.JFrame {
     
     public void preferences() {
         String aboutText = "This is where preferences will go for the editor.\n";
-        aboutText += "There are currently none at the moment";
-        final JEditorPane panel = new JEditorPane("text/html", aboutText);
+        aboutText += "There are none at this time";
+        JEditorPane panel = new JEditorPane("text/html", aboutText);
         panel.setEditable(false);
         panel.setOpaque(false);
         info(panel, "About");
@@ -362,7 +359,7 @@ public final class EditorFrame extends javax.swing.JFrame {
         aboutText += "<p>Please give feedback or suggestions on <a href=\""+latestThread+"\">the latest update thread</a></p>";
         aboutText += "<p>Current version: " + Main.myVer + "</p>";
         aboutText += "</html>";
-        final JEditorPane panel = new JEditorPane("text/html", aboutText);
+        JEditorPane panel = new JEditorPane("text/html", aboutText);
         panel.setEditable(false);
         panel.setOpaque(false);
         panel.addHyperlinkListener(new HyperlinkListener() {
@@ -373,7 +370,7 @@ public final class EditorFrame extends javax.swing.JFrame {
                     try {
                         Desktop.getDesktop().browse(he.getURL().toURI()); // http://stackoverflow.com/questions/5116473/linux-command-to-open-url-in-default-browser
                     } catch(Exception e) {
-                        //                                e.printStackTrace();
+//                        e.printStackTrace();
                     }
                 }
             }
@@ -389,47 +386,44 @@ public final class EditorFrame extends javax.swing.JFrame {
             }
         };
         
-        final JComboBox dropDown = new JComboBox();
+        JComboBox dropDown = new JComboBox();
         File steamappsFolder = new File(Utils.locateSteamAppsDirectory());
         if(steamappsFolder == null) {
             error("Could not find Steam install directory!", "Steam not found");
             return;
         }
-        final File[] userFolders = steamappsFolder.listFiles(dirFilter);
+        File[] userFolders = steamappsFolder.listFiles(dirFilter);
         if(userFolders == null) {
             error("SteamApps is empty!", "Empty SteamApps directory");
             return;
         }
         for(int i = 0; i < userFolders.length; i++) {
-            if(!userFolders[i].getName().equalsIgnoreCase("common") && !userFolders[i].getName().equalsIgnoreCase("sourcemods")) {
-                final File[] gameFolders = userFolders[i].listFiles(dirFilter);
-                for(int j = 0; j < gameFolders.length; j++) {
-                    if(gameFolders[j].getName().equalsIgnoreCase("Team Fortress 2")) {
-                        dropDown.addItem(userFolders[i].getName());
-                        break;
-                    }
+            if(userFolders[i].getName().equalsIgnoreCase("common") || userFolders[i].getName().equalsIgnoreCase("sourcemods")) {
+                continue;
+            }
+            File[] gameFolders = userFolders[i].listFiles(dirFilter);
+            for(int j = 0; j < gameFolders.length; j++) {
+                if(gameFolders[j].getName().equalsIgnoreCase("Team Fortress 2")) {
+                    dropDown.addItem(userFolders[i].getName());
+                    break;
                 }
             }
         }
-        if(dropDown.getItemCount() > 0) {
-            final JPanel dialogPanel = new JPanel();
+        if(dropDown.getItemCount() == 0) {
+            error("No users have TF2 installed!", "TF2 not found");
+            return;
+        }
+        if(dropDown.getItemCount() > 1) {
+            JPanel dialogPanel = new JPanel();
             dialogPanel.setLayout(new BoxLayout(dialogPanel, BoxLayout.Y_AXIS));
             dialogPanel.add(new JLabel("Please choose for which user you want to install the HUD"));
             dialogPanel.add(dropDown);
             JOptionPane.showMessageDialog(this, dialogPanel, "Select user", JOptionPane.QUESTION_MESSAGE);
-        } else {
-            error("No users have TF2 installed!", "TF2 not found");
-            return;
         }
-        
         File installDir = new File(steamappsFolder, dropDown.getSelectedItem() + "/Team Fortress 2/tf");
         if(installDir.isDirectory() && installDir.exists()) {
             info("Install path: " + installDir, "Install path");
         }
-    }
-    
-    private void locateZippedHud() {
-        
     }
 
     /**
@@ -443,11 +437,9 @@ public final class EditorFrame extends javax.swing.JFrame {
         new Thread() {
             @Override
             public void run() {
-                NativeFileChooser nc = new NativeFileChooser(EditorFrame.this, Main.rb.getString("LoadHudDir"), hudSelectionDir);
+                NativeFileChooser nc = new NativeFileChooser(EditorFrame.this, Main.rb.getString("LoadHudDir"), lastLoaded);
                 final File selection = nc.getFolder();
                 if(selection != null) {
-                    hudSelectionDir = selection.getPath();
-
                     new Thread() {
                         @Override
                         public void run() {
@@ -460,6 +452,11 @@ public final class EditorFrame extends javax.swing.JFrame {
         }.start();
     }
     
+    private void locateZippedHud() {
+        
+    }
+    
+    //<editor-fold defaultstate="collapsed" desc="Messages">
     private void error(Object msg) {
         error(msg, Main.rb.getString("Error"));
     }
@@ -475,7 +472,7 @@ public final class EditorFrame extends javax.swing.JFrame {
     private void info(Object msg, String title) {
         JOptionPane.showMessageDialog(this, msg, title, JOptionPane.INFORMATION_MESSAGE);
     }
-    
+    //</editor-fold>
     
     private void changeResolution() {
         
@@ -635,12 +632,12 @@ public final class EditorFrame extends javax.swing.JFrame {
                     boolean worked = ApplicationMenu.tryInstall(EditorFrame.this, menubar);
                     if(worked) {
                         super.setJMenuBar(null);
-                    } else { // I think this one is safe to ignore
-                        // error("AyatanaDesktop failed to load" + "\n" + System.getenv("XDG_CURRENT_DESKTOP"));
+                    } else {
+//                         error("AyatanaDesktop failed to load" + "\n" + System.getenv("XDG_CURRENT_DESKTOP"));
                     }
                 }
             } catch(UnsupportedClassVersionError e) { // crashes earlier versions of the JVM - particularly old macs
-                // e.printStackTrace();
+//                e.printStackTrace();
             }
         }
     }
@@ -671,19 +668,19 @@ public final class EditorFrame extends javax.swing.JFrame {
         propTable.repaint();
     }
     
-    private void loadHud(final File rootFile) {
-        if(rootFile == null) {
+    private void loadHud(File root) {
+        if(root == null) {
             return;
         }
-        if(!rootFile.exists()) {
-            error(new MessageFormat(Main.rb.getString("FileAccessError")).format(new Object[]{rootFile}));
+        if(!root.exists()) {
+            error(new MessageFormat(Main.rb.getString("FileAccessError")).format(new Object[]{root}));
         }
-        setLastLoaded(rootFile);
-        System.out.println("You have selected: " + rootFile.getAbsolutePath());
+        setLastLoaded(root);
+        System.out.println("You have selected: " + root.getAbsolutePath());
         
-        if(rootFile.getName().endsWith(".zip")) {
+        if(root.getName().endsWith(".zip")) {
             try {
-                ZipInputStream zin = new ZipInputStream(new FileInputStream(rootFile));
+                ZipInputStream zin = new ZipInputStream(new FileInputStream(root));
                 ZipEntry entry;
                 while((entry = zin.getNextEntry()) != null) {
                     System.out.println(entry.getName());
@@ -695,8 +692,8 @@ public final class EditorFrame extends javax.swing.JFrame {
             return;
         }
         
-        if(rootFile.isDirectory()) {
-            File[] folders = rootFile.listFiles();
+        if(root.isDirectory()) {
+            File[] folders = root.listFiles();
             boolean valid = true;
             for(int i = 0; i < folders.length; i++) {
                 if(folders[i].isDirectory() && ("resource".equalsIgnoreCase(folders[i].getName()) || "scripts".equalsIgnoreCase(folders[i].getName()))) {
@@ -733,8 +730,8 @@ public final class EditorFrame extends javax.swing.JFrame {
             
             this.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
             final long start = System.currentTimeMillis();
-            Utils.recurseDirectoryToNode(rootFile, fileSystemRoot);
-            fileSystemRoot.setUserObject(rootFile.getName()); // The only String in the tree
+            Utils.recurseDirectoryToNode(root, fileSystemRoot);
+            fileSystemRoot.setUserObject(root.getName()); // The only String in the tree
             
             DefaultTreeModel model = (DefaultTreeModel) fileTree.getModel();
             model.reload();
@@ -758,7 +755,7 @@ public final class EditorFrame extends javax.swing.JFrame {
                 JFrame f = new JFrame();
                 f.setUndecorated(true);
                 f.setJMenuBar(this.getJMenuBar());
-                f.setLocation(-Integer.MAX_VALUE, -Integer.MAX_VALUE); // Hacky - should just use the Application calls...
+                f.setLocation(-Integer.MAX_VALUE, -Integer.MAX_VALUE); // Hacky - should just use the OSX Application calls...
                 f.setVisible(true);
             } else {
                 System.exit(0);
@@ -766,9 +763,9 @@ public final class EditorFrame extends javax.swing.JFrame {
         }
     }
     
-    private void setLastLoaded(File file) {
-        lastLoaded = file;
-//        jmb.reloadItem.setEnabled(file != null);
+    private void setLastLoaded(File root) {
+        lastLoaded = root;
+        jmb.reloadItem.setEnabled(root != null);
     }
     //</editor-fold>
     
@@ -852,6 +849,7 @@ public final class EditorFrame extends javax.swing.JFrame {
         this.setPreferredSize(new Dimension((int) (d.getWidth() / 1.5), (int) (d.getHeight() / 1.5)));
         
         this.setLocation((d.getWidth() / 2) - (this.getPreferredSize().width / 2), (d.getHeight() / 2) - (this.getPreferredSize().height / 2));
+        this.setLocationRelativeTo(null);
         //<editor-fold defaultstate="collapsed" desc="Drag+drop">
         this.setDropTarget(new DropTarget() {
             @Override
@@ -905,12 +903,14 @@ public final class EditorFrame extends javax.swing.JFrame {
         this.getRootPane().putClientProperty("apple.awt.brushMetalLook", Boolean.TRUE);
         status.putClientProperty("Quaqua.ToolBar.style", "bottom");
         
-        this.setJMenuBar(new EditorMenuBar());
+        jmb = new EditorMenuBar();
+        this.setJMenuBar(jmb);
         
         //<editor-fold defaultstate="collapsed" desc="Tree">
         fileSystemRoot = new DefaultMutableTreeNode("root");
         fileTree = new FileTree(fileSystemRoot);
         JScrollPane fileTreePane = new JScrollPane(fileTree);
+        fileTreePane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
         sideSplit.setTopComponent(fileTreePane);
         fileTree.addTreeSelectionListener(new TreeSelectionListener() {
             @Override
@@ -958,7 +958,7 @@ public final class EditorFrame extends javax.swing.JFrame {
         JScrollPane canvasPane = new JScrollPane(canvas);
         canvasPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
         canvasPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_ALWAYS);
-        tabbedContent.add("Canvas", canvasPane);
+        tabbedContent.add(Main.rb.getString("Canvas"), canvasPane);
         //</editor-fold>
     }
     

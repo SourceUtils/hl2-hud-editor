@@ -1,6 +1,7 @@
 package com.timepath.tf2.loaders;
 
-import com.timepath.util.DataUtils;
+import com.timepath.tf2.hudeditor.util.Utils;
+import com.timepath.util.io.DataUtils;
 import java.awt.AlphaComposite;
 import java.awt.Color;
 import java.awt.Graphics2D;
@@ -10,6 +11,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.util.HashMap;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
@@ -195,21 +197,43 @@ public class VTF {
     
     // STATIC METHODS
     
+    public static GCF mats = null;
+    
     public static VTF load(String path) {
-        File f = new File(path);
-        System.out.println("Loading " + f);
+        path = new File(path).getAbsolutePath();
+        if(mats == null) {
+            try {
+                mats = new GCF(new File(Utils.locateSteamAppsDirectory() + "Team Fortress 2 Materials.gcf"));
+            } catch (IOException ex) {
+                Logger.getLogger(VTF.class.getName()).log(Level.SEVERE, null, ex);
+            }
+        }
+        File f = null;
+        try {
+            File dest = File.createTempFile(path.replaceAll("/", "_"), "");
+            System.out.println(dest);
+            if(mats.extract(path, dest) != null) {
+                f = new File(path);
+                System.out.println("Loading " + f);
+            }
+        } catch (IOException ex) {
+            Logger.getLogger(VTF.class.getName()).log(Level.SEVERE, null, ex);
+        }
         return VTF.load(f);
     }
     
     private static HashMap<File, VTF> cache = new HashMap<File, VTF>();
         
     public static VTF load(File file) {
+        if(file == null) {
+            return null;
+        }
         file = file.getAbsoluteFile();
         
         if(cache.containsKey(file)) {
             return cache.get(file);
         }
-        if(file == null || !file.exists() || !file.canRead()) {
+        if(!file.exists() || !file.canRead()) {
             return null;
         }
         RandomAccessFile rf;
