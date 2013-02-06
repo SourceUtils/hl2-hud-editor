@@ -167,7 +167,7 @@ public class Blob {
         bn.setLength(DataUtils.readULEInt(rf) - 10);
         DataUtils.readULEInt(rf); // padding
         int nameLength = DataUtils.readULEShort(rf);
-        int dataLength = DataUtils.readLEInt(rf);
+        int dataLength = DataUtils.readULEInt(rf);
         bn.setName(DataUtils.readBytes(rf, nameLength));
 //        byte[] data = DataUtils.readBytes(rf, dataLength);
         bn.children.add(readBlob(rf));

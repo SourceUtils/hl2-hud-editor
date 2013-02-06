@@ -1,6 +1,7 @@
 package com.timepath.tf2.loaders;
 
 //<editor-fold defaultstate="collapsed" desc="Imports">
+import com.timepath.tf2.loaders.GCF.ManifestHeaderBitmask;
 import com.timepath.util.io.DataUtils;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -101,9 +102,9 @@ public class GCF {
                 logger.log(Level.WARNING, "Block out of range for {0} : {1}. Is the size 0?", new Object[]{outFile.getPath(), index});
                 return null;
             }
-            Block block = blockHeader.getBlock(idx);
+            BlockAllocationTableEntry block = blockHeader.getBlock(idx);
             RandomAccessFile out = new RandomAccessFile(outFile, "rw");
-            int dataIdx = block.firstDataBlockIndex;
+            int dataIdx = block.firstClusterIndex;
             for(int q = 0; ; q++) {
                 long pos = ((long)dataBlockHeader.firstBlockOffset + ((long)dataIdx * (long)dataBlockHeader.blockSize));
                 out.seek(pos);
@@ -121,7 +122,7 @@ public class GCF {
                 if(dataIdx == 65535) {
                     break;
                 }
-                dataIdx = fragMap.getEntry(dataIdx).nextDataBlockIndex;
+                dataIdx = fragMap.getEntry(dataIdx).nextClusterIndex;
                 if(dataIdx == -1) {
                     break;
                 }
@@ -140,12 +141,12 @@ public class GCF {
     
     //<editor-fold defaultstate="collapsed" desc="Header info">
     //<editor-fold defaultstate="collapsed" desc="Header">
-    public GcfHeader header;
+    public FileHeader header;
     
     /**
      * 
      */
-    public class GcfHeader {
+    public class FileHeader {
         
         /**
          * 11 * 4
@@ -156,27 +157,29 @@ public class GCF {
         
         /**
          * Always 0x00000001
+         * Probably the version number for the structure
          */
         public int headerVersion;
         
         /**
-         * Always 0x00000001 for GCF, 2 for NCF
+         * Always 0x00000001 for GCF, 0x00000002 for NCF
          */
         public int cacheType;
         
         /**
          * Container version
-         * TF2 is 0x00000006
          */
         public int formatVersion;
         
         /**
+         * ID of the cache
+         * Can be found in the CDR section of ClientRegistry.blob
          * TF2 is 440
          */
         public int applicationID;
         
         /**
-         * 
+         * Current revision
          */
         public int applicationVersion;
         
@@ -186,7 +189,7 @@ public class GCF {
         public int isMounted;
         
         /**
-         * 
+         * Always 0x00000000
          */
         public int dummy0;
         
@@ -196,62 +199,62 @@ public class GCF {
         public int fileSize;
         
         /**
-         * Size of each data block in bytes
+         * Size of each data cluster in bytes
          */
-        public int blockSize;
+        public int clusterSize;
         
         /**
          * Number of data blocks
          */
-        public int blockCount;
+        public int clusterCount;
         
         /**
          * 
          */
         public int checksum;
         
-        private GcfHeader() throws IOException {
+        private FileHeader() throws IOException {
             pos = rf.getFilePointer();
-            headerVersion = DataUtils.readLEInt(rf);
-            cacheType = DataUtils.readLEInt(rf);
-            formatVersion = DataUtils.readLEInt(rf);
-            applicationID = DataUtils.readLEInt(rf);
-            applicationVersion = DataUtils.readLEInt(rf);
-            isMounted = DataUtils.readLEInt(rf);
-            dummy0 = DataUtils.readLEInt(rf);
-            fileSize = DataUtils.readLEInt(rf);
-            blockSize = DataUtils.readLEInt(rf);
-            blockCount = DataUtils.readLEInt(rf);
-            checksum = DataUtils.readLEInt(rf);
+            headerVersion = DataUtils.readULEInt(rf);
+            cacheType = DataUtils.readULEInt(rf);
+            formatVersion = DataUtils.readULEInt(rf);
+            applicationID = DataUtils.readULEInt(rf);
+            applicationVersion = DataUtils.readULEInt(rf);
+            isMounted = DataUtils.readULEInt(rf);
+            dummy0 = DataUtils.readULEInt(rf);
+            fileSize = DataUtils.readULEInt(rf);
+            clusterSize = DataUtils.readULEInt(rf);
+            clusterCount = DataUtils.readULEInt(rf);
+            checksum = DataUtils.readULEInt(rf);
         }
         
         @Override
         public String toString() {
             int checked = 0;
-            checked += DataUtils.updateChecksum(headerVersion);
-            checked += DataUtils.updateChecksum(cacheType);
-            checked += DataUtils.updateChecksum(formatVersion);
-            checked += DataUtils.updateChecksum(applicationID);
-            checked += DataUtils.updateChecksum(applicationVersion);
-            checked += DataUtils.updateChecksum(isMounted);
-            checked += DataUtils.updateChecksum(dummy0);
-            checked += DataUtils.updateChecksum(fileSize);
-            checked += DataUtils.updateChecksum(blockSize);
-            checked += DataUtils.updateChecksum(blockCount);
+            checked += DataUtils.updateChecksumAddSpecial(headerVersion);
+            checked += DataUtils.updateChecksumAddSpecial(cacheType);
+            checked += DataUtils.updateChecksumAddSpecial(formatVersion);
+            checked += DataUtils.updateChecksumAddSpecial(applicationID);
+            checked += DataUtils.updateChecksumAddSpecial(applicationVersion);
+            checked += DataUtils.updateChecksumAddSpecial(isMounted);
+            checked += DataUtils.updateChecksumAddSpecial(dummy0);
+            checked += DataUtils.updateChecksumAddSpecial(fileSize);
+            checked += DataUtils.updateChecksumAddSpecial(clusterSize);
+            checked += DataUtils.updateChecksumAddSpecial(clusterCount);
             String checkState = (checksum == checked) ? "OK" : checksum + "vs" + checked;
-            return "id:" + applicationID + ", ver:" + formatVersion + ", rev:" + applicationVersion + ", mounted?: " + isMounted + ", size:" + fileSize + ", blockSize:" + blockSize + ", blocks:" + blockCount + ", checksum:" + checkState;
+            return "id:" + applicationID + ", ver:" + formatVersion + ", rev:" + applicationVersion + ", mounted?: " + isMounted + ", size:" + fileSize + ", blockSize:" + clusterSize + ", blocks:" + clusterCount + ", checksum:" + checkState;
         }
         
     }
     //</editor-fold>
     
     //<editor-fold defaultstate="collapsed" desc="Block">
-    public BlockHeader blockHeader;
+    public BlockAllocationTableHeader blockHeader;
     
     /**
      * 
      */
-    public class BlockHeader {
+    public class BlockAllocationTableHeader {
         
         /**
          * 8 * 4
@@ -301,28 +304,28 @@ public class GCF {
          */
         public int checksum;
         
-        private BlockHeader() throws IOException {
+        private BlockAllocationTableHeader() throws IOException {
             pos = rf.getFilePointer();
-            blockCount = DataUtils.readLEInt(rf);
-            blocksUsed = DataUtils.readLEInt(rf);
-            lastBlockUsed = DataUtils.readLEInt(rf);
-            dummy0 = DataUtils.readLEInt(rf);
-            dummy1 = DataUtils.readLEInt(rf);
-            dummy2 = DataUtils.readLEInt(rf);
-            dummy3 = DataUtils.readLEInt(rf);
-            checksum = DataUtils.readLEInt(rf);
+            blockCount = DataUtils.readULEInt(rf);
+            blocksUsed = DataUtils.readULEInt(rf);
+            lastBlockUsed = DataUtils.readULEInt(rf);
+            dummy0 = DataUtils.readULEInt(rf);
+            dummy1 = DataUtils.readULEInt(rf);
+            dummy2 = DataUtils.readULEInt(rf);
+            dummy3 = DataUtils.readULEInt(rf);
+            checksum = DataUtils.readULEInt(rf);
             
-            blocks = new Block[blockCount];
-            rf.skipBytes(blockCount * Block.SIZE);
+            blocks = new BlockAllocationTableEntry[blockCount];
+            rf.skipBytes(blockCount * BlockAllocationTableEntry.SIZE);
         }
         
-        public Block getBlock(int i) {
-            Block b = blocks[i];
+        public BlockAllocationTableEntry getBlock(int i) {
+            BlockAllocationTableEntry b = blocks[i];
             if(b == null) {
                 try {
 //                    long orig = rf.getFilePointer();
-                    rf.seek((pos + SIZE) + (i * Block.SIZE));
-                    b = new Block();
+                    rf.seek((pos + SIZE) + (i * BlockAllocationTableEntry.SIZE));
+                    b = new BlockAllocationTableEntry();
 //                    rf.seek(orig);
 //                    blocks[i] = b; // ???
                 } catch(IOException ex) {
@@ -335,24 +338,24 @@ public class GCF {
         @Override
         public String toString() {
             int checked = 0;
-            checked += DataUtils.updateChecksum2(blockCount);
-            checked += DataUtils.updateChecksum2(blocksUsed);
-            checked += DataUtils.updateChecksum2(lastBlockUsed);
-            checked += DataUtils.updateChecksum2(dummy0);
-            checked += DataUtils.updateChecksum2(dummy1);
-            checked += DataUtils.updateChecksum2(dummy2);
-            checked += DataUtils.updateChecksum2(dummy3);
+            checked += DataUtils.updateChecksumAdd(blockCount);
+            checked += DataUtils.updateChecksumAdd(blocksUsed);
+            checked += DataUtils.updateChecksumAdd(lastBlockUsed);
+            checked += DataUtils.updateChecksumAdd(dummy0);
+            checked += DataUtils.updateChecksumAdd(dummy1);
+            checked += DataUtils.updateChecksumAdd(dummy2);
+            checked += DataUtils.updateChecksumAdd(dummy3);
             String checkState = (checksum == checked) ? "OK" : checksum + " vs " + checked;
             return "blockCount:" + blockCount + ", blocksUsed:" + blocksUsed + ", check:" + checkState;
         }
     }
     
-    private Block[] blocks;
+    private BlockAllocationTableEntry[] blocks;
     
     /**
      * 
      */
-    public class Block {
+    public class BlockAllocationTableEntry {
         
         /**
          * 7 * 4
@@ -380,7 +383,7 @@ public class GCF {
         /**
          * The index to the first data block of this block entry's data
          */
-        int firstDataBlockIndex;
+        int firstClusterIndex;
         
         /**
          * The next block entry in the series
@@ -395,35 +398,35 @@ public class GCF {
         int previousBlockEntryIndex;
         
         /**
-         * The index of the block entry in the directory
+         * The index of the block entry in the manifest
          */
-        int directoryIndex;
+        int manifestIndex;
         
-        private Block() throws IOException {            
-            entryType = DataUtils.readLEInt(rf);
-            fileDataOffset = DataUtils.readLEInt(rf);
-            fileDataSize = DataUtils.readLEInt(rf);
-            firstDataBlockIndex = DataUtils.readLEInt(rf);
-            nextBlockEntryIndex = DataUtils.readLEInt(rf);
-            previousBlockEntryIndex = DataUtils.readLEInt(rf);
-            directoryIndex = DataUtils.readLEInt(rf);
+        private BlockAllocationTableEntry() throws IOException {            
+            entryType = DataUtils.readULEInt(rf);
+            fileDataOffset = DataUtils.readULEInt(rf);
+            fileDataSize = DataUtils.readULEInt(rf);
+            firstClusterIndex = DataUtils.readULEInt(rf);
+            nextBlockEntryIndex = DataUtils.readULEInt(rf);
+            previousBlockEntryIndex = DataUtils.readULEInt(rf);
+            manifestIndex = DataUtils.readULEInt(rf);
         }
         
         @Override
         public String toString() {
-            return "type:" + entryType + ", off:" + fileDataOffset + ", size:" + fileDataSize + ", firstidx:" + firstDataBlockIndex + ", nextidx:" + nextBlockEntryIndex + ", previdx:" + previousBlockEntryIndex + ", di:" + directoryIndex;
+            return "type:" + entryType + ", off:" + fileDataOffset + ", size:" + fileDataSize + ", firstidx:" + firstClusterIndex + ", nextidx:" + nextBlockEntryIndex + ", previdx:" + previousBlockEntryIndex + ", di:" + manifestIndex;
         }
         
     }
     //</editor-fold>
     
     //<editor-fold defaultstate="collapsed" desc="Frag Map">
-    public FragMapHeader fragMap;
+    public FileAllocationTableHeader fragMap;
     
     /**
      * 
      */
-    public class FragMapHeader {
+    public class FileAllocationTableHeader {
         
         /**
          * 4 * 4
@@ -435,7 +438,7 @@ public class GCF {
         /**
          * Number of data blocks
          */
-        public int blockCount;
+        public int clusterCount;
         
         /**
          * Index of 1st unused GCFFRAGMAP entry?
@@ -453,21 +456,21 @@ public class GCF {
          */
         public int checksum;
         
-        private FragMapHeader() throws IOException {
+        private FileAllocationTableHeader() throws IOException {
             pos = rf.getFilePointer();
-            blockCount = DataUtils.readLEInt(rf);
-            firstUnusedEntry = DataUtils.readLEInt(rf);
-            isLongTerminator = DataUtils.readLEInt(rf);
-            checksum = DataUtils.readLEInt(rf);
-            fragMapEntries = new FragMapEntry[blockCount];
-            rf.skipBytes(blockCount * FragMapEntry.SIZE);
+            clusterCount = DataUtils.readULEInt(rf);
+            firstUnusedEntry = DataUtils.readULEInt(rf);
+            isLongTerminator = DataUtils.readULEInt(rf);
+            checksum = DataUtils.readULEInt(rf);
+            fragMapEntries = new FileAllocationTableEntry[clusterCount];
+            rf.skipBytes(clusterCount * FileAllocationTableEntry.SIZE);
         }
         
-        public FragMapEntry getEntry(int i) throws IOException {
-            FragMapEntry fe = fragMapEntries[i];
+        public FileAllocationTableEntry getEntry(int i) throws IOException {
+            FileAllocationTableEntry fe = fragMapEntries[i];
             if(fe == null) {
-                rf.seek(pos + SIZE + (i * FragMapEntry.SIZE));
-                fe = new FragMapEntry();
+                rf.seek(pos + SIZE + (i * FileAllocationTableEntry.SIZE));
+                fe = new FileAllocationTableEntry();
 //                fragMapEntries[i] = fe; // ???
             }
             return fe;
@@ -476,21 +479,21 @@ public class GCF {
         @Override
         public String toString() {
             int checked = 0;
-            checked += DataUtils.updateChecksum2(blockCount);
-            checked += DataUtils.updateChecksum2(firstUnusedEntry);
-            checked += DataUtils.updateChecksum2(isLongTerminator);
+            checked += DataUtils.updateChecksumAdd(clusterCount);
+            checked += DataUtils.updateChecksumAdd(firstUnusedEntry);
+            checked += DataUtils.updateChecksumAdd(isLongTerminator);
             String checkState = (checksum == checked) ? "OK" : checksum + "vs" + checked;
-            return "blockCount:" + blockCount + ", firstUnusedEntry:" + firstUnusedEntry + ", isLongTerminator:" + isLongTerminator + ", checksum:" + checkState;
+            return "blockCount:" + clusterCount + ", firstUnusedEntry:" + firstUnusedEntry + ", isLongTerminator:" + isLongTerminator + ", checksum:" + checkState;
         }
         
     }
     
-    private FragMapEntry[] fragMapEntries;
+    private FileAllocationTableEntry[] fragMapEntries;
     
     /**
      * 
      */
-    public class FragMapEntry {
+    public class FileAllocationTableEntry {
         
         /**
          * 1 * 4
@@ -499,25 +502,26 @@ public class GCF {
         
         /**
          * The index of the next data block
+         * If == FileAllocationTableHeader.isLongTerminator, there are no more clusters in the file
          */
-        public int nextDataBlockIndex;
+        public int nextClusterIndex;
         
-        private FragMapEntry() throws IOException {
-            nextDataBlockIndex = DataUtils.readLEInt(rf);
+        private FileAllocationTableEntry() throws IOException {
+            nextClusterIndex = DataUtils.readULEInt(rf);
         }
 
         @Override
         public String toString() {
-            return "nextDataBlockIndex:" + nextDataBlockIndex;
+            return "nextDataBlockIndex:" + nextClusterIndex;
         }
         
     }
     //</editor-fold>
     
     //<editor-fold defaultstate="collapsed" desc="Directories">
-    public DirectoryHeader directoryHeader;
+    public ManifestHeader directoryHeader;
     
-    enum DirectoryHeaderBitmask {
+    public enum ManifestHeaderBitmask {
         
         Build_Mode(0x1),
         Is_Purge_All(0x2),
@@ -526,90 +530,104 @@ public class GCF {
         
         int mask;
         
-        DirectoryHeaderBitmask(int mask) {
+        ManifestHeaderBitmask(int mask) {
             this.mask = mask;
+        }
+        
+        private static final ManifestHeaderBitmask[] flags = ManifestHeaderBitmask.values();
+        
+        public static ManifestHeaderBitmask get(int mask) {
+            ManifestHeaderBitmask m = flags[mask];
+            return m;
         }
     };
     
-    public class DirectoryHeader {
+    public class ManifestHeader {
         
         /**
          * 14 * 4
          */
         public static final int SIZE = 56;
         
+        public final long pos;
+        
         int headerVersion;		// Always 0x00000004
         int applicationID;		// Cache ID.
         int applicationVersion;        // GCF file version.
         int nodeCount;          // Number of items in the directory.
         int fileCount;          // Number of files in the directory.
-        int compressedBlockSize;		// Always 0x00008000
+        int compressionBlockSize;		// Always 0x00008000
+        
+        /**
+         * Inclusive of header
+         */
         int binarySize;	// Size of lpGCFDirectoryEntries & lpGCFDirectoryNames & lpGCFDirectoryInfo1Entries & lpGCFDirectoryInfo2Entries & lpGCFDirectoryCopyEntries & lpGCFDirectoryLocalEntries in bytes.
         int nameSize;		// Size of the directory names in bytes.
         int hashTableKeyCount;         // Number of Info1 entires.
-        int copyCount;          // Number of files to copy.
-        int localCount;         // Number of files to keep local.
+        int minimumFootprintCount;          // Number of files to copy.
+        int userConfigCount;         // Number of files to keep local.
+//        ManifestHeaderBitmask bitmask;
         int bitmask;
         int fingerprint;
         int checksum;
         
-        DirectoryHeader() throws IOException {
-            headerVersion = DataUtils.readLEInt(rf);
-            applicationID = DataUtils.readLEInt(rf);
-            applicationVersion = DataUtils.readLEInt(rf);
-            nodeCount = DataUtils.readLEInt(rf);
-            fileCount = DataUtils.readLEInt(rf);
-            compressedBlockSize = DataUtils.readLEInt(rf);
-            binarySize = DataUtils.readLEInt(rf);
-            nameSize = DataUtils.readLEInt(rf);
-            hashTableKeyCount = DataUtils.readLEInt(rf);
-            copyCount = DataUtils.readLEInt(rf);
-            localCount = DataUtils.readLEInt(rf);
-            bitmask = DataUtils.readLEInt(rf);
-            fingerprint = DataUtils.readLEInt(rf);
-            checksum = DataUtils.readLEInt(rf);
+        ManifestHeader() throws IOException {
+            pos = rf.getFilePointer();
+            headerVersion = DataUtils.readULEInt(rf);
+            applicationID = DataUtils.readULEInt(rf);
+            applicationVersion = DataUtils.readULEInt(rf);
+            nodeCount = DataUtils.readULEInt(rf);
+            fileCount = DataUtils.readULEInt(rf);
+            compressionBlockSize = DataUtils.readULEInt(rf);
+            binarySize = DataUtils.readULEInt(rf);
+            nameSize = DataUtils.readULEInt(rf);
+            hashTableKeyCount = DataUtils.readULEInt(rf);
+            minimumFootprintCount = DataUtils.readULEInt(rf);
+            userConfigCount = DataUtils.readULEInt(rf);
+//            bitmask = ManifestHeaderBitmask.get(DataUtils.readULEInt(rf));
+            bitmask = DataUtils.readULEInt(rf);
+            fingerprint = DataUtils.readULEInt(rf);
+            checksum = DataUtils.readULEInt(rf);
         }
         
         @Override
         public String toString() {
-            int checked = 0;
-            checked += DataUtils.updateChecksum2(headerVersion);
-            checked += DataUtils.updateChecksum2(applicationID);
-            checked += DataUtils.updateChecksum2(applicationVersion);
-            checked += DataUtils.updateChecksum2(nodeCount);
-            checked += DataUtils.updateChecksum2(fileCount);
-            checked += DataUtils.updateChecksum2(compressedBlockSize);
-            checked += DataUtils.updateChecksum2(binarySize);
-            checked += DataUtils.updateChecksum2(nameSize);
-            checked += DataUtils.updateChecksum2(hashTableKeyCount);
-            checked += DataUtils.updateChecksum2(copyCount);
-            checked += DataUtils.updateChecksum2(localCount);
-            checked += DataUtils.updateChecksum2(bitmask);
-            checked += DataUtils.updateChecksum2(fingerprint);
-            checked += DataUtils.updateChecksum2(checksum);
-//            ByteBuffer bb = ByteBuffer.allocate(14 * 4);
-//            bb.order(ByteOrder.LITTLE_ENDIAN);
-//            bb.putInt(headerVersion);
-//            bb.putInt(applicationID);
-//            bb.putInt(applicationVersion);
-//            bb.putInt(nodeCount);
-//            bb.putInt(fileCount);
-//            bb.putInt(compressedBlockSize);
-//            bb.putInt(binarySize);
-//            bb.putInt(nameSize);
-//            bb.putInt(hashTableKeyCount);
-//            bb.putInt(copyCount);
-//            bb.putInt(localCount);
-//            bb.putInt(bitmask);
-//            bb.putInt(0);
-//            bb.putInt(0);
-////            bb.flip();
-//            byte[] bytes = bb.array();
-//            Checksum adler32 = new Adler32();
-//            adler32.update(bytes, 0, 14 * 4);
-//            long checked = adler32.getValue();
-            String checkState = (checksum == checked) ? "OK" : checksum + "vs" + checked;
-            return "id:" + applicationID + ", ver:" + applicationVersion + ", items:" + nodeCount + ", files:" + fileCount + ", dsize:" + binarySize + ", nsize:" + nameSize + ", info1:" + hashTableKeyCount + ", copy:" + copyCount + ", local:" + localCount + ", check:" + checkState;
+            try {
+                ByteBuffer bbh = ByteBuffer.allocate(SIZE);
+                bbh.order(ByteOrder.LITTLE_ENDIAN);
+                bbh.putInt(headerVersion);
+                bbh.putInt(applicationID);
+                bbh.putInt(applicationVersion);
+                bbh.putInt(nodeCount);
+                bbh.putInt(fileCount);
+                bbh.putInt(compressionBlockSize);
+                bbh.putInt(binarySize);
+                bbh.putInt(nameSize);
+                bbh.putInt(hashTableKeyCount);
+                bbh.putInt(minimumFootprintCount);
+                bbh.putInt(userConfigCount);
+                bbh.putInt(bitmask);
+                bbh.putInt(0);
+                bbh.putInt(0);
+                bbh.flip();
+                byte[] bytes1 = bbh.array();
+                
+                rf.seek(pos + SIZE);
+                ByteBuffer bb = ByteBuffer.allocate(binarySize);
+                bb.order(ByteOrder.LITTLE_ENDIAN);
+                bb.put(bytes1);
+                bb.put(DataUtils.readBytes(rf, binarySize - SIZE));
+                bb.flip();
+                byte[] bytes = bb.array();
+                Checksum adler32 = new Adler32();
+                adler32.update(bytes, 0, bytes.length);
+                int checked = (int)(adler32.getValue() & 0xFFFFFFFF);
+                String checkState = (checksum == checked) ? "OK" : DataUtils.toBinaryString(checksum) + " vs " + DataUtils.toBinaryString(checked);
+                return Long.toHexString(pos) + " : id:" + applicationID + ", ver:" + applicationVersion + ", bitmask:0x"+Integer.toHexString(bitmask).toUpperCase()+", items:" + nodeCount + ", files:" + fileCount + ", dsize:" + binarySize + ", nsize:" + nameSize + ", info1:" + hashTableKeyCount + ", copy:" + minimumFootprintCount + ", local:" + userConfigCount + ", check:" + checkState;
+            } catch (IOException ex) {
+                Logger.getLogger(GCF.class.getName()).log(Level.SEVERE, null, ex);
+            }
+            return null;
         }
     }
     
@@ -694,8 +712,8 @@ public class GCF {
         int dummy0;     // Always 0x00000000
         
         DirectoryMapHeader() throws IOException {
-            headerVersion = DataUtils.readLEInt(rf);
-            dummy0 = DataUtils.readLEInt(rf);
+            headerVersion = DataUtils.readULEInt(rf);
+            dummy0 = DataUtils.readULEInt(rf);
         }
         
         @Override
@@ -722,8 +740,8 @@ public class GCF {
         // the number of bytes in the checksum section (excluding this structure and the following LatestApplicationVersion structure).
         
         ChecksumHeader() throws IOException {
-            headerVersion = DataUtils.readLEInt(rf);
-            ChecksumSize = DataUtils.readLEInt(rf);
+            headerVersion = DataUtils.readULEInt(rf);
+            ChecksumSize = DataUtils.readULEInt(rf);
         }
         
         @Override
@@ -812,10 +830,10 @@ public class GCF {
         @Override
         public String toString() {
             int checked = 0;
-            checked += DataUtils.updateChecksum2(blockCount);
-            checked += DataUtils.updateChecksum2(blockSize);
-            checked += DataUtils.updateChecksum2(firstBlockOffset);
-            checked += DataUtils.updateChecksum2(blocksUsed);
+            checked += DataUtils.updateChecksumAdd(blockCount);
+            checked += DataUtils.updateChecksumAdd(blockSize);
+            checked += DataUtils.updateChecksumAdd(firstBlockOffset);
+            checked += DataUtils.updateChecksumAdd(blocksUsed);
             String checkState = (checksum == checked) ? "OK" : checksum + "vs" + checked;
             return "v:" + gcfRevision + ", blocks:" + blockCount + ", size:" + blockSize + ", offset:0x" + Integer.toHexString(firstBlockOffset) + ", used:" + blocksUsed + ", check:" + checkState;
         }
@@ -829,15 +847,15 @@ public class GCF {
         this.file = file;
         rf = new RandomAccessFile(file, "r");
         
-        header = new GcfHeader();
-        blockHeader = new BlockHeader();
-        fragMap = new FragMapHeader();
+        header = new FileHeader();
+        blockHeader = new BlockAllocationTableHeader();
+        fragMap = new FileAllocationTableHeader();
         
-        directoryHeader = new DirectoryHeader();
+        directoryHeader = new ManifestHeader();
         //<editor-fold defaultstate="collapsed" desc="Directories">
         boolean skipDirs = false;
         if(skipDirs) {
-            rf.skipBytes(directoryHeader.binarySize - DirectoryHeader.SIZE);
+            rf.skipBytes(directoryHeader.binarySize - ManifestHeader.SIZE);
         } else {
             directoryEntries = new DirectoryEntry[directoryHeader.nodeCount];
             for(int i = 0; i < directoryHeader.nodeCount; i++) {
@@ -845,13 +863,13 @@ public class GCF {
                 //                    logger.log(Level.INFO, "Loading entry {0}/{1}", new Object[]{i + 1, directoryHeader.itemCount});
                 //                }
                 DirectoryEntry de = new DirectoryEntry();
-                de.nameOffset = DataUtils.readLEInt(rf);
-                de.itemSize = DataUtils.readLEInt(rf);
-                de.checksumIndex = DataUtils.readLEInt(rf);
-                de.attributes = DataUtils.readLEInt(rf);
-                de.parentIndex = DataUtils.readLEInt(rf);
-                de.nextIndex = DataUtils.readLEInt(rf);
-                de.firstChildIndex = DataUtils.readLEInt(rf);
+                de.nameOffset = DataUtils.readULEInt(rf);
+                de.itemSize = DataUtils.readULEInt(rf);
+                de.checksumIndex = DataUtils.readULEInt(rf);
+                de.attributes = DataUtils.readULEInt(rf);
+                de.parentIndex = DataUtils.readULEInt(rf);
+                de.nextIndex = DataUtils.readULEInt(rf);
+                de.firstChildIndex = DataUtils.readULEInt(rf);
                 
                 directoryEntries[i] = de;
             }
@@ -866,7 +884,7 @@ public class GCF {
                 //                    logger.log(Level.INFO, "Loading info1 {0}/{1}", new Object[]{i + 1, directoryHeader.info1Count});
                 //                }
                 tagGCFDIRECTORYINFO1ENTRY f = new tagGCFDIRECTORYINFO1ENTRY();
-                f.Dummy0 = DataUtils.readLEInt(rf);
+                f.Dummy0 = DataUtils.readULEInt(rf);
                 
                 info1Entries[i] = f;
             }
@@ -877,29 +895,29 @@ public class GCF {
                 //                    logger.log(Level.INFO, "Loading info1 {0}/{1}", new Object[]{i + 1, directoryHeader.itemCount});
                 //                }
                 tagGCFDIRECTORYINFO2ENTRY f = new tagGCFDIRECTORYINFO2ENTRY();
-                f.Dummy0 = DataUtils.readLEInt(rf);
+                f.Dummy0 = DataUtils.readULEInt(rf);
                 
                 info2Entries[i] = f;
             }
             
-            copyEntries = new tagGCFDIRECTORYCOPYENTRY[directoryHeader.copyCount];
-            for(int i = 0; i < directoryHeader.copyCount; i++) {
+            copyEntries = new tagGCFDIRECTORYCOPYENTRY[directoryHeader.minimumFootprintCount];
+            for(int i = 0; i < directoryHeader.minimumFootprintCount; i++) {
                 //                if(i % 10000 == 0) {
                 //                    logger.log(Level.INFO, "Loading info1 {0}/{1}", new Object[]{i + 1, directoryHeader.copyCount});
                 //                }
                 tagGCFDIRECTORYCOPYENTRY f = new tagGCFDIRECTORYCOPYENTRY();
-                f.DirectoryIndex = DataUtils.readLEInt(rf);
+                f.DirectoryIndex = DataUtils.readULEInt(rf);
                 
                 copyEntries[i] = f;
             }
             
-            localEntries = new tagGCFDIRECTORYLOCALENTRY[directoryHeader.localCount];
-            for(int i = 0; i < directoryHeader.localCount; i++) {
+            localEntries = new tagGCFDIRECTORYLOCALENTRY[directoryHeader.userConfigCount];
+            for(int i = 0; i < directoryHeader.userConfigCount; i++) {
                 //                if(i % 10000 == 0) {
                 //                    logger.log(Level.INFO, "Loading info1 {0}/{1}", new Object[]{i + 1, directoryHeader.localCount});
                 //                }
                 tagGCFDIRECTORYLOCALENTRY f = new tagGCFDIRECTORYLOCALENTRY();
-                f.DirectoryIndex = DataUtils.readLEInt(rf);
+                f.DirectoryIndex = DataUtils.readULEInt(rf);
                 
                 localEntries[i] = f;
             }
@@ -915,7 +933,7 @@ public class GCF {
             //                logger.log(Level.INFO, "Loading info1 {0}/{1}", new Object[]{i + 1, directoryHeader.itemCount});
             //            }
             DirectoryMapEntry dme = new DirectoryMapEntry();
-            dme.firstBlockIndex = DataUtils.readLEInt(rf);
+            dme.firstBlockIndex = DataUtils.readULEInt(rf);
             
             directoryMapEntries[i] = dme;
         }
@@ -926,17 +944,17 @@ public class GCF {
         //        logger.log(Level.INFO, "csize:{0}", checksumHeader.ChecksumSize);
         
         checksumMapHeader = new GCF.ChecksumMapHeader();
-        checksumMapHeader.formatCode = DataUtils.readLEInt(rf);
-        checksumMapHeader.Dummy1 = DataUtils.readLEInt(rf);
-        checksumMapHeader.ItemCount = DataUtils.readLEInt(rf);
-        checksumMapHeader.ChecksumCount = DataUtils.readLEInt(rf);
+        checksumMapHeader.formatCode = DataUtils.readULEInt(rf);
+        checksumMapHeader.Dummy1 = DataUtils.readULEInt(rf);
+        checksumMapHeader.ItemCount = DataUtils.readULEInt(rf);
+        checksumMapHeader.ChecksumCount = DataUtils.readULEInt(rf);
         //        logger.log(Level.INFO, "items:{0}, checks:{1}", new Object[]{checksumMapHeader.ItemCount, checksumMapHeader.ChecksumCount});
         
         checksumMapEntries = new ChecksumMapEntry[checksumMapHeader.ItemCount];
         for(int i = 0; i < checksumMapHeader.ItemCount; i++) {
             ChecksumMapEntry cme = new GCF.ChecksumMapEntry();
-            cme.checksumCount = DataUtils.readLEInt(rf);
-            cme.firstChecksumIndex = DataUtils.readLEInt(rf);
+            cme.checksumCount = DataUtils.readULEInt(rf);
+            cme.firstChecksumIndex = DataUtils.readULEInt(rf);
             checksumMapEntries[i] = cme;
         }
         
@@ -946,7 +964,7 @@ public class GCF {
             //                logger.log(Level.INFO, "Loading info1 {0}/{1}", new Object[]{i + 1, checksumMapEntries.ChecksumCount});
             //            }
             ChecksumEntry ce = new ChecksumEntry();
-            ce.checksum = DataUtils.readLEInt(rf);
+            ce.checksum = DataUtils.readULEInt(rf);
             checksumEntries[i] = ce;
         }
         //</editor-fold>
@@ -954,12 +972,12 @@ public class GCF {
         // TODO: Slow. Takes about 73 seconds
         //<editor-fold defaultstate="collapsed" desc="Data">
         dataBlockHeader = new DataBlockHeader();
-        dataBlockHeader.gcfRevision = DataUtils.readLEInt(rf);
-        dataBlockHeader.blockCount = DataUtils.readLEInt(rf);
-        dataBlockHeader.blockSize = DataUtils.readLEInt(rf);
-        dataBlockHeader.firstBlockOffset = DataUtils.readLEInt(rf);
-        dataBlockHeader.blocksUsed = DataUtils.readLEInt(rf);
-        dataBlockHeader.checksum = DataUtils.readLEInt(rf);
+        dataBlockHeader.gcfRevision = DataUtils.readULEInt(rf);
+        dataBlockHeader.blockCount = DataUtils.readULEInt(rf);
+        dataBlockHeader.blockSize = DataUtils.readULEInt(rf);
+        dataBlockHeader.firstBlockOffset = DataUtils.readULEInt(rf);
+        dataBlockHeader.blocksUsed = DataUtils.readULEInt(rf);
+        dataBlockHeader.checksum = DataUtils.readULEInt(rf);
         
         boolean skipRead = true;
         if(skipRead) {

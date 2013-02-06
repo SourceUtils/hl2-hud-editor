@@ -48,18 +48,18 @@ public class VCCD {
             if(!magic.equals(magic)) {
                 logger.severe("Header mismatch");
             }
-            int ver = DataUtils.readLEInt(rf);
-            int blocks = DataUtils.readLEInt(rf);
-            int blockSize = DataUtils.readLEInt(rf);
-            int directorySize = DataUtils.readLEInt(rf);
-            int dataOffset = DataUtils.readLEInt(rf);
+            int ver = DataUtils.readULEInt(rf);
+            int blocks = DataUtils.readULEInt(rf);
+            int blockSize = DataUtils.readULEInt(rf);
+            int directorySize = DataUtils.readULEInt(rf);
+            int dataOffset = DataUtils.readULEInt(rf);
             logger.log(Level.INFO, "Header: {0}, Version: {1}, Blocks: {2}, BlockSize: {3}, DirectorySize: {4}, DataOffset: {5}", new Object[]{magic, ver, blocks, blockSize, directorySize, dataOffset});
 
             Entry[] entries = new Entry[directorySize];
             for(int i = 0; i < directorySize; i++) {
                 Entry e = new Entry();
                 e.setKey(DataUtils.readULong(rf));
-                e.setBlock(DataUtils.readLEInt(rf));
+                e.setBlock(DataUtils.readULEInt(rf));
                 e.setOffset(DataUtils.readULEShort(rf));
                 e.setLength(DataUtils.readULEShort(rf));
 //                    System.out.println("<" + i + " - " + e);

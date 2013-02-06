@@ -43,7 +43,7 @@ public class BinaryVDF {
              * 3 internal
              * 4 dev
              */
-            int universe = DataUtils.readLEInt(rf);
+            int universe = DataUtils.readULEInt(rf);
             System.out.println("Universe: " + universe);
             if(magic[1] == 0x44) {
                 /**
@@ -69,19 +69,19 @@ public class BinaryVDF {
 //                ty = AppInfoFile
                 
                 for(;;) {
-                    int appID = DataUtils.readLEInt(rf);
+                    int appID = DataUtils.readULEInt(rf);
                     if(appID == 0) {
                         break;
                     }
-                    int size = DataUtils.readLEInt(rf);
-                    int dummy1 = DataUtils.readLEInt(rf);
+                    int size = DataUtils.readULEInt(rf);
+                    int dummy1 = DataUtils.readULEInt(rf);
                     long lastUpdated = DataUtils.readULEInt(rf);
                     DateFormat df = new SimpleDateFormat("EEE, dd MMM yyyy HH:mm:ss z");
                     df.setTimeZone(TimeZone.getTimeZone("GMT"));
                     System.out.println(appID + " : " + df.format(new Date(lastUpdated * 1000)) + " : " + lastUpdated);
-                    long dummy2 = (DataUtils.readLEInt(rf) << 32) + DataUtils.readLEInt(rf);
+                    long dummy2 = (DataUtils.readULEInt(rf) << 32) + DataUtils.readULEInt(rf);
                     byte[] dummy3 = DataUtils.readBytes(rf, 20);
-                    long changeNumber = (DataUtils.readLEInt(rf) << 32) + DataUtils.readLEInt(rf);
+                    long changeNumber = (DataUtils.readULEInt(rf) << 32) + DataUtils.readULEInt(rf);
                     for(;;) {
                         byte section_number = DataUtils.readByte(rf); // enum EAppInfoSection
                         if(section_number == 0x00) // end of section data
@@ -97,7 +97,7 @@ public class BinaryVDF {
             } else if(magic[1] == 0x55) {
 //                ty = PackageInfoFile
                 for(;;) {
-                    int appID = DataUtils.readLEInt(rf);
+                    int appID = DataUtils.readULEInt(rf);
                     if(appID == 0xFFFFFFFF) { // -1
                         break;
                     }
@@ -105,7 +105,7 @@ public class BinaryVDF {
                     for(int i = 0; i < unknown1.length; i++) {
                         unknown1[i] = rf.readByte();
                     }
-                    int unknown2 = DataUtils.readLEInt(rf);
+                    int unknown2 = DataUtils.readULEInt(rf);
 //                    byte[] data;
                     parse(rf, stuff, 0, -1);
                 }

@@ -84,7 +84,7 @@ public class DataUtils {
      * @throws IOException
      */
     public static int readLEInt(RandomAccessFile f) throws IOException {
-        return readUByte(f) + (readUByte(f) << 8) + (readUByte(f) << 16) + (readUByte(f) << 24);
+        return readByte(f) + (readByte(f) << 8) + (readByte(f) << 16) + (readByte(f) << 24);
     }
     
     public static int readInt(RandomAccessFile f) throws IOException {
@@ -126,24 +126,38 @@ public class DataUtils {
     }
     
     public static String toBinaryString(short n) {
-        StringBuilder sb = new StringBuilder("0000000000000000");
-        for (int bit = 0; bit < 16; bit++) {
+        return toBinaryString(n, 16);
+    }
+    
+    public static String toBinaryString(int n) {
+        return toBinaryString(n, 32);
+    }
+    
+    public static String toBinaryString(long n) {
+        return toBinaryString(n, 64);
+    }
+    public static String toBinaryString(long n, int radix) {
+        StringBuilder sb = new StringBuilder();
+        for(int i = 0; i < radix; i++) {
+            sb.append("0");
+        }
+        for(int bit = 0; bit < radix; bit++) {
             if (((n >> bit) & 1) > 0) {
-                sb.setCharAt(15 - bit, '1');
+                sb.setCharAt(radix - 1 - bit, '1');
             }
         }
         return sb.toString();
     }
  
-    public static int updateChecksum(int value) {
+    public static int updateChecksumAddSpecial(int value) {
         int checksum = (value & 0xFF);
-        checksum += ((value >> 8) & 0xFF);
-        checksum += ((value >> 16) & 0xFF);
-        checksum += ((value >> 24) & 0xFF);
+        checksum += (value >> 8 & 0xFF);
+        checksum += (value >> 16 & 0xFF);
+        checksum += (value >> 24 & 0xFF);
         return checksum;
     }
     
-    public static int updateChecksum2(int value) {
+    public static int updateChecksumAdd(int value) {
         return value;
     }
     
