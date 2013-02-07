@@ -379,18 +379,12 @@ public class VCCDTest extends javax.swing.JFrame {
         f.add(pb);
         f.setMinimumSize(new Dimension(300, 50));
         f.setLocationRelativeTo(null);
+        f.setVisible(true);
 
         new Thread(new Runnable() {
             @Override
             public void run() {
-                f.setVisible(true);
-            }
-        }).start();
-
-        new Thread(new Runnable() {
-            @Override
-            public void run() {
-                VCCDTest c = new VCCDTest();
+                final VCCDTest c = new VCCDTest();
                 c.setLocationRelativeTo(null);
                 c.setVisible(true);
                 f.dispose();

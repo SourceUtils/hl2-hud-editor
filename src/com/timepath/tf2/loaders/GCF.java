@@ -27,12 +27,12 @@ public class GCF {
     private static final Logger LOG = Logger.getLogger(GCF.class.getName());
 
     //<editor-fold defaultstate="collapsed" desc="Utils">
-    public static void analyze(File file, DefaultMutableTreeNode child) {
+    public static void analyze(final File file, final DefaultMutableTreeNode top) {
         try {
             GCF g = new GCF(file);
             String[] entries = g.getEntries();
             for(int i = 0; i < entries.length; i++) {
-                child.add(new DefaultMutableTreeNode(entries[i]));
+                top.add(new DefaultMutableTreeNode(entries[i]));
             }
         } catch(IOException ex) {
             LOG.log(Level.SEVERE, null, ex);
@@ -563,7 +563,8 @@ public class GCF {
 
         /**
          * Defines the end of block chain terminator
-         * If the value is 0, then the terminator is 0x0000FFFF; if the value is 1, then the terminator is 0xFFFFFFFF
+         * If the value is 0, then the terminator is 0x0000FFFF; if the value is 1, then the
+         * terminator is 0xFFFFFFFF
          */
         public final int isLongTerminator;
 
@@ -613,7 +614,8 @@ public class GCF {
 
         /**
          * The index of the next data block
-         * If == FileAllocationTableHeader.isLongTerminator, there are no more clusters in the file
+         * If == FileAllocationTableHeader.isLongTerminator, there are no more clusters in the
+         * file
          */
         public final int nextClusterIndex;
 
@@ -864,6 +866,7 @@ public class GCF {
     class tagGCFDIRECTORYCOPYENTRY {
 
         int DirectoryIndex;	// Index of the directory item.
+
     }
 
     private tagGCFDIRECTORYLOCALENTRY[] localEntries; // TODO
@@ -872,6 +875,7 @@ public class GCF {
     class tagGCFDIRECTORYLOCALENTRY {
 
         int DirectoryIndex;	// Index of the directory item.
+
     }
     //</editor-fold>
 

@@ -46,41 +46,35 @@ public class RES {
         if(file.isDirectory()) {
             return;
         }
-        Thread t = new Thread() { // threading this cuts loading times in half
-            @Override
-            public void run() {
-                Scanner s = null;
-                try {
-                    RandomAccessFile rf = new RandomAccessFile(file.getPath(), "r");
-                    s = new Scanner(rf.getChannel());
-                    processAnalyze(s, top, new ArrayList<Property>(), file);
-                    if(file.getName().equalsIgnoreCase("ClientScheme.res")) {
-                        clientScheme(top);
-                    }
-                } catch(FileNotFoundException ex) {
-                    LOG.log(Level.SEVERE, null, ex);
-                } finally {
-                    if(s != null) {
-                        s.close();
-                    }
-                }
-            }
 
-            private void clientScheme(DefaultMutableTreeNode props) {
-                LOG.info("Found clientscheme");
-                TreeNode fontNode = props.getChildAt(0).getChildAt(3); // XXX: hardcoded
-                for(int i = 0; i < fontNode.getChildCount(); i++) {
-                    TreeNode font = fontNode.getChildAt(i);
-                    TreeNode detailFont = font.getChildAt(0); // XXX: hardcoded detail level
-                    Element fontElement = (Element) ((DefaultMutableTreeNode) detailFont).getUserObject();
-                    String fontName = font.toString().replaceAll("\"", ""); // Some use quotes.. oh well
-                    fonts.put(fontName, new HudFont(fontName, fontElement));
-                }
-                LOG.info("Loaded clientscheme");
+        Scanner s = null;
+        try {
+            RandomAccessFile rf = new RandomAccessFile(file.getPath(), "r");
+            s = new Scanner(rf.getChannel());
+            processAnalyze(s, top, new ArrayList<Property>(), file);
+            if(file.getName().equalsIgnoreCase("ClientScheme.res")) {
+                clientScheme(top);
             }
-        };
-        t.run();
-//        t.start();
+        } catch(FileNotFoundException ex) {
+            LOG.log(Level.SEVERE, null, ex);
+        } finally {
+            if(s != null) {
+                s.close();
+            }
+        }
+    }
+
+    private static void clientScheme(DefaultMutableTreeNode props) {
+        LOG.info("Found clientscheme");
+        TreeNode fontNode = props.getChildAt(0).getChildAt(3); // XXX: hardcoded
+        for(int i = 0; i < fontNode.getChildCount(); i++) {
+            TreeNode font = fontNode.getChildAt(i);
+            TreeNode detailFont = font.getChildAt(0); // XXX: hardcoded detail level
+            Element fontElement = (Element) ((DefaultMutableTreeNode) detailFont).getUserObject();
+            String fontName = font.toString().replaceAll("\"", ""); // Some use quotes.. oh well
+            fonts.put(fontName, new HudFont(fontName, fontElement));
+        }
+        LOG.info("Loaded clientscheme");
     }
 
     private static void processAnalyze(Scanner scanner, DefaultMutableTreeNode parent, ArrayList<Property> carried, File file) {

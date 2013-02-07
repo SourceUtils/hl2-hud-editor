@@ -31,26 +31,22 @@ public class VDF {
         if(file.isDirectory()) {
             return;
         }
-        new Thread() { // threading this cuts loading times in half
-            @Override
-            public void run() {
-                Scanner s = null;
-                try {
-                    RandomAccessFile rf = new RandomAccessFile(file.getPath(), "r");
-                    s = new Scanner(rf.getChannel());
-                    processAnalyze(s, top, new ArrayList<Property>(), file);
+
+        Scanner s = null;
+        try {
+            RandomAccessFile rf = new RandomAccessFile(file.getPath(), "r");
+            s = new Scanner(rf.getChannel());
+            processAnalyze(s, top, new ArrayList<Property>(), file);
 //                    if(file.getName().equalsIgnoreCase("ClientScheme.res")) {
 //                        clientScheme(top);
 //                    }
-                } catch(FileNotFoundException ex) {
-                    LOG.log(Level.SEVERE, null, ex);
-                } finally {
-                    if(s != null) {
-                        s.close();
-                    }
-                }
+        } catch(FileNotFoundException ex) {
+            LOG.log(Level.SEVERE, null, ex);
+        } finally {
+            if(s != null) {
+                s.close();
             }
-        }.start();
+        }
     }
 
     private static void processAnalyze(Scanner scanner, DefaultMutableTreeNode parent, ArrayList<Property> carried, File file) {

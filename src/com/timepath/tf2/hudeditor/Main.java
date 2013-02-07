@@ -5,9 +5,12 @@ import com.timepath.plaf.OS;
 import com.timepath.plaf.linux.GtkFixer;
 import com.timepath.plaf.linux.LinuxDesktopLauncher;
 import com.timepath.tf2.hudeditor.gui.EditorFrame;
+import com.timepath.tf2.hudeditor.util.Utils;
+import java.awt.Dimension;
 import java.awt.EventQueue;
 import java.awt.Toolkit;
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -26,12 +29,15 @@ import java.util.ResourceBundle;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.prefs.Preferences;
+import javax.swing.JFrame;
+import javax.swing.JProgressBar;
 import javax.swing.UIManager;
 import net.tomahawk.XFileDialog;
 //</editor-fold>
 
 /**
- * Link dump: https://docs.google.com/document/d/19jk3L-kyduz_AvTOhMXk4agh5gUYM9gWQCHafbMl3wY/edit
+ * Link dump:
+ * https://docs.google.com/document/d/19jk3L-kyduz_AvTOhMXk4agh5gUYM9gWQCHafbMl3wY/edit
  *
  * @author timepath
  */
@@ -50,9 +56,7 @@ public class Main {
 
     public final static OS os;
 
-    private final static int arch;
-
-    private static final Logger logger = Logger.getLogger(Main.class.getName());
+    private static final Logger LOG = Logger.getLogger(Main.class.getName());
 
     private static Preferences prefs = Preferences.userRoot().node(projectName);
 
@@ -66,13 +70,7 @@ public class Main {
             os = OS.Linux;
         } else {
             os = OS.Other;
-            logger.log(Level.WARNING, "Unrecognised OS: {0}", osVer);
-        }
-
-        if(System.getProperty("os.arch").indexOf("64") >= 0) {
-            arch = 64;
-        } else {
-            arch = 32;
+            LOG.log(Level.WARNING, "Unrecognised OS: {0}", osVer);
         }
 
         if(os == OS.Windows) {
@@ -92,17 +90,23 @@ public class Main {
 //            if(force) {
 //                System.setProperty("jayatana.force", "true");
 //            }
-            System.setProperty("jayatana.startupWMClass", projectName);
+            /**
+             * Using a custom name has a low chance of success
+             */
+            String n = Wrapper.class.getName().replaceAll("\\.", "-");
+            System.setProperty("jayatana.startupWMClass", n);
 
+            // Doesn't seem to work all the time
             try {
                 Toolkit xToolkit = Toolkit.getDefaultToolkit();
                 Field awtAppClassNameField = xToolkit.getClass().getDeclaredField("awtAppClassName");
                 awtAppClassNameField.setAccessible(true);
-                awtAppClassNameField.set(xToolkit, projectName);
-            } catch (Exception ex) {
-                logger.log(Level.SEVERE, null, ex);
+                awtAppClassNameField.set(xToolkit, n);
+            } catch(Exception ex) {
+                LOG.log(Level.SEVERE, null, ex);
             }
-            LinuxDesktopLauncher.create();
+
+//            LinuxDesktopLauncher.create(n, projectName);
         }
     }
 
@@ -127,7 +131,7 @@ public class Main {
 
     public static String runPath;
 
-    public static String myVer = calcMD5();
+    public static String myVer = "";// = calcMD5();
 
     private static String calcMD5() {
         String md5 = "";
@@ -137,27 +141,13 @@ public class Main {
                 indev = true;
                 return "indev";
             }
-            InputStream fis = new FileInputStream(runPath);
-            byte[] buffer = new byte[8192];
-            MessageDigest md = MessageDigest.getInstance("MD5");
-            int numRead;
-            do {
-                numRead = fis.read(buffer);
-                if(numRead > 0) {
-                    md.update(buffer, 0, numRead);
-                }
-            } while(numRead != -1);
-            fis.close();
-            byte[] b = md.digest();
-            for(int i = 0; i < b.length; i++) {
-                md5 += Integer.toString((b[i] & 255) + 256, 16).substring(1);
-            }
+            md5 = Utils.takeMD5(Utils.loadFile(new File(runPath)));
         } catch(NoSuchAlgorithmException ex) {
-            logger.log(Level.SEVERE, null, ex);
+            LOG.log(Level.SEVERE, null, ex);
         } catch(UnsupportedEncodingException ex) {
-            logger.log(Level.SEVERE, null, ex);
+            LOG.log(Level.SEVERE, null, ex);
         } catch(IOException ex) {
-            logger.log(Level.SEVERE, null, ex);
+            LOG.log(Level.SEVERE, null, ex);
         }
         return md5;
     }
@@ -182,7 +172,7 @@ public class Main {
                 }
                 //</editor-fold>
             } catch(Exception ex) {
-                logger.log(Level.WARNING, null, ex);
+                LOG.log(Level.WARNING, null, ex);
             }
         }
         GtkFixer.installGtkPopupBugWorkaround(); // Apply clearlooks java menu fix if applicable
@@ -197,7 +187,7 @@ public class Main {
             Runtime.getRuntime().addShutdownHook(new Thread() {
                 @Override
                 public void run() {
-                    logger.info("Server shutting down...");
+                    LOG.info("Server shutting down...");
                     prefs.remove("port");
 //                    System.exit(0);
                 }
@@ -212,9 +202,9 @@ public class Main {
                             PrintWriter out = new PrintWriter(client.getOutputStream(), true);
 
                             String cVer = in.readLine();
-                            logger.log(Level.INFO, "client {0} vs host {1}", new Object[]{cVer, myVer});
+                            LOG.log(Level.INFO, "client {0} vs host {1}", new Object[]{cVer, myVer});
                             String request = "-noupdate " + in.readLine();
-                            logger.log(Level.INFO, "Request: {0}", request);
+                            LOG.log(Level.INFO, "Request: {0}", request);
                             out.println(myVer);
 
                             if(cVer.equals("indev") || !cVer.equals(myVer)) { // Or if timestamp is greater when timestamps are implemented
@@ -224,7 +214,7 @@ public class Main {
                                 start(request.split(" "));
                             }
                         } catch(Exception ex) {
-                            logger.log(Level.SEVERE, null, ex);
+                            LOG.log(Level.SEVERE, null, ex);
                         }
                     }
                 }
@@ -234,14 +224,14 @@ public class Main {
         } catch(BindException ex) {
             return false;
         } catch(Exception ex) {
-            logger.log(Level.SEVERE, null, ex);
+            LOG.log(Level.SEVERE, null, ex);
             return false;
         }
         return true;
     }
 
     private static boolean startClient(int port, String... args) {
-        logger.info("Communicating with other running instance");
+        LOG.info("Communicating with other running instance");
         try {
             Socket client = new Socket("localhost", port);
             BufferedReader in = new BufferedReader(new InputStreamReader(client.getInputStream()));
@@ -257,15 +247,15 @@ public class Main {
                 main(args);
             }
         } catch(IOException ex) {
-            logger.log(Level.SEVERE, null, ex);
+            LOG.log(Level.SEVERE, null, ex);
             return false;
         }
         return true;
     }
 
     private static void start(String... args) {
-        logger.log(Level.INFO, "Env: {0}", System.getenv());
-        logger.log(Level.INFO, "Properties: {0}", System.getProperties());
+        LOG.log(Level.FINE, "Env: {0}", System.getenv());
+        LOG.log(Level.FINE, "Properties: {0}", System.getProperties());
 
         boolean flag = true;
         for(int i = 0; i < args.length; i++) {
@@ -277,7 +267,6 @@ public class Main {
         }
 
         final boolean autoCheck = flag;
-
         EventQueue.invokeLater(new Runnable() {
             @Override
             public void run() {

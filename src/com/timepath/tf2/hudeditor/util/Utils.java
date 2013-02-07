@@ -7,11 +7,18 @@ import com.timepath.tf2.loaders.GCF;
 import com.timepath.tf2.loaders.RES;
 import com.timepath.tf2.loaders.VDF;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.URISyntaxException;
+import java.nio.ByteBuffer;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.tree.DefaultMutableTreeNode;
 
@@ -59,6 +66,36 @@ public class Utils {
         return str.matches("[a-fA-F0-9]{32}");
     }
 
+    public static String takeMD5(byte[] bytes) throws NoSuchAlgorithmException {
+        String md5 = "";
+        MessageDigest md = MessageDigest.getInstance("MD5");
+        md.update(bytes);
+        byte[] b = md.digest();
+        for(int i = 0; i < b.length; i++) {
+            md5 += Integer.toString((b[i] & 0xFF) + 256, 16).substring(1);
+        }
+        return md5;
+    }
+
+    public static byte[] loadFile(File f) throws FileNotFoundException, IOException {
+        InputStream fis = new FileInputStream(f);
+        byte[] buff = new byte[8192];
+        int numRead;
+        int size = 0;
+        for(;;) {
+            numRead = fis.read(buff);
+            if(numRead == -1) {
+                break;
+            } else {
+                size += numRead;
+            }
+        }
+        fis.close();
+        byte[] ret = new byte[size];
+        System.arraycopy(buff, 0, ret, 0, ret.length);
+        return ret;
+    }
+
     private static Comparator<File> dirAlphaComparator = new Comparator<File>() {
         /**
          * Alphabetically sorts directories before files ignoring case.
@@ -76,10 +113,10 @@ public class Utils {
     };
 
     public static void recurseDirectoryToNode(File root, DefaultMutableTreeNode parent) {
-        File[] fileList = root.listFiles();
+        final File[] fileList = root.listFiles();
         Arrays.sort(fileList, Utils.getDirAlphaComparator());
         for(int i = 0; i < fileList.length; i++) {
-            DefaultMutableTreeNode child = new DefaultMutableTreeNode();
+            final DefaultMutableTreeNode child = new DefaultMutableTreeNode();
             child.setUserObject(fileList[i]);
             if(fileList[i].isDirectory()) {
                 recurseDirectoryToNode(fileList[i], child);
@@ -89,13 +126,19 @@ public class Utils {
                 parent.add(child);
             } else {
                 parent.add(child);
-                if(fileList[i].getName().endsWith(".txt") || fileList[i].getName().endsWith(".vdf")) {
-                    VDF.analyze(fileList[i], child);
-                } else if(fileList[i].getName().endsWith(".res")) {
-                    RES.analyze(fileList[i], child);
-                } else if(fileList[i].getName().endsWith(".gcf")) {
-                    GCF.analyze(fileList[i], child);
-                }
+                final int idx = i;
+                Thread t = new Thread(new Runnable() {
+                    public void run() {
+                        if(fileList[idx].getName().endsWith(".txt") || fileList[idx].getName().endsWith(".vdf")) {
+                            VDF.analyze(fileList[idx], child);
+                        } else if(fileList[idx].getName().endsWith(".res")) {
+                            RES.analyze(fileList[idx], child);
+                        } else if(fileList[idx].getName().endsWith(".gcf")) {
+                            GCF.analyze(fileList[idx], child);
+                        }
+                    }
+                });
+                t.run();
             }
         }
     }

@@ -1,11 +1,14 @@
 package com.timepath.plaf.linux;
 
-import com.timepath.tf2.hudeditor.Main;
+import com.timepath.tf2.hudeditor.util.Utils;
+import com.timepath.util.file.FileUtils;
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintWriter;
+import java.security.NoSuchAlgorithmException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -17,9 +20,9 @@ public class LinuxDesktopLauncher {
 
     private static final Logger LOG = Logger.getLogger(LinuxDesktopLauncher.class.getName());
 
-    public static void create() {
-        createLauncher();
-        createIcon();
+    public static void create(String desktop, String icon) {
+        createLauncher(desktop, icon);
+        createIcon(icon);
     }
 
     public static String getStore() {
@@ -30,50 +33,68 @@ public class LinuxDesktopLauncher {
         return root;
     }
 
-    private static void createLauncher() {
-        File destFile = new File(getStore() + "applications/" + Main.projectName + ".desktop");
+    private static void createLauncher(String desktop, String icon) {
+        File destFile = new File(getStore() + "applications/" + desktop + ".desktop");
         LOG.log(Level.INFO, "Linux .desktop file: {0}", destFile);
-        try {
-            destFile.delete();
-            destFile.getParentFile().mkdirs();
-            destFile.createNewFile();
 
-            PrintWriter destination = null;
-            try {
-                destination = new PrintWriter(new FileOutputStream(destFile));
-                destination.println("[Desktop Entry]");
-                destination.println("Version=1.0");
-                destination.println("StartupWMClass=" + Main.projectName);
-                destination.println("Exec=java -jar Dropbox/Public/tf/Hud\\ Editor/TF2\\ HUD\\ Editor.jar %U"); // TODO: fixme. Get a dedicated install directory.
-                destination.println("Icon=" + Main.projectName);
-                destination.println("Type=Application");
-                destination.println("StartupNotify=true");
-                destination.println("Terminal=false");
-                destination.println("Keywords=TF2;HUD;Editor;WYSIWYG;");
-                destination.println("Categories=Game;");
-                destination.println("Name=TF2 HUD Editor");
-                destination.println("GenericName=TF2 HUD Editor");
-                destination.println("Comment=Edit TF2 HUDs");
-                destination.println("Actions=New;");
-                destination.println("[Desktop Action New]");
-                destination.println("Name=New HUD");
-                destination.println("Exec=java -jar Dropbox/Public/tf/Hud\\ Editor/TF2\\ HUD\\ Editor.jar"); // TODO: fixme
-            } finally {
-                if(destination != null) {
-                    destination.close();
-                }
-                destFile.setExecutable(false);
+        StringBuilder sb = new StringBuilder();
+        sb.append("[Desktop Entry]").append("\n");
+        sb.append("Version=1.0").append("\n");
+        sb.append("StartupWMClass=").append(desktop).append("\n");
+        sb.append("Exec=java -jar Dropbox/Public/tf/Hud\\ Editor/TF2\\ HUD\\ Editor.jar %U").append("\n"); // TODO: fixme. Get a dedicated install directory.
+        sb.append("Icon=").append(icon).append("\n");
+        sb.append("Type=Application").append("\n");
+        sb.append("StartupNotify=true").append("\n");
+        sb.append("Terminal=false").append("\n");
+        sb.append("Keywords=TF2;HUD;Editor;WYSIWYG;").append("\n");
+        sb.append("Categories=Game;").append("\n");
+        sb.append("Name=TF2 HUD Editor").append("\n");
+        sb.append("GenericName=TF2 HUD Editor").append("\n");
+        sb.append("Comment=Edit TF2 HUDs").append("\n");
+        sb.append("Actions=New;").append("\n");
+        sb.append("[Desktop Action New]").append("\n");
+        sb.append("Name=New HUD").append("\n");
+        sb.append("Exec=java -jar Dropbox/Public/tf/Hud\\ Editor/TF2\\ HUD\\ Editor.jar"); // TODO: fixme
+
+        boolean flag = false;
+        String md51, md52;
+        try {
+            md51 = Utils.takeMD5(Utils.loadFile(destFile));
+            md52 = Utils.takeMD5(sb.toString().getBytes());
+            if(!md51.equals(md52)) { // TODO: Check date to allow for user customisation
+                LOG.log(Level.INFO, "{0} vs {1}", new Object[]{md51, md52});
+                flag = true;
             }
-        } catch(IOException ex) {
-            LOG.log(Level.WARNING, null, ex);
+        } catch(Exception e) {
+            flag = true;
+        }
+
+        PrintWriter out = null;
+        if(flag) {
+            try {
+                destFile.delete();
+                destFile.getParentFile().mkdirs();
+                destFile.createNewFile();
+                FileUtils.chmod777(destFile);
+                out = new PrintWriter(new FileOutputStream(destFile));
+                out.print(sb.toString());
+            } catch(FileNotFoundException ex) {
+                Logger.getLogger(LinuxDesktopLauncher.class.getName()).log(Level.SEVERE, null, ex);
+            } catch(IOException ex) {
+                Logger.getLogger(LinuxDesktopLauncher.class.getName()).log(Level.SEVERE, null, ex);
+            } finally {
+                if(out != null) {
+                    out.close();
+                }
+            }
         }
     }
 
-    private static void createIcon() {
+    private static void createIcon(String icon) {
         String[] icons = {"png", "svg"};
         for(int i = 0; i < icons.length; i++) {
             try {
-                File destFile = new File(getStore() + "icons/" + Main.projectName + "." + icons[i]);
+                File destFile = new File(getStore() + "icons/" + icon + "." + icons[i]);
 
                 if(!destFile.getParentFile().exists()) {
                     destFile.getParentFile().mkdirs();

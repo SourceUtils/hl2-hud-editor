@@ -93,6 +93,7 @@ import org.java.ayatana.AyatanaDesktop;
  *
  * @author timepath
  */
+@SuppressWarnings("serial")
 public final class EditorFrame extends javax.swing.JFrame {
 
     private static final Logger LOG = Logger.getLogger(EditorFrame.class.getName());
@@ -443,7 +444,7 @@ public final class EditorFrame extends javax.swing.JFrame {
                     new Thread() {
                         @Override
                         public void run() {
-                            loadHud(selection);
+                            load(selection);
                         }
                     }.start();
                 } else {
@@ -650,7 +651,7 @@ public final class EditorFrame extends javax.swing.JFrame {
     //</editor-fold>
 
     //<editor-fold defaultstate="collapsed" desc="Actions">
-    private void closeHud() {
+    private void close() {
 //        canvas.removeAllElements();
 
         fileSystemRoot.removeAllChildren();
@@ -665,7 +666,7 @@ public final class EditorFrame extends javax.swing.JFrame {
         propTable.repaint();
     }
 
-    private void loadHud(File root) {
+    private void load(File root) {
         if(root == null) {
             return;
         }
@@ -691,7 +692,7 @@ public final class EditorFrame extends javax.swing.JFrame {
 
         if(root.isDirectory()) {
             File[] folders = root.listFiles();
-            boolean valid = true;
+            boolean valid = true; // TODO: find resource and scripts if there is a parent directory
             for(int i = 0; i < folders.length; i++) {
                 if(folders[i].isDirectory() && ("resource".equalsIgnoreCase(folders[i].getName()) || "scripts".equalsIgnoreCase(folders[i].getName()))) {
                     valid = true;
@@ -703,7 +704,7 @@ public final class EditorFrame extends javax.swing.JFrame {
                 locateHudDirectory();
                 return;
             }
-            closeHud();
+            close();
 
             //            SwingWorker<Void, Void> worker = new SwingWorker<Void, Void>() {
             //
@@ -728,7 +729,7 @@ public final class EditorFrame extends javax.swing.JFrame {
             this.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
             final long start = System.currentTimeMillis();
             Utils.recurseDirectoryToNode(root, fileSystemRoot);
-            fileSystemRoot.setUserObject(root.getName()); // The only String in the tree
+            fileSystemRoot.setUserObject(root.getName());
 
             DefaultTreeModel model = (DefaultTreeModel) fileTree.getModel();
             model.reload();
@@ -755,7 +756,7 @@ public final class EditorFrame extends javax.swing.JFrame {
                 f.setLocation(-Integer.MAX_VALUE, -Integer.MAX_VALUE); // Hacky - should just use the OSX Application calls...
                 f.setVisible(true);
             } else {
-                System.exit(0);
+//                System.exit(0);
             }
         }
     }
@@ -796,7 +797,7 @@ public final class EditorFrame extends javax.swing.JFrame {
                 boolean updateReal = true;
 
                 /**
-                 * When maximizing windows on linux under gnome-shell, the JMenuBar
+                 * When maximizing windows on linux under gnome-shell and possibly others, the JMenuBar
                  * menus appear not to work. This is because the position of the
                  * window never updates. This is an attempt to make them usable again.
                  */
@@ -865,7 +866,7 @@ public final class EditorFrame extends javax.swing.JFrame {
                             }
                             try {
                                 File file = new File(new URI(token));
-                                loadHud(file);
+                                load(file);
                             } catch(Exception ex) {
                             }
                         }
@@ -875,7 +876,7 @@ public final class EditorFrame extends javax.swing.JFrame {
                             for(Iterator<?> it = ((List<?>) data).iterator(); it.hasNext();) {
                                 Object o = it.next();
                                 if(o instanceof File) {
-                                    loadHud((File) o);
+                                    load((File) o);
                                 }
                             }
                         }
@@ -1226,13 +1227,13 @@ public final class EditorFrame extends javax.swing.JFrame {
                 } else if(cmd == locateUserItem) {
                     locateUserDirectory();
                 } else if(cmd == closeItem) {
-                    closeHud();
+                    close();
                 } else if(cmd == saveItem) {
                     //                    if(canvas.getElements().size() > 0) {
                     //                        error(canvas.getElements().get(canvas.getElements().size() - 1).save());
                     //                    }
                 } else if(cmd == reloadItem) {
-                    loadHud(lastLoaded);
+                    load(lastLoaded);
                 } else if(cmd == exitItem) {
                     quit();
                 } else if(cmd == resolutionItem) {

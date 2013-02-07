@@ -64,10 +64,4 @@ public class JarClassLoader extends ClassLoader {
         LOG.log(Level.INFO, "findLibrary({0})", libname);
         return super.findLibrary(libname);
     }
-
-    private void chmod777(File file) {
-        file.setReadable(true, false);
-        file.setWritable(true, false);
-        file.setExecutable(true, false);
-    }
 }
