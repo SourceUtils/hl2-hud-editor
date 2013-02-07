@@ -36,7 +36,7 @@ import javax.swing.table.TableCellRenderer;
  */
 @SuppressWarnings("serial")
 public class VCCDTest extends javax.swing.JFrame {
-    
+
     /**
      * This method is called from within the constructor to initialize the form.
      * WARNING: Do NOT modify this code. The content of this method is always
@@ -170,26 +170,27 @@ public class VCCDTest extends javax.swing.JFrame {
 
     private void loadCaptions(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_loadCaptions
         JFileChooser fc = new JFileChooser();
-        
+
         FileFilter filter = new FileFilter() {
             public boolean accept(File file) {
                 return (file.getName().startsWith("closecaption_") && (file.getName().endsWith(".dat"))) || file.isDirectory();
             }
+
             public String getDescription() {
                 return "VCCD Files (.dat)";
             }
         };
         fc.setFileFilter(filter);
-        
+
         int returnVal = fc.showOpenDialog(this);
 
         if(returnVal == JFileChooser.APPROVE_OPTION) {
             File file = fc.getSelectedFile();
             ArrayList<Entry> entries = cl.loadFile(file.getAbsolutePath().toString());
             logger.log(Level.INFO, "Entries: {0}", entries.size());
-            
+
             DefaultTableModel model = (DefaultTableModel) jTable1.getModel();
-            for(int i = model.getRowCount() - 1; i >= 0 ; i--) {
+            for(int i = model.getRowCount() - 1; i >= 0; i--) {
                 model.removeRow(i);
             }
             for(int i = 0; i < entries.size(); i++) {
@@ -200,22 +201,23 @@ public class VCCDTest extends javax.swing.JFrame {
 
     private void saveCaptions(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_saveCaptions
         JFileChooser fc = new JFileChooser();
-        
+
         FileFilter filter = new FileFilter() {
             public boolean accept(File file) {
                 return (file.getName().startsWith("closecaption_") && (file.getName().endsWith(".dat"))) || file.isDirectory();
             }
+
             public String getDescription() {
                 return "VCCD Files (.dat)";
             }
         };
         fc.setFileFilter(filter);
-        
+
         int returnVal = fc.showSaveDialog(this);
 
         if(returnVal == JFileChooser.APPROVE_OPTION) {
             File file = fc.getSelectedFile();
-            
+
             ArrayList<Entry> entries = new ArrayList<Entry>();
             DefaultTableModel model = (DefaultTableModel) jTable1.getModel();
             for(int i = 0; i < model.getRowCount(); i++) {
@@ -230,26 +232,27 @@ public class VCCDTest extends javax.swing.JFrame {
 
     private void importCaptions(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_importCaptions
         JFileChooser fc = new JFileChooser();
-        
+
         FileFilter filter = new FileFilter() {
             public boolean accept(File file) {
                 return (file.getName().startsWith("closecaption_") && (file.getName().endsWith(".txt"))) || file.isDirectory();
             }
+
             public String getDescription() {
                 return "VCCD Source Files (.txt)";
             }
         };
         fc.setFileFilter(filter);
-        
+
         int returnVal = fc.showOpenDialog(this);
 
         if(returnVal == JFileChooser.APPROVE_OPTION) {
             File file = fc.getSelectedFile();
             ArrayList<Entry> entries = cl.importFile(file.getAbsolutePath().toString());
             logger.log(Level.INFO, "Entries: {0}", entries.size());
-            
+
             DefaultTableModel model = (DefaultTableModel) jTable1.getModel();
-            for(int i = model.getRowCount() - 1; i >= 0 ; i--) {
+            for(int i = model.getRowCount() - 1; i >= 0; i--) {
                 model.removeRow(i);
             }
             for(int i = 0; i < entries.size(); i++) {
@@ -257,7 +260,7 @@ public class VCCDTest extends javax.swing.JFrame {
             }
         }
     }//GEN-LAST:event_importCaptions
-    
+
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JMenu jMenu1;
     private javax.swing.JMenuBar jMenuBar1;
@@ -272,33 +275,35 @@ public class VCCDTest extends javax.swing.JFrame {
     // End of variables declaration//GEN-END:variables
 
     private VCCD cl;
-    
+
     //<editor-fold defaultstate="collapsed" desc="Entry point">
     /**
      * Creates new form CaptionLoaderFrame
      */
     public VCCDTest() {
         initComponents();
-        
+
         jTextField3.getDocument().addDocumentListener(new DocumentListener() {
             public void changedUpdate(DocumentEvent e) {
                 update();
             }
+
             public void removeUpdate(DocumentEvent e) {
                 update();
             }
+
             public void insertUpdate(DocumentEvent e) {
                 update();
             }
-            
+
             public void update() {
                 jTextField4.setText(hexFormat(takeCRC32(jTextField3.getText())));
             }
         });
-        
+
         cl = new VCCD();
     }
-    
+
     TableCellEditor getKeyEditor() {
         JComboBox comboBox = new JComboBox();
         comboBox.setEditable(true);
@@ -310,17 +315,17 @@ public class VCCDTest extends javax.swing.JFrame {
         }
         return new DefaultCellEditor(comboBox);
     }
-    
+
     public class EditorPaneRenderer extends JPanel implements TableCellRenderer {
-        
+
         private int curX;
-        
+
         private String text;
-      
+
         public EditorPaneRenderer() {
             super();
         }
-        
+
         @Override
         public void paint(Graphics g) {
             g.setFont(this.getFont());
@@ -328,22 +333,21 @@ public class VCCDTest extends javax.swing.JFrame {
             g.setColor(this.getBackground());
             g.fillRect(0, 0, this.getWidth(), this.getHeight());
             g.setColor(this.getForeground());
-            
+
             for(int i = 0; i < text.length(); i++) {
                 if(text.charAt(i) == '<') {
-                    
                 }
             }
-            
+
             drawWords(fm, g, text);
             curX = 0;
         }
-        
+
         public void drawWords(FontMetrics fm, Graphics g, String str) {
             g.drawString(text, curX, fm.getHeight());
             curX += fm.stringWidth(str);
         }
-        
+
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
             setText((value == null) ? "" : value.toString());
             if(isSelected) {
@@ -360,11 +364,11 @@ public class VCCDTest extends javax.swing.JFrame {
             this.text = string;
         }
     }
-    
-    TableCellRenderer valueRenderer = new EditorPaneRenderer();
-    
+
+    private TableCellRenderer valueRenderer = new EditorPaneRenderer();
+
     private static final Logger logger = Logger.getLogger(VCCDTest.class.getName());
-    
+
     /**
      * @param args the command line arguments
      */
@@ -375,14 +379,14 @@ public class VCCDTest extends javax.swing.JFrame {
         f.add(pb);
         f.setMinimumSize(new Dimension(300, 50));
         f.setLocationRelativeTo(null);
-        
+
         new Thread(new Runnable() {
             @Override
             public void run() {
                 f.setVisible(true);
             }
         }).start();
-        
+
         new Thread(new Runnable() {
             @Override
             public void run() {
@@ -394,80 +398,80 @@ public class VCCDTest extends javax.swing.JFrame {
         }).start();
     }
     //</editor-fold>
-    
+
     //<editor-fold defaultstate="collapsed" desc="Hash codes">
     private HashMap<Integer, String> hashmap;
-    
+
     private HashMap<Integer, String> generateHash() {
         HashMap<Integer, String> map = new HashMap<Integer, String>();
         logger.info("Generating hash codes ...");
         try {
             GCF gcf = new GCF(new File(Utils.locateSteamAppsDirectory() + "/Team Fortress 2 Content.gcf"));
-            
+
             CRC32 crc = new CRC32();
-            
+
             String all = new String(gcf.ls);
             String[] ls = gcf.getEntries();
             for(int i = 0; i < ls.length; i++) {
                 int end = ls[i].length();
-                int ext = ls[i].lastIndexOf(".");
+                int ext = ls[i].lastIndexOf('.');
                 if(ext != -1) {
                     end = ext;
                 }
                 String sp = ls[i].substring(0, end);
                 if(ls[i].toLowerCase().endsWith(".wav") || ls[i].toLowerCase().endsWith(".mp3")// ||
-//                    ls[i].toLowerCase().endsWith(".vcd") || ls[i].toLowerCase().endsWith(".bsp") ||
-//                    ls[i].toLowerCase().endsWith(".mp3") || ls[i].toLowerCase().endsWith(".bat") ||
-//                    ls[i].toLowerCase().endsWith(".doc") || ls[i].toLowerCase().endsWith(".raw") ||
-//                    ls[i].toLowerCase().endsWith(".pcf") || ls[i].toLowerCase().endsWith(".cfg") ||
-//                    ls[i].toLowerCase().endsWith(".vbsp") || ls[i].toLowerCase().endsWith(".inf") ||
-//                    ls[i].toLowerCase().endsWith(".rad") || ls[i].toLowerCase().endsWith(".vdf") ||
-//                    ls[i].toLowerCase().endsWith(".ctx") || ls[i].toLowerCase().endsWith(".vdf") ||
-//                    ls[i].toLowerCase().endsWith(".lst") || ls[i].toLowerCase().endsWith(".res") ||
-//                    ls[i].toLowerCase().endsWith(".pop") || ls[i].toLowerCase().endsWith(".dll") ||
-//                    ls[i].toLowerCase().endsWith(".dylib") || ls[i].toLowerCase().endsWith(".so") ||
-//                    ls[i].toLowerCase().endsWith(".scr") || ls[i].toLowerCase().endsWith(".rc") ||
-//                    ls[i].toLowerCase().endsWith(".vfe") || ls[i].toLowerCase().endsWith(".pre") ||
-//                    ls[i].toLowerCase().endsWith(".cache") || ls[i].toLowerCase().endsWith(".nav") ||
-//                    ls[i].toLowerCase().endsWith(".lmp") || ls[i].toLowerCase().endsWith(".bik") ||
-//                    ls[i].toLowerCase().endsWith(".mov") || ls[i].toLowerCase().endsWith(".snd") ||
-//                    ls[i].toLowerCase().endsWith(".midi") || ls[i].toLowerCase().endsWith(".png") ||
-//                    ls[i].toLowerCase().endsWith(".ttf") || ls[i].toLowerCase().endsWith(".ico") ||
-//                    ls[i].toLowerCase().endsWith(".dat") || ls[i].toLowerCase().endsWith(".pl") ||
-//                    ls[i].toLowerCase().endsWith(".ain") || ls[i].toLowerCase().endsWith(".db") ||
-//                    ls[i].toLowerCase().endsWith(".py") || ls[i].toLowerCase().endsWith(".xsc") ||
-//                    ls[i].toLowerCase().endsWith(".bmp") || ls[i].toLowerCase().endsWith(".icns") ||
-//                    ls[i].toLowerCase().endsWith(".txt") || ls[i].toLowerCase().endsWith(".manifest")
-                        ) {
+                    //                    ls[i].toLowerCase().endsWith(".vcd") || ls[i].toLowerCase().endsWith(".bsp") ||
+                    //                    ls[i].toLowerCase().endsWith(".mp3") || ls[i].toLowerCase().endsWith(".bat") ||
+                    //                    ls[i].toLowerCase().endsWith(".doc") || ls[i].toLowerCase().endsWith(".raw") ||
+                    //                    ls[i].toLowerCase().endsWith(".pcf") || ls[i].toLowerCase().endsWith(".cfg") ||
+                    //                    ls[i].toLowerCase().endsWith(".vbsp") || ls[i].toLowerCase().endsWith(".inf") ||
+                    //                    ls[i].toLowerCase().endsWith(".rad") || ls[i].toLowerCase().endsWith(".vdf") ||
+                    //                    ls[i].toLowerCase().endsWith(".ctx") || ls[i].toLowerCase().endsWith(".vdf") ||
+                    //                    ls[i].toLowerCase().endsWith(".lst") || ls[i].toLowerCase().endsWith(".res") ||
+                    //                    ls[i].toLowerCase().endsWith(".pop") || ls[i].toLowerCase().endsWith(".dll") ||
+                    //                    ls[i].toLowerCase().endsWith(".dylib") || ls[i].toLowerCase().endsWith(".so") ||
+                    //                    ls[i].toLowerCase().endsWith(".scr") || ls[i].toLowerCase().endsWith(".rc") ||
+                    //                    ls[i].toLowerCase().endsWith(".vfe") || ls[i].toLowerCase().endsWith(".pre") ||
+                    //                    ls[i].toLowerCase().endsWith(".cache") || ls[i].toLowerCase().endsWith(".nav") ||
+                    //                    ls[i].toLowerCase().endsWith(".lmp") || ls[i].toLowerCase().endsWith(".bik") ||
+                    //                    ls[i].toLowerCase().endsWith(".mov") || ls[i].toLowerCase().endsWith(".snd") ||
+                    //                    ls[i].toLowerCase().endsWith(".midi") || ls[i].toLowerCase().endsWith(".png") ||
+                    //                    ls[i].toLowerCase().endsWith(".ttf") || ls[i].toLowerCase().endsWith(".ico") ||
+                    //                    ls[i].toLowerCase().endsWith(".dat") || ls[i].toLowerCase().endsWith(".pl") ||
+                    //                    ls[i].toLowerCase().endsWith(".ain") || ls[i].toLowerCase().endsWith(".db") ||
+                    //                    ls[i].toLowerCase().endsWith(".py") || ls[i].toLowerCase().endsWith(".xsc") ||
+                    //                    ls[i].toLowerCase().endsWith(".bmp") || ls[i].toLowerCase().endsWith(".icns") ||
+                    //                    ls[i].toLowerCase().endsWith(".txt") || ls[i].toLowerCase().endsWith(".manifest")
+                    ) {
                     String str = sp;
                     if(str.split("_").length == 2) {
                         str = str.replaceAll("_", ".").replaceAll(" ", "");// + "\0";
                     }
 //                    System.out.println(str);
                     crc.update(str.toLowerCase().getBytes());
-                    map.put((int)crc.getValue(), str.toLowerCase()); // enforce lowercase for consistency
+                    map.put((int) crc.getValue(), str.toLowerCase()); // enforce lowercase for consistency
 //                    logger.log(Level.INFO, "{0} > {1}", new Object[]{crc.getValue(), str});
                     crc.reset();
                 } else {
 //                    logger.info(ls[i]);
                 }
             }
-        } catch (IOException ex) {
+        } catch(IOException ex) {
             logger.log(Level.WARNING, "Error generating hash codes", ex);
         }
         return map;
     }
-    
+
     public static int takeCRC32(String in) {
         CRC32 crc = new CRC32();
         crc.update(in.toLowerCase().getBytes());
-        return (int)crc.getValue();
+        return (int) crc.getValue();
     }
-    
+
     public static String hexFormat(int in) {
         return Integer.toHexString(in).toUpperCase();
     }
-    
+
     private String attemptDecode(int hash) {
         if(!hashmap.containsKey(hash)) {
 //            logger.log(Level.INFO, "hashmap does not contain {0}", hash);
@@ -476,5 +480,4 @@ public class VCCDTest extends javax.swing.JFrame {
         return hashmap.get(hash);
     }
     //</editor-fold>
-
 }

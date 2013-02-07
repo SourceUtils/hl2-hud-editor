@@ -17,21 +17,22 @@ import java.util.logging.Logger;
 
 /**
  * TODO: edge cases. I think elements without x and y coordinates default to the center (c0)
+ *
  * @author timepath
  */
 public class Element {
-    
-    static final Logger logger = Logger.getLogger(Element.class.getName());
-    
+
+    private static final Logger LOG = Logger.getLogger(Element.class.getName());
+
     Canvas canvas = new Canvas(); // TEMP
-    
+
     public static Map<String, Element> areas = new HashMap<String, Element>();
 
     public Element(String name, String info) {
         this.name = name;
         this.info = info;
     }
-    
+
     public String save() {
         String str = "";
         // preceding header
@@ -61,14 +62,15 @@ public class Element {
         str += "}\n";
         return str;
     }
-    
+
     private String name;
-    
+
     public String getName() {
         return name;
     }
-    
+
     private String info;
+
     private ArrayList<Property> propMap = new ArrayList<Property>();
 
     public ArrayList<Property> getProps() {
@@ -76,30 +78,32 @@ public class Element {
     }
 
     public void addProp(Property p) {
-        logger.log(Level.FINE, "Adding prop: {0} to: {1}", new Object[]{p, this});
+        LOG.log(Level.FINE, "Adding prop: {0} to: {1}", new Object[]{p, this});
         propMap.add(p);
     }
 
     public void addProps(ArrayList<Property> p) {
-        for (int i = 0; i < p.size(); i++) {
+        for(int i = 0; i < p.size(); i++) {
             addProp(p.get(i));
         }
         p.clear();
     }
+
     private Element parent;
+
     public ArrayList<Element> children = new ArrayList<Element>();
 
     public void addChild(Element e) {
         if(e == this || e == this.getParent()) {
-            logger.log(Level.INFO, "Cannot add element {0} to {1}", new Object[]{e, this});
+            LOG.log(Level.INFO, "Cannot add element {0} to {1}", new Object[]{e, this});
         }
-        if (!children.contains(e)) {
+        if(!children.contains(e)) {
             e.validateLoad();
             children.add(e);
             e.setParent(this);
         }
     }
-    
+
     public void removeAllChildren() {
         for(int i = 0; i < children.size(); i++) {
             children.remove(i);
@@ -112,10 +116,10 @@ public class Element {
     }
 
     public Rectangle getBounds() {
-        int minX = (int)Math.round(this.getX() * ((double)canvas.screen.width / (double)canvas.internal.width) * canvas.scale);
-        int minY = (int)Math.round(this.getY() * ((double)canvas.screen.height / (double)canvas.internal.height) * canvas.scale);
-        int maxX = (int)Math.round(this.getWidth() * ((double)canvas.screen.width / (double)canvas.internal.width) * canvas.scale);
-        int maxY = (int)Math.round(this.getHeight() * ((double)canvas.screen.height / (double)canvas.internal.height) * canvas.scale);
+        int minX = (int) Math.round(this.getX() * ((double) canvas.screen.width / (double) canvas.internal.width) * canvas.scale);
+        int minY = (int) Math.round(this.getY() * ((double) canvas.screen.height / (double) canvas.internal.height) * canvas.scale);
+        int maxX = (int) Math.round(this.getWidth() * ((double) canvas.screen.width / (double) canvas.internal.width) * canvas.scale);
+        int maxY = (int) Math.round(this.getHeight() * ((double) canvas.screen.height / (double) canvas.internal.height) * canvas.scale);
         return new Rectangle(minX, minY, maxX + 1, maxY + 1);
     }
 
@@ -125,6 +129,7 @@ public class Element {
         return name + displayInfo;
     }
     // Properties
+
     private double xPos;
 
     public int getLocalX() {
@@ -136,19 +141,19 @@ public class Element {
     }
 
     public int getX() {
-        if (parent == null || parent.name.replaceAll("\"", "").endsWith(".res")) {
-            if (this.getXAlignment() == Alignment.Center) {
+        if(parent == null || parent.name.replaceAll("\"", "").endsWith(".res")) {
+            if(this.getXAlignment() == Alignment.Center) {
                 return (getLocalX() + Math.round(853 / 2));
-            } else if (this.getXAlignment() == Alignment.Right) {
+            } else if(this.getXAlignment() == Alignment.Right) {
                 return (853 - getLocalX());
             } else {
                 return getLocalX();
             }
         } else {
             int x;
-            if (this.getXAlignment() == Alignment.Center) {
+            if(this.getXAlignment() == Alignment.Center) {
                 x = (parent.getWidth() / 2) + getLocalX();
-            } else if (this.getXAlignment() == Alignment.Right) {
+            } else if(this.getXAlignment() == Alignment.Right) {
                 x = (parent.getWidth()) - getLocalX();
             } else {
                 x = getLocalX();
@@ -168,19 +173,19 @@ public class Element {
     }
 
     public int getY() {
-        if (parent == null || parent.name.replaceAll("\"", "").endsWith(".res")) {
-            if (this.getYAlignment() == Alignment.Center) {
+        if(parent == null || parent.name.replaceAll("\"", "").endsWith(".res")) {
+            if(this.getYAlignment() == Alignment.Center) {
                 return (getLocalY() + Math.round(480 / 2));
-            } else if (this.getYAlignment() == Alignment.Right) {
+            } else if(this.getYAlignment() == Alignment.Right) {
                 return (480 - getLocalY());
             } else {
                 return getLocalY();
             }
         }
         int y;
-        if (this.getYAlignment() == Alignment.Center) {
+        if(this.getYAlignment() == Alignment.Center) {
             y = (parent.getHeight() / 2) + getLocalY();
-        } else if (this.getYAlignment() == Alignment.Right) {
+        } else if(this.getYAlignment() == Alignment.Right) {
             y = parent.getHeight() - getLocalY();
         } else {
             y = getLocalY();
@@ -198,6 +203,7 @@ public class Element {
     public void setLayer(int z) {
         this.zPos = z;
     }
+
     private int wide;
 
     public int getLocalWidth() {
@@ -209,7 +215,7 @@ public class Element {
     }
 
     public int getWidth() {
-        if (this.getWidthMode() == DimensionMode.Mode2) {
+        if(this.getWidthMode() == DimensionMode.Mode2) {
 //            if(this.parent !hudRes= null) {
 //                return this.parent.getWidth() - wide;
 //            } else {
@@ -219,7 +225,7 @@ public class Element {
             return wide;
         }
     }
-    
+
     private DimensionMode _wideMode = DimensionMode.Mode1;
 
     public DimensionMode getWidthMode() {
@@ -229,6 +235,7 @@ public class Element {
     public void setWidthMode(DimensionMode mode) {
         this._wideMode = mode;
     }
+
     private int tall;
 
     public int getLocalHeight() {
@@ -242,7 +249,7 @@ public class Element {
     public int getHeight() {
         return (this.getHeightMode() == DimensionMode.Mode2 ? (this.parent != null ? this.parent.getHeight() - tall : canvas.internal.height - tall) : tall);
     }
-    
+
     private DimensionMode _tallMode = DimensionMode.Mode1;
 
     public DimensionMode getHeightMode() {
@@ -252,6 +259,7 @@ public class Element {
     public void setHeightMode(DimensionMode mode) {
         this._tallMode = mode;
     }
+
     private boolean visible;
 
     public boolean isVisible() {
@@ -261,6 +269,7 @@ public class Element {
     public void setVisible(boolean visible) {
         this.visible = visible;
     }
+
     private boolean enabled;
 
     public boolean isEnabled() {
@@ -270,6 +279,7 @@ public class Element {
     public void setEnabled(boolean enabled) {
         this.enabled = enabled;
     }
+
     private Font font;
 
     public Font getFont() {
@@ -279,6 +289,7 @@ public class Element {
     public void setFont(Font font) {
         this.font = font;
     }
+
     private Color fgColor;
 
     public Color getFgColor() {
@@ -288,77 +299,76 @@ public class Element {
     public void setFgColor(Color fgColor) {
         this.fgColor = fgColor;
     }
-    
+
     // TODO: remove duplicate keys (only keep the latest, or highlight duplicates)
     public void validateLoad() {
-        for (int n = 0; n < this.getProps().size(); n++) {
+        for(int n = 0; n < this.getProps().size(); n++) {
             Property entry = this.getProps().get(n);
             String k = entry.getKey().toLowerCase();
-            if (k != null && k.contains("\"")) { // assumes one set of quotes
+            if(k != null && k.contains("\"")) { // assumes one set of quotes
                 k = k.substring(1, k.length() - 1);
                 k = k.replaceAll("\"", "").trim();
             }
             String v = entry.getValue();
-            if (v != null && v.contains("\"")) {
+            if(v != null && v.contains("\"")) {
                 v = v.substring(1, v.length() - 1);
                 v = v.replaceAll("\"", "").trim();
             }
-            String i = entry.getInfo();
-            if (i != null && i.contains("\"")) {
-                i = i.substring(1, i.length() - 1);
-                i = i.replaceAll("\"", "").trim();
-            }
+//            String i = entry.getInfo();
+//            if(i != null && i.contains("\"")) {
+//                i = i.substring(1, i.length() - 1);
+//                i = i.replaceAll("\"", "").trim();
+//            }
 
-            if ("enabled".equalsIgnoreCase(k)) {
+            if("enabled".equalsIgnoreCase(k)) {
                 this.setEnabled(Integer.parseInt(v) == 1);
-            } else if ("visible".equalsIgnoreCase(k)) {
+            } else if("visible".equalsIgnoreCase(k)) {
                 this.setVisible(Integer.parseInt(v) == 1);
-            } else if ("xpos".equalsIgnoreCase(k)) {
-                if (v.startsWith("c")) {
+            } else if("xpos".equalsIgnoreCase(k)) {
+                if(v.startsWith("c")) {
                     this.setXAlignment(Alignment.Center);
                     v = v.substring(1);
-                } else if (v.startsWith("r")) {
+                } else if(v.startsWith("r")) {
                     this.setXAlignment(Alignment.Right);
                     v = v.substring(1);
                 } else {
                     this.setXAlignment(Alignment.Left);
                 }
                 this.setLocalX(Integer.parseInt(v));
-            } else if ("ypos".equalsIgnoreCase(k)) {
-                if (v.startsWith("c")) {
+            } else if("ypos".equalsIgnoreCase(k)) {
+                if(v.startsWith("c")) {
                     this.setYAlignment(Alignment.Center);
                     v = v.substring(1);
-                } else if (v.startsWith("r")) {
+                } else if(v.startsWith("r")) {
                     this.setYAlignment(Alignment.Right);
                     v = v.substring(1);
                 } else {
                     this.setYAlignment(Alignment.Left);
                 }
                 this.setLocalY(Integer.parseInt(v));
-            } else if ("zpos".equalsIgnoreCase(k)) {
+            } else if("zpos".equalsIgnoreCase(k)) {
                 this.setLayer(Integer.parseInt(v));
-            } else if ("wide".equalsIgnoreCase(k)) {
-                if (v.startsWith("f")) {
+            } else if("wide".equalsIgnoreCase(k)) {
+                if(v.startsWith("f")) {
                     v = v.substring(1);
                     this.setWidthMode(DimensionMode.Mode2);
                 }
                 this.setLocalWidth(Integer.parseInt(v));
-            } else if ("tall".equalsIgnoreCase(k)) {
-                if (v.startsWith("f")) {
+            } else if("tall".equalsIgnoreCase(k)) {
+                if(v.startsWith("f")) {
                     v = v.substring(1);
                     this.setHeightMode(DimensionMode.Mode2);
                 }
                 this.setLocalHeight(Integer.parseInt(v));
-            } else if ("labelText".equalsIgnoreCase(k)) {
+            } else if("labelText".equalsIgnoreCase(k)) {
                 this.setLabelText(v);
-            } else if ("ControlName".equalsIgnoreCase(k)) { // others are areas
+            } else if("ControlName".equalsIgnoreCase(k)) { // others are areas
                 this.setControlName(v);
-            } else if ("fgcolor".equalsIgnoreCase(k)) {
+            } else if("fgcolor".equalsIgnoreCase(k)) {
                 String[] c = v.split(" ");
                 try {
                     this.setFgColor(new Color(Integer.parseInt(c[0]), Integer.parseInt(c[1]), Integer.parseInt(c[2]), Integer.parseInt(c[3])));
                 } catch(NumberFormatException e) {
-                    
                 }
             } else if("font".equalsIgnoreCase(k)) {
                 if(!RES.fonts.containsKey(v)) {
@@ -384,14 +394,14 @@ public class Element {
                         continue;
                     }
                     this.setImage(img);
-                } catch (IOException ex) {
-                    logger.log(Level.SEVERE, null, ex);
+                } catch(IOException ex) {
+                    LOG.log(Level.SEVERE, null, ex);
                 }
             } else {
 //                System.out.println("Other property: " + k);
             }
         }
-        
+
         if(this.getControlName() != null) { // temp
             if("CExLabel".equalsIgnoreCase(controlName)) {
             } else if("CIconPanel".equalsIgnoreCase(controlName)) {
@@ -506,8 +516,6 @@ public class Element {
             } else if("CTFFlagStatus".equalsIgnoreCase(controlName)) {
             } else if("CTFHudMannVsMachineScoreboard".equalsIgnoreCase(controlName)) {
             } else if("CReplayReminderPanel".equalsIgnoreCase(controlName)) {
-                
-                
             } else if("CircularProgressBar".equalsIgnoreCase(controlName)) { // what the hell is this?
             } else if("PanelListPanel".equalsIgnoreCase(controlName)) {
             } else if("ImageButton".equalsIgnoreCase(controlName)) {
@@ -541,7 +549,7 @@ public class Element {
             } else if("HTML".equalsIgnoreCase(controlName)) {
             } else if("TextEntry".equalsIgnoreCase(controlName)) {
             } else {
-                System.out.println(controlName);
+                LOG.log(Level.WARNING, "Unknown control: {0}", controlName);
             }
             if(this.getFgColor() == null) {
                 this.setFgColor(new Color((int) (Math.random() * 255), (int) (Math.random() * 255), (int) (Math.random() * 255), 32));
@@ -551,38 +559,38 @@ public class Element {
 //            System.out.println("adding " + this.name + " to areas");
         }
     }
-    
+
     // TODO: remove duplicate keys (only keep the latest, or highlight duplicates)
-    public void validateDisplay() { 
-        for (int n = 0; n < propMap.size(); n++) {
+    public void validateDisplay() {
+        for(int n = 0; n < propMap.size(); n++) {
             Property entry = propMap.get(n);
             String k = entry.getKey();
             if(k == null) {
                 continue;
             }
-            if (k.contains("\"")) { // assumes one set of quotes
+            if(k.contains("\"")) { // assumes one set of quotes
                 k = k.substring(1, k.length() - 1);
             }
 
-            if ("enabled".equalsIgnoreCase(k)) {
+            if("enabled".equalsIgnoreCase(k)) {
                 entry.setValue(this.isEnabled() ? 1 : 0);
-            } else if ("visible".equalsIgnoreCase(k)) {
+            } else if("visible".equalsIgnoreCase(k)) {
                 entry.setValue(this.isVisible() ? 1 : 0);
-            } else if ("xpos".equalsIgnoreCase(k)) {
+            } else if("xpos".equalsIgnoreCase(k)) {
                 entry.setValue(this.getXAlignment().name().substring(0, 1).toLowerCase().replaceFirst("l", "") + this.getLocalX());
-            } else if ("ypos".equalsIgnoreCase(k)) {
+            } else if("ypos".equalsIgnoreCase(k)) {
                 entry.setValue(this.getYAlignment().name().substring(0, 1).toLowerCase().replaceFirst("l", "") + this.getLocalY());
-            } else if ("zpos".equalsIgnoreCase(k)) {
+            } else if("zpos".equalsIgnoreCase(k)) {
                 entry.setValue(this.getLayer());
-            } else if ("wide".equalsIgnoreCase(k)) {
+            } else if("wide".equalsIgnoreCase(k)) {
                 entry.setValue((this.getWidthMode() == DimensionMode.Mode2 ? "f" : "") + this.getLocalWidth());
-            } else if ("tall".equalsIgnoreCase(k)) {
+            } else if("tall".equalsIgnoreCase(k)) {
                 entry.setValue((this.getHeightMode() == DimensionMode.Mode2 ? "f" : "") + this.getLocalHeight());
-            } else if ("labelText".equalsIgnoreCase(k)) {
+            } else if("labelText".equalsIgnoreCase(k)) {
                 entry.setValue(this.getLabelText());
-            } else if ("ControlName".equalsIgnoreCase(k)) {
+            } else if("ControlName".equalsIgnoreCase(k)) {
                 entry.setValue(this.getControlName());
-            } else if ("font".equalsIgnoreCase(k)) {
+            } else if("font".equalsIgnoreCase(k)) {
 //                entry.setValue(this.getFont()); // TODO
             }
             if(!entry.getKey().equals("//") && !entry.getKey().equals("\\n")) {
@@ -598,7 +606,7 @@ public class Element {
     public void setParent(Element newParent) {
         this.parent = newParent;
     }
-    
+
     private String controlName;
 
     public void setControlName(String controlName) {
@@ -610,7 +618,7 @@ public class Element {
     }
 
     private String fileName;
-    
+
     public void setParentFile(File file) { // todo: case insensitivity
         if(file.getName().contains(".")) {
             this.fileName = file.getName().split("\\.")[0];
@@ -618,10 +626,11 @@ public class Element {
             this.fileName = file.getName();
         }
     }
-    
+
     public String getFile() {
         return fileName;
     }
+
     private Alignment _xAlignment = Alignment.Left;
 
     public Alignment getXAlignment() {
@@ -631,6 +640,7 @@ public class Element {
     public void setXAlignment(Alignment _xAlignment) {
         this._xAlignment = _xAlignment;
     }
+
     private Alignment _yAlignment = Alignment.Left;
 
     public Alignment getYAlignment() {
@@ -640,6 +650,7 @@ public class Element {
     public void setYAlignment(Alignment _yAlignment) {
         this._yAlignment = _yAlignment;
     }
+
     private String labelText;
 
     public String getLabelText() {
@@ -649,6 +660,7 @@ public class Element {
     public void setLabelText(String labelText) {
         this.labelText = labelText;
     }
+
     private Image image;
 
     public Image getImage() {
@@ -658,5 +670,14 @@ public class Element {
     public void setImage(Image image) {
         this.image = image;
     }
-    
+
+    public enum Alignment {
+
+        Left, Center, Right
+    }
+
+    public enum DimensionMode {
+
+        Mode1, Mode2
+    }
 }

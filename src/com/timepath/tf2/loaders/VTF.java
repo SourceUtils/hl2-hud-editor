@@ -16,11 +16,11 @@ import java.util.logging.Logger;
 
 /**
  * TODO: .360.vtf files seem to be a slightly different format... and LZMA compressed.
- * 
+ *
  * @author timepath
  */
 public class VTF {
-    
+
     public VTF(RandomAccessFile file) {
         this.file = file;
     }
@@ -111,7 +111,7 @@ public class VTF {
     public void getControls() throws IOException {
         file.seek(this.headerSize - 8); // 8 bytes for CRC or other things. I have no idea what the data after the first 64 bytes up until here are for
 
-        String crcHead = new String(new byte[] {DataUtils.readByte(file), DataUtils.readByte(file), DataUtils.readByte(file), DataUtils.readByte(file)});
+        String crcHead = new String(new byte[]{DataUtils.readByte(file), DataUtils.readByte(file), DataUtils.readByte(file), DataUtils.readByte(file)});
         int crc = DataUtils.readULong(file);
 
         if(!(crcHead.equals("CRC\2"))) {
@@ -122,9 +122,8 @@ public class VTF {
     }
 
 //    private int _thumbLength = Math.max(thumbWidth, 4) * Math.max(thumbHeight, 4) / 2;
-
     private Image thumbImage;
-    
+
     public Image getThumbImage() throws IOException {
         if(thumbImage == null) {
             file.seek(this.headerSize);
@@ -146,8 +145,8 @@ public class VTF {
         int[] sizesX = new int[this.mipCount]; // smallest -> largest {1, 2, 4, 8, 16, 32, 64, 128}
         int[] sizesY = new int[this.mipCount];
         for(int n = 0; n < this.mipCount; n++) {
-            sizesX[n] = Math.max((this.width >>> (this.mipCount-n-1)), 1);
-            sizesY[n] = Math.max((this.height >>> (this.mipCount-n-1)), 1);
+            sizesX[n] = Math.max((this.width >>> (this.mipCount - n - 1)), 1);
+            sizesY[n] = Math.max((this.height >>> (this.mipCount - n - 1)), 1);
 //                System.out.println("sizesX["+n+"] = " + sizesX[n] + "\n" + "sizesY["+n+"] = " + sizesY[n]);
         }
         for(int i = 0; i < this.mipCount; i++) {
@@ -194,17 +193,16 @@ public class VTF {
         }
         return image;
     }
-    
+
     // STATIC METHODS
-    
     public static GCF mats = null;
-    
+
     public static VTF load(String path) {
         path = new File(path).getAbsolutePath();
         if(mats == null) {
             try {
                 mats = new GCF(new File(Utils.locateSteamAppsDirectory() + "Team Fortress 2 Materials.gcf"));
-            } catch (IOException ex) {
+            } catch(IOException ex) {
                 Logger.getLogger(VTF.class.getName()).log(Level.SEVERE, null, ex);
             }
         }
@@ -216,20 +214,20 @@ public class VTF {
                 f = new File(path);
                 System.out.println("Loading " + f);
             }
-        } catch (IOException ex) {
+        } catch(IOException ex) {
             Logger.getLogger(VTF.class.getName()).log(Level.SEVERE, null, ex);
         }
         return VTF.load(f);
     }
-    
+
     private static HashMap<File, VTF> cache = new HashMap<File, VTF>();
-        
+
     public static VTF load(File file) {
         if(file == null) {
             return null;
         }
         file = file.getAbsoluteFile();
-        
+
         if(cache.containsKey(file)) {
             return cache.get(file);
         }
@@ -240,14 +238,14 @@ public class VTF {
         try {
             rf = new RandomAccessFile(file, "r");
 //            System.out.println("Loading " + path + "...");
-            String signature = new String(new byte[] {DataUtils.readByte(rf), DataUtils.readByte(rf), DataUtils.readByte(rf), DataUtils.readByte(rf)});
+            String signature = new String(new byte[]{DataUtils.readByte(rf), DataUtils.readByte(rf), DataUtils.readByte(rf), DataUtils.readByte(rf)});
             if(!(signature.equals("VTF\0"))) {
                 System.err.println("Invalid VTF file " + file);
                 cache.put(file, null);
                 return null;
             }
             VTF vtf = new VTF(rf);
-            vtf.version = new int[] {DataUtils.readULEInt(rf), DataUtils.readULEInt(rf)};
+            vtf.version = new int[]{DataUtils.readULEInt(rf), DataUtils.readULEInt(rf)};
             vtf.headerSize = DataUtils.readULEInt(rf);
             vtf.width = DataUtils.readULEShort(rf);
             vtf.height = DataUtils.readULEShort(rf);
@@ -255,7 +253,7 @@ public class VTF {
             vtf.frameCount = DataUtils.readULEShort(rf);
             vtf.frameFirst = DataUtils.readULEShort(rf);
             rf.skipBytes(4); // padding
-            vtf.reflectivity = new float[] {DataUtils.readLEFloat(rf), DataUtils.readLEFloat(rf), DataUtils.readLEFloat(rf)};
+            vtf.reflectivity = new float[]{DataUtils.readLEFloat(rf), DataUtils.readLEFloat(rf), DataUtils.readLEFloat(rf)};
             rf.skipBytes(4); // padding
             vtf.bumpScale = DataUtils.readLEFloat(rf);
             vtf.format = Format.getEnumForIndex(DataUtils.readULEInt(rf));
@@ -264,9 +262,9 @@ public class VTF {
             vtf.thumbWidth = DataUtils.readUByte(rf);
             vtf.thumbHeight = DataUtils.readUByte(rf);
             vtf.depth = DataUtils.readULEShort(rf); // the docs say that there are 64 bytes for this section, but I count 64. Should this be a single byte?
-            
+
 //            System.out.println(vtf.format);
-            
+
 //            System.err.println("USEMIPS=" + !((flags & Flags.TEXTUREFLAGS_NOMIP.getMask()) == 0xff));
             if(vtf.frameCount > 1) {
                 System.err.println("FRAMES = " + vtf.frameCount); // zero indexed
@@ -276,26 +274,25 @@ public class VTF {
             }
             cache.put(file, vtf);
             return vtf;
-        } catch (Exception e) {
+        } catch(Exception e) {
             LOG.severe(e.toString());
             return null;
         }
     }
-    
-    
+
     /**
      * 8 bytes per 4*4
      */
     private static BufferedImage loadDXT1(byte[] b, int width, int height) {
         BufferedImage bi = new BufferedImage(Math.max(width, 4), Math.max(height, 4), BufferedImage.TYPE_INT_ARGB);
         int pos = 0;
-        
-        for(int y = 0; y < height; y+=4) {
-            for(int x = 0; x < width; x+=4) {
+
+        for(int y = 0; y < height; y += 4) {
+            for(int x = 0; x < width; x += 4) {
                 int color_0 = ((b[pos++] & 0xFF) + ((b[pos++] & 0xFF) << 8)) & 0xFFFF; // 2 bytes
-                int color_1 = ((b[pos++] & 0xFF) + ((b[pos++] &0xFF) << 8)) & 0xFFFF; // 2 bytes
+                int color_1 = ((b[pos++] & 0xFF) + ((b[pos++] & 0xFF) << 8)) & 0xFFFF; // 2 bytes
                 Color[] colour = new Color[4];
-                
+
                 if(color_0 > color_1) {
                     colour[0] = extract565(color_0);
                     colour[1] = extract565(color_1);
@@ -307,18 +304,22 @@ public class VTF {
                     colour[2] = new Color(Math.round((colour[0].getRed() + colour[1].getRed()) / 2), Math.round((colour[0].getGreen() + colour[1].getGreen()) / 2), Math.round((colour[0].getBlue() + colour[1].getBlue()) / 2));
                     colour[3] = new Color(0, 0, 0, 0);
                 }
-                
+
                 // remaining 4 bytes
 //                int sel = b[pos++];
 //        	    sel |= b[pos++] << 8;
 //        	    sel |= b[pos++] << 16;
 //        	    sel |= b[pos++] << 24;
-                for(int y1 = 0; y1 < 4/* - (height % 4)*/; y1++) { // 16 bits / 4 rows = 4 bits/line = 1 byte/row
+                for(int y1 = 0; y1 < 4/*
+                     * - (height % 4)
+                     */; y1++) { // 16 bits / 4 rows = 4 bits/line = 1 byte/row
                     byte rowData = b[pos++];
                     int[] rowBits = {(rowData & 0xC0) >>> 6, (rowData & 0x30) >>> 4, (rowData & 0xC) >>> 2, rowData & 0x3};
-                    
-                    for(int x1 = 0; x1 < 4/* - (width % 4)*/; x1++) { // column scan
-                        bi.setRGB((x) + x1, (y) + y1, colour[rowBits[3-x1]].getRGB()); // c is taken from 3 to ensure everything is drawn the correct way around
+
+                    for(int x1 = 0; x1 < 4/*
+                         * - (width % 4)
+                         */; x1++) { // column scan
+                        bi.setRGB((x) + x1, (y) + y1, colour[rowBits[3 - x1]].getRGB()); // c is taken from 3 to ensure everything is drawn the correct way around
 //                        bi.setRGB((x+x1), (y+y1), colour[sel & 3].getRGB());
 //                        sel >>= 2;
                     }
@@ -327,7 +328,7 @@ public class VTF {
         }
         return bi;
     }
-    
+
     //<editor-fold defaultstate="collapsed" desc="Currently unimplemented">
     /**
      *
@@ -339,13 +340,13 @@ public class VTF {
         BufferedImage bi = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
         Graphics2D g = (Graphics2D) bi.getGraphics();
         int pos = 0;
-        
+
         int bits_12 = 0xC0; // first 2 bits
         int bits_34 = 0x30; // next 2 bits
         int bits_56 = 0xC; // next 2 bits
         int bits_78 = 0x3; // last 2 bits
         //        RGB 565: WORD pixel565 = (red_value << 11) | (green_value << 5) | blue_value;
-        
+
         int xBlocks = (width / 4);
         if(xBlocks < 1) {
             xBlocks = 1;
@@ -354,35 +355,35 @@ public class VTF {
         if(yBlocks < 1) {
             yBlocks = 1;
         }
-        
+
         //        System.err.println("SIZE="+xBlocks+", "+yBlocks+" = " + b.length);
         for(int y = 0; y < yBlocks; y++) {
             for(int x = 0; x < xBlocks; x++) {
                 pos += 8; // 64 bits of alpha channel data (two 8 bit alpha values and a 4x4 3 bit lookup table)
-                int color_0 = (b[pos] & 0xff) + ((b[pos+1] & 0xff) << 8); // 2 bytes
+                int color_0 = (b[pos] & 0xff) + ((b[pos + 1] & 0xff) << 8); // 2 bytes
                 pos += 2;
-                int color_1 = (b[pos] & 0xff) + ((b[pos+1] & 0xff) << 8); // 2 bytes
+                int color_1 = (b[pos] & 0xff) + ((b[pos + 1] & 0xff) << 8); // 2 bytes
                 pos += 2;
-                
+
                 int red1, green1, blue1, red2, green2, blue2;
                 Color c1, c2;
-                
-                red1 = (int) (((color_0 & red_mask_565) >> 11) << 3);
-                green1 = (int) (((color_0 & green_mask_565) >> 5) << 2);
-                blue1 = (int) ((color_0 & blue_mask_565) << 3);
+
+                red1 = ((color_0 & red_mask_565) >> 11) << 3;
+                green1 = ((color_0 & green_mask_565) >> 5) << 2;
+                blue1 = ((color_0 & blue_mask_565) << 3);
                 c1 = new Color(red1, green1, blue1);
-                
-                red2 = (int) (((color_1 & red_mask_565) >> 11) << 3);
-                green2 = (int) (((color_1 & green_mask_565) >> 5) << 2);
-                blue2 = (int) ((color_1 & blue_mask_565) << 3);
+
+                red2 = ((color_1 & red_mask_565) >> 11) << 3;
+                green2 = ((color_1 & green_mask_565) >> 5) << 2;
+                blue2 = (color_1 & blue_mask_565) << 3;
                 c2 = new Color(red2, green2, blue2);
-                
+
                 // remaining 4 bytes
-                byte[] next4 = {b[pos], b[pos+1], b[pos+2], b[pos+3]};
+                byte[] next4 = {b[pos], b[pos + 1], b[pos + 2], b[pos + 3]};
                 pos += 4;
                 for(int y1 = 0; y1 < 4; y1++) { // 16 bits / 4 lines = 4 bits/line = 1 byte/line
                     int[] bits = new int[]{(next4[y1] & bits_12) >> 6, (next4[y1] & bits_34) >> 4, (next4[y1] & bits_56) >> 2, next4[y1] & bits_78};
-                    
+
                     for(int i = 0; i < 4; i++) { // horizontal scan
                         int bit = bits[i];
                         if(bit == 0) {
@@ -403,7 +404,7 @@ public class VTF {
                             g.setColor(c);
                         }
                         g.drawLine((x * 4) + 4 - i, (y * 4) + y1,
-                                (x * 4) + 4 - i, (y * 4) + y1);
+                                   (x * 4) + 4 - i, (y * 4) + y1);
                     }
                 }
             }
@@ -411,11 +412,11 @@ public class VTF {
         return bi;
     }
     //</editor-fold>
-    
+
     /**
-     * 
+     *
      * 8 bytes for alpha channel, additional 8 per 4*4 chunk
-     * 
+     *
      * TODO: fully implement correct colours
      */
     private static BufferedImage loadDXT5(byte[] b, int width, int height) {
@@ -424,25 +425,25 @@ public class VTF {
         Graphics2D g = (Graphics2D) bi.getGraphics();
         g.setComposite(AlphaComposite.Src);
         int pos = 0;
-        
-        for(int y = 0; y < height; y+=4) {
-            for(int x = 0; x < width; x+=4) {
-                
+
+        for(int y = 0; y < height; y += 4) {
+            for(int x = 0; x < width; x += 4) {
+
                 int[] a = new int[8];
                 a[0] = (b[pos++] & 0xFF); // 64 bits of alpha channel data (two 8 bit alpha values and a 4x4 3 bit lookup table)
                 a[1] = (b[pos++] & 0xFF);
                 if(a[0] > a[1]) {
-                    a[2] = Math.round((6*a[0] + 1*a[1])/7);
-                    a[3] = Math.round((5*a[0] + 2*a[1])/7);
-                    a[4] = Math.round((4*a[0] + 3*a[1])/7);
-                    a[5] = Math.round((3*a[0] + 4*a[1])/7);
-                    a[6] = Math.round((2*a[0] + 5*a[1])/7);
-                    a[7] = Math.round((1*a[0] + 6*a[1])/7);
+                    a[2] = Math.round((6 * a[0] + 1 * a[1]) / 7);
+                    a[3] = Math.round((5 * a[0] + 2 * a[1]) / 7);
+                    a[4] = Math.round((4 * a[0] + 3 * a[1]) / 7);
+                    a[5] = Math.round((3 * a[0] + 4 * a[1]) / 7);
+                    a[6] = Math.round((2 * a[0] + 5 * a[1]) / 7);
+                    a[7] = Math.round((1 * a[0] + 6 * a[1]) / 7);
                 } else {
-                    a[2] = Math.round((4*a[0] + 1*a[1])/5);
-                    a[3] = Math.round((3*a[0] + 2*a[1])/5);
-                    a[4] = Math.round((2*a[0] + 3*a[1])/5);
-                    a[5] = Math.round((1*a[0] + 4*a[1])/5);
+                    a[2] = Math.round((4 * a[0] + 1 * a[1]) / 5);
+                    a[3] = Math.round((3 * a[0] + 2 * a[1]) / 5);
+                    a[4] = Math.round((2 * a[0] + 3 * a[1]) / 5);
+                    a[5] = Math.round((1 * a[0] + 4 * a[1]) / 5);
                     a[6] = 0;
                     a[7] = 255;
                 }
@@ -460,26 +461,26 @@ public class VTF {
                     }
                     for(int yi = 0; yi < 2; yi++) {
                         for(int xi = 0; xi < 4; xi++) {
-                            alphas[2+yi][xi] = a[((sel2) & 0x7)];
+                            alphas[2 + yi][xi] = a[((sel2) & 0x7)];
                             sel2 >>= 3;
                         }
                     }
                 } else {
                     pos += 8;
                 }
-                
+
                 // Copy-paste from DXT1
-                
+
                 int c0 = (b[pos++] & 0xff);
-                    c0 |= ((b[pos++] & 0xff) << 8); // 2 bytes
+                c0 |= ((b[pos++] & 0xff) << 8); // 2 bytes
                 int c1 = (b[pos++] & 0xff);
-                    c1 |= ((b[pos++] & 0xff) << 8); // 2 bytes
+                c1 |= ((b[pos++] & 0xff) << 8); // 2 bytes
                 Color[] colour = new Color[4];
                 colour[0] = extract565(c0);
                 colour[1] = extract565(c1);
                 colour[2] = new Color(Math.round(((2 * colour[0].getRed()) + colour[1].getRed()) / 3), Math.round(((2 * colour[0].getGreen()) + colour[1].getGreen()) / 3), Math.round(((2 * colour[0].getBlue()) + colour[1].getBlue()) / 3));
                 colour[3] = new Color(Math.round(((2 * colour[1].getRed()) + colour[0].getRed()) / 3), Math.round(((2 * colour[1].getGreen()) + colour[0].getGreen()) / 3), Math.round(((2 * colour[1].getBlue()) + colour[0].getBlue()) / 3));
-                
+
                 // remaining 4 bytes
                 if(width >= 4 && height >= 4) {
                     for(int y1 = 0; y1 < 4; y1++) { // 16 bits / 4 rows = 4 bits/line = 1 byte/row
@@ -489,8 +490,8 @@ public class VTF {
                         for(int x1 = 0; x1 < 4; x1++) { // column scan
 //                            if(alphas[y1][x1] > 0)
 //                                System.out.println(alphas[y1][x1]);
-                            Color col = new Color(colour[rowBits[3-x1]].getRed(), colour[rowBits[3-x1]].getGreen(), colour[rowBits[3-x1]].getBlue(), alphas[y1][x1]); // c is taken from 3 to ensure everything is drawn the correct way around
-                            bi.setRGB((x+x1), (y+y1), col.getRGB());
+                            Color col = new Color(colour[rowBits[3 - x1]].getRed(), colour[rowBits[3 - x1]].getGreen(), colour[rowBits[3 - x1]].getBlue(), alphas[y1][x1]); // c is taken from 3 to ensure everything is drawn the correct way around
+                            bi.setRGB((x + x1), (y + y1), col.getRGB());
 //                            System.out.println("(" + y + "," + x + ") = " + (y1) + ":" + (x1) + " = (" + (y+y1) + "," + (x+x1) + ")");
                         }
 //                        System.out.println();
@@ -502,35 +503,35 @@ public class VTF {
         }
         return bi;
     }
-    
+
     private static BufferedImage loadUV(byte[] b, int width, int height) {
         BufferedImage bi = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
         Graphics2D g = (Graphics2D) bi.getGraphics();
         int pos = 0;
         for(int y = 0; y < height; y++) {
             for(int x = 0; x < width; x++) {
-                g.setColor(new Color((b[pos] & 0xff) + ((b[pos+1] & 0xff) << 16) + ((255 & 0xff) << 24)));
+                g.setColor(new Color((b[pos] & 0xff) + ((b[pos + 1] & 0xff) << 16) + ((255 & 0xff) << 24)));
                 pos += 2;
                 g.drawLine(x, y, x, y);
             }
         }
         return bi;
     }
-    
+
     private static BufferedImage loadBGR(byte[] b, int width, int height) {
         BufferedImage bi = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
         Graphics2D g = (Graphics2D) bi.getGraphics();
         int pos = 0;
         for(int y = 0; y < height; y++) {
             for(int x = 0; x < width; x++) {
-                g.setColor(new Color((b[pos] & 0xff) + ((b[pos+1] & 0xff) << 8) + ((b[pos+2] & 0xff) << 16) + ((255 & 0xff) << 24)));
+                g.setColor(new Color((b[pos] & 0xff) + ((b[pos + 1] & 0xff) << 8) + ((b[pos + 2] & 0xff) << 16) + ((255 & 0xff) << 24)));
                 pos += 3;
                 g.drawLine(x, y, x, y);
             }
         }
         return bi;
     }
-    
+
     private static BufferedImage loadBGRA(byte[] b, int width, int height) {
         BufferedImage bi = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
         Graphics2D g = (Graphics2D) bi.getGraphics();
@@ -538,60 +539,64 @@ public class VTF {
         int pos = 0;
         for(int y = 0; y < height; y++) {
             for(int x = 0; x < width; x++) {
-                g.setColor(new Color((b[pos+2] & 0xff), (b[pos+1] & 0xff), (b[pos] & 0xff), (b[pos+3] & 0xff)));
+                g.setColor(new Color((b[pos + 2] & 0xff), (b[pos + 1] & 0xff), (b[pos] & 0xff), (b[pos + 3] & 0xff)));
                 pos += 4;
                 g.drawLine(x, y, x, y);
             }
         }
         return bi;
     }
-    
+
     //<editor-fold defaultstate="collapsed" desc="Helpers">
     private static int nextPowerOf2(int n) {
-       n |= (n >> 16);
-       n |= (n >> 8);
-       n |= (n >> 4);
-       n |= (n >> 2);
-       n |= (n >> 1);
-       ++n;
-       return n;
+        n |= (n >> 16);
+        n |= (n >> 8);
+        n |= (n >> 4);
+        n |= (n >> 2);
+        n |= (n >> 1);
+        ++n;
+        return n;
     }
-    
+
     //<editor-fold defaultstate="collapsed" desc="Colour helpers">
     private static Color createColor(float r, float g, float b, float a) {
         return new Color(Math.round(r), Math.round(g), Math.round(b), Math.round(a));
     }
-    
+
     /**
      * First 5 bits
      */
     private static final int red_mask_565 = 0xF800;
-    
+
     /**
      * Next 6 bits
      */
     private static final int green_mask_565 = 0x7E0;
-    
+
     /**
      * Last 5 bits
      */
     private static final int blue_mask_565 = 0x1F;
-    
+
     private static Color extract565(int c) {
         return createColor((float) (((c & red_mask_565) >>> 11) << 3), (float) (((c & green_mask_565) >>> 5) << 2), (float) ((c & blue_mask_565) << 3), 255);
     }
-    
+
     private static final int red_mask_555 = 0x7C00; // first 5 bits
+
     private static final int green_mask_555 = 0x3E0; // next 5 bits
+
     private static final int blue_mask_555 = 0x1F;
+
     private static final int alpha_mask_555 = 0x1;
-    
+
     private static Color extract555(int c) {
         return createColor((float) (((c & red_mask_555) >>> 10) << 3), (float) (((c & green_mask_555) >>> 5) << 3), (float) ((c & blue_mask_555) << 3), (float) ((c & alpha_mask_555) << 7));
     }
     //</editor-fold>
-    
+
     public static enum Format {
+
         IMAGE_FORMAT_NONE(-1),
         IMAGE_FORMAT_RGBA8888(0),
         IMAGE_FORMAT_ABGR8888(1),
@@ -629,17 +634,17 @@ public class VTF {
         IMAGE_FORMAT_RGBA16161616F(24),
         IMAGE_FORMAT_RGBA16161616(25),
         IMAGE_FORMAT_UVLX8888(26);
-        
+
         private int index;
-        
+
         private Format(int index) {
             this.index = index;
         }
-        
+
         public int getIndex() {
             return index;
         }
-        
+
         public static Format getEnumForIndex(int index) {
             Format[] values = Format.values();
             for(Format eachValue : values) {
@@ -649,14 +654,14 @@ public class VTF {
             }
             return null;
         }
-        
     }
-    
+
     /**
      * https://developer.valvesoftware.com/wiki/Valve_Texture_Format#Image_flags
      */
     public static enum Flags {
         // Flags from the *.txt config file
+
         TEXTUREFLAGS_POINTSAMPLE(0x00000001),
         TEXTUREFLAGS_TRILINEAR(0x00000002),
         TEXTUREFLAGS_CLAMPS(0x00000004),
@@ -669,11 +674,9 @@ public class VTF {
         TEXTUREFLAGS_NOLOD(0x00000200),
         TEXTUREFLAGS_ALL_MIPS(0x00000400),
         TEXTUREFLAGS_PROCEDURAL(0x00000800),
-        
         // These are automatically generated by vtex from the texture data.
         TEXTUREFLAGS_ONEBITALPHA(0x00001000),
         TEXTUREFLAGS_EIGHTBITALPHA(0x00002000),
-        
         // Newer flags from the *.txt config file
         TEXTUREFLAGS_ENVMAP(0x00004000),
         TEXTUREFLAGS_RENDERTARGET(0x00008000),
@@ -681,36 +684,29 @@ public class VTF {
         TEXTUREFLAGS_NODEBUGOVERRIDE(0x00020000),
         TEXTUREFLAGS_SINGLECOPY(0x00040000),
         TEXTUREFLAGS_PRE_SRGB(0x00080000),
-        
         TEXTUREFLAGS_UNUSED_00100000(0x00100000),
         TEXTUREFLAGS_UNUSED_00200000(0x00200000),
         TEXTUREFLAGS_UNUSED_00400000(0x00400000),
-        
         TEXTUREFLAGS_NODEPTHBUFFER(0x00800000),
-        
         TEXTUREFLAGS_UNUSED_01000000(0x01000000),
-        
         TEXTUREFLAGS_CLAMPU(0x02000000),
         TEXTUREFLAGS_VERTEXTEXTURE(0x04000000),
         TEXTUREFLAGS_SSBUMP(0x08000000),
-        
         TEXTUREFLAGS_UNUSED_10000000(0x10000000),
-        
         TEXTUREFLAGS_BORDER(0x20000000),
-        
         TEXTUREFLAGS_UNUSED_40000000(0x40000000),
         TEXTUREFLAGS_UNUSED_80000000(0x80000000);
-        
+
         private int mask;
-        
+
         private Flags(int mask) {
             this.mask = mask;
         }
-        
+
         public int getMask() {
             return mask;
         }
-        
+
         public static Flags getEnumForMask(int mask) {
             Flags[] values = Flags.values();
             for(Flags eachValue : values) {
@@ -722,6 +718,6 @@ public class VTF {
         }
     }
     //</editor-fold>
+
     private static final Logger LOG = Logger.getLogger(VTF.class.getName());
-    
 }

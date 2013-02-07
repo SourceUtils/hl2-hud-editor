@@ -94,26 +94,33 @@ import org.java.ayatana.AyatanaDesktop;
  * @author timepath
  */
 public final class EditorFrame extends javax.swing.JFrame {
-    
-    private static final Logger logger = Logger.getLogger(EditorFrame.class.getName());
-    
+
+    private static final Logger LOG = Logger.getLogger(EditorFrame.class.getName());
+
     //<editor-fold defaultstate="collapsed" desc="Variables">
     private final EditorMenuBar jmb;
+
     private final DefaultMutableTreeNode fileSystemRoot;
+
     private final FileTree fileTree;
+
     private final PropertyTable propTable;
+
     public static Canvas canvas;
-    
+
     private boolean updating;
+
     public boolean autoCheck = true;
-    
+
     private File hudSelectionDir;
+
     private File lastLoaded;
-    
+
     private JSpinner spinnerWidth;
+
     private JSpinner spinnerHeight;
     //</editor-fold>
-    
+
     //<editor-fold defaultstate="collapsed" desc="Dialogs">
     private void changelog() {
         new Thread() {
@@ -123,10 +130,10 @@ public final class EditorFrame extends javax.swing.JFrame {
                     URL url = new URL("https://dl.dropbox.com/u/42745598/tf/Hud%20Editor/TF2%20HUD%20Editor.jar.changes");
                     URLConnection connection = url.openConnection();
 //                    HttpURLConnection connection = (HttpURLConnection) url.openConnection();
-                    logger.info("getting filesize...");
+                    LOG.info("getting filesize...");
                     int filesize = connection.getContentLength();
                     System.out.println(filesize);
-                    
+
                     String text = "";
                     BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getInputStream()));
                     String line;
@@ -145,17 +152,16 @@ public final class EditorFrame extends javax.swing.JFrame {
                         }
                     }
                     reader.close();
-                    
+
                     final JEditorPane panel = new JEditorPane("text/html", text);
                     Dimension s = Toolkit.getDefaultToolkit().getScreenSize();
                     panel.setPreferredSize(new Dimension(s.width / 4, s.height / 2));
                     panel.setEditable(false);
                     panel.setOpaque(false);
                     panel.addHyperlinkListener(new HyperlinkListener() {
-                        
                         @Override
                         public void hyperlinkUpdate(HyperlinkEvent he) {
-                            if (he.getEventType().equals(HyperlinkEvent.EventType.ACTIVATED)) {
+                            if(he.getEventType().equals(HyperlinkEvent.EventType.ACTIVATED)) {
                                 try {
                                     Desktop.getDesktop().browse(he.getURL().toURI());
                                 } catch(Exception e) {
@@ -163,27 +169,25 @@ public final class EditorFrame extends javax.swing.JFrame {
                                 }
                             }
                         }
-                        
                     });
                     JScrollPane window = new JScrollPane(panel);
                     window.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
                     info(window, "Changes");
                 } catch(IOException ex) {
                     error(ex);
-                    logger.log(Level.SEVERE, null, ex);
+                    LOG.log(Level.SEVERE, null, ex);
                 }
             }
         }.start();
     }
-    
+
     private void checkForUpdates() {
         if(Main.indev) {
             return;
         }
         new Thread() {
-            
             int retries = 3;
-            
+
             private void doCheckForUpdates() {
                 try {
                     String md5;
@@ -194,10 +198,10 @@ public final class EditorFrame extends javax.swing.JFrame {
                     try {
                         is = connection.getInputStream();
                     } catch(UnknownHostException ex) {
-                        logger.info("No internet connection");
+                        LOG.info("No internet connection");
                         return;
                     }
-                    
+
                     // read from internet
                     BufferedReader reader = new BufferedReader(new InputStreamReader(is));
                     String line = reader.readLine();
@@ -209,78 +213,77 @@ public final class EditorFrame extends javax.swing.JFrame {
                         return;
                     }
                     reader.close();
-                    
+
                     boolean equal = md5.equals(Main.myVer);
-                    
-                    logger.log(Level.INFO, "{0} ={1}= {2}", new Object[]{md5, equal ? "" : "/", Main.myVer});
-                    
+
+                    LOG.log(Level.INFO, "{0} ={1}= {2}", new Object[]{md5, equal ? "" : "/", Main.myVer});
+
                     if(!equal) {
 //                        updateButton.setEnabled(true);
                         int returnCode = JOptionPane.showConfirmDialog(null, "Would you like to update to the latest version?", "A new update is available", JOptionPane.YES_NO_OPTION);
                         if(returnCode == JOptionPane.YES_OPTION) {
                             long startTime = System.currentTimeMillis();
-                            
+
                             System.out.println("Connecting to Dropbox...\n");
-                            
+
                             URL latest = new URL("https://dl.dropbox.com/u/42745598/tf/Hud%20Editor/TF2%20HUD%20Editor.jar");
                             URLConnection editor = latest.openConnection();
-                            
-                            JProgressBar pb = new JProgressBar(0,editor.getContentLength());
+
+                            JProgressBar pb = new JProgressBar(0, editor.getContentLength());
 //                            pb.setPreferredSize(new Dimension(175,20));
                             pb.setStringPainted(true);
                             pb.setValue(0);
-                            
+
 //                            JLabel label = new JLabel("Update Progress: ");
-                            
+
 //                            JPanel center_panel = new JPanel();
 //                            center_panel.add(label);
 //                            center_panel.add(pb);
-                            
+
 //                            JDialog dialog = new JDialog((JFrame) null, "Updating...");
 //                            dialog.getContentPane().add(center_panel, BorderLayout.CENTER);
 //                            dialog.pack();
 //                            dialog.setVisible(true);
-                            
+
 //                            statusBar.remove(updateButton);
                             status.add(pb, BorderLayout.EAST);
-                            
+
 //                            dialog.setLocationRelativeTo(null); // center on screen
 //                            dialog.toFront(); // raise above other java windows
-                            
+
                             InputStream in = latest.openStream();
-                            
-                            
+
+
                             FileOutputStream writer = new FileOutputStream(Main.runPath); // TODO: stop closing when this happens. Maybe make a backup..
                             byte[] buffer = new byte[153600]; // 150KB
                             int totalBytesRead = 0;
                             int bytesRead;
-                            
-                            logger.info("Downloading JAR file in 150KB blocks at a time.\n");
-                            
+
+                            LOG.info("Downloading JAR file in 150KB blocks at a time.\n");
+
                             updating = true;
-                            
+
                             while((bytesRead = in.read(buffer)) > 0) {
                                 writer.write(buffer, 0, bytesRead); // I don't want to write directly over the top until I have all the data..
                                 buffer = new byte[153600];
                                 totalBytesRead += bytesRead;
                                 pb.setValue(totalBytesRead);
                             }
-                            
+
                             long endTime = System.currentTimeMillis();
-                            
-                            logger.log(Level.INFO, "Done. {0} bytes read ({1} millseconds).\n", new Object[]{new Integer(totalBytesRead).toString(), new Long(endTime - startTime).toString()});
+
+                            LOG.log(Level.INFO, "Done. {0} bytes read ({1} millseconds).\n", new Object[]{new Integer(totalBytesRead).toString(), new Long(endTime - startTime).toString()});
                             writer.close();
                             in.close();
-                            
+
 //                            dialog.dispose();
-                            
+
                             info("Downloaded the latest version. Please restart now.");
-                            
+
                             updating = false;
-                            
+
                             final JButton rb = new JButton("Restart");
                             rb.setAction(new Action() {
-
                                 public Object getValue(String string) {
                                     throw new UnsupportedOperationException("Not supported yet.");
                                 }
@@ -308,13 +311,12 @@ public final class EditorFrame extends javax.swing.JFrame {
                                 public void actionPerformed(ActionEvent ae) {
                                     try {
                                         Utils.restart();
-                                    } catch (URISyntaxException ex) {
-                                        logger.log(Level.SEVERE, null, ex);
-                                    } catch (IOException ex) {
-                                        logger.log(Level.SEVERE, null, ex);
+                                    } catch(URISyntaxException ex) {
+                                        LOG.log(Level.SEVERE, null, ex);
+                                    } catch(IOException ex) {
+                                        LOG.log(Level.SEVERE, null, ex);
                                     }
                                 }
-                                
                             });
                             status.remove(pb);
                             status.add(rb, BorderLayout.EAST);
@@ -327,19 +329,19 @@ public final class EditorFrame extends javax.swing.JFrame {
                     if(retries > 0) {
                         doCheckForUpdates();
                     } else {
-                        logger.log(Level.SEVERE, null, ex);
+                        LOG.log(Level.SEVERE, null, ex);
                         updating = false;
                     }
                 }
             }
-            
+
             @Override
             public void run() {
                 doCheckForUpdates();
             }
         }.start();
     }
-    
+
     public void preferences() {
         String aboutText = "This is where preferences will go for the editor.\n";
         aboutText += "There are none at this time";
@@ -348,7 +350,7 @@ public final class EditorFrame extends javax.swing.JFrame {
         panel.setOpaque(false);
         info(panel, "About");
     }
-    
+
     public void about() {
         String latestThread = "http://www.reddit.com/r/truetf2/comments/11xtwz/wysiwyg_hud_editor_coming_together/";
         String aboutText = "<html><h2>This is a <u>W</u>hat <u>Y</u>ou <u>S</u>ee <u>I</u>s <u>W</u>hat <u>Y</u>ou <u>G</u>et HUD Editor for TF2.</h2>";
@@ -356,17 +358,16 @@ public final class EditorFrame extends javax.swing.JFrame {
         aboutText += "<p>It was written by <a href=\"http://www.reddit.com/user/TimePath/\">TimePath</a></p>";
         aboutText += "<p>Source available on <a href=\"http://code.google.com/p/tf2-hud-editor/\">Google code</a></p>";
         aboutText += "<p>I have an <a href=\"http://code.google.com/feeds/p/tf2-hud-editor/hgchanges/basic\">Atom feed</a> set up listing source commits</p>";
-        aboutText += "<p>Please give feedback or suggestions on <a href=\""+latestThread+"\">the latest update thread</a></p>";
+        aboutText += "<p>Please give feedback or suggestions on <a href=\"" + latestThread + "\">the latest update thread</a></p>";
         aboutText += "<p>Current version: " + Main.myVer + "</p>";
         aboutText += "</html>";
         JEditorPane panel = new JEditorPane("text/html", aboutText);
         panel.setEditable(false);
         panel.setOpaque(false);
         panel.addHyperlinkListener(new HyperlinkListener() {
-            
             @Override
             public void hyperlinkUpdate(HyperlinkEvent he) {
-                if (he.getEventType().equals(HyperlinkEvent.EventType.ACTIVATED)) {
+                if(he.getEventType().equals(HyperlinkEvent.EventType.ACTIVATED)) {
                     try {
                         Desktop.getDesktop().browse(he.getURL().toURI()); // http://stackoverflow.com/questions/5116473/linux-command-to-open-url-in-default-browser
                     } catch(Exception e) {
@@ -374,18 +375,17 @@ public final class EditorFrame extends javax.swing.JFrame {
                     }
                 }
             }
-            
         });
         info(panel, "About");
     }
-    
+
     private void locateUserDirectory() {
         FilenameFilter dirFilter = new FilenameFilter() {
             public boolean accept(File dir, String name) {
                 return new File(dir, name).isDirectory();
             }
         };
-        
+
         JComboBox dropDown = new JComboBox();
         File steamappsFolder = new File(Utils.locateSteamAppsDirectory());
         if(steamappsFolder == null) {
@@ -437,7 +437,7 @@ public final class EditorFrame extends javax.swing.JFrame {
         new Thread() {
             @Override
             public void run() {
-                NativeFileChooser nc = new NativeFileChooser(EditorFrame.this, Main.rb.getString("LoadHudDir"), lastLoaded);
+                NativeFileChooser nc = new NativeFileChooser(EditorFrame.this, Main.strings.getString("LoadHudDir"), lastLoaded);
                 final File selection = nc.getFolder();
                 if(selection != null) {
                     new Thread() {
@@ -451,66 +451,65 @@ public final class EditorFrame extends javax.swing.JFrame {
             }
         }.start();
     }
-    
+
     private void locateZippedHud() {
-        
     }
-    
+
     //<editor-fold defaultstate="collapsed" desc="Messages">
     private void error(Object msg) {
-        error(msg, Main.rb.getString("Error"));
+        error(msg, Main.strings.getString("Error"));
     }
-    
+
     private void error(Object msg, String title) {
         JOptionPane.showMessageDialog(this, msg, title, JOptionPane.ERROR_MESSAGE);
     }
-    
+
     private void info(Object msg) {
-        info(msg, Main.rb.getString("Info"));
+        info(msg, Main.strings.getString("Info"));
     }
-    
+
     private void info(Object msg, String title) {
         JOptionPane.showMessageDialog(this, msg, title, JOptionPane.INFORMATION_MESSAGE);
     }
     //</editor-fold>
-    
+
     private void changeResolution() {
-        
-    //<editor-fold defaultstate="collapsed" desc="Number filter">
-    //    private static class NumericDocumentFilter extends DocumentFilter {
-    //
-    //        @Override
-    //        public void insertString(FilterBypass fb, int offset, String string, AttributeSet attr) throws BadLocationException {
-    //            if(stringContainsOnlyDigits(string)) {
-    //                super.insertString(fb, offset, string, attr);
-    //            }
-    //        }
-    //
-    //        @Override
-    //        public void remove(FilterBypass fb, int offset, int length) throws BadLocationException {
-    //            super.remove(fb, offset, length);
-    //        }
-    //
-    //        @Override
-    //        public void replace(FilterBypass fb, int offset, int length, String text, AttributeSet attrs) throws BadLocationException {
-    //            if(stringContainsOnlyDigits(text)) {
-    //                super.replace(fb, offset, length, text, attrs);
-    //            }
-    //        }
-    //
-    //        private boolean stringContainsOnlyDigits(String text) {
-    //            for (int i = 0; i < text.length(); i++) {
-    //                if (!Character.isDigit(text.charAt(i))) {
-    //                    return false;
-    //                }
-    //            }
-    //            return true;
-    //        }
-    //    }
-    //</editor-fold>
-    
+
+        //<editor-fold defaultstate="collapsed" desc="Number filter">
+        //    private static class NumericDocumentFilter extends DocumentFilter {
+        //
+        //        @Override
+        //        public void insertString(FilterBypass fb, int offset, String string, AttributeSet attr) throws BadLocationException {
+        //            if(stringContainsOnlyDigits(string)) {
+        //                super.insertString(fb, offset, string, attr);
+        //            }
+        //        }
+        //
+        //        @Override
+        //        public void remove(FilterBypass fb, int offset, int length) throws BadLocationException {
+        //            super.remove(fb, offset, length);
+        //        }
+        //
+        //        @Override
+        //        public void replace(FilterBypass fb, int offset, int length, String text, AttributeSet attrs) throws BadLocationException {
+        //            if(stringContainsOnlyDigits(text)) {
+        //                super.replace(fb, offset, length, text, attrs);
+        //            }
+        //        }
+        //
+        //        private boolean stringContainsOnlyDigits(String text) {
+        //            for (int i = 0; i < text.length(); i++) {
+        //                if (!Character.isDigit(text.charAt(i))) {
+        //                    return false;
+        //                }
+        //            }
+        //            return true;
+        //        }
+        //    }
+        //</editor-fold>
+
 //            spinnerWidth = new JSpinner(new SpinnerNumberModel(canvas.screen.width, 640, 7680, 1)); // WHUXGA
-            spinnerWidth.setEnabled(false);
+        spinnerWidth.setEnabled(false);
 //            NumberEditor jsWidth = (NumberEditor) spinnerWidth.getEditor();
 //            final Document jsWidthDoc = jsWidth.getTextField().getDocument();
 //            if(jsWidthDoc instanceof PlainDocument) {
@@ -528,7 +527,7 @@ public final class EditorFrame extends javax.swing.JFrame {
 //                jsWidth.getTextField().setDocument(docWidth);
 //            }
 //            spinnerHeight = new JSpinner(new SpinnerNumberModel(canvas.screen.height, 480, 4800, 1)); // WHUXGA
-            spinnerHeight.setEnabled(false);
+        spinnerHeight.setEnabled(false);
 //            NumberEditor jsHeight = (NumberEditor) spinnerHeight.getEditor();
 //            final Document jsHeightDoc = jsHeight.getTextField().getDocument();
 //            if(jsHeightDoc instanceof PlainDocument) {
@@ -546,11 +545,11 @@ public final class EditorFrame extends javax.swing.JFrame {
 //                jsHeight.getTextField().setDocument(docHeight);
 //            }
         final JComboBox dropDown = new JComboBox();
-        
+
         GraphicsEnvironment env = GraphicsEnvironment.getLocalGraphicsEnvironment();
         GraphicsDevice[] devices = env.getScreenDevices();
         ArrayList<Object> listItems = new ArrayList<Object>();
-        for (int i = 0; i < devices.length; i++) {
+        for(int i = 0; i < devices.length; i++) {
             DisplayMode[] resolutions = devices[i].getDisplayModes(); // TF2 has different resolutions
             for(int j = 0; j < resolutions.length; j++) {
                 String item = resolutions[j].getWidth() + "x" + resolutions[j].getHeight(); // TODO: Work out aspect ratios
@@ -565,7 +564,6 @@ public final class EditorFrame extends javax.swing.JFrame {
         }
         dropDown.setSelectedIndex(1);
         dropDown.addActionListener(new ActionListener() {
-
             public void actionPerformed(ActionEvent e) {
                 String item = dropDown.getSelectedItem().toString();
                 boolean isRes = item.contains("x");
@@ -577,11 +575,10 @@ public final class EditorFrame extends javax.swing.JFrame {
                     spinnerHeight.setValue(Integer.parseInt(xy[1]));
                 }
             }
-            
         });
-        
+
         Object[] message = {"Presets: ", dropDown, "Width: ", spinnerWidth, "Height: ", spinnerHeight};
-        
+
         final JOptionPane optionPane = new JOptionPane(message, JOptionPane.PLAIN_MESSAGE, JOptionPane.OK_CANCEL_OPTION, null, null);
         final JDialog dialog = optionPane.createDialog(this, "Change resolution...");
         dialog.setContentPane(optionPane);
@@ -595,7 +592,7 @@ public final class EditorFrame extends javax.swing.JFrame {
         }
     }
     //</editor-fold>
-    
+
     //<editor-fold defaultstate="collapsed" desc="Overrides">
     @Override
     public void setJMenuBar(JMenuBar menubar) {
@@ -605,26 +602,26 @@ public final class EditorFrame extends javax.swing.JFrame {
                 OSXAdapter.setQuitHandler(this, getClass().getDeclaredMethod("quit", (Class[]) null));
                 OSXAdapter.setAboutHandler(this, getClass().getDeclaredMethod("about", (Class[]) null));
                 OSXAdapter.setPreferencesHandler(this, getClass().getDeclaredMethod("preferences", (Class[]) null));
-    //            OSXAdapter.setFileHandler(this, getClass().getDeclaredMethod("loadImageFile", new Class[] { String.class }));
+                //            OSXAdapter.setFileHandler(this, getClass().getDeclaredMethod("loadImageFile", new Class[] { String.class }));
 
-    //            com.apple.eawt.Application app = com.apple.eawt.Application.getApplication();
-    //            app.setEnabledPreferencesMenu(true);
-    //            app.setEnabledAboutMenu(true);
-    //            app.setQuitStrategy(QuitStrategy.CLOSE_ALL_WINDOWS);
-    //            app.setAboutHandler(new com.apple.eawt.AboutHandler() {
-    //                public void handleAbout(AboutEvent e) {
-    //                    about();
-    //                }
-    //            });
-    //            app.setQuitHandler(new com.apple.eawt.QuitHandler() {
-    //                public void handleQuitRequestWith(QuitEvent qe, QuitResponse qr) {
-    //                    quit();
-    //                }
-    //            });
-    //            ImageIcon icon = ... // your code to load your icon
-    //            application.setDockIconImage(icon.getImage());
+                //            com.apple.eawt.Application app = com.apple.eawt.Application.getApplication();
+                //            app.setEnabledPreferencesMenu(true);
+                //            app.setEnabledAboutMenu(true);
+                //            app.setQuitStrategy(QuitStrategy.CLOSE_ALL_WINDOWS);
+                //            app.setAboutHandler(new com.apple.eawt.AboutHandler() {
+                //                public void handleAbout(AboutEvent e) {
+                //                    about();
+                //                }
+                //            });
+                //            app.setQuitHandler(new com.apple.eawt.QuitHandler() {
+                //                public void handleQuitRequestWith(QuitEvent qe, QuitResponse qr) {
+                //                    quit();
+                //                }
+                //            });
+                //            ImageIcon icon = ... // your code to load your icon
+                //            application.setDockIconImage(icon.getImage());
             } catch(Exception e) {
-                logger.severe(e.toString());
+                LOG.severe(e.toString());
             }
         } else if(Main.os == OS.Linux) {
             try {
@@ -641,7 +638,7 @@ public final class EditorFrame extends javax.swing.JFrame {
             }
         }
     }
-    
+
     @Override
     public void setVisible(boolean b) {
         super.setVisible(b);
@@ -655,29 +652,29 @@ public final class EditorFrame extends javax.swing.JFrame {
     //<editor-fold defaultstate="collapsed" desc="Actions">
     private void closeHud() {
 //        canvas.removeAllElements();
-        
+
         fileSystemRoot.removeAllChildren();
         fileSystemRoot.setUserObject(null);
         DefaultTreeModel model1 = (DefaultTreeModel) fileTree.getModel();
         model1.reload();
         fileTree.setSelectionRow(0);
-        
+
         DefaultTableModel model2 = (DefaultTableModel) propTable.getModel();
         model2.setRowCount(0);
         model2.insertRow(0, new String[]{"", "", ""});
         propTable.repaint();
     }
-    
+
     private void loadHud(File root) {
         if(root == null) {
             return;
         }
         if(!root.exists()) {
-            error(new MessageFormat(Main.rb.getString("FileAccessError")).format(new Object[]{root}));
+            error(new MessageFormat(Main.strings.getString("FileAccessError")).format(new Object[]{root}));
         }
         setLastLoaded(root);
         System.out.println("You have selected: " + root.getAbsolutePath());
-        
+
         if(root.getName().endsWith(".zip")) {
             try {
                 ZipInputStream zin = new ZipInputStream(new FileInputStream(root));
@@ -687,11 +684,11 @@ public final class EditorFrame extends javax.swing.JFrame {
                     zin.closeEntry();
                 }
                 zin.close();
-            } catch (IOException e) {
+            } catch(IOException e) {
             }
             return;
         }
-        
+
         if(root.isDirectory()) {
             File[] folders = root.listFiles();
             boolean valid = true;
@@ -707,7 +704,7 @@ public final class EditorFrame extends javax.swing.JFrame {
                 return;
             }
             closeHud();
-            
+
             //            SwingWorker<Void, Void> worker = new SwingWorker<Void, Void>() {
             //
             //                @Override
@@ -727,29 +724,29 @@ public final class EditorFrame extends javax.swing.JFrame {
             //
             //            };
             //            worker.execute();
-            
+
             this.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
             final long start = System.currentTimeMillis();
             Utils.recurseDirectoryToNode(root, fileSystemRoot);
             fileSystemRoot.setUserObject(root.getName()); // The only String in the tree
-            
+
             DefaultTreeModel model = (DefaultTreeModel) fileTree.getModel();
             model.reload();
             fileTree.setSelectionRow(0);
-            
+
             SwingUtilities.invokeLater(new Runnable() {
                 @Override
                 public void run() {
-                    logger.log(Level.INFO, "Loaded hud - took {0}ms", (System.currentTimeMillis() - start));
+                    LOG.log(Level.INFO, "Loaded hud - took {0}ms", (System.currentTimeMillis() - start));
                     setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
                 }
             });
         }
     }
-    
+
     public void quit() {
         if(!updating) {
-            logger.info("Quitting...");
+            LOG.info("Quitting...");
             this.dispose();
             if(Main.os == OS.Mac) {
                 JFrame f = new JFrame();
@@ -762,43 +759,42 @@ public final class EditorFrame extends javax.swing.JFrame {
             }
         }
     }
-    
+
     private void setLastLoaded(File root) {
         lastLoaded = root;
         jmb.reloadItem.setEnabled(root != null);
     }
     //</editor-fold>
-    
+
     //<editor-fold defaultstate="collapsed" desc="Interface">
     /**
      * Creates new form EditorFrame
      */
     public EditorFrame() {
         initComponents();
-        
+
         URL url = getClass().getResource("/com/timepath/tf2/hudeditor/resources/Icon.png");
         Image icon = Toolkit.getDefaultToolkit().getImage(url);
         this.setIconImage(icon);
-        this.setTitle(Main.rb.getString("Title"));
+        this.setTitle(Main.strings.getString("Title"));
         this.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
-        
+
         this.addWindowListener(new WindowAdapter() {
-            
             @Override
             public void windowClosing(WindowEvent e) {
                 quit();
             }
-            
         });
-        
+
         //<editor-fold defaultstate="collapsed" desc="Menu fix for window managers that don't set position on resize">
         if(Main.os == OS.Linux) {
             this.addComponentListener(new ComponentAdapter() {
-                
                 boolean moved;
+
                 Point real = new Point();
+
                 boolean updateReal = true;
-                
+
                 /**
                  * When maximizing windows on linux under gnome-shell, the JMenuBar
                  * menus appear not to work. This is because the position of the
@@ -808,12 +804,12 @@ public final class EditorFrame extends javax.swing.JFrame {
                 public void componentResized(ComponentEvent e) {
                     Rectangle b = EditorFrame.this.getBounds();
                     Rectangle s = EditorFrame.this.getGraphicsConfiguration().getBounds();
-                    
+
                     if(moved) {
                         moved = false;
                         return;
                     }
-                    
+
                     if(updateReal) {
                         real.x = b.x;
                         real.y = b.y;
@@ -831,7 +827,7 @@ public final class EditorFrame extends javax.swing.JFrame {
                     }
                     EditorFrame.this.setBounds(b);
                 }
-                
+
                 @Override
                 public void componentMoved(ComponentEvent e) {
                     Rectangle b = EditorFrame.this.getBounds();
@@ -842,12 +838,12 @@ public final class EditorFrame extends javax.swing.JFrame {
             });
         }
         //</editor-fold>
-        
+
         DisplayMode d = GraphicsEnvironment.getLocalGraphicsEnvironment().getDefaultScreenDevice().getDisplayMode();
-        
+
         this.setMinimumSize(new Dimension(640, 480));
         this.setPreferredSize(new Dimension((int) (d.getWidth() / 1.5), (int) (d.getHeight() / 1.5)));
-        
+
         this.setLocation((d.getWidth() / 2) - (this.getPreferredSize().width / 2), (d.getHeight() / 2) - (this.getPreferredSize().height / 2));
         this.setLocationRelativeTo(null);
         //<editor-fold defaultstate="collapsed" desc="Drag+drop">
@@ -876,23 +872,23 @@ public final class EditorFrame extends javax.swing.JFrame {
                     } else {
                         Object data = t.getTransferData(DataFlavor.javaFileListFlavor);
                         if(data instanceof List) {
-                            for( Iterator<?> it = ((List<?>)data).iterator(); it.hasNext(); ) {
+                            for(Iterator<?> it = ((List<?>) data).iterator(); it.hasNext();) {
                                 Object o = it.next();
                                 if(o instanceof File) {
-                                    loadHud((File)o);
+                                    loadHud((File) o);
                                 }
                             }
                         }
                     }
                     context.dropComplete(true);
-                } catch (ClassNotFoundException ex) {
-                    logger.log(Level.SEVERE, null, ex);
-                } catch (InvalidDnDOperationException ex) {
-                    logger.log(Level.SEVERE, null, ex);
-                } catch (UnsupportedFlavorException ex) {
-                    logger.log(Level.SEVERE, null, ex);
-                } catch (IOException ex) {
-                    logger.log(Level.SEVERE, null, ex);
+                } catch(ClassNotFoundException ex) {
+                    LOG.log(Level.SEVERE, null, ex);
+                } catch(InvalidDnDOperationException ex) {
+                    LOG.log(Level.SEVERE, null, ex);
+                } catch(UnsupportedFlavorException ex) {
+                    LOG.log(Level.SEVERE, null, ex);
+                } catch(IOException ex) {
+                    LOG.log(Level.SEVERE, null, ex);
                 } finally {
                     e.dropComplete(true);
                     repaint();
@@ -902,10 +898,10 @@ public final class EditorFrame extends javax.swing.JFrame {
         //</editor-fold>
         this.getRootPane().putClientProperty("apple.awt.brushMetalLook", Boolean.TRUE);
         status.putClientProperty("Quaqua.ToolBar.style", "bottom");
-        
+
         jmb = new EditorMenuBar();
         this.setJMenuBar(jmb);
-        
+
         //<editor-fold defaultstate="collapsed" desc="Tree">
         fileSystemRoot = new DefaultMutableTreeNode("root");
         fileTree = new FileTree(fileSystemRoot);
@@ -915,17 +911,17 @@ public final class EditorFrame extends javax.swing.JFrame {
         fileTree.addTreeSelectionListener(new TreeSelectionListener() {
             @Override
             public void valueChanged(TreeSelectionEvent e) {
-                
+
                 DefaultMutableTreeNode node = (DefaultMutableTreeNode) fileTree.getLastSelectedPathComponent();
                 if(node == null) {
                     return;
                 }
-                
+
                 DefaultTableModel model = (DefaultTableModel) propTable.getModel();
                 model.getDataVector().removeAllElements();
                 model.insertRow(0, new String[]{"", "", ""});
                 propTable.scrollRectToVisible(new Rectangle(0, 0, 0, 0));
-                
+
                 Object nodeInfo = node.getUserObject();
                 if(nodeInfo instanceof Element) {
                     Element element = (Element) nodeInfo;
@@ -938,270 +934,291 @@ public final class EditorFrame extends javax.swing.JFrame {
                             if(entry.getKey().equals("\\n")) {
                                 continue;
                             }
-                            model.insertRow(model.getRowCount(), new Object[] {entry.getKey(), entry.getValue(), entry.getInfo()});
+                            model.insertRow(model.getRowCount(), new Object[]{entry.getKey(), entry.getValue(), entry.getInfo()});
                         }
                     }
                 }
             }
-            
         });
         //</editor-fold>
-        
+
         //<editor-fold defaultstate="collapsed" desc="Table">
         propTable = new PropertyTable();
         JScrollPane propTablePane = new JScrollPane(propTable);
         sideSplit.setBottomComponent(propTablePane);
         //</editor-fold>
-        
+
         //<editor-fold defaultstate="collapsed" desc="Canvas">
         canvas = new Canvas();
         JScrollPane canvasPane = new JScrollPane(canvas);
         canvasPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
         canvasPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_ALWAYS);
-        tabbedContent.add(Main.rb.getString("Canvas"), canvasPane);
+        tabbedContent.add(Main.strings.getString("Canvas"), canvasPane);
         //</editor-fold>
     }
-    
+
     public class EditorMenuBar extends JMenuBar {
-        
+
         private JMenuItem newItem;
+
         private JMenuItem openItem;
+
         private JMenuItem openZippedItem;
+
         private JMenuItem saveItem;
+
         private JMenuItem saveAsItem;
+
         private JMenuItem reloadItem;
+
         private JMenuItem closeItem;
+
         private JMenuItem exitItem;
+
         private JMenuItem undoItem;
+
         private JMenuItem redoItem;
+
         private JMenuItem cutItem;
+
         private JMenuItem copyItem;
+
         private JMenuItem pasteItem;
+
         private JMenuItem deleteItem;
+
         private JMenuItem selectAllItem;
+
         private JMenuItem preferencesItem;
+
         private JMenuItem locateUserItem;
+
         private JMenuItem resolutionItem;
+
         private JMenuItem previewItem;
+
         private JMenuItem updateItem;
+
         private JMenuItem aboutItem;
+
         private JMenuItem changeLogItem;
-        
+
         private JMenuItem vtfItem;
+
         private JMenuItem captionItem;
-        
+
         EditorActionListener al = new EditorActionListener();
-        
+
         EditorMenuBar() {
             super();
-            
-            JMenu fileMenu = new JMenu(Main.rb.getString("File"));
+
+            JMenu fileMenu = new JMenu(Main.strings.getString("File"));
             fileMenu.setMnemonic(KeyEvent.VK_F);
             this.add(fileMenu);
-            
-            newItem = new JMenuItem(Main.rb.getString("New"), KeyEvent.VK_N);
+
+            newItem = new JMenuItem(Main.strings.getString("New"), KeyEvent.VK_N);
             newItem.setEnabled(false);
             newItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_N, Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()));
             newItem.addActionListener(al);
             fileMenu.add(newItem);
-            
-            openItem = new JMenuItem(Main.rb.getString("Open"), KeyEvent.VK_O);
+
+            openItem = new JMenuItem(Main.strings.getString("Open"), KeyEvent.VK_O);
             openItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_O, Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()));
             openItem.addActionListener(al);
             fileMenu.add(openItem);
-            
-            openZippedItem = new JMenuItem(Main.rb.getString("OpenArchive"), KeyEvent.VK_Z);
+
+            openZippedItem = new JMenuItem(Main.strings.getString("OpenArchive"), KeyEvent.VK_Z);
             openZippedItem.setEnabled(false);
             openZippedItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_O, Toolkit.getDefaultToolkit().getMenuShortcutKeyMask() + ActionEvent.SHIFT_MASK));
             openZippedItem.addActionListener(al);
             fileMenu.add(openZippedItem);
-            
+
             if(Main.os == OS.Mac) {
                 fileMenu.addSeparator();
-                
+
                 closeItem = new JMenuItem("Close", KeyEvent.VK_C);
                 closeItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_W, Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()));
                 closeItem.addActionListener(al);
                 fileMenu.add(closeItem);
             }
-            
+
             saveItem = new JMenuItem("Save", KeyEvent.VK_S);
             saveItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_S, Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()));
             saveItem.addActionListener(al);
             fileMenu.add(saveItem);
-            
+
             saveAsItem = new JMenuItem("Save As...", KeyEvent.VK_A);
             saveAsItem.setEnabled(false);
             saveAsItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_S, Toolkit.getDefaultToolkit().getMenuShortcutKeyMask() + ActionEvent.SHIFT_MASK));
             saveAsItem.addActionListener(al);
             fileMenu.add(saveAsItem);
-            
+
             reloadItem = new JMenuItem("Revert", KeyEvent.VK_R);
             reloadItem.setEnabled(false);
             reloadItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_F5, 0));
             reloadItem.addActionListener(al);
             fileMenu.add(reloadItem);
-            
+
             if(Main.os != OS.Mac) {
                 fileMenu.addSeparator();
-                
+
                 closeItem = new JMenuItem("Close", KeyEvent.VK_C);
                 closeItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_W, Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()));
                 closeItem.addActionListener(al);
                 fileMenu.add(closeItem);
-                
+
                 fileMenu.addSeparator();
-                
+
                 exitItem = new JMenuItem("Exit", KeyEvent.VK_X);
                 exitItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_Q, Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()));
                 exitItem.addActionListener(al);
                 fileMenu.add(exitItem);
             }
-            
+
             JMenu editMenu = new JMenu("Edit");
             editMenu.setMnemonic(KeyEvent.VK_E);
             this.add(editMenu);
-            
+
             undoItem = new JMenuItem("Undo", KeyEvent.VK_U);
             undoItem.setEnabled(false);
             undoItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_Z, Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()));
             undoItem.addActionListener(al);
             editMenu.add(undoItem);
-            
+
             redoItem = new JMenuItem("Redo", KeyEvent.VK_R);
             redoItem.setEnabled(false);
             redoItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_Z, Toolkit.getDefaultToolkit().getMenuShortcutKeyMask() + ActionEvent.SHIFT_MASK));
             redoItem.addActionListener(al);
             editMenu.add(redoItem);
-            
+
             editMenu.addSeparator();
-            
+
             cutItem = new JMenuItem("Cut", KeyEvent.VK_T);
             cutItem.setEnabled(false);
             cutItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_X, Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()));
             cutItem.addActionListener(al);
             editMenu.add(cutItem);
-            
+
             copyItem = new JMenuItem("Copy", KeyEvent.VK_C);
             copyItem.setEnabled(false);
             copyItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_C, Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()));
             copyItem.addActionListener(al);
             editMenu.add(copyItem);
-            
+
             pasteItem = new JMenuItem("Paste", KeyEvent.VK_P);
             pasteItem.setEnabled(false);
             pasteItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_V, Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()));
             pasteItem.addActionListener(al);
             editMenu.add(pasteItem);
-            
+
             deleteItem = new JMenuItem("Delete");
             deleteItem.setEnabled(false);
             deleteItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_DELETE, 0));
             deleteItem.addActionListener(al);
             editMenu.add(deleteItem);
-            
+
             editMenu.addSeparator();
-            
+
             selectAllItem = new JMenuItem("Select All", KeyEvent.VK_A);
             selectAllItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_A, Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()));
             selectAllItem.addActionListener(al);
             editMenu.add(selectAllItem);
-            
+
             editMenu.addSeparator();
-            
+
             if(Main.os != OS.Mac) {
                 preferencesItem = new JMenuItem("Preferences", KeyEvent.VK_E);
                 preferencesItem.addActionListener(al);
                 editMenu.add(preferencesItem);
             }
-            
+
             locateUserItem = new JMenuItem("Select user folder", null);
             locateUserItem.addActionListener(al);
             editMenu.add(locateUserItem);
-            
+
             JMenu viewMenu = new JMenu("View");
             viewMenu.setMnemonic(KeyEvent.VK_V);
             this.add(viewMenu);
-            
+
             resolutionItem = new JMenuItem("Change Resolution", KeyEvent.VK_R);
             resolutionItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_R, Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()));
             resolutionItem.addActionListener(al);
             viewMenu.add(resolutionItem);
-            
+
             previewItem = new JMenuItem("Full Screen Preview", KeyEvent.VK_F);
             previewItem.setAccelerator(KeyStroke.getKeyStroke("F11"));
             previewItem.addActionListener(al);
             viewMenu.add(previewItem);
-            
+
             viewMenu.addSeparator();
-            
+
             JMenuItem viewItem1 = new JMenuItem("Main Menu");
             viewItem1.setEnabled(false);
             viewItem1.addActionListener(al);
             viewMenu.add(viewItem1);
-            
+
             JMenuItem viewItem2 = new JMenuItem("In-game (Health and ammo)");
             viewItem2.setEnabled(false);
             viewItem2.addActionListener(al);
             viewMenu.add(viewItem2);
-            
+
             JMenuItem viewItem3 = new JMenuItem("Scoreboard");
             viewItem3.setEnabled(false);
             viewItem3.addActionListener(al);
             viewMenu.add(viewItem3);
-            
+
             JMenuItem viewItem4 = new JMenuItem("CTF HUD");
             viewItem4.setEnabled(false);
             viewItem4.addActionListener(al);
             viewMenu.add(viewItem4);
-            
+
             extras();
-            
+
             JMenu helpMenu = new JMenu("Help");
             helpMenu.setMnemonic(KeyEvent.VK_H);
             this.add(helpMenu);
-            
+
             updateItem = new JMenuItem("Check for Updates", KeyEvent.VK_U);
             //            updateItem.setEnabled(!inDev);
             updateItem.addActionListener(al);
             helpMenu.add(updateItem);
-            
+
             changeLogItem = new JMenuItem("Changelog");
             changeLogItem.addActionListener(al);
             helpMenu.add(changeLogItem);
-            
+
             if(Main.os != OS.Mac) {
                 aboutItem = new JMenuItem("About", KeyEvent.VK_A);
                 aboutItem.addActionListener(al);
                 helpMenu.add(aboutItem);
             }
         }
-        
+
         private void extras() {
             JMenu extrasMenu = new JMenu("Extras");
             extrasMenu.setMnemonic(KeyEvent.VK_X);
             this.add(extrasMenu);
-            
+
             vtfItem = new JMenuItem("VTF Loader", KeyEvent.VK_V);
             vtfItem.addActionListener(al);
             extrasMenu.add(vtfItem);
-            
+
             captionItem = new JMenuItem("Caption Viewer", KeyEvent.VK_C);
             captionItem.addActionListener(al);
             extrasMenu.add(captionItem);
         }
-        
+
         private class EditorActionListener implements ActionListener {
+
             private boolean fullscreen;
-            
+
             EditorActionListener() {
-                
             }
-            
+
             @Override
             public void actionPerformed(ActionEvent e) {
                 Object cmd = e.getSource();
-                
+
                 if(cmd == openItem) {
                     locateHudDirectory();
                 } else if(cmd == openZippedItem) {
@@ -1221,7 +1238,7 @@ public final class EditorFrame extends javax.swing.JFrame {
                 } else if(cmd == resolutionItem) {
                     changeResolution();
                 } else if(cmd == selectAllItem) {
-                    logger.info("Select All");
+                    LOG.info("Select All");
                     //                    for(int i = 0; i < canvas.getElements().size(); i++) {
                     //                        canvas.select(canvas.getElements().get(i));
                     //                    }
@@ -1248,9 +1265,8 @@ public final class EditorFrame extends javax.swing.JFrame {
                 }
             }
         }
-        
     }
-    
+
     //<editor-fold defaultstate="collapsed" desc="Generated Code">
     /**
      * This method is called from within the constructor to initialize the form.
@@ -1267,8 +1283,6 @@ public final class EditorFrame extends javax.swing.JFrame {
         tabbedContent = new javax.swing.JTabbedPane();
         status = new com.timepath.swing.StatusBar();
 
-        tools.setRollover(true);
-
         rootSplit.setDividerLocation(180);
         rootSplit.setContinuousLayout(true);
 
@@ -1277,8 +1291,6 @@ public final class EditorFrame extends javax.swing.JFrame {
         sideSplit.setContinuousLayout(true);
         rootSplit.setLeftComponent(sideSplit);
         rootSplit.setRightComponent(tabbedContent);
-
-        status.setRollover(true);
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);

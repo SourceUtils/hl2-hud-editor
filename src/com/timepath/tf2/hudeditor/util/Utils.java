@@ -12,6 +12,7 @@ import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
+import java.util.logging.Logger;
 import javax.swing.tree.DefaultMutableTreeNode;
 
 /**
@@ -19,7 +20,7 @@ import javax.swing.tree.DefaultMutableTreeNode;
  * @author timepath
  */
 public class Utils {
-    
+
     public static String locateSteamAppsDirectory() {
         if(Main.os == OS.Windows) {
             String str = System.getenv("PROGRAMFILES(x86)");
@@ -35,7 +36,7 @@ public class Utils {
             return null;
         }
     }
-    
+
     public static void restart() throws URISyntaxException, IOException { // TODO: wrap this class in a launcher, rather than explicitly restarting
         final String javaBin = System.getProperty("java.home") + File.separator + "bin" + File.separator + "java";
         final File currentJar = new File(EditorFrame.class.getProtectionDomain().getCodeSource().getLocation().toURI());
@@ -53,13 +54,12 @@ public class Utils {
         builder.start();
         System.exit(0);
     }
-    
+
     public static boolean isMD5(String str) {
         return str.matches("[a-fA-F0-9]{32}");
     }
-    
-    public static Comparator<File> dirAlphaComparator = new Comparator<File>() {
-        
+
+    private static Comparator<File> dirAlphaComparator = new Comparator<File>() {
         /**
          * Alphabetically sorts directories before files ignoring case.
          */
@@ -73,12 +73,11 @@ public class Utils {
                 return a.getName().compareToIgnoreCase(b.getName());
             }
         }
-
     };
-    
+
     public static void recurseDirectoryToNode(File root, DefaultMutableTreeNode parent) {
         File[] fileList = root.listFiles();
-        Arrays.sort(fileList, Utils.dirAlphaComparator);
+        Arrays.sort(fileList, Utils.getDirAlphaComparator());
         for(int i = 0; i < fileList.length; i++) {
             DefaultMutableTreeNode child = new DefaultMutableTreeNode();
             child.setUserObject(fileList[i]);
@@ -101,4 +100,15 @@ public class Utils {
         }
     }
 
+    private static final Logger LOG = Logger.getLogger(Utils.class.getName());
+
+    /**
+     * @return the dirAlphaComparator
+     */
+    public static Comparator<File> getDirAlphaComparator() {
+        return dirAlphaComparator;
+    }
+
+    private Utils() {
+    }
 }

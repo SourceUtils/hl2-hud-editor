@@ -4,6 +4,7 @@ import java.io.File;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
@@ -11,27 +12,26 @@ import java.util.logging.Logger;
  * @author timepath
  */
 public class JarClassLoader extends ClassLoader {
-    
-    private static final Logger logger = Logger.getLogger(JarClassLoader.class.getName());
-    
+
+    private static final Logger LOG = Logger.getLogger(JarClassLoader.class.getName());
+
     JarClassLoader() {
         this(ClassLoader.getSystemClassLoader());
     }
-    
+
     JarClassLoader(ClassLoader parent) {
         super(parent);
-        
+
         Runtime.getRuntime().addShutdownHook(new Thread() {
             @Override
             public void run() {
-                
             }
         });
     }
-    
+
     public void run(String className, String[] args) throws Throwable {
         Class<?> clazz = loadClass(className);
-        Method method = clazz.getMethod("main", new Class<?>[] {String[].class});
+        Method method = clazz.getMethod("main", new Class<?>[]{String[].class});
         // ensure 'method' is 'public static void main(args[])'
         boolean modifiersValid = false;
         boolean returnTypeValid = false;
@@ -45,30 +45,29 @@ public class JarClassLoader extends ClassLoader {
         if(method == null || !modifiersValid || !returnTypeValid) {
             throw new NoSuchMethodException("Class \"" + className + "\" does not have a main() method.");
         }
-        
+
         try {
             method.invoke(null, (Object) args);
-        } catch (InvocationTargetException e) {
+        } catch(InvocationTargetException e) {
             throw e.getTargetException();
         }
     }
 
     @Override
     protected Class<?> findClass(String name) throws ClassNotFoundException {
-        System.out.println("findClass("+name+")");
+        LOG.log(Level.INFO, "findClass({0})", name);
         return super.findClass(name);
     }
 
     @Override
     protected String findLibrary(String libname) {
-        System.out.println("findLibrary("+libname+")");
+        LOG.log(Level.INFO, "findLibrary({0})", libname);
         return super.findLibrary(libname);
     }
-    
+
     private void chmod777(File file) {
         file.setReadable(true, false);
         file.setWritable(true, false);
         file.setExecutable(true, false);
     }
-    
 }

@@ -22,47 +22,48 @@ import javax.swing.JTextField;
  *
  * @author timepath
  */
+@SuppressWarnings("serial")
 public class ExternalScoreboard extends JFrame {
-    
+
     private static final Logger logger = Logger.getLogger(ExternalConsole.class.getName());
-    
+
 //    @Override
 //    public void paint(Graphics graphics) {
 //        super.paint(graphics);
 //        Graphics2D g = (Graphics2D) graphics;
-//        
+//
 //        g.drawString("Test", 0, 0);
 //    }
-    
-//    
-    
+//
     JTextArea output;
+
     JTextField input;
+
     JScrollPane jsp;
-    
+
     public ExternalScoreboard() {
         output = new JTextArea();
         output.setFont(new Font("Monospaced", Font.PLAIN, 15));
-        
+
         jsp = new JScrollPane(output);
         jsp.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
         jsp.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
-        
+
         input = new JTextField();
-        
+
         this.setTitle("External killfeed");
 //        setAlwaysOnTop(true);
 //        setUndecorated(true);
         this.setPreferredSize(new Dimension(800, 600));
-        
+
         this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        
+
         this.getContentPane().add(jsp, BorderLayout.CENTER);
 //        this.getContentPane().add(input, BorderLayout.SOUTH); // TODO: work out better way of sending input
-        
+
         this.pack();
     }
-    
+
     public void start() throws FileNotFoundException {
         this.setVisible(true);
         File log = new File("/home/timepath/.local/share/Steam/SteamApps/timepath/Team Fortress 2/tf/out.log");
@@ -73,9 +74,9 @@ public class ExternalScoreboard extends JFrame {
         }, log, 500);
         update(log);
     }
-    
+
     int currentUpdateLine;
-    
+
     public void update(File file) {
         try {
             RandomAccessFile rf = new RandomAccessFile(file, "r");
@@ -89,25 +90,25 @@ public class ExternalScoreboard extends JFrame {
                 currentUpdateLine++;
             }
             parse(sb.toString());
-            
+
             JScrollBar vertical = jsp.getVerticalScrollBar();
             if(vertical.getValue() == vertical.getMaximum()) {
                 output.setCaretPosition(output.getDocument().getLength());
             }
-            
-        } catch (IOException ex) {
+
+        } catch(IOException ex) {
             logger.log(Level.SEVERE, null, ex);
         }
     }
-    
+
     int currentParseLine = 0;
-    
+
     void parse(String lines) {
         String[] strings = lines.split("\n");
         for(int i = currentParseLine; i < strings.length; i++) {
             String s = strings[i];
 //            if(s.length() != 0) {
-                currentParseLine++;
+            currentParseLine++;
 //            }
             if(s.contains(" killed ")) {
                 notify(s);
@@ -116,43 +117,40 @@ public class ExternalScoreboard extends JFrame {
                 // possible team/class switch
             }
             if(s.endsWith(" connected")) {
-                
             }
             if(s.startsWith("Dropped") && s.contains("from server")) {
-                
             }
             // names defended/captured 'capname' for team#
             if(s.contains(" for team #")) {
                 // team 0 = spectator, team 2 = red, team 3 = blu
             }
             if(s.equals("Teams have been switched.")) {
-                
             }
         }
-        
+
         output.append("\nPlayers:\n");
         for(int i = 0; i < players.size(); i++) {
-           output.append(players.get(i).toString() + "\n");
+            output.append(players.get(i).toString() + "\n");
         }
-        
+
         Player me = getPlayer("TimePath");
         output.append("\nAllies:\n");
-        for(int i = 0; i < me.allies.size(); i++) {
-            output.append(me.allies.get(i) + "\n");
+        for(int i = 0; i < me.getAllies().size(); i++) {
+            output.append(me.getAllies().get(i) + "\n");
         }
         output.append("\nEnemies:\n");
-        for(int i = 0; i < me.enemies.size(); i++) {
-            output.append(me.enemies.get(i) + "\n");
+        for(int i = 0; i < me.getEnemies().size(); i++) {
+            output.append(me.getEnemies().get(i) + "\n");
         }
         output.append("\n");
     }
-    
+
     ArrayList<Player> players = new ArrayList<Player>();
-    
+
     Player getPlayer(String name) {
         for(int i = 0; i < players.size(); i++) {
             Player p = players.get(i);
-            if(p.name.equals(name)) {
+            if(p.getName().equals(name)) {
                 return p;
             }
         }
@@ -160,30 +158,29 @@ public class ExternalScoreboard extends JFrame {
         Player p = getPlayer(name);
         return p;
     }
-    
+
     void notify(String s) {
         Player killer = getPlayer(s.split(" killed ")[0]);
         Player victim = getPlayer(s.split(" killed ")[1].split(" with ")[0]);
         String weapon = s.split(" killed ")[1].split(" with ")[1];
-        
+
         Player.exchangeInfo(victim, killer);
-        
+
         boolean crit = weapon.endsWith("(crit)");
         weapon = weapon.substring(0, weapon.indexOf("."));
         if(crit) {
             weapon = "*" + weapon + "*";
         }
         StringBuilder sb = new StringBuilder();
-        sb.append(killer.name).append(" = ").append(weapon).append(" -> ").append(victim.name);
+        sb.append(killer.getName()).append(" = ").append(weapon).append(" -> ").append(victim.getName());
         output.append(sb.toString() + "\n");
     }
-    
+
     public static void main(String... args) {
         try {
             new ExternalScoreboard().start();
-        } catch (FileNotFoundException ex) {
+        } catch(FileNotFoundException ex) {
             logger.log(Level.SEVERE, null, ex);
         }
     }
-    
 }

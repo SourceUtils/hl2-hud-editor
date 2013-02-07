@@ -4,6 +4,7 @@ import com.timepath.tf2.hudeditor.util.Element;
 import java.awt.Color;
 import java.awt.Component;
 import java.io.File;
+import java.util.logging.Logger;
 import javax.swing.Icon;
 import javax.swing.JFileChooser;
 import javax.swing.JTree;
@@ -17,6 +18,7 @@ import javax.swing.tree.TreeSelectionModel;
  *
  * @author timepath
  */
+@SuppressWarnings("serial")
 public class FileTree extends javax.swing.JTree {
 
     public FileTree(TreeNode root) {
@@ -25,7 +27,7 @@ public class FileTree extends javax.swing.JTree {
         getSelectionModel().setSelectionMode(TreeSelectionModel.SINGLE_TREE_SELECTION);
         setCellRenderer(new CustomTreeCellRenderer());
     }
-    
+
     private class CustomTreeCellRenderer extends DefaultTreeCellRenderer {
 
         CustomTreeCellRenderer() {
@@ -41,18 +43,22 @@ public class FileTree extends javax.swing.JTree {
         }
 
         JFileChooser iconFinder = new JFileChooser();
+
         Color sameColor = Color.BLACK;
+
         Color diffColor = Color.BLUE;
-        Color newColor = Color.GREEN.darker(); 
+
+        Color newColor = Color.GREEN.darker();
 
         /**
-          * Configures the renderer based on the passed in components.
-          * The value is set from messaging the tree with
-          * <code>convertValueToText</code>, which ultimately invokes
-          * <code>toString</code> on <code>value</code>.
-          * The foreground color is set based on the selection and the icon
-          * is set based on on leaf and expanded.
-          */
+         * Configures the renderer based on the passed in components.
+         * The value is set from messaging the tree with
+         * <code>convertValueToText</code>, which ultimately invokes
+         * <code>toString</code> on
+         * <code>value</code>.
+         * The foreground color is set based on the selection and the icon
+         * is set based on on leaf and expanded.
+         */
         @Override
         public Component getTreeCellRendererComponent(JTree tree, Object value, boolean sel, boolean expanded, boolean leaf, int row, boolean hasFocus) {
             String valueText = value.toString();
@@ -112,4 +118,6 @@ public class FileTree extends javax.swing.JTree {
     }// </editor-fold>//GEN-END:initComponents
     // Variables declaration - do not modify//GEN-BEGIN:variables
     // End of variables declaration//GEN-END:variables
+
+    private static final Logger LOG = Logger.getLogger(FileTree.class.getName());
 }

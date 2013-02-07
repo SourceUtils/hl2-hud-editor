@@ -14,17 +14,16 @@ import java.util.logging.Logger;
  * @author timepath
  */
 public class HudFont {
-    
+
     public HudFont() {
-        
     }
-    
+
     private String name;
-    
+
     private String _name;
-    
+
     private int tall;
-    
+
     private boolean aa;
 
     public HudFont(String font, Element node) {
@@ -42,33 +41,33 @@ public class HudFont {
             }
         }
     }
-    
+
     public Font getFont() {
         int screenRes = Toolkit.getDefaultToolkit().getScreenResolution();
         int fontSize = (int) Math.round(tall * screenRes / 72.0);
-                
+
         GraphicsEnvironment ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
         String[] fontFamilies = ge.getAvailableFontFamilyNames();
         if(Arrays.asList(fontFamilies).contains(_name)) { // System font
             return new Font(_name, Font.PLAIN, fontSize);
         }
-        
-        Font f1 = null; 
+
+        Font f1 = null;
         try {
-            System.out.println("Loading font "+name+"... ("+_name+")");
+            LOG.log(Level.INFO, "Loading font: {0}... ({1})", new Object[]{name, _name});
             f1 = fontFileForName(_name);
             if(f1 == null) {
                 return null;
             }
             ge.registerFont(f1); // for some reason, this works but the bottom return does not
             return new Font(name, Font.PLAIN, fontSize);
-        } catch (Exception ex) {
-            logger.log(Level.SEVERE, null, ex);
+        } catch(Exception ex) {
+            LOG.log(Level.SEVERE, null, ex);
         }
-        System.out.println("Loaded!");
+        LOG.log(Level.INFO, "Loaded {0}", name);
         return f1.deriveFont(fontSize);
     }
-    
+
     public static Font fontFileForName(String name) throws Exception {
         File[] files = new File("/home/andrew/TF2 HUDS/frankenhudr47/resource/").listFiles(new FilenameFilter() { // XXX: hardcoded
             public boolean accept(File file, String string) {
@@ -78,15 +77,15 @@ public class HudFont {
         if(files != null) {
             for(int t = 0; t < files.length; t++) {
                 Font f = Font.createFont(Font.TRUETYPE_FONT, files[t]);
-    //            System.out.println(f.getFamily().toLowerCase());
+                //            System.out.println(f.getFamily().toLowerCase());
                 if(f.getFamily().toLowerCase().equals(name.toLowerCase())) {
-                    System.out.println("Found font for " + name);
+                    LOG.log(Level.INFO, "Found font for {0}", name);
                     return f;
                 }
             }
         }
         return null;
     }
-    private static final Logger logger = Logger.getLogger(HudFont.class.getName());
-    
+
+    private static final Logger LOG = Logger.getLogger(HudFont.class.getName());
 }

@@ -1,10 +1,10 @@
 package com.timepath.tf2.hudeditor;
 
 //<editor-fold defaultstate="collapsed" desc="imports">
-import com.timepath.tf2.hudeditor.gui.EditorFrame;
 import com.timepath.plaf.OS;
 import com.timepath.plaf.linux.GtkFixer;
 import com.timepath.plaf.linux.LinuxDesktopLauncher;
+import com.timepath.tf2.hudeditor.gui.EditorFrame;
 import java.awt.EventQueue;
 import java.awt.Toolkit;
 import java.io.BufferedReader;
@@ -32,30 +32,30 @@ import net.tomahawk.XFileDialog;
 
 /**
  * Link dump: https://docs.google.com/document/d/19jk3L-kyduz_AvTOhMXk4agh5gUYM9gWQCHafbMl3wY/edit
- * 
+ *
  * @author timepath
  */
 public class Main {
-    
-    public static final ResourceBundle rb = ResourceBundle.getBundle("com/timepath/tf2/hudeditor/resources/lang");
-    
+
+    public static final ResourceBundle strings = ResourceBundle.getBundle("com/timepath/tf2/hudeditor/resources/lang");
+
     public final static String appName = "TF2 HUD Editor";
-    
+
     /**
      * Used for storing preferences. Do not localize
      * The window class on Linux systems
      * The app name on Mac systems
      */
     public final static String projectName = "tf2-hud-editor"; // in xfce, window grouping show this, unfortunately
-    
+
     public final static OS os;
-    
+
     private final static int arch;
-    
+
     private static final Logger logger = Logger.getLogger(Main.class.getName());
-    
-    private static Preferences p = Preferences.userRoot().node(projectName);;
-    
+
+    private static Preferences prefs = Preferences.userRoot().node(projectName);
+
     static {
         String osVer = System.getProperty("os.name").toLowerCase();
         if(osVer.indexOf("windows") != -1) {
@@ -68,18 +68,18 @@ public class Main {
             os = OS.Other;
             logger.log(Level.WARNING, "Unrecognised OS: {0}", osVer);
         }
-        
+
         if(System.getProperty("os.arch").indexOf("64") >= 0) {
             arch = 64;
         } else {
             arch = 32;
         }
-        
+
         if(os == OS.Windows) {
             XFileDialog.setTraceLevel(0);
         } else if(os == OS.Mac) {
             System.setProperty("apple.awt.brushMetalLook", "false");
-            System.setProperty("apple.awt.graphics.EnableQ2DX", "true"); 
+            System.setProperty("apple.awt.graphics.EnableQ2DX", "true");
             System.setProperty("apple.awt.showGrowBox", "true");
             System.setProperty("apple.laf.useScreenMenuBar", "true");
             System.setProperty("com.apple.macos.smallTabs", "true");
@@ -93,7 +93,7 @@ public class Main {
 //                System.setProperty("jayatana.force", "true");
 //            }
             System.setProperty("jayatana.startupWMClass", projectName);
-            
+
             try {
                 Toolkit xToolkit = Toolkit.getDefaultToolkit();
                 Field awtAppClassNameField = xToolkit.getClass().getDeclaredField("awtAppClassName");
@@ -105,13 +105,13 @@ public class Main {
             LinuxDesktopLauncher.create();
         }
     }
-    
+
     public static void main(String... args) {
         init(args);
     }
-    
+
     private static void init(String... args) {
-        int port = p.getInt("port", 0);
+        int port = prefs.getInt("port", 0);
         if(startServer(port, args)) {
             lookAndFeel();
             start(args);
@@ -121,14 +121,14 @@ public class Main {
             init(args);
         }
     }
-    
+
     //<editor-fold defaultstate="collapsed" desc="TODO: Replace with timestamp system">
     public static boolean indev;
-    
+
     public static String runPath;
-    
+
     public static String myVer = calcMD5();
-    
+
     private static String calcMD5() {
         String md5 = "";
         try {
@@ -152,17 +152,17 @@ public class Main {
             for(int i = 0; i < b.length; i++) {
                 md5 += Integer.toString((b[i] & 255) + 256, 16).substring(1);
             }
-        } catch (NoSuchAlgorithmException ex) {
+        } catch(NoSuchAlgorithmException ex) {
             logger.log(Level.SEVERE, null, ex);
-        } catch (UnsupportedEncodingException ex) {
+        } catch(UnsupportedEncodingException ex) {
             logger.log(Level.SEVERE, null, ex);
-        } catch (IOException ex) {
+        } catch(IOException ex) {
             logger.log(Level.SEVERE, null, ex);
         }
         return md5;
     }
     //</editor-fold>
-    
+
     private static void lookAndFeel() {
         if(System.getProperty("swing.defaultlaf") == null) { // Do not override user specified theme
             try {
@@ -172,7 +172,7 @@ public class Main {
                 } else if(os == OS.Linux) {
                     UIManager.setLookAndFeel("com.sun.java.swing.plaf.gtk.GTKLookAndFeel"); // Apply gtk+ theme if available
                 }
-                
+
                 //<editor-fold defaultstate="collapsed" desc="Nimbus will eventually be removed in favour of native appearance">
                 for(UIManager.LookAndFeelInfo info : UIManager.getInstalledLookAndFeels()) {
                     if("Nimbus".equals(info.getName())) {
@@ -187,22 +187,22 @@ public class Main {
         }
         GtkFixer.installGtkPopupBugWorkaround(); // Apply clearlooks java menu fix if applicable
     }
-    
-    private static boolean startServer(int port, final String... args) {        
+
+    private static boolean startServer(int port, final String... args) {
         try {
             final ServerSocket sock = new ServerSocket(port, 0, InetAddress.getByName(null)); // cannot use java7 InetAddress.getLoopbackAddress(). On windows, this prevents firewall warnings. It's also good for security in general
             port = sock.getLocalPort();
-            p.putInt("port", port);
-            
+            prefs.putInt("port", port);
+
             Runtime.getRuntime().addShutdownHook(new Thread() {
                 @Override
                 public void run() {
                     logger.info("Server shutting down...");
-                    p.remove("port");
+                    prefs.remove("port");
 //                    System.exit(0);
                 }
             });
-            
+
             Thread server = new Thread(new Runnable() {
                 public void run() {
                     while(!sock.isClosed()) {
@@ -210,13 +210,13 @@ public class Main {
                             Socket client = sock.accept();
                             BufferedReader in = new BufferedReader(new InputStreamReader(client.getInputStream()));
                             PrintWriter out = new PrintWriter(client.getOutputStream(), true);
-                            
+
                             String cVer = in.readLine();
-                            logger.log(Level.INFO, "client {0} vs host {1}", new Object[] {cVer, myVer});
+                            logger.log(Level.INFO, "client {0} vs host {1}", new Object[]{cVer, myVer});
                             String request = "-noupdate " + in.readLine();
                             logger.log(Level.INFO, "Request: {0}", request);
                             out.println(myVer);
-                            
+
                             if(cVer.equals("indev") || !cVer.equals(myVer)) { // Or if timestamp is greater when timestamps are implemented
                                 sock.close();
                                 System.exit(0);
@@ -239,7 +239,7 @@ public class Main {
         }
         return true;
     }
-    
+
     private static boolean startClient(int port, String... args) {
         logger.info("Communicating with other running instance");
         try {
@@ -256,17 +256,17 @@ public class Main {
             if(sVer.equals("indev") || !sVer.equals(myVer)) {
                 main(args);
             }
-        } catch (IOException ex) {
+        } catch(IOException ex) {
             logger.log(Level.SEVERE, null, ex);
             return false;
         }
         return true;
     }
-    
+
     private static void start(String... args) {
         logger.log(Level.INFO, "Env: {0}", System.getenv());
         logger.log(Level.INFO, "Properties: {0}", System.getProperties());
-        
+
         boolean flag = true;
         for(int i = 0; i < args.length; i++) {
             String cmd = args[i].toLowerCase();
@@ -279,15 +279,12 @@ public class Main {
         final boolean autoCheck = flag;
 
         EventQueue.invokeLater(new Runnable() {
-
             @Override
             public void run() {
                 EditorFrame frame = new EditorFrame();
                 frame.autoCheck = autoCheck;
                 frame.setVisible(true);
             }
-
         });
     }
-    
 }

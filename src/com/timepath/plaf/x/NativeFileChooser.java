@@ -20,19 +20,21 @@ import net.tomahawk.XFileDialog;
  * @author timepath
  */
 public class NativeFileChooser {
-    
-    private static final Logger logger = Logger.getLogger(NativeFileChooser.class.getName());
-    
+
+    private static final Logger LOG = Logger.getLogger(NativeFileChooser.class.getName());
+
     private Frame parent;
+
     private String title;
+
     private File directory;
-    
+
     public NativeFileChooser(Frame parent, String title, File directory) {
         this.parent = parent;
         this.title = title;
         this.directory = directory;
     }
-    
+
     public File getFolder() {
         String selection;
         if(Main.os == OS.Windows) {
@@ -46,7 +48,7 @@ public class NativeFileChooser {
             selection = awt();
         } else if(Main.os == OS.Linux) {
             try {
-                selection = zenity();  
+                selection = zenity();
             } catch(IOException ex) {
 //                UIManager.put("FileChooserUI", "eu.kostia.gtkjfilechooser.ui.GtkFileChooserUI");
                 selection = swing();
@@ -69,7 +71,7 @@ public class NativeFileChooser {
         }
         return null;
     }
-    
+
     private String zenity() throws IOException {
         StringBuilder cmd = new StringBuilder();
         cmd.append("zenity ");
@@ -94,8 +96,8 @@ public class NativeFileChooser {
 //        cmd.append("--cancel-label=TEXT ");
 
         String zenity = cmd.toString();
-        logger.log(Level.INFO, "zenity: {0}", zenity);
-        
+        LOG.log(Level.INFO, "zenity: {0}", zenity);
+
         final Process proc = Runtime.getRuntime().exec(zenity);
         Runtime.getRuntime().addShutdownHook(new Thread() {
             @Override
@@ -106,7 +108,7 @@ public class NativeFileChooser {
         BufferedReader br = new BufferedReader(new InputStreamReader(proc.getInputStream()));
         return br.readLine();
     }
-    
+
     private String awt() {
         FileDialog fd = new FileDialog(parent, title);
         fd.setFilenameFilter(new FilenameFilter() {
@@ -124,5 +126,4 @@ public class NativeFileChooser {
         }
         return fd.getDirectory() + fd.getFile();
     }
-    
 }

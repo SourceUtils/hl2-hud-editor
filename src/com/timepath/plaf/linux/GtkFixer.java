@@ -2,6 +2,7 @@ package com.timepath.plaf.linux;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
+import java.util.logging.Logger;
 import javax.swing.JComponent;
 import javax.swing.JPopupMenu;
 import javax.swing.JSeparator;
@@ -13,7 +14,7 @@ import javax.swing.UIManager;
  * @author http://www.ailis.de/~k/archives/67-Workaround-for-borderless-Java-Swing-menus-on-Linux.html
  */
 public class GtkFixer {
-    
+
     /**
      * Swing menus are looking pretty bad on Linux when the GTK LaF is used (See
      * bug #6925412). It will most likely never be fixed anytime soon so this
@@ -27,7 +28,7 @@ public class GtkFixer {
         Class<?> lafClass = laf.getClass();
 
         // Do nothing when not using the problematic LaF
-        if (!lafClass.getName().equals("com.sun.java.swing.plaf.gtk.GTKLookAndFeel")) {
+        if(!lafClass.getName().equals("com.sun.java.swing.plaf.gtk.GTKLookAndFeel")) {
             return;
         }
 
@@ -49,7 +50,7 @@ public class GtkFixer {
             // Fix the vertical thickness of the popup menu separator style
             style = getGtkStyle(styleFactory, new JSeparator(), "POPUP_MENU_SEPARATOR");
             fixGtkThickness(style, "yThickness");
-        } catch (Exception e) {
+        } catch(Exception e) {
             // Silently ignored. Workaround can't be applied.
         }
     }
@@ -57,9 +58,10 @@ public class GtkFixer {
     /**
      * Called internally by installGtkPopupBugWorkaround to fix the thickness
      * of a GTK style field by setting it to a minimum value of 1.
-     * 
-     * @param style The GTK style object.
+     *
+     * @param style     The GTK style object.
      * @param fieldName The field name.
+     *
      * @throws Exception When reflection fails.
      */
     private static void fixGtkThickness(Object style, String fieldName) throws Exception {
@@ -73,11 +75,13 @@ public class GtkFixer {
     /**
      * Called internally by installGtkPopupBugWorkaround. Returns a specific
      * GTK style object.
-     * 
+     *
      * @param styleFactory The GTK style factory.
-     * @param component The target component of the style.
-     * @param regionName The name of the target region of the style.
+     * @param component    The target component of the style.
+     * @param regionName   The name of the target region of the style.
+     *
      * @return The GTK style.
+     *
      * @throws Exception When reflection fails.
      */
     private static Object getGtkStyle(Object styleFactory, JComponent component, String regionName) throws Exception {
@@ -88,12 +92,16 @@ public class GtkFixer {
 
         // Get and return the style
         Class<?> styleFactoryClass = styleFactory.getClass();
-        Method method = styleFactoryClass.getMethod("getStyle", new Class<?>[] { JComponent.class, regionClass });
+        Method method = styleFactoryClass.getMethod("getStyle", new Class<?>[]{JComponent.class, regionClass});
         boolean accessible = method.isAccessible();
         method.setAccessible(true);
         Object style = method.invoke(styleFactory, component, region);
         method.setAccessible(accessible);
         return style;
     }
-    
+
+    private static final Logger LOG = Logger.getLogger(GtkFixer.class.getName());
+
+    private GtkFixer() {
+    }
 }

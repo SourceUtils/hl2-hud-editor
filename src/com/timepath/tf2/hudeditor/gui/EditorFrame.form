@@ -38,9 +38,6 @@
   </Layout>
   <SubComponents>
     <Container class="com.timepath.swing.BlendedToolBar" name="tools">
-      <Properties>
-        <Property name="rollover" type="boolean" value="true"/>
-      </Properties>
 
       <Layout class="org.netbeans.modules.form.compat2.layouts.DesignBoxLayout"/>
     </Container>
@@ -78,9 +75,6 @@
       </SubComponents>
     </Container>
     <Container class="com.timepath.swing.StatusBar" name="status">
-      <Properties>
-        <Property name="rollover" type="boolean" value="true"/>
-      </Properties>
 
       <Layout class="org.netbeans.modules.form.compat2.layouts.DesignBoxLayout"/>
     </Container>

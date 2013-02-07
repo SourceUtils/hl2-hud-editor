@@ -10,25 +10,31 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.TimeZone;
+import java.util.logging.Logger;
 
 /**
- * See also: 
- *  https://github.com/harvimt/steam_launcher/blob/master/binvdf.py
- *  https://github.com/barneygale/bvdf/blob/master/bvdf.py
- *  https://github.com/DHager/hl2parse
- *  http://webcache.googleusercontent.com/search?q=cache:pKubZAM3J3QJ:cs.rin.ru/forum/viewtopic.php%3Ff%3D20%26t%3D62438+&cd=1&hl=en&ct=clnk&gl=au
- * 
+ * See also:
+ * https://github.com/harvimt/steam_launcher/blob/master/binvdf.py
+ * https://github.com/barneygale/bvdf/blob/master/bvdf.py
+ * https://github.com/DHager/hl2parse
+ * http://webcache.googleusercontent.com/search?q=cache:pKubZAM3J3QJ:cs.rin.ru/forum/viewtopic.php%3Ff%3D20%26t%3D62438+&cd=1&hl=en&ct=clnk&gl=au
+ *
  * @author timepath
  */
 public class BinaryVDF {
-    
+
     private static final byte nul = 0;
+
     private static final byte headingStart = 1;
+
     private static final byte textStart = 2;
+
     private static final byte extended = 3;
+
     private static final byte depots = 7;
+
     private static final byte terminator = 8;
-    
+
     public BinaryVDF(String location) throws FileNotFoundException, IOException {
         RandomAccessFile rf = new RandomAccessFile(location, "r");
         byte[] magic = new byte[4];
@@ -64,10 +70,9 @@ public class BinaryVDF {
                  * 13 policies
                  * 14 sysreqs
                  * 15 community
-                 * 
+                 *
                  */
 //                ty = AppInfoFile
-                
                 for(;;) {
                     int appID = DataUtils.readULEInt(rf);
                     if(appID == 0) {
@@ -85,7 +90,9 @@ public class BinaryVDF {
                     for(;;) {
                         byte section_number = DataUtils.readByte(rf); // enum EAppInfoSection
                         if(section_number == 0x00) // end of section data
+                        {
                             break;
+                        }
                         byte[] section_data; // section data as written by KeyValues::WriteAsBinary() (see KeyValues.cpp in Source SDK)
                         for(;;) {
                             if(rf.readByte() == 8) {
@@ -116,16 +123,18 @@ public class BinaryVDF {
 //            ty = VDFFile
         }
     }
-    
+
     /**
      * http://cdr.xpaw.ru/app/5/#section_info
-     * 
+     *
      * @param rf
      * @param data
      * @param end
      * @param timesEndSeen
+     *
      * @return
-     * @throws IOException 
+     *
+     * @throws IOException
      */
     private String parse(RandomAccessFile rf, ArrayList data, int end, int timesEndSeen) throws IOException {
         ByteArrayOutputStream buf = new ByteArrayOutputStream();
@@ -168,8 +177,8 @@ public class BinaryVDF {
 //        System.out.println(Arrays.toString(bytes));
         String str = new String(bytes);
         if(bytes.length > 1) {
-            if(bytes[bytes.length-1] == 0) {
-                str = str.substring(0, str.length()-1);
+            if(bytes[bytes.length - 1] == 0) {
+                str = str.substring(0, str.length() - 1);
             }
             if(bytes[0] == 0) {
                 str = str.substring(1, str.length());
@@ -184,5 +193,6 @@ public class BinaryVDF {
 //        return super.toString();
         return "";
     }
-    
+
+    private static final Logger LOG = Logger.getLogger(BinaryVDF.class.getName());
 }

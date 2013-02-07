@@ -13,29 +13,30 @@ import java.util.logging.Logger;
  * @author timepath
  */
 public class VCCD {
-    
-    private static final Logger logger = Logger.getLogger(VCCD.class.getName());
-    
+
+    private static final Logger LOG = Logger.getLogger(VCCD.class.getName());
+
     public VCCD() {
-        
     }
 
     /**
      * Used for writing captions
+     *
      * @param curr
      * @param round
-     * @return 
+     *
+     * @return
      */
     private static int alignValue(double curr, double round) {
-        return (int)(Math.ceil(curr/round) * round);
+        return (int) (Math.ceil(curr / round) * round);
     }
-    
+
     String currentFile;
-    
+
     private static String magicID = "VCCD";
-    
+
     private static int captionVer = 1;
-    
+
     public ArrayList<Entry> loadFile(String file) {
         if(file == null) {
             return null;
@@ -44,16 +45,16 @@ public class VCCD {
         ArrayList<Entry> list = new ArrayList<Entry>();
         try {
             RandomAccessFile rf = new RandomAccessFile(file, "r");
-            String magic = new String(new byte[]{DataUtils.readByte(rf), DataUtils.readByte(rf), DataUtils.readByte(rf),DataUtils.readByte(rf)});
+            String magic = new String(new byte[]{DataUtils.readByte(rf), DataUtils.readByte(rf), DataUtils.readByte(rf), DataUtils.readByte(rf)});
             if(!magic.equals(magic)) {
-                logger.severe("Header mismatch");
+                LOG.severe("Header mismatch");
             }
             int ver = DataUtils.readULEInt(rf);
             int blocks = DataUtils.readULEInt(rf);
             int blockSize = DataUtils.readULEInt(rf);
             int directorySize = DataUtils.readULEInt(rf);
             int dataOffset = DataUtils.readULEInt(rf);
-            logger.log(Level.INFO, "Header: {0}, Version: {1}, Blocks: {2}, BlockSize: {3}, DirectorySize: {4}, DataOffset: {5}", new Object[]{magic, ver, blocks, blockSize, directorySize, dataOffset});
+            LOG.log(Level.INFO, "Header: {0}, Version: {1}, Blocks: {2}, BlockSize: {3}, DirectorySize: {4}, DataOffset: {5}", new Object[]{magic, ver, blocks, blockSize, directorySize, dataOffset});
 
             Entry[] entries = new Entry[directorySize];
             for(int i = 0; i < directorySize; i++) {
@@ -77,8 +78,8 @@ public class VCCD {
                 list.add(entries[i]);
             }
             rf.close(); // The rest of the file is garbage, 0's or otherwise
-        } catch (IOException ex) {
-            logger.log(Level.SEVERE, null, ex);
+        } catch(IOException ex) {
+            LOG.log(Level.SEVERE, null, ex);
         }
 //            saveFile(file + ".test", list); // debugging
         return list;
@@ -86,9 +87,9 @@ public class VCCD {
 
     /**
      * Ensure alphabetical order
-     * 
+     *
      * @param file
-     * @param entries 
+     * @param entries
      */
     public void saveFile(String file, ArrayList<Entry> entries) {
         if(file == null) {
@@ -156,18 +157,18 @@ public class VCCD {
 
                 DataUtils.writeULong(rf, e.getKey());
                 DataUtils.writeLEInt(rf, e.getBlock());
-                DataUtils.writeULEShort(rf, (short)e.getOffset());
-                DataUtils.writeULEShort(rf, (short)e.getLength());
+                DataUtils.writeULEShort(rf, (short) e.getOffset());
+                DataUtils.writeULEShort(rf, (short) e.getLength());
             }
 
-            rf.write(new byte[(dataOffset - (int)rf.getFilePointer())]);
+            rf.write(new byte[(dataOffset - (int) rf.getFilePointer())]);
 
             int lastBlock = 0;
             for(int i = 0; i < directorySize; i++) {
                 Entry e = entries.get(i);
                 if(e.getBlock() > lastBlock) {
                     lastBlock = e.getBlock();
-                    rf.write(new byte[blockSize - (entries.get(i-1).getOffset() + entries.get(i-1).getLength())]);
+                    rf.write(new byte[blockSize - (entries.get(i - 1).getOffset() + entries.get(i - 1).getLength())]);
                 }
                 DataUtils.writeLEChars(rf, e.getValue());
                 DataUtils.writeLEChar(rf, 0);
@@ -175,83 +176,82 @@ public class VCCD {
             int last = entries.size() - 1;
             rf.write(new byte[blockSize - (entries.get(last).getOffset() + entries.get(last).getLength())]);
             rf.close();
-        } catch (IOException ex) {
-            logger.log(Level.SEVERE, null, ex);
+        } catch(IOException ex) {
+            LOG.log(Level.SEVERE, null, ex);
         }
-        logger.log(Level.INFO, "Saved {0}", file);
+        LOG.log(Level.INFO, "Saved {0}", file);
     }
 
     public ArrayList<Entry> importFile(String file) {
         return null;
     }
-    
+
     public Entry getNewEntry() {
         return new Entry();
     }
-    
+
     /**
      * Entries are stored alphabetically by original value of hash
      */
     public class Entry implements Comparable<Entry> {
-        
+
         public Entry() {
-            
         }
-        
+
         private long key;
-        
+
         public int getKey() {
             return (int) key;
         }
-        
+
         public void setKey(long key) {
             this.key = key;
         }
-        
+
         private int block;
-        
+
         public int getBlock() {
             return block;
         }
-        
+
         public void setBlock(int block) {
             this.block = block;
         }
-        
+
         private int offset;
-        
+
         public int getOffset() {
             return offset;
         }
-        
+
         public void setOffset(int offset) {
             this.offset = offset;
         }
-        
+
         private int length;
-        
+
         public int getLength() {
             return length;
         }
-        
+
         public void setLength(int length) {
             this.length = length;
             if(this.value != null) {
                 this.value = value.substring(0, (length / 2) - 1);
             }
         }
-        
+
         private String value;
-        
+
         public String getValue() {
             return value;
         }
-        
+
         public void setValue(String string) {
             this.value = string;
             this.length = (string.length() + 1) * 2;
         }
-        
+
         @Override
         public String toString() {
             return new StringBuilder().append("H: ").append(key).append(", b: ").append(block).append(", o: ").append(offset).append(", l: ").append(length).toString();
@@ -270,7 +270,5 @@ public class VCCD {
             }
             return e1.compareToIgnoreCase(e2);
         }
-        
     }
-    
 }

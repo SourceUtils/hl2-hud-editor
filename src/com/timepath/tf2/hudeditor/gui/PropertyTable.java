@@ -12,7 +12,7 @@ import javax.swing.table.TableCellRenderer;
  * @author timepath
  */
 public class PropertyTable extends JTable {
-    
+
     private static final Logger logger = Logger.getLogger(PropertyTable.class.getName());
 
     /**
@@ -21,13 +21,13 @@ public class PropertyTable extends JTable {
     public PropertyTable() {
         initComponents();
         DefaultTableModel model = new DefaultTableModel();
-        model.addColumn(Main.rb.getString("Key"));
-        model.addColumn(Main.rb.getString("Value"));
-        model.addColumn(Main.rb.getString("Info"));
+        model.addColumn(Main.strings.getString("Key"));
+        model.addColumn(Main.strings.getString("Value"));
+        model.addColumn(Main.strings.getString("Info"));
         model.insertRow(0, new String[]{"", "", ""});
         this.setModel(model);
     }
-    
+
     @Override
     public boolean isCellEditable(int row, int column) {
         return column != 0; // deny editing of key

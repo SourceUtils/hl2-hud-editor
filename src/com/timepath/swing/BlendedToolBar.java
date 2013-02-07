@@ -1,6 +1,7 @@
 package com.timepath.swing;
 
 import java.awt.Graphics;
+import java.util.logging.Logger;
 import javax.swing.JMenuBar;
 import javax.swing.JToolBar;
 
@@ -8,6 +9,7 @@ import javax.swing.JToolBar;
  *
  * @author timepath
  */
+@SuppressWarnings("serial")
 public final class BlendedToolBar extends JToolBar {
 
     /**
@@ -19,14 +21,14 @@ public final class BlendedToolBar extends JToolBar {
         this.add(mb);
         mb.setVisible(false);
     }
-    
-    JMenuBar mb;
+
+    private final JMenuBar mb;
 
     @Override
     protected void paintComponent(Graphics g) {
         this.setForeground(mb.getForeground());
         this.setBackground(mb.getBackground());
-        
+
         g.setColor(this.getBackground());
         g.fillRect(0, 0, this.getWidth(), this.getHeight());
     }
@@ -46,4 +48,6 @@ public final class BlendedToolBar extends JToolBar {
     }// </editor-fold>//GEN-END:initComponents
     // Variables declaration - do not modify//GEN-BEGIN:variables
     // End of variables declaration//GEN-END:variables
+
+    private static final Logger LOG = Logger.getLogger(BlendedToolBar.class.getName());
 }

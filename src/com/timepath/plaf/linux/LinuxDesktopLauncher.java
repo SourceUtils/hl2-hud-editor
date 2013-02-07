@@ -14,14 +14,14 @@ import java.util.logging.Logger;
  * @author timepath
  */
 public class LinuxDesktopLauncher {
-    
-    private static final Logger logger = Logger.getLogger(LinuxDesktopLauncher.class.getName());
-    
+
+    private static final Logger LOG = Logger.getLogger(LinuxDesktopLauncher.class.getName());
+
     public static void create() {
         createLauncher();
         createIcon();
     }
-    
+
     public static String getStore() {
         String root = System.getenv("XDG_DATA_HOME");
         if(root == null) {
@@ -29,10 +29,10 @@ public class LinuxDesktopLauncher {
         }
         return root;
     }
-    
+
     private static void createLauncher() {
         File destFile = new File(getStore() + "applications/" + Main.projectName + ".desktop");
-        logger.log(Level.INFO, "Linux .desktop file: {0}", destFile);
+        LOG.log(Level.INFO, "Linux .desktop file: {0}", destFile);
         try {
             destFile.delete();
             destFile.getParentFile().mkdirs();
@@ -65,10 +65,10 @@ public class LinuxDesktopLauncher {
                 destFile.setExecutable(false);
             }
         } catch(IOException ex) {
-            logger.log(Level.WARNING, null, ex);
+            LOG.log(Level.WARNING, null, ex);
         }
     }
-    
+
     private static void createIcon() {
         String[] icons = {"png", "svg"};
         for(int i = 0; i < icons.length; i++) {
@@ -104,10 +104,12 @@ public class LinuxDesktopLauncher {
                     destFile.setExecutable(false);
                 }
             } catch(IOException ex) {
-                logger.log(Level.WARNING, null, ex);
+                LOG.log(Level.WARNING, null, ex);
                 continue;
             }
         }
     }
 
+    private LinuxDesktopLauncher() {
+    }
 }

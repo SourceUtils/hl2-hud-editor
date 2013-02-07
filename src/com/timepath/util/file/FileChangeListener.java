@@ -8,21 +8,20 @@ import java.io.File;
  * the accompanying materials are made available under the terms of the Eclipse
  * Public License v1.0 which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
- * 
+ *
  * Contributors: Pascal Essiembre - initial API and implementation
  ******************************************************************************/
 
 /**
  * Listener interested in {@link File} changes.
- * 
+ *
  * @author Pascal Essiembre
  */
 public interface FileChangeListener {
   /**
    * Invoked when a file changes.
-   * 
-   * @param fileName
-   *          name of changed file.
+   *
+   * @param file the changed file
    */
   public void fileChanged(File file);
 }

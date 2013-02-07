@@ -1,11 +1,13 @@
 package com.timepath.swing;
 
+import java.util.logging.Logger;
 import javax.swing.JToolBar;
 
 /**
  *
  * @author timepath
  */
+@SuppressWarnings("serial")
 public class StatusBar extends JToolBar {
 
     /**
@@ -31,4 +33,6 @@ public class StatusBar extends JToolBar {
     }// </editor-fold>//GEN-END:initComponents
     // Variables declaration - do not modify//GEN-BEGIN:variables
     // End of variables declaration//GEN-END:variables
+
+    private static final Logger LOG = Logger.getLogger(StatusBar.class.getName());
 }

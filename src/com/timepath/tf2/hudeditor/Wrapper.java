@@ -9,9 +9,9 @@ import java.util.logging.Logger;
  * @author timepath
  */
 public class Wrapper {
-    
+
     private static final Logger logger = Logger.getLogger(Wrapper.class.getName());
-    
+
     public static void main(String[] args) {
         JarClassLoader cl = new JarClassLoader();
         try {
@@ -20,5 +20,4 @@ public class Wrapper {
             logger.log(Level.SEVERE, "Uncaught Exception", e);
         }
     }
-    
 }

@@ -12,22 +12,21 @@ import java.util.logging.Logger;
 import javax.swing.tree.DefaultMutableTreeNode;
 
 /**
- * 
+ *
  * http://hpmod.googlecode.com/svn/trunk/tier1/KeyValues.cpp
  * http://hlssmod.net/he_code/public/tier1/KeyValues.h
- * 
+ *
  * Standard KeyValues format loader
- * 
+ *
  * @author timepath
  */
 public class VDF {
 
-    static final Logger logger = Logger.getLogger(VDF.class.getName());
+    private static final Logger LOG = Logger.getLogger(VDF.class.getName());
 
     public VDF(String file) {
-        
     }
-    
+
     public static void analyze(final File file, final DefaultMutableTreeNode top) {
         if(file.isDirectory()) {
             return;
@@ -44,7 +43,7 @@ public class VDF {
 //                        clientScheme(top);
 //                    }
                 } catch(FileNotFoundException ex) {
-                    logger.log(Level.SEVERE, null, ex);
+                    LOG.log(Level.SEVERE, null, ex);
                 } finally {
                     if(s != null) {
                         s.close();
@@ -61,7 +60,7 @@ public class VDF {
             String key = line.split("[ \t]+")[0];
             String val = line.substring(key.length()).trim();
             String info = null;
-            
+
             // not the best - what if both are used? ... splits at //, then [
             int idx = val.contains("//") ? val.indexOf("//") : (val.contains("[") ? val.indexOf("[") : -1);
             if(idx >= 0) {
@@ -71,9 +70,9 @@ public class VDF {
             if(val.length() == 0) { // very good assumption
                 val = "{";
             }
-            
+
             // Process values
-            
+
             Property p = new Property(key, val, info);
 
             if(line.equals("}")) { // for returning out of recursion: analyze: processAnalyze > processAnalyze < break < break
@@ -83,13 +82,13 @@ public class VDF {
                     e.addProps(carried);
 //                    e.validate(); // TODO: Thread safety. oops
                 }
-                logger.log(Level.FINE, "Returning");
+                LOG.log(Level.FINE, "Returning");
                 break;
             } else if(line.length() == 0) {
                 p.setKey("\\n");
                 p.setValue("\\n");
                 p.setInfo("");
-                logger.log(Level.FINE, "Carrying: {0}", line);
+                LOG.log(Level.FINE, "Carrying: {0}", line);
                 carried.add(p);
                 continue;
             } else if(line.equals("{")) { // just a { on its own line
@@ -99,14 +98,14 @@ public class VDF {
                 p.setKey("#" + rest.substring(0, rest.indexOf(" ")));
                 p.setValue(rest.substring(rest.indexOf(" ")));
                 p.setInfo("");
-                logger.log(Level.INFO, "Carrying: {0}", line);
+                LOG.log(Level.INFO, "Carrying: {0}", line);
                 carried.add(p);
                 continue;
             } else if(line.startsWith("//")) {
                 p.setKey("//");
                 p.setValue(line.substring(line.indexOf("//") + 2)); // display this with .trim()
                 p.setInfo("");
-                logger.log(Level.FINE, "Carrying: {0}", line);
+                LOG.log(Level.FINE, "Carrying: {0}", line);
                 carried.add(p);
                 continue;
             }
@@ -114,7 +113,7 @@ public class VDF {
             if(p.getValue().equals("{")) { // make new sub
                 Element childElement = new Element(p.getKey(), p.getInfo());
                 childElement.setParentFile(file);
-                logger.log(Level.FINE, "Subbing: {0}", childElement);
+                LOG.log(Level.FINE, "Subbing: {0}", childElement);
                 // If setting the properties of a section, put put the value in the info spot
                 for(int i = 0; i < carried.size(); i++) {
                     Property prop = carried.get(i);
@@ -144,5 +143,4 @@ public class VDF {
             }
         }
     }
-
 }

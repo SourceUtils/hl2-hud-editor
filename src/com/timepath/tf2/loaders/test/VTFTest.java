@@ -25,13 +25,13 @@ import javax.swing.filechooser.FileFilter;
  * @author timepath
  */
 public class VTFTest {
-    
-    private static final Logger logger = Logger.getLogger(VTFTest.class.getName());
-    
+
+    private static final Logger LOG = Logger.getLogger(VTFTest.class.getName());
+
     public static void test() {
         final JFrame f = new JFrame("Vtf Loader");
         f.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-        
+
         JScrollPane jsp = new JScrollPane();
         jsp.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
         jsp.getVerticalScrollBar().setUnitIncrement(64);
@@ -39,33 +39,36 @@ public class VTFTest {
         JPanel pane = new JPanel();
         pane.setLayout(new BoxLayout(pane, BoxLayout.PAGE_AXIS));
         jsp.setViewportView(pane);
-        
+
         class ImagePreviewPanel extends JPanel implements PropertyChangeListener {
-            
+
             private int width, height;
+
             private Image image;
+
             private static final int ACCSIZE = 128;
+
             private Color bg;
-            
+
             ImagePreviewPanel() {
                 setPreferredSize(new Dimension(ACCSIZE, -1));
                 bg = getBackground();
             }
-            
+
             public void propertyChange(PropertyChangeEvent e) {
                 String propertyName = e.getPropertyName();
-                
+
                 // Make sure we are responding to the right event.
                 if(propertyName.equals(JFileChooser.SELECTED_FILE_CHANGED_PROPERTY)) {
-                    File selection = (File)e.getNewValue();
+                    File selection = (File) e.getNewValue();
                     String name;
-                    
+
                     if(selection == null) {
                         return;
                     } else {
                         name = selection.getAbsolutePath();
                     }
-                    
+
                     /*
                      * Make reasonably sure we have an image format that AWT can
                      * handle so we don't try to draw something silly.
@@ -84,46 +87,46 @@ public class VTFTest {
                             image = (i != null ? i : new BufferedImage(128, 128, BufferedImage.TYPE_INT_ARGB));
                             scaleImage();
                             repaint();
-                        } catch (IOException ex) {
-                            logger.log(Level.SEVERE, null, ex);
+                        } catch(IOException ex) {
+                            LOG.log(Level.SEVERE, null, ex);
                         }
                     }
                 }
             }
-            
+
             private void scaleImage() {
                 width = image.getWidth(this);
                 height = image.getHeight(this);
                 double ratio = 1.0;
-                
+
                 /*
                  * Determine how to scale the image. Since the accessory can expand
                  * vertically make sure we don't go larger than ACCSIZE when scaling
                  * vertically.
                  */
                 if(width >= height) {
-                    ratio = (double)(ACCSIZE-5) / width;
-                    width = ACCSIZE-5;
-                    height = (int)(height * ratio);
+                    ratio = (double) (ACCSIZE - 5) / width;
+                    width = ACCSIZE - 5;
+                    height = (int) (height * ratio);
                 } else {
                     if(getHeight() > ACCSIZE) {
-                        ratio = (double)(ACCSIZE-5) / height;
-                        height = ACCSIZE-5;
-                        width = (int)(width * ratio);
+                        ratio = (double) (ACCSIZE - 5) / height;
+                        height = ACCSIZE - 5;
+                        width = (int) (width * ratio);
                     } else {
-                        ratio = (double)getHeight() / height;
+                        ratio = (double) getHeight() / height;
                         height = getHeight();
-                        width = (int)(width * ratio);
+                        width = (int) (width * ratio);
                     }
                 }
-                
+
                 image = image.getScaledInstance(width, height, Image.SCALE_DEFAULT);
             }
-            
+
             @Override
             public void paintComponent(Graphics g) {
                 g.setColor(bg);
-                
+
                 /*
                  * If we don't do this, we will end up with garbage from previous
                  * images if they have larger sizes than the one we are currently
@@ -135,17 +138,16 @@ public class VTFTest {
                 g.fillRect(0, 0, ACCSIZE, getHeight());
                 g.drawImage(image, getWidth() / 2 - width / 2 + 5, getHeight() / 2 - height / 2, this);
             }
-            
         }
-        
+
         class VtfFileFilter extends FileFilter {
-            
+
             VtfFileFilter(Format format) {
                 this.vtfFormat = format;
             }
-            
+
             Format vtfFormat;
-            
+
             @Override
             public boolean accept(File file) {
                 if(file.isDirectory()) {
@@ -163,13 +165,13 @@ public class VTFTest {
                 }
                 return (v.format == vtfFormat);
             }
-            
+
             @Override
             public String getDescription() {
                 return "VTF (" + (vtfFormat != Format.IMAGE_FORMAT_NONE ? vtfFormat.name() : "All") + ")";
             }
         }
-        
+
         JFileChooser chooser = new JFileChooser();
         FileFilter generic = new VtfFileFilter(Format.IMAGE_FORMAT_NONE);
         chooser.addChoosableFileFilter(generic);
@@ -208,8 +210,8 @@ public class VTFTest {
 //                            jsp.repaint();
 //
 //                            if(!init) {
-                                f.setVisible(true);
-                                f.pack();
+        f.setVisible(true);
+        f.pack();
 //                                init = true;
 //                            }
 //                        }
@@ -220,7 +222,7 @@ public class VTFTest {
 //            }
 //        }
     }
-    
+
     public static void main(String... args) {
         new Thread(new Runnable() {
             public void run() {
@@ -228,5 +230,4 @@ public class VTFTest {
             }
         }).start();
     }
-
 }

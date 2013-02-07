@@ -15,10 +15,10 @@ import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreeNode;
 
 /**
- * 
+ *
  * TODO: Threading. This class can probably be executed as a thread.
  * If there are multiple values with platform tags, all the values become the last loaded value tag, but only if the variable is recognized
- * 
+ *
  * Some tags:
  * $WINDOWS
  * $WIN32
@@ -26,22 +26,22 @@ import javax.swing.tree.TreeNode;
  * $POSIX
  * $OSX
  * $LINUX
- * 
+ *
  * @author timepath
  */
 public class RES {
 
-    static final Logger logger = Logger.getLogger(RES.class.getName());
+    private static final Logger LOG = Logger.getLogger(RES.class.getName());
 
     private String hudFolder;
 
     public RES(String hudFolder) {
         this.hudFolder = hudFolder;
     }
-    
-    public static HashMap<String,HudFont> fonts = new HashMap<String,HudFont>(); 
 
-    // TODO: Special exceptions for *scheme.res, hudlayout.res, 
+    public static HashMap<String, HudFont> fonts = new HashMap<String, HudFont>();
+
+    // TODO: Special exceptions for *scheme.res, hudlayout.res,
     public static void analyze(final File file, final DefaultMutableTreeNode top) {
         if(file.isDirectory()) {
             return;
@@ -58,7 +58,7 @@ public class RES {
                         clientScheme(top);
                     }
                 } catch(FileNotFoundException ex) {
-                    logger.log(Level.SEVERE, null, ex);
+                    LOG.log(Level.SEVERE, null, ex);
                 } finally {
                     if(s != null) {
                         s.close();
@@ -67,7 +67,7 @@ public class RES {
             }
 
             private void clientScheme(DefaultMutableTreeNode props) {
-                System.out.println("Found clientscheme");
+                LOG.info("Found clientscheme");
                 TreeNode fontNode = props.getChildAt(0).getChildAt(3); // XXX: hardcoded
                 for(int i = 0; i < fontNode.getChildCount(); i++) {
                     TreeNode font = fontNode.getChildAt(i);
@@ -76,7 +76,7 @@ public class RES {
                     String fontName = font.toString().replaceAll("\"", ""); // Some use quotes.. oh well
                     fonts.put(fontName, new HudFont(fontName, fontElement));
                 }
-                System.out.println("Loaded clientscheme");
+                LOG.info("Loaded clientscheme");
             }
         };
         t.run();
@@ -90,9 +90,9 @@ public class RES {
             String key = line.split("[ \t]+")[0];
             String val = line.substring(key.length()).trim();
             String info = null;
-            
+
             // not the best - what if both are used? ... splits at //, then [
-            int idx = val.contains("//") ? val.indexOf("//") : (val.contains("[") ? val.indexOf("[") : -1);
+            int idx = val.contains("//") ? val.indexOf("//") : (val.contains("[") ? val.indexOf('[') : -1);
             if(idx >= 0) {
                 info = val.substring(idx).trim();
                 val = val.substring(0, idx).trim();
@@ -100,9 +100,9 @@ public class RES {
             if(val.length() == 0) { // very good assumption
                 val = "{";
             }
-            
+
             // Process values
-            
+
             Property p = new Property(key, val, info);
 
             if(line.equals("}")) { // for returning out of recursion: analyze: processAnalyze > processAnalyze < break < break
@@ -112,30 +112,30 @@ public class RES {
                     e.addProps(carried);
 //                    e.validate(); // TODO: Thread safety. oops
                 }
-                logger.log(Level.FINE, "Returning");
+                LOG.log(Level.FINE, "Returning");
                 break;
             } else if(line.length() == 0) {
                 p.setKey("\\n");
                 p.setValue("\\n");
                 p.setInfo("");
-                logger.log(Level.FINE, "Carrying: {0}", line);
+                LOG.log(Level.FINE, "Carrying: {0}", line);
                 carried.add(p);
                 continue;
             } else if(line.equals("{")) { // just a { on its own line
                 continue;
             } else if(line.startsWith("#")) {
                 String rest = line.substring(line.indexOf('#') + 1);
-                p.setKey("#" + rest.substring(0, rest.indexOf(" ")));
-                p.setValue(rest.substring(rest.indexOf(" ")));
+                p.setKey("#" + rest.substring(0, rest.indexOf(' ')));
+                p.setValue(rest.substring(rest.indexOf(' ')));
                 p.setInfo("");
-                logger.log(Level.INFO, "Carrying: {0}", line);
+                LOG.log(Level.INFO, "Carrying: {0}", line);
                 carried.add(p);
                 continue;
             } else if(line.startsWith("//")) {
                 p.setKey("//");
                 p.setValue(line.substring(line.indexOf("//") + 2)); // display this with .trim()
                 p.setInfo("");
-                logger.log(Level.FINE, "Carrying: {0}", line);
+                LOG.log(Level.FINE, "Carrying: {0}", line);
                 carried.add(p);
                 continue;
             }
@@ -143,7 +143,7 @@ public class RES {
             if(p.getValue().equals("{")) { // make new sub
                 Element childElement = new Element(p.getKey(), p.getInfo());
                 childElement.setParentFile(file);
-                logger.log(Level.FINE, "Subbing: {0}", childElement);
+                LOG.log(Level.FINE, "Subbing: {0}", childElement);
                 // If setting the properties of a section, put put the value in the info spot
                 for(int i = 0; i < carried.size(); i++) {
                     Property prop = carried.get(i);
@@ -173,5 +173,4 @@ public class RES {
             }
         }
     }
-
 }

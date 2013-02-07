@@ -1,7 +1,7 @@
 package com.timepath.tf2.hudeditor.gui;
 
-import com.timepath.tf2.hudeditor.util.Alignment;
 import com.timepath.tf2.hudeditor.util.Element;
+import com.timepath.tf2.hudeditor.util.Element.Alignment;
 import java.awt.AlphaComposite;
 import java.awt.Color;
 import java.awt.Dimension;
@@ -27,37 +27,46 @@ import javax.swing.JPanel;
  *
  * @author timepath
  */
+@SuppressWarnings("serial")
 public final class Canvas extends JPanel implements MouseListener, MouseMotionListener {
 
-    private static final Logger logger = Logger.getLogger(Canvas.class.getName());
+    private static final Logger LOG = Logger.getLogger(Canvas.class.getName());
+
     public double scale = 1;
+
     public Dimension screen;
+
     public Dimension internal;
-    
+
     private Color BG_COLOR = Color.GRAY;
+
     private Color GRID_COLOR = Color.GRAY.brighter();
 
     private static int offX = 0; // left
+
     private static int offY = 0; // top
 
     private Rectangle selectRect = new Rectangle();
-    
+
     private Image currentbg;
+
     private Image gridbg;
 
-    AlphaComposite ac = AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.25f);
-    
+    private static final AlphaComposite ac = AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.25f);
+
     //<editor-fold defaultstate="collapsed" desc="Utility methods">
     /**
      * Finds the greatest common multiple
+     *
      * @param a
      * @param b
+     *
      * @return
      */
     public static long gcm(long a, long b) {
         return b == 0 ? a : gcm(b, a % b);
     }
-    
+
     public static Rectangle fitRect(Point p1, Point p2, Rectangle r) {
         Rectangle result = new Rectangle(r);
         result.x = Math.min(p1.x, p2.x);
@@ -67,7 +76,7 @@ public final class Canvas extends JPanel implements MouseListener, MouseMotionLi
         return result;
     }
     //</editor-fold>
-    
+
     /**
      * Creates new form Canvas
      */
@@ -89,77 +98,78 @@ public final class Canvas extends JPanel implements MouseListener, MouseMotionLi
     }// </editor-fold>//GEN-END:initComponents
     // Variables declaration - do not modify//GEN-BEGIN:variables
     // End of variables declaration//GEN-END:variables
-    
+
     //<editor-fold defaultstate="collapsed" desc="Background image">
     private Image background;
-    
+
     private void loadBackground() {
         URL url = getClass().getResource("/com/timepath/tf2/hudeditor/resources/Badlands1.png");
         background = Toolkit.getDefaultToolkit().getImage(url);
         this.prepareImage(background, this);
     }
     //</editor-fold>
-    
+
     //<editor-fold defaultstate="collapsed" desc="Input">
     private void initInput() {
         this.addMouseListener(this);
         this.addMouseMotionListener(this);
     }
-    
-    /*public void mouseClicked(MouseEvent me) {
-        throw new UnsupportedOperationException("Not supported yet.");
-    }
-    
-    public void mousePressed(MouseEvent me) {
-        throw new UnsupportedOperationException("Not supported yet.");
-    }
-    
-    public void mouseReleased(MouseEvent me) {
-        throw new UnsupportedOperationException("Not supported yet.");
-    }
-    
-    public void mouseEntered(MouseEvent me) {
-        throw new UnsupportedOperationException("Not supported yet.");
-    }
-    
-    public void mouseExited(MouseEvent me) {
-        throw new UnsupportedOperationException("Not supported yet.");
-    }
-    
-    public void mouseDragged(MouseEvent me) {
-        throw new UnsupportedOperationException("Not supported yet.");
-    }
-    
-    public void mouseMoved(MouseEvent me) {
-        throw new UnsupportedOperationException("Not supported yet.");
-    }*/
+
+    /*
+     * public void mouseClicked(MouseEvent me) {
+     * throw new UnsupportedOperationException("Not supported yet.");
+     * }
+     *
+     * public void mousePressed(MouseEvent me) {
+     * throw new UnsupportedOperationException("Not supported yet.");
+     * }
+     *
+     * public void mouseReleased(MouseEvent me) {
+     * throw new UnsupportedOperationException("Not supported yet.");
+     * }
+     *
+     * public void mouseEntered(MouseEvent me) {
+     * throw new UnsupportedOperationException("Not supported yet.");
+     * }
+     *
+     * public void mouseExited(MouseEvent me) {
+     * throw new UnsupportedOperationException("Not supported yet.");
+     * }
+     *
+     * public void mouseDragged(MouseEvent me) {
+     * throw new UnsupportedOperationException("Not supported yet.");
+     * }
+     *
+     * public void mouseMoved(MouseEvent me) {
+     * throw new UnsupportedOperationException("Not supported yet.");
+     * }
+     */
     //</editor-fold>
-    
     @Override
     public void setPreferredSize(Dimension preferredSize) {
         super.setPreferredSize(preferredSize);
-        
+
         currentbg = null;
         gridbg = null;
         screen = preferredSize;
-        
+
 //        long gcm = gcm(hudRes.width, hudRes.height);
         long resX = screen.width;
         long resY = screen.height;
-        double m = (double)resX / (double)resY;
+        double m = (double) resX / (double) resY;
 //        System.out.println(resX + "/" + resY + "=" + m);
 //        System.out.println((resX / gcm) + ":" + (resY / gcm) + " = " + Math.round(m * 480) + "x" + 480);
 
-        internal = new Dimension((int)Math.round(m * 480), 480);
+        internal = new Dimension((int) Math.round(m * 480), 480);
         this.repaint();
     }
-    
+
     //<editor-fold defaultstate="collapsed" desc="Paint methods">
     @Override
     protected void paintComponent(Graphics graphics) {
         super.paintComponent(graphics);
         Graphics2D g = (Graphics2D) graphics;
-        
+
         if(background != null) {
             if(currentbg == null) {
                 currentbg = resizeImage(background);
@@ -168,7 +178,7 @@ public final class Canvas extends JPanel implements MouseListener, MouseMotionLi
 //            g.drawImage(background, offX, offY, this);
         } else {
             g.setColor(BG_COLOR);
-            g.fillRect(offX, offY, (int)Math.round(screen.width * scale), (int)Math.round(screen.height * scale));
+            g.fillRect(offX, offY, (int) Math.round(screen.width * scale), (int) Math.round(screen.height * scale));
         }
         if(true) {
             if(gridbg == null) {
@@ -176,14 +186,14 @@ public final class Canvas extends JPanel implements MouseListener, MouseMotionLi
             }
             g.drawImage(gridbg, offX, offY, this);
         }
-        
+
         Collections.sort(elements, layerSort);
-        
+
         for(int i = 0; i < elements.size(); i++) {
             paintElement(elements.get(i), g);
             //            System.out.println(elements.get(i).getParent());
         }
-        
+
         //<editor-fold defaultstate="collapsed" desc="Selection rectangle">
         g.setComposite(ac);
         g.setColor(Color.CYAN.darker());
@@ -192,17 +202,17 @@ public final class Canvas extends JPanel implements MouseListener, MouseMotionLi
         g.drawRect(offX + selectRect.x, offY + selectRect.y, selectRect.width - 1, selectRect.height - 1);
         //</editor-fold>
     }
-    
+
     private static Comparator<Element> layerSort = new Comparator<Element>() {
         @Override
         public int compare(Element e1, Element e2) {
             return e1.getLayer() - e2.getLayer();
         }
     };
-    
+
     private Image resizeImage(Image i) { // TODO: aspect ratio tuning
         int w = screen.width;
-        int h = screen.height;        
+        int h = screen.height;
         int type = BufferedImage.TYPE_INT_ARGB;
 
         BufferedImage resizedImage = new BufferedImage(w, h, type);
@@ -213,16 +223,16 @@ public final class Canvas extends JPanel implements MouseListener, MouseMotionLi
         g.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
         g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
-        int proposedWidth = Math.round((float)h / (float)i.getHeight(null) * (float)i.getWidth(null));
+        int proposedWidth = Math.round((float) h / (float) i.getHeight(null) * (float) i.getWidth(null));
         int excess = Math.abs(proposedWidth - w) / 2;
         g.drawImage(i, -excess, 0, w + (2 * excess), h, this); // should scale most images correctly
         g.dispose();
 
         return resizedImage;
     }
-    
+
     private int minGridSpacing = 10;
-    
+
     // as soon as the height drops below 480, stops rendering
     private Image drawGrid() {
         BufferedImage img = new BufferedImage(screen.width, screen.height, BufferedImage.TYPE_INT_ARGB);
@@ -231,12 +241,12 @@ public final class Canvas extends JPanel implements MouseListener, MouseMotionLi
 //        g.setComposite(AlphaComposite.Src);
         g.setComposite(ac);
         g.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_SPEED);
-        
+
         g.setColor(GRID_COLOR);
-        
+
         int w = screen.width;
         int h = screen.height;
-        int i = minGridSpacing; 
+        int i = minGridSpacing;
         if(i < 0) {
             return img;
         }
@@ -260,13 +270,13 @@ public final class Canvas extends JPanel implements MouseListener, MouseMotionLi
         g.dispose();
         return img;
     }
-    
+
     private void paintElement(Element e, Graphics2D g) {
         if(e.getWidth() > 0 && e.getHeight() > 0) { // invisible? don't waste time
-            int elementX = (int) Math.round((double) e.getX() * ((double)screen.width / (double)internal.width) * scale) + offX;
-            int elementY = (int) Math.round((double) e.getY() * ((double)screen.height / (double)internal.height) * scale) + offY;
-            int elementW = (int) Math.round((double) e.getWidth() * ((double)screen.width / (double)internal.width) * scale);
-            int elementH = (int) Math.round((double) e.getHeight() * ((double)screen.height / (double)internal.height) * scale);
+            int elementX = (int) Math.round((double) e.getX() * ((double) screen.width / (double) internal.width) * scale) + offX;
+            int elementY = (int) Math.round((double) e.getY() * ((double) screen.height / (double) internal.height) * scale) + offY;
+            int elementW = (int) Math.round((double) e.getWidth() * ((double) screen.width / (double) internal.width) * scale);
+            int elementH = (int) Math.round((double) e.getHeight() * ((double) screen.height / (double) internal.height) * scale);
             if(selectedElements.contains(e)) {
                 elementX += _offX;
                 elementY += _offY;
@@ -277,43 +287,43 @@ public final class Canvas extends JPanel implements MouseListener, MouseMotionLi
                     g.fillRect(elementX, elementY, elementW - 1, elementH - 1);
                 }
             }
-            
+
             if(e.getImage() != null) {
                 g.drawImage(e.getImage(), elementX, elementY, elementW, elementH, this);
             }
-            
+
             if(selectedElements.contains(e)) {
                 g.setColor(Color.CYAN);
             } else {
                 g.setColor(Color.GREEN);
             }
             g.drawRect(elementX, elementY, elementW - 1, elementH - 1);
-            
-            
+
+
             if(hoveredElement == e) {
-                g.setColor(new Color(255-g.getColor().getRed(), 255-g.getColor().getGreen(), 255-g.getColor().getBlue()));
+                g.setColor(new Color(255 - g.getColor().getRed(), 255 - g.getColor().getGreen(), 255 - g.getColor().getBlue()));
                 //                g.drawRect(elementX + offX, elementY + offY, e.getWidth() - 1, e.getHeight() - 1); // border
                 g.drawRect(elementX + 1, elementY + 1, elementW - 3, elementH - 3); // inner
                 //                g.drawRect(elementX + offX - 1, elementY + offY - 1, e.getWidth() + 1, e.getHeight() + 1); // outer
             }
-            
+
             if(e.getLabelText() != null && !e.getLabelText().isEmpty()) {
                 if(e.getFgColor() != null) {
                     g.setColor(e.getFgColor());
                 }
                 int screenRes = Toolkit.getDefaultToolkit().getScreenResolution();
-                int fontSize = (int)Math.round(12.0 * screenRes / 72.0);
+                int fontSize = (int) Math.round(12.0 * screenRes / 72.0);
                 g.setFont(e.getFont());
                 g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
                 g.drawString(e.getLabelText(), elementX, elementY + fontSize);
             }
         }
-        
+
         //        for(int i = 0; i < e.children.size(); i++) {
         //            paintElement(e.children.get(i), g);
         //        }
     }
-    
+
     public void doRepaint(Rectangle bounds) {
         this.repaint(offX + bounds.x, offY + bounds.y, bounds.width - 1, bounds.height - 1); // repaint the bare minimum
         //        this.repaint();
@@ -325,16 +335,16 @@ public final class Canvas extends JPanel implements MouseListener, MouseMotionLi
     public void mouseMoved(MouseEvent event) {
         Point p = new Point(event.getPoint());
         p.translate(-offX, -offY);
-        
+
         hover(chooseBest(pick(p, elements)));
     }
-    
+
     @Override
     public void mousePressed(MouseEvent event) {
         Point p = new Point(event.getPoint());
         p.translate(-offX, -offY);
         int button = event.getButton(); // Button2 is middle click on linux. How odd.
-        
+
         if(button == MouseEvent.BUTTON1) {
             dragStart = new Point(p.x, p.y);
             selectRect.x = p.x;
@@ -363,13 +373,13 @@ public final class Canvas extends JPanel implements MouseListener, MouseMotionLi
             }
         }
     }
-    
+
     @Override
     public void mouseReleased(MouseEvent event) {
         Point p = new Point(event.getPoint());
         p.translate(-offX, -offY);
         int button = event.getButton();
-        
+
         if(button == MouseEvent.BUTTON1) {
             isDragSelecting = false;
             isDragMoving = false;
@@ -389,15 +399,16 @@ public final class Canvas extends JPanel implements MouseListener, MouseMotionLi
             doRepaint(new Rectangle(original.x, original.y, original.width + 1, original.height + 1));
         }
     }
-    
+
     private int _offX;
+
     private int _offY;
-    
+
     @Override
-    public void mouseDragged(MouseEvent event) { 
+    public void mouseDragged(MouseEvent event) {
         Point p = new Point(event.getPoint());
         p.translate(-offX, -offY); // relative to top left of canvas
-        
+
         //        if(button == MouseEvent.BUTTON1) {
         if(isDragSelecting) {
             select(dragStart, p, event.isControlDown());
@@ -409,7 +420,7 @@ public final class Canvas extends JPanel implements MouseListener, MouseMotionLi
         }
         //        }
     }
-    
+
     //<editor-fold defaultstate="collapsed" desc="For later use">
     @Override
     public void mouseEntered(MouseEvent e) {
@@ -424,9 +435,7 @@ public final class Canvas extends JPanel implements MouseListener, MouseMotionLi
     } // May be needed for double clicks later on
 
     //</editor-fold>
-    
     //</editor-fold>
-
     private boolean isDragSelecting;
 
     private boolean isDragMoving;
@@ -436,11 +445,11 @@ public final class Canvas extends JPanel implements MouseListener, MouseMotionLi
     //<editor-fold defaultstate="collapsed" desc="Element management">
     // List of elements
     private ArrayList<Element> elements = new ArrayList<Element>();
-    
+
     public ArrayList<Element> getElements() {
         return elements;
     }
-    
+
     public void addElement(Element e) {
         if(!elements.contains(e)) {
             e.validateLoad();
@@ -449,33 +458,32 @@ public final class Canvas extends JPanel implements MouseListener, MouseMotionLi
             this.doRepaint(e.getBounds());
         }
     }
-    
+
     public void removeElement(Element e) {
         if(elements.contains(e)) {
             elements.remove(e);
             this.doRepaint(e.getBounds());
         }
     }
-    
+
     public void removeElements(ArrayList<Element> e) {
         for(int i = 0; i < e.size(); i++) {
             removeElement(e.get(i));
         }
     }
-    
+
     public void clearElements() {
         for(int i = 0; i < elements.size(); i++) {
             removeElement(elements.get(i));
         }
     }
-    
+
     public void load(Element element) {
         if(Element.areas.containsKey(element.getFile())) {
             Element p = Element.areas.get(element.getFile());
             p.addChild(element);
             this.addElement(p);
-        }
-        else if(element.getFile().equalsIgnoreCase("HudPlayerHealth")) { // better, but still not perfect
+        } else if(element.getFile().equalsIgnoreCase("HudPlayerHealth")) { // better, but still not perfect
             // move by "CHealthAccountPanel" delta_item_x" and "delta_item_start_y"
             Element p = Element.areas.get("CHealthAccountPanel");
             p.addChild(element);
@@ -483,54 +491,54 @@ public final class Canvas extends JPanel implements MouseListener, MouseMotionLi
         }
         this.addElement(element); // weird but it has to be done
     }
-    
+
     // List of currently selected elements
     private ArrayList<Element> selectedElements = new ArrayList<Element>();
-    
+
     private ArrayList<Element> getSelected() {
         return selectedElements;
     }
-    
+
     public boolean isSelected(Element e) {
         return selectedElements.contains(e);
     }
-    
+
     public void select(Element e) {
         if(e != null) {
             if(selectedElements.contains(e)) {
                 return;
             }
-            
+
             selectedElements.add(e);
-            
+
             //            if(e.children != null) {
             //                for(int i = 0; i < e.children.size(); i++) {
             //                    select(e.children.get(i));
             //                }
             //            }
-            
+
             this.doRepaint(e.getBounds());
         }
     }
-    
+
     public void deselect(Element e) {
         if(e != null) {
             if(!selectedElements.contains(e)) {
                 return;
             }
-            
+
             selectedElements.remove(e);
-            
+
             //            if(e.children != null) {
             //                for(int i = 0; i < e.children.size(); i++) {
             //                    deselect(e.children.get(i));
             //                }
             //            }
-            
+
             this.doRepaint(e.getBounds());
         }
     }
-    
+
     public void deselectAll() {
         ArrayList<Element> temp = new ArrayList<Element>(selectedElements);
         selectedElements.clear();
@@ -538,14 +546,14 @@ public final class Canvas extends JPanel implements MouseListener, MouseMotionLi
             this.doRepaint(temp.get(i).getBounds());
         }
     }
-    
+
     // List of currently selected elements
     private Element hoveredElement;
-    
+
     public Element getHovered() {
         return hoveredElement;
     }
-    
+
     void hover(Element e) {
         if(hoveredElement != e) { // don't waste time re-drawing
             Rectangle oldBounds = null;
@@ -561,7 +569,7 @@ public final class Canvas extends JPanel implements MouseListener, MouseMotionLi
             }
         }
     }
-    
+
     // Checks if poing p is inside the bounds of any element
     public ArrayList<Element> pick(Point p, ArrayList<Element> elements) {
         ArrayList<Element> potential = new ArrayList<Element>();
@@ -573,7 +581,7 @@ public final class Canvas extends JPanel implements MouseListener, MouseMotionLi
         }
         return potential;
     }
-    
+
     public Element chooseBest(ArrayList<Element> potential) {
         int pSize = potential.size();
         if(pSize == 0) {
@@ -595,7 +603,7 @@ public final class Canvas extends JPanel implements MouseListener, MouseMotionLi
         }
         return smallest;
     }
-    
+
     public void select(Point p1, Point p2, boolean ctrl) {
         if(p1 != null && p2 != null) {
             Rectangle originalSelectRect = new Rectangle(selectRect);
@@ -615,19 +623,19 @@ public final class Canvas extends JPanel implements MouseListener, MouseMotionLi
             this.doRepaint(new Rectangle(this.selectRect.x, this.selectRect.y, this.selectRect.width + 1, this.selectRect.height + 1));
         }
     }
-    
+
     public void translate(Element e, double dx, double dy) { // todo: scaling (scale 5 = 5 pixels to move 1 x/y co-ord)
 //        Rectangle originalBounds = new Rectangle(e.getBounds());
         if(e.getXAlignment() == Alignment.Right) {
             dx *= -1;
         }
-        double scaleX = ((double)screen.width / (double)internal.width);
+        double scaleX = ((double) screen.width / (double) internal.width);
         dx = Math.round(dx / scaleX);
         e.setLocalX(e.getLocalX() + dx);
         if(e.getYAlignment() == Alignment.Right) {
             dy *= -1;
         }
-        double scaleY = ((double)screen.height / (double)internal.height);
+        double scaleY = ((double) screen.height / (double) internal.height);
         dy = Math.round(dy / scaleY);
         e.setLocalY(e.getLocalY() + dy);
 //        this.doRepaint(originalBounds);
@@ -641,8 +649,7 @@ public final class Canvas extends JPanel implements MouseListener, MouseMotionLi
         for(int i = 0; i < temp.size(); i++) {
             Element e = temp.get(i);
             this.doRepaint(e.getBounds());
-        }   
+        }
     }
     //</editor-fold>
-    
 }

@@ -9,11 +9,12 @@ import java.util.logging.Logger;
 public class Property {
 
     private String key;
+
     private String value;
+
     private String info;
-    
+
     public Property() {
-    	
     }
 
     public Property(String key, String value, String info) {
@@ -33,7 +34,7 @@ public class Property {
     public String getValue() {
         return value;
     }
-    
+
     public void setValue(Object value) {
         this.value = value.toString();
     }
@@ -50,6 +51,6 @@ public class Property {
     public String toString() {
         return key + ":" + value + ":" + info;
     }
-    private static final Logger logger = Logger.getLogger(Property.class.getName());
 
+    private static final Logger LOG = Logger.getLogger(Property.class.getName());
 }

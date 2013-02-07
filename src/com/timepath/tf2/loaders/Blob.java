@@ -11,62 +11,59 @@ import java.util.logging.Logger;
 /**
  *
  * http://trac.assembla.com/clientregistrytoolkit/browser/trunk/SteamReg/Blob
- * 
+ *
  * @author timepath
  */
 public class Blob {
-    
+
     /**
      * Type:
      * short
-     *  0x5001 = uncompressed
-     *  0x4301 = compressed
+     * 0x5001 = uncompressed
+     * 0x4301 = compressed
      */
-    
     /**
      * Compressed header:
      * int
-     *  compressed + 20 (size of header neglecting initial short)
+     * compressed + 20 (size of header neglecting initial short)
      * int
-     *  dummy1
+     * dummy1
      * int
-     *  decompressed
+     * decompressed
      * int
-     *  dummy2
+     * dummy2
      * short
-     *  dummy3
+     * dummy3
      * byte[compressed]
-     *  perform zlib decompression (skip the first 2 bytes) to get byte[decompressed]
+     * perform zlib decompression (skip the first 2 bytes) to get byte[decompressed]
      */
-    
     /**
      * Header:
      * uint
-     *  length + 10 (10 = size of header)
+     * length + 10 (10 = size of header)
      * int padding
-     *  4 bytes of nothing
+     * 4 bytes of nothing
      */
-    
     /**
      * Node:
      * short
-     *  length
+     * length
      * int
-     *  dataSize
+     * dataSize
      * byte[length]
-     *  name
+     * name
      * byte[dataSize]
-     *  the actual data for this blob. May contain more blob data chunks
+     * the actual data for this blob. May contain more blob data chunks
      */
-    
     private static final Logger logger = Logger.getLogger(Blob.class.getName());
+
     private BlobNode blob;
-    
+
     public Blob(File f) {
         try {
             RandomAccessFile rf = new RandomAccessFile(f, "r");
             this.blob = readBlob(rf);
-        } catch (IOException ex) {
+        } catch(IOException ex) {
             logger.log(Level.SEVERE, null, ex);
         }
     }
@@ -75,16 +72,16 @@ public class Blob {
     public String toString() {
         return blob.toString();
     }
-    
+
     private static final int COMPRESSED = 0x4301;
+
     private static final int UNCOMPRESSED = 0x5001;
-    
+
     public class BlobNode {
-        
+
         public BlobNode() {
-            
         }
-        
+
         private short header;
 
         /**
@@ -129,48 +126,46 @@ public class Blob {
         /**
          * @param name the name to set
          */
-        public void setName(byte[] bytes) {
-            this.name = new String(bytes);
+        public void setName(String name) {
+            this.name = name;
         }
-        
+
         public ArrayList children = new ArrayList();
 
         @Override
         public String toString() {
             return "'" + name + "'";
         }
-        
     }
-    
+
     /**
      * 1. Get data of current blob
      * 2. for all nested blobs, goto 1
-     * 
-     * @param rf 
+     *
+     * @param rf
      */
     private BlobNode readBlob(RandomAccessFile rf) throws IOException {
         BlobNode bn = new BlobNode();
         bn.setHeader(DataUtils.readLEShort(rf));
         switch(bn.getHeader()) {
             case COMPRESSED:
-            break;
+                break;
             case UNCOMPRESSED:
                 readBlobUncompressed(rf, bn);
-            break;
+                break;
             default:
-            break;
+                break;
         }
         return bn;
     }
-    
+
     private void readBlobUncompressed(RandomAccessFile rf, BlobNode bn) throws IOException {
         bn.setLength(DataUtils.readULEInt(rf) - 10);
         DataUtils.readULEInt(rf); // padding
         int nameLength = DataUtils.readULEShort(rf);
         int dataLength = DataUtils.readULEInt(rf);
-        bn.setName(DataUtils.readBytes(rf, nameLength));
+        bn.setName(new String(DataUtils.readBytes(rf, nameLength)));
 //        byte[] data = DataUtils.readBytes(rf, dataLength);
         bn.children.add(readBlob(rf));
     }
-    
 }
