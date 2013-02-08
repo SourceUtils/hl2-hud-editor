@@ -27,52 +27,72 @@ public class GCF {
     private static final Logger LOG = Logger.getLogger(GCF.class.getName());
 
     //<editor-fold defaultstate="collapsed" desc="Utils">
-    public static void analyze(final File file, final DefaultMutableTreeNode top) {
-        try {
-            GCF g = new GCF(file);
-            String[] entries = g.getEntries();
-            for(int i = 0; i < entries.length; i++) {
-                top.add(new DefaultMutableTreeNode(entries[i]));
+    public void analyze(GCF g, final DefaultMutableTreeNode top) {
+        DirectoryEntry[] entries = g.directoryEntries;
+        g.analyze(entries[0], top);
+    }
+
+    public void analyze(DirectoryEntry root, DefaultMutableTreeNode parent) {
+        DirectoryEntry[] entries = getImmediateChildren(root);
+        for(int i = 0; i < entries.length; i++) {
+            DefaultMutableTreeNode child = new DefaultMutableTreeNode(entries[i]);
+            if(entries[i].firstChildIndex != 0) {
+                analyze(entries[i], child);
             }
-        } catch(IOException ex) {
-            LOG.log(Level.SEVERE, null, ex);
+            parent.add(child);
         }
     }
 
-    public String[] getEntries() {
+    public DirectoryEntry[] getImmediateChildren(DirectoryEntry root) {
+        int idx = root.index;
+        DirectoryEntry[] entries = new DirectoryEntry[directoryEntries[idx].itemSize];
+        int next = directoryEntries[idx].firstChildIndex;
+        for(int i = 0; i < entries.length; i++) {
+            entries[i] = directoryEntries[next];
+            next = entries[i].nextIndex;
+        }
+        return entries;
+    }
+
+    public String[] getEntryNames() {
         String[] out = new String[directoryEntries.length];
         for(int i = 0; i < out.length; i++) {
-            out[i] = nameForDirectoryIndex(i);
+            out[i] = nameForDirectoryIndexRecursive(i);
         }
         return out;
     }
 
-    public String nameForDirectoryIndex(int idx) {
-        String str = nameForDirectoryIndexRecurse(idx);
-        return str.length() > 0 ? str : "/";
+    public String nameForDirectoryIndexRecursive(int idx) {
+        String str = nameForDirectoryIndex(idx);
+        if(directoryEntries[idx].parentIndex != 0xFFFFFFFF) {
+            String parent = nameForDirectoryIndexRecursive(directoryEntries[idx].parentIndex);
+            str = parent + str;
+        } else {
+            return str;
+        }
+        return str;
     }
 
-    private String nameForDirectoryIndexRecurse(int idx) {
+    private String nameForDirectoryIndex(int idx) {
         String str;
-        if(idx != -1 && directoryEntries[idx].parentIndex != -1 && directoryEntries[idx].parentIndex != 0xFFFFFFFF) {
-            str = nameForDirectoryIndexRecurse(directoryEntries[idx].parentIndex);
+        if(idx == 0) {
+            str = "root";
         } else {
-            return "";
+            int off = directoryEntries[idx].nameOffset;
+            ByteArrayOutputStream s = new ByteArrayOutputStream();
+            while(ls[off] != 0) {
+                s.write(ls[off]);
+                off++;
+            }
+            str = new String(s.toByteArray());
         }
-        int off = directoryEntries[idx].nameOffset;
-        ByteArrayOutputStream s = new ByteArrayOutputStream();
-        while(ls[off] != 0) {
-            s.write(ls[off]);
-            off++;
-        }
-        str += "/" + new String(s.toByteArray());
-        return str;
+        return str + (directoryEntries[idx].firstChildIndex != 0 ? "/" : "");
     }
 
     public File extract(String search, File dest) throws IOException {
         LOG.log(Level.INFO, "Extracting {0}", search);
         for(int i = 0; i < directoryEntries.length; i++) {
-            String str = nameForDirectoryIndex(i);
+            String str = nameForDirectoryIndexRecursive(i);
             if(!str.equals(search)) {
                 continue;
             }
@@ -83,7 +103,7 @@ public class GCF {
     }
 
     public File extract(int index, File dest) throws IOException {
-        String str = nameForDirectoryIndex(index);
+        String str = nameForDirectoryIndexRecursive(index);
         File outFile;
         if(directoryEntries[index].attributes == 0) {
             //<editor-fold defaultstate="collapsed" desc="Extract directory">
@@ -182,11 +202,16 @@ public class GCF {
     }
     //</editor-fold>
 
+    private File file;
+
     private final RandomAccessFile rf;
 
-    private final File file;
-
     public byte[] ls = null;
+
+    @Override
+    public String toString() {
+        return file.getName();
+    }
 
     public GCF(File file) throws IOException {
         this.file = file;
@@ -204,7 +229,7 @@ public class GCF {
         } else {
             directoryEntries = new DirectoryEntry[manifestHeader.nodeCount];
             for(int i = 0; i < manifestHeader.nodeCount; i++) {
-                directoryEntries[i] = new DirectoryEntry();
+                directoryEntries[i] = new DirectoryEntry(i);
             }
 
             ls = DataUtils.readBytes(rf, manifestHeader.nameSize);
@@ -786,21 +811,42 @@ public class GCF {
 
     public class DirectoryEntry {
 
-        public final int nameOffset;         // Offset to the directory item name from the end of the directory items.
+        /**
+         * Offset to the directory item name from the end of the directory items
+         */
+        public final int nameOffset;
 
-        public final int itemSize;		// Size of the item.  (If file, file size.  If folder, num items.)
+        /**
+         * Size of the item.  (If file, file size.  If folder, num items.)
+         */
+        public final int itemSize;
 
-        public final int checksumIndex;	// Checksum index / file ID. (0xFFFFFFFF == None).
+        /**
+         * Checksum index / file ID. (0xFFFFFFFF == None).
+         */
+        public final int checksumIndex;
 
         public final int attributes;
 
-        public final int parentIndex;	// Index of the parent directory item.  (0xFFFFFFFF == None).
+        /**
+         * Index of the parent directory item.  (0xFFFFFFFF == None).
+         */
+        public final int parentIndex;
 
-        public final int nextIndex;          // Index of the next directory item.  (0x00000000 == None).
+        /**
+         * Index of the next directory item.  (0x00000000 == None).
+         */
+        public final int nextIndex;
 
-        public final int firstChildIndex;         // Index of the first directory item.  (0x00000000 == None).
+        /**
+         * Index of the first directory item.  (0x00000000 == None).
+         */
+        public final int firstChildIndex;
 
-        private DirectoryEntry() throws IOException {
+        public final int index;
+
+        private DirectoryEntry(int index) throws IOException {
+            this.index = index;
             nameOffset = DataUtils.readULEInt(rf);
             itemSize = DataUtils.readULEInt(rf);
             checksumIndex = DataUtils.readULEInt(rf);
@@ -812,7 +858,7 @@ public class GCF {
 
         @Override
         public String toString() {
-            return nameOffset + ", " + itemSize + ", " + checksumIndex + ", " + attributes + ", " + parentIndex + ", " + nextIndex + ", " + firstChildIndex;
+            return nameForDirectoryIndex(index);
         }
     }
 

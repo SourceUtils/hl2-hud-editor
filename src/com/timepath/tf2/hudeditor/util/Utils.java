@@ -12,7 +12,6 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URISyntaxException;
-import java.nio.ByteBuffer;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
@@ -120,7 +119,7 @@ public class Utils {
                                          ".xz", ".log", ".doc", ".webm", ".jpg", ".psd", ".avi",
                                          ".zip", ".bin"};
 
-    public static void recurseDirectoryToNode(File root, DefaultMutableTreeNode parent) {
+    public static void recurseDirectoryToNode(File root, final DefaultMutableTreeNode parent) {
         final File[] fileList = root.listFiles();
         if(fileList.length == 0) {
             return;
@@ -146,7 +145,6 @@ public class Utils {
                 if(flag) {
                     continue;
                 }
-                parent.add(child);
                 final int idx = i;
                 Thread t = new Thread(new Runnable() {
                     public void run() {
@@ -161,11 +159,18 @@ public class Utils {
                         } else if(fileList[idx].getName().endsWith(".vmt")) {
 //                            VDF.analyze(fileList[idx], child);
                         } else if(fileList[idx].getName().endsWith(".gcf")) {
-                            GCF.analyze(fileList[idx], child);
+                            try {
+                                GCF g = new GCF(fileList[idx]);
+                                child.setUserObject(g);
+                                g.analyze(g, child);
+                            } catch(IOException ex) {
+                                Logger.getLogger(Utils.class.getName()).log(Level.SEVERE, null, ex);
+                            }
                         }
+                        parent.add(child);
                     }
                 });
-                boolean multi = true;
+                boolean multi = false;
                 if(multi) {
                     t.start();
                 } else {

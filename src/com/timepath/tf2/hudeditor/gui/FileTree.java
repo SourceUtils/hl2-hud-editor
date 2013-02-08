@@ -1,12 +1,14 @@
 package com.timepath.tf2.hudeditor.gui;
 
 import com.timepath.tf2.hudeditor.util.Element;
+import com.timepath.tf2.loaders.GCF;
+import com.timepath.tf2.loaders.GCF.DirectoryEntry;
 import java.awt.Color;
 import java.awt.Component;
 import java.io.File;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.Icon;
-import javax.swing.JFileChooser;
 import javax.swing.JTree;
 import javax.swing.UIManager;
 import javax.swing.tree.DefaultMutableTreeNode;
@@ -42,8 +44,6 @@ public class FileTree extends javax.swing.JTree {
             }
         }
 
-        JFileChooser iconFinder = new JFileChooser();
-
         Color sameColor = Color.BLACK;
 
         Color diffColor = Color.BLUE;
@@ -74,7 +74,11 @@ public class FileTree extends javax.swing.JTree {
                     tColor = diffColor;
                     File f = ((File) nodeValue);
                     valueText = f.getName();
-                    setIcons(tree, iconFinder.getIcon(f));
+                    if(f.isDirectory()) {
+                        setIcons(tree, UIManager.getIcon("FileView.directoryIcon"));
+                    } else {
+                        setIcons(tree, UIManager.getIcon("FileView.fileIcon"));
+                    }
                 } else if(nodeValue instanceof Element) {
                     tColor = newColor;
                     Element e = (Element) nodeValue;
@@ -83,9 +87,22 @@ public class FileTree extends javax.swing.JTree {
                     } else {
                         setIcons(tree, UIManager.getIcon("FileChooser.listViewIcon"));
                     }
+                } else if(nodeValue instanceof GCF) {
+                    Icon i = UIManager.getIcon("FileView.hardDriveIcon");
+                    if(i == null) {
+                        i = UIManager.getIcon("FileView.directoryIcon");
+                    }
+                    setIcons(tree, i);
+                } else if(nodeValue instanceof DirectoryEntry) {
+                    DirectoryEntry d = (DirectoryEntry) nodeValue;
+                    if(d.attributes == 0) {
+                        setIcons(tree, UIManager.getIcon("FileView.directoryIcon"));
+                    } else {
+                        setIcons(tree, UIManager.getIcon("FileView.fileIcon"));
+                    }
                 } else {
                     if(nodeValue != null) {
-                        System.out.println(nodeValue.getClass());
+                        LOG.log(Level.FINE, "Node class: {0}", nodeValue.getClass());
                     }
                     setIcons(tree, null);
                 }

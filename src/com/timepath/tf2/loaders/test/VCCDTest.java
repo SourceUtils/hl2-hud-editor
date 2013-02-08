@@ -405,7 +405,7 @@ public class VCCDTest extends javax.swing.JFrame {
             CRC32 crc = new CRC32();
 
             String all = new String(gcf.ls);
-            String[] ls = gcf.getEntries();
+            String[] ls = gcf.getEntryNames();
             for(int i = 0; i < ls.length; i++) {
                 int end = ls[i].length();
                 int ext = ls[i].lastIndexOf('.');

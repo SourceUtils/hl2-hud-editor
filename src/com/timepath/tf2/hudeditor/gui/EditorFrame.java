@@ -7,6 +7,8 @@ import com.timepath.tf2.hudeditor.Main;
 import com.timepath.tf2.hudeditor.util.Element;
 import com.timepath.tf2.hudeditor.util.Property;
 import com.timepath.tf2.hudeditor.util.Utils;
+import com.timepath.tf2.loaders.GCF;
+import com.timepath.tf2.loaders.GCF.DirectoryEntry;
 import com.timepath.tf2.loaders.test.VCCDTest;
 import com.timepath.tf2.loaders.test.VTFTest;
 import java.awt.BorderLayout;
@@ -950,6 +952,26 @@ public final class EditorFrame extends javax.swing.JFrame {
                             model.insertRow(model.getRowCount(), new Object[]{entry.getKey(), entry.getValue(), entry.getInfo()});
                         }
                     }
+                } else if(nodeInfo instanceof GCF) {
+                    GCF g = (GCF) nodeInfo;
+                    model.getDataVector().removeAllElements();
+                    model.insertRow(model.getRowCount(), new Object[]{"headerVersion", g.header.headerVersion, "Header"});
+                    model.insertRow(model.getRowCount(), new Object[]{"cacheType", g.header.cacheType, "Header"});
+                    model.insertRow(model.getRowCount(), new Object[]{"formatVersion", g.header.formatVersion, "Header"});
+                    model.insertRow(model.getRowCount(), new Object[]{"applicationID", g.header.applicationID, "Header"});
+                    model.insertRow(model.getRowCount(), new Object[]{"applicationVersion", g.header.applicationVersion, "Header"});
+                    model.insertRow(model.getRowCount(), new Object[]{"isMounted", g.header.isMounted, "Header"});
+                    model.insertRow(model.getRowCount(), new Object[]{"dummy0", g.header.dummy0, "Header"});
+                    model.insertRow(model.getRowCount(), new Object[]{"fileSize", g.header.fileSize, "Header"});
+                    model.insertRow(model.getRowCount(), new Object[]{"clusterSize", g.header.clusterSize, "Header"});
+                    model.insertRow(model.getRowCount(), new Object[]{"clusterCount", g.header.clusterCount, "Header"});
+                    model.insertRow(model.getRowCount(), new Object[]{"checksum", g.header.checksum, "Header"});
+                } else if(nodeInfo instanceof DirectoryEntry) {
+                    DirectoryEntry d = (DirectoryEntry) nodeInfo;
+                    model.getDataVector().removeAllElements();
+                    model.insertRow(model.getRowCount(), new Object[]{"index", d.index, ""});
+                    model.insertRow(model.getRowCount(), new Object[]{"itemSize", d.itemSize, ""});
+                    model.insertRow(model.getRowCount(), new Object[]{"attributes", d.attributes, ""});
                 }
             }
         });
@@ -965,7 +987,11 @@ public final class EditorFrame extends javax.swing.JFrame {
         canvas = new Canvas();
         JScrollPane canvasPane = new JScrollPane(canvas);
         canvasPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
+        canvasPane.getVerticalScrollBar().setBlockIncrement(30);
+        canvasPane.getVerticalScrollBar().setUnitIncrement(20);
         canvasPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_ALWAYS);
+        canvasPane.getHorizontalScrollBar().setBlockIncrement(30);
+        canvasPane.getHorizontalScrollBar().setUnitIncrement(20);
         tabbedContent.add(Main.strings.getString("Canvas"), canvasPane);
         canvas.requestFocusInWindow();
         //</editor-fold>
