@@ -1,6 +1,5 @@
 package com.timepath.tf2.hudeditor.gui;
 
-//<editor-fold defaultstate="collapsed" desc="Imports">
 import com.timepath.plaf.OS;
 import com.timepath.plaf.mac.OSXAdapter;
 import com.timepath.plaf.x.NativeFileChooser;
@@ -11,13 +10,16 @@ import com.timepath.tf2.hudeditor.util.Utils;
 import com.timepath.tf2.loaders.test.VCCDTest;
 import com.timepath.tf2.loaders.test.VTFTest;
 import java.awt.BorderLayout;
+import java.awt.Color;
 import java.awt.Cursor;
 import java.awt.Desktop;
 import java.awt.Dimension;
 import java.awt.DisplayMode;
+import java.awt.GraphicsConfiguration;
 import java.awt.GraphicsDevice;
 import java.awt.GraphicsEnvironment;
 import java.awt.Image;
+import java.awt.Insets;
 import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.Toolkit;
@@ -59,8 +61,10 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
+import javax.swing.AbstractAction;
 import javax.swing.Action;
 import javax.swing.BoxLayout;
+import javax.swing.Icon;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JDialog;
@@ -87,7 +91,6 @@ import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
 import org.java.ayatana.ApplicationMenu;
 import org.java.ayatana.AyatanaDesktop;
-//</editor-fold>
 
 /**
  *
@@ -107,7 +110,7 @@ public final class EditorFrame extends javax.swing.JFrame {
 
     private final PropertyTable propTable;
 
-    public static Canvas canvas;
+    private static Canvas canvas;
 
     private boolean updating;
 
@@ -131,9 +134,8 @@ public final class EditorFrame extends javax.swing.JFrame {
                     URL url = new URL("https://dl.dropbox.com/u/42745598/tf/Hud%20Editor/TF2%20HUD%20Editor.jar.changes");
                     URLConnection connection = url.openConnection();
 //                    HttpURLConnection connection = (HttpURLConnection) url.openConnection();
-                    LOG.info("getting filesize...");
                     int filesize = connection.getContentLength();
-                    System.out.println(filesize);
+                    LOG.log(Level.INFO, "Changelog size: {0}", filesize);
 
                     String text = "";
                     BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getInputStream()));
@@ -154,12 +156,13 @@ public final class EditorFrame extends javax.swing.JFrame {
                     }
                     reader.close();
 
-                    final JEditorPane panel = new JEditorPane("text/html", text);
+                    final JEditorPane pane = new JEditorPane("text/html", text);
                     Dimension s = Toolkit.getDefaultToolkit().getScreenSize();
-                    panel.setPreferredSize(new Dimension(s.width / 4, s.height / 2));
-                    panel.setEditable(false);
-                    panel.setOpaque(false);
-                    panel.addHyperlinkListener(new HyperlinkListener() {
+                    pane.setPreferredSize(new Dimension(s.width / 4, s.height / 2));
+                    pane.setEditable(false);
+                    pane.setOpaque(false);
+                    pane.setBackground(new Color(0, 0, 0, 0));
+                    pane.addHyperlinkListener(new HyperlinkListener() {
                         @Override
                         public void hyperlinkUpdate(HyperlinkEvent he) {
                             if(he.getEventType().equals(HyperlinkEvent.EventType.ACTIVATED)) {
@@ -171,7 +174,7 @@ public final class EditorFrame extends javax.swing.JFrame {
                             }
                         }
                     });
-                    JScrollPane window = new JScrollPane(panel);
+                    JScrollPane window = new JScrollPane(pane);
                     window.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
                     info(window, "Changes");
                 } catch(IOException ex) {
@@ -339,6 +342,7 @@ public final class EditorFrame extends javax.swing.JFrame {
             @Override
             public void run() {
                 doCheckForUpdates();
+                autoCheck = false;
             }
         }.start();
     }
@@ -346,10 +350,11 @@ public final class EditorFrame extends javax.swing.JFrame {
     public void preferences() {
         String aboutText = "This is where preferences will go for the editor.\n";
         aboutText += "There are none at this time";
-        JEditorPane panel = new JEditorPane("text/html", aboutText);
-        panel.setEditable(false);
-        panel.setOpaque(false);
-        info(panel, "About");
+        JEditorPane pane = new JEditorPane("text/html", aboutText);
+        pane.setEditable(false);
+        pane.setOpaque(false);
+        pane.setBackground(new Color(0, 0, 0, 0));
+        info(pane, "About");
     }
 
     public void about() {
@@ -362,10 +367,11 @@ public final class EditorFrame extends javax.swing.JFrame {
         aboutText += "<p>Please give feedback or suggestions on <a href=\"" + latestThread + "\">the latest update thread</a></p>";
         aboutText += "<p>Current version: " + Main.myVer + "</p>";
         aboutText += "</html>";
-        JEditorPane panel = new JEditorPane("text/html", aboutText);
-        panel.setEditable(false);
-        panel.setOpaque(false);
-        panel.addHyperlinkListener(new HyperlinkListener() {
+        JEditorPane pane = new JEditorPane("text/html", aboutText);
+        pane.setEditable(false);
+        pane.setOpaque(false);
+        pane.setBackground(new Color(0, 0, 0, 0));
+        pane.addHyperlinkListener(new HyperlinkListener() {
             @Override
             public void hyperlinkUpdate(HyperlinkEvent he) {
                 if(he.getEventType().equals(HyperlinkEvent.EventType.ACTIVATED)) {
@@ -377,7 +383,7 @@ public final class EditorFrame extends javax.swing.JFrame {
                 }
             }
         });
-        info(panel, "About");
+        info(pane, "About");
     }
 
     private void locateUserDirectory() {
@@ -631,7 +637,7 @@ public final class EditorFrame extends javax.swing.JFrame {
                     if(worked) {
                         super.setJMenuBar(null);
                     } else {
-//                         error("AyatanaDesktop failed to load" + "\n" + System.getenv("XDG_CURRENT_DESKTOP"));
+                         error("AyatanaDesktop failed to load" + "\nDE:" + System.getenv("XDG_CURRENT_DESKTOP"));
                     }
                 }
             } catch(UnsupportedClassVersionError e) { // crashes earlier versions of the JVM - particularly old macs
@@ -674,14 +680,14 @@ public final class EditorFrame extends javax.swing.JFrame {
             error(new MessageFormat(Main.strings.getString("FileAccessError")).format(new Object[]{root}));
         }
         setLastLoaded(root);
-        System.out.println("You have selected: " + root.getAbsolutePath());
+        LOG.log(Level.INFO, "You have selected: {0}", root.getAbsolutePath());
 
         if(root.getName().endsWith(".zip")) {
             try {
                 ZipInputStream zin = new ZipInputStream(new FileInputStream(root));
                 ZipEntry entry;
                 while((entry = zin.getNextEntry()) != null) {
-                    System.out.println(entry.getName());
+                    LOG.log(Level.INFO, "{0}", entry.getName());
                     zin.closeEntry();
                 }
                 zin.close();
@@ -706,25 +712,25 @@ public final class EditorFrame extends javax.swing.JFrame {
             }
             close();
 
-            //            SwingWorker<Void, Void> worker = new SwingWorker<Void, Void>() {
-            //
-            //                @Override
-            //                public Void doInBackground() {
-            //                    while(!isCancelled()) {
-            //                    }
-            //                    return null;
-            //                }
-            //
-            //                @Override
-            //                public void done() {
-            //                }
-            //
-            //                @Override
-            //                protected void process(List<Void> chunks) {
-            //                }
-            //
-            //            };
-            //            worker.execute();
+//            SwingWorker<Void, Void> worker = new SwingWorker<Void, Void>() {
+//
+//                @Override
+//                public Void doInBackground() {
+//                    while(!isCancelled()) {
+//                    }
+//                    return null;
+//                }
+//
+//                @Override
+//                public void done() {
+//                }
+//
+//                @Override
+//                protected void process(List<Void> chunks) {
+//                }
+//
+//            };
+//            worker.execute();
 
             this.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
             final long start = System.currentTimeMillis();
@@ -787,17 +793,19 @@ public final class EditorFrame extends javax.swing.JFrame {
             }
         });
 
+        boolean buggyWM = true;
         //<editor-fold defaultstate="collapsed" desc="Menu fix for window managers that don't set position on resize">
-        if(Main.os == OS.Linux) {
+        if(Main.os == OS.Linux && buggyWM) {
             this.addComponentListener(new ComponentAdapter() {
-                boolean moved;
+                private boolean moved;
 
-                Point real = new Point();
+                private Point real = new Point();
 
-                boolean updateReal = true;
+                private boolean updateReal = true;
 
                 /**
-                 * When maximizing windows on linux under gnome-shell and possibly others, the JMenuBar
+                 * When maximizing windows on linux under gnome-shell and possibly others, the
+                 * JMenuBar
                  * menus appear not to work. This is because the position of the
                  * window never updates. This is an attempt to make them usable again.
                  */
@@ -840,9 +848,14 @@ public final class EditorFrame extends javax.swing.JFrame {
         }
         //</editor-fold>
 
+
+        GraphicsConfiguration gc = this.getGraphicsConfiguration();
+        Rectangle screenBounds = gc.getBounds();
+        Insets screenInsets = this.getToolkit().getScreenInsets(gc);
+        Dimension workspace = new Dimension(screenBounds.width - screenInsets.left - screenInsets.right, screenBounds.height - screenInsets.top - screenInsets.bottom);
         DisplayMode d = GraphicsEnvironment.getLocalGraphicsEnvironment().getDefaultScreenDevice().getDisplayMode();
 
-        this.setMinimumSize(new Dimension(640, 480));
+        this.setMinimumSize(new Dimension(Math.min(workspace.width / 2, 640), 480));
         this.setPreferredSize(new Dimension((int) (d.getWidth() / 1.5), (int) (d.getHeight() / 1.5)));
 
         this.setLocation((d.getWidth() / 2) - (this.getPreferredSize().width / 2), (d.getHeight() / 2) - (this.getPreferredSize().height / 2));
@@ -955,6 +968,7 @@ public final class EditorFrame extends javax.swing.JFrame {
         canvasPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
         canvasPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_ALWAYS);
         tabbedContent.add(Main.strings.getString("Canvas"), canvasPane);
+        canvas.requestFocusInWindow();
         //</editor-fold>
     }
 
@@ -1008,189 +1022,292 @@ public final class EditorFrame extends javax.swing.JFrame {
 
         private JMenuItem captionItem;
 
-        EditorActionListener al = new EditorActionListener();
+        private int state = Toolkit.getDefaultToolkit().getMenuShortcutKeyMask();
 
         EditorMenuBar() {
             super();
 
+            //<editor-fold defaultstate="collapsed" desc="File">
             JMenu fileMenu = new JMenu(Main.strings.getString("File"));
             fileMenu.setMnemonic(KeyEvent.VK_F);
             this.add(fileMenu);
 
-            newItem = new JMenuItem(Main.strings.getString("New"), KeyEvent.VK_N);
+            newItem = new JMenuItem(new CustomAction(Main.strings.getString("New"), null, KeyEvent.VK_N,
+                                                     KeyStroke.getKeyStroke(KeyEvent.VK_N, state)) {
+                @Override
+                public void actionPerformed(ActionEvent ae) {
+                    throw new UnsupportedOperationException("Not supported yet.");
+                }
+            });
             newItem.setEnabled(false);
-            newItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_N, Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()));
-            newItem.addActionListener(al);
             fileMenu.add(newItem);
 
-            openItem = new JMenuItem(Main.strings.getString("Open"), KeyEvent.VK_O);
-            openItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_O, Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()));
-            openItem.addActionListener(al);
+            openItem = new JMenuItem(new CustomAction("Open", null, KeyEvent.VK_O,
+                                                      KeyStroke.getKeyStroke(KeyEvent.VK_O, state)) {
+                @Override
+                public void actionPerformed(ActionEvent ae) {
+                    locateHudDirectory();
+                }
+            });
             fileMenu.add(openItem);
 
-            openZippedItem = new JMenuItem(Main.strings.getString("OpenArchive"), KeyEvent.VK_Z);
+            openZippedItem = new JMenuItem(new CustomAction("OpenArchive", null, KeyEvent.VK_Z,
+                                                            KeyStroke.getKeyStroke(KeyEvent.VK_O, state + ActionEvent.SHIFT_MASK)) {
+                @Override
+                public void actionPerformed(ActionEvent ae) {
+                    locateZippedHud();
+                }
+            });
             openZippedItem.setEnabled(false);
-            openZippedItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_O, Toolkit.getDefaultToolkit().getMenuShortcutKeyMask() + ActionEvent.SHIFT_MASK));
-            openZippedItem.addActionListener(al);
             fileMenu.add(openZippedItem);
 
-            if(Main.os == OS.Mac) {
-                fileMenu.addSeparator();
+            fileMenu.addSeparator();
 
-                closeItem = new JMenuItem("Close", KeyEvent.VK_C);
-                closeItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_W, Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()));
-                closeItem.addActionListener(al);
+            closeItem = new JMenuItem(new CustomAction("Close", null, KeyEvent.VK_C,
+                                                       KeyStroke.getKeyStroke(KeyEvent.VK_W, state)) {
+                @Override
+                public void actionPerformed(ActionEvent ae) {
+                    close();
+                }
+            });
+
+            if(Main.os == OS.Mac) {
                 fileMenu.add(closeItem);
+                fileMenu.addSeparator();
             }
 
-            saveItem = new JMenuItem("Save", KeyEvent.VK_S);
-            saveItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_S, Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()));
-            saveItem.addActionListener(al);
+            saveItem = new JMenuItem(new CustomAction("Save", null, KeyEvent.VK_S,
+                                                      KeyStroke.getKeyStroke(KeyEvent.VK_S, state)) {
+                @Override
+                public void actionPerformed(ActionEvent ae) {
+                    if(canvas.getElements().size() > 0) {
+                        info(canvas.getElements().get(canvas.getElements().size() - 1).save());
+                    }
+                }
+            });
+            saveItem.setEnabled(false);
             fileMenu.add(saveItem);
 
-            saveAsItem = new JMenuItem("Save As...", KeyEvent.VK_A);
+            saveAsItem = new JMenuItem(new CustomAction("Save As...", null, KeyEvent.VK_A,
+                                                        KeyStroke.getKeyStroke(KeyEvent.VK_S, state + ActionEvent.SHIFT_MASK)) {
+                @Override
+                public void actionPerformed(ActionEvent ae) {
+                }
+            });
             saveAsItem.setEnabled(false);
-            saveAsItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_S, Toolkit.getDefaultToolkit().getMenuShortcutKeyMask() + ActionEvent.SHIFT_MASK));
-            saveAsItem.addActionListener(al);
             fileMenu.add(saveAsItem);
 
-            reloadItem = new JMenuItem("Revert", KeyEvent.VK_R);
+            reloadItem = new JMenuItem(new CustomAction("Revert", null, KeyEvent.VK_R,
+                                                        KeyStroke.getKeyStroke(KeyEvent.VK_F5, 0)) {
+                @Override
+                public void actionPerformed(ActionEvent ae) {
+                    load(lastLoaded);
+                }
+            });
             reloadItem.setEnabled(false);
-            reloadItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_F5, 0));
-            reloadItem.addActionListener(al);
             fileMenu.add(reloadItem);
 
-            if(Main.os != OS.Mac) {
-                fileMenu.addSeparator();
+            fileMenu.addSeparator();
 
-                closeItem = new JMenuItem("Close", KeyEvent.VK_C);
-                closeItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_W, Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()));
-                closeItem.addActionListener(al);
+            if(Main.os != OS.Mac) {
                 fileMenu.add(closeItem);
 
-                fileMenu.addSeparator();
-
-                exitItem = new JMenuItem("Exit", KeyEvent.VK_X);
-                exitItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_Q, Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()));
-                exitItem.addActionListener(al);
+                exitItem = new JMenuItem(new CustomAction("Exit", null, KeyEvent.VK_X,
+                                                          KeyStroke.getKeyStroke(KeyEvent.VK_Q, state)) {
+                    @Override
+                    public void actionPerformed(ActionEvent ae) {
+                        quit();
+                    }
+                });
                 fileMenu.add(exitItem);
             }
+            //</editor-fold>
 
+            //<editor-fold defaultstate="collapsed" desc="Edit">
             JMenu editMenu = new JMenu("Edit");
             editMenu.setMnemonic(KeyEvent.VK_E);
             this.add(editMenu);
 
-            undoItem = new JMenuItem("Undo", KeyEvent.VK_U);
+            undoItem = new JMenuItem(new CustomAction("Undo", null, KeyEvent.VK_U,
+                                                      KeyStroke.getKeyStroke(KeyEvent.VK_Z, state)) {
+                @Override
+                public void actionPerformed(ActionEvent ae) {
+                }
+            });
             undoItem.setEnabled(false);
-            undoItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_Z, Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()));
-            undoItem.addActionListener(al);
             editMenu.add(undoItem);
 
-            redoItem = new JMenuItem("Redo", KeyEvent.VK_R);
+            redoItem = new JMenuItem(new CustomAction("Redo", null, KeyEvent.VK_R,
+                                                      KeyStroke.getKeyStroke(KeyEvent.VK_Y, state)) { // TODO: ctrl + shift + z
+                @Override
+                public void actionPerformed(ActionEvent ae) {
+                }
+            });
             redoItem.setEnabled(false);
-            redoItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_Z, Toolkit.getDefaultToolkit().getMenuShortcutKeyMask() + ActionEvent.SHIFT_MASK));
-            redoItem.addActionListener(al);
             editMenu.add(redoItem);
 
             editMenu.addSeparator();
 
-            cutItem = new JMenuItem("Cut", KeyEvent.VK_T);
+            cutItem = new JMenuItem(new CustomAction("Cut", null, KeyEvent.VK_T,
+                                                     KeyStroke.getKeyStroke(KeyEvent.VK_X, state)) {
+                @Override
+                public void actionPerformed(ActionEvent ae) {
+                }
+            });
             cutItem.setEnabled(false);
-            cutItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_X, Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()));
-            cutItem.addActionListener(al);
             editMenu.add(cutItem);
 
-            copyItem = new JMenuItem("Copy", KeyEvent.VK_C);
+            copyItem = new JMenuItem(new CustomAction("Copy", null, KeyEvent.VK_C,
+                                                      KeyStroke.getKeyStroke(KeyEvent.VK_C, state)) {
+                @Override
+                public void actionPerformed(ActionEvent ae) {
+                }
+            });
             copyItem.setEnabled(false);
-            copyItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_C, Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()));
-            copyItem.addActionListener(al);
             editMenu.add(copyItem);
 
-            pasteItem = new JMenuItem("Paste", KeyEvent.VK_P);
+            pasteItem = new JMenuItem(new CustomAction("Paste", null, KeyEvent.VK_P,
+                                                       KeyStroke.getKeyStroke(KeyEvent.VK_V, state)) {
+                @Override
+                public void actionPerformed(ActionEvent ae) {
+                }
+            });
             pasteItem.setEnabled(false);
-            pasteItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_V, Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()));
-            pasteItem.addActionListener(al);
             editMenu.add(pasteItem);
 
-            deleteItem = new JMenuItem("Delete");
-            deleteItem.setEnabled(false);
-            deleteItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_DELETE, 0));
-            deleteItem.addActionListener(al);
+            deleteItem = new JMenuItem(new CustomAction("Delete", null, KeyEvent.VK_D,
+                                                        KeyStroke.getKeyStroke(KeyEvent.VK_DELETE, 0)) {
+                @Override
+                public void actionPerformed(ActionEvent ae) {
+                }
+            });
             editMenu.add(deleteItem);
-
             editMenu.addSeparator();
 
-            selectAllItem = new JMenuItem("Select All", KeyEvent.VK_A);
-            selectAllItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_A, Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()));
-            selectAllItem.addActionListener(al);
+            selectAllItem = new JMenuItem(new CustomAction("Select All", null, KeyEvent.VK_A,
+                                                           KeyStroke.getKeyStroke(KeyEvent.VK_A, state)) {
+                @Override
+                public void actionPerformed(ActionEvent ae) {
+                    LOG.info("Select All");
+                    for(int i = 0; i < canvas.getElements().size(); i++) {
+                        canvas.select(canvas.getElements().get(i));
+                    }
+                }
+            });
             editMenu.add(selectAllItem);
 
             editMenu.addSeparator();
 
             if(Main.os != OS.Mac) {
-                preferencesItem = new JMenuItem("Preferences", KeyEvent.VK_E);
-                preferencesItem.addActionListener(al);
+                preferencesItem = new JMenuItem(new CustomAction("Preferences", null, KeyEvent.VK_E, null) {
+                    @Override
+                    public void actionPerformed(ActionEvent ae) {
+                        preferences();
+                    }
+                });
                 editMenu.add(preferencesItem);
             }
 
-            locateUserItem = new JMenuItem("Select user folder", null);
-            locateUserItem.addActionListener(al);
+            locateUserItem = new JMenuItem(new CustomAction("Select user folder", null, KeyEvent.VK_S, null) {
+                @Override
+                public void actionPerformed(ActionEvent ae) {
+                    locateUserDirectory();
+                }
+            });
             editMenu.add(locateUserItem);
+            //</editor-fold>
 
             JMenu viewMenu = new JMenu("View");
             viewMenu.setMnemonic(KeyEvent.VK_V);
             this.add(viewMenu);
 
-            resolutionItem = new JMenuItem("Change Resolution", KeyEvent.VK_R);
-            resolutionItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_R, Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()));
-            resolutionItem.addActionListener(al);
+            resolutionItem = new JMenuItem(new CustomAction("Change Resolution", null, KeyEvent.VK_R,
+                                                            KeyStroke.getKeyStroke(KeyEvent.VK_R, state)) {
+                @Override
+                public void actionPerformed(ActionEvent ae) {
+                    changeResolution();
+                }
+            });
             viewMenu.add(resolutionItem);
 
-            previewItem = new JMenuItem("Full Screen Preview", KeyEvent.VK_F);
-            previewItem.setAccelerator(KeyStroke.getKeyStroke("F11"));
-            previewItem.addActionListener(al);
+            previewItem = new JMenuItem(new CustomAction("Full Screen Preview", null, KeyEvent.VK_F,
+                                                         KeyStroke.getKeyStroke(KeyEvent.VK_F11, 0)) {
+                private boolean fullscreen;
+
+                @Override
+                public void actionPerformed(ActionEvent ae) {
+                    EditorFrame.this.dispose();
+                    EditorFrame.this.setUndecorated(!fullscreen);
+                    EditorFrame.this.setExtendedState(fullscreen ? JFrame.NORMAL : JFrame.MAXIMIZED_BOTH);
+                    EditorFrame.this.setVisible(true);
+                    EditorFrame.this.setJMenuBar(jmb);
+                    EditorFrame.this.pack();
+                    EditorFrame.this.toFront();
+                    fullscreen = !fullscreen;
+                }
+            });
             viewMenu.add(previewItem);
 
             viewMenu.addSeparator();
 
+            //<editor-fold defaultstate="collapsed" desc="Views">
             JMenuItem viewItem1 = new JMenuItem("Main Menu");
+
             viewItem1.setEnabled(false);
-            viewItem1.addActionListener(al);
+
             viewMenu.add(viewItem1);
 
             JMenuItem viewItem2 = new JMenuItem("In-game (Health and ammo)");
+
             viewItem2.setEnabled(false);
-            viewItem2.addActionListener(al);
+
             viewMenu.add(viewItem2);
 
             JMenuItem viewItem3 = new JMenuItem("Scoreboard");
+
             viewItem3.setEnabled(false);
-            viewItem3.addActionListener(al);
+
             viewMenu.add(viewItem3);
 
             JMenuItem viewItem4 = new JMenuItem("CTF HUD");
+
             viewItem4.setEnabled(false);
-            viewItem4.addActionListener(al);
+
             viewMenu.add(viewItem4);
+            //</editor-fold>
 
             extras();
 
             JMenu helpMenu = new JMenu("Help");
+
             helpMenu.setMnemonic(KeyEvent.VK_H);
+
             this.add(helpMenu);
 
-            updateItem = new JMenuItem("Check for Updates", KeyEvent.VK_U);
-            //            updateItem.setEnabled(!inDev);
-            updateItem.addActionListener(al);
+            updateItem = new JMenuItem(new CustomAction("Check for Updates", null, KeyEvent.VK_U, null) {
+                @Override
+                public void actionPerformed(ActionEvent ae) {
+                    EditorFrame.this.checkForUpdates();
+                }
+            });
+//            updateItem.setEnabled(!inDev);
             helpMenu.add(updateItem);
 
-            changeLogItem = new JMenuItem("Changelog");
-            changeLogItem.addActionListener(al);
+            changeLogItem = new JMenuItem(new CustomAction("Changelog", null, KeyEvent.VK_L, null) {
+                @Override
+                public void actionPerformed(ActionEvent ae) {
+                    changelog();
+                }
+            });
             helpMenu.add(changeLogItem);
 
             if(Main.os != OS.Mac) {
-                aboutItem = new JMenuItem("About", KeyEvent.VK_A);
-                aboutItem.addActionListener(al);
+                aboutItem = new JMenuItem(new CustomAction("About", null, KeyEvent.VK_A, null) {
+                    @Override
+                    public void actionPerformed(ActionEvent ae) {
+                        about();
+                    }
+                });
                 helpMenu.add(aboutItem);
             }
         }
@@ -1200,75 +1317,38 @@ public final class EditorFrame extends javax.swing.JFrame {
             extrasMenu.setMnemonic(KeyEvent.VK_X);
             this.add(extrasMenu);
 
-            vtfItem = new JMenuItem("VTF Loader", KeyEvent.VK_V);
-            vtfItem.addActionListener(al);
+            vtfItem = new JMenuItem(new CustomAction("VTF Viewer", null, KeyEvent.VK_V, null) {
+                @Override
+                public void actionPerformed(ActionEvent ae) {
+                    VTFTest.main("");
+                }
+            });
             extrasMenu.add(vtfItem);
 
-            captionItem = new JMenuItem("Caption Viewer", KeyEvent.VK_C);
-            captionItem.addActionListener(al);
-            extrasMenu.add(captionItem);
-        }
-
-        private class EditorActionListener implements ActionListener {
-
-            private boolean fullscreen;
-
-            EditorActionListener() {
-            }
-
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                Object cmd = e.getSource();
-
-                if(cmd == openItem) {
-                    locateHudDirectory();
-                } else if(cmd == openZippedItem) {
-                    locateZippedHud();
-                } else if(cmd == locateUserItem) {
-                    locateUserDirectory();
-                } else if(cmd == closeItem) {
-                    close();
-                } else if(cmd == saveItem) {
-                    //                    if(canvas.getElements().size() > 0) {
-                    //                        error(canvas.getElements().get(canvas.getElements().size() - 1).save());
-                    //                    }
-                } else if(cmd == reloadItem) {
-                    load(lastLoaded);
-                } else if(cmd == exitItem) {
-                    quit();
-                } else if(cmd == resolutionItem) {
-                    changeResolution();
-                } else if(cmd == selectAllItem) {
-                    LOG.info("Select All");
-                    //                    for(int i = 0; i < canvas.getElements().size(); i++) {
-                    //                        canvas.select(canvas.getElements().get(i));
-                    //                    }
-                } else if(cmd == aboutItem) {
-                    about();
-                } else if(cmd == preferencesItem) {
-                    preferences();
-                } else if(cmd == updateItem) {
-                    EditorFrame.this.checkForUpdates();
-                } else if(cmd == changeLogItem) {
-                    changelog();
-                } else if(cmd == vtfItem) {
-                    VTFTest.main("");
-                } else if(cmd == captionItem) {
+            captionItem = new JMenuItem(new CustomAction("Caption Viewer", null, KeyEvent.VK_C, null) {
+                @Override
+                public void actionPerformed(ActionEvent ae) {
                     VCCDTest.main("");
-                } else if(cmd == previewItem) {
-                    EditorFrame.this.dispose();
-                    EditorFrame.this.setUndecorated(!fullscreen);
-                    EditorFrame.this.setExtendedState(fullscreen ? JFrame.NORMAL : JFrame.MAXIMIZED_BOTH);
-                    EditorFrame.this.setVisible(true);
-                    EditorFrame.this.pack();
-                    EditorFrame.this.toFront();
-                    fullscreen = !fullscreen;
                 }
-            }
+            });
+            extrasMenu.add(captionItem);
         }
     }
 
-    //<editor-fold defaultstate="collapsed" desc="Generated Code">
+    private class CustomAction extends AbstractAction {
+
+        private CustomAction(String string, Icon icon, int mnemonic, KeyStroke shortcut) {
+            super(Main.strings.containsKey(string) ? Main.strings.getString(string) : string, icon);
+            this.putValue(Action.MNEMONIC_KEY, mnemonic);
+            this.putValue(Action.ACCELERATOR_KEY, shortcut);
+        }
+
+        @Override
+        public void actionPerformed(ActionEvent ae) {
+        }
+    }
+
+//<editor-fold defaultstate="collapsed" desc="Generated Code">
     /**
      * This method is called from within the constructor to initialize the form.
      * WARNING: Do NOT modify this code. The content of this method is always
@@ -1287,6 +1367,7 @@ public final class EditorFrame extends javax.swing.JFrame {
         rootSplit.setDividerLocation(180);
         rootSplit.setContinuousLayout(true);
 
+        sideSplit.setBorder(null);
         sideSplit.setOrientation(javax.swing.JSplitPane.VERTICAL_SPLIT);
         sideSplit.setResizeWeight(0.5);
         sideSplit.setContinuousLayout(true);

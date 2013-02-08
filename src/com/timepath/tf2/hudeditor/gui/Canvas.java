@@ -84,7 +84,7 @@ public final class Canvas extends JPanel implements MouseListener, MouseMotionLi
         initComponents();
         loadBackground();
         initInput();
-        setPreferredSize(new Dimension(640, 480));
+        this.setPreferredSize(new Dimension(640, 480));
     }
 
     /**
@@ -341,6 +341,7 @@ public final class Canvas extends JPanel implements MouseListener, MouseMotionLi
 
     @Override
     public void mousePressed(MouseEvent event) {
+        this.requestFocusInWindow();
         Point p = new Point(event.getPoint());
         p.translate(-offX, -offY);
         int button = event.getButton(); // Button2 is middle click on linux. How odd.
