@@ -90,10 +90,9 @@ public class Main {
 //            if(force) {
 //                System.setProperty("jayatana.force", "true");
 //            }
-            /**
-             * Using a custom name has a low chance of success
-             */
-            String n = Wrapper.class.getName().replaceAll("\\.", "-");
+            
+            String n = projectName;
+//            n = Wrapper.class.getName().replaceAll("\\.", "-");
             System.setProperty("jayatana.startupWMClass", n);
 
             // Doesn't seem to work all the time
@@ -106,7 +105,7 @@ public class Main {
                 LOG.log(Level.SEVERE, null, ex);
             }
 
-//            LinuxDesktopLauncher.create(n, projectName);
+            LinuxDesktopLauncher.create(n, projectName);
         }
     }
 

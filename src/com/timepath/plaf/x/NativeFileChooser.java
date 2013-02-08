@@ -5,11 +5,13 @@ import com.timepath.plaf.linux.LinuxDesktopLauncher;
 import com.timepath.tf2.hudeditor.Main;
 import java.awt.FileDialog;
 import java.awt.Frame;
+import java.awt.Toolkit;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FilenameFilter;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.lang.reflect.Field;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.JFileChooser;
@@ -89,8 +91,17 @@ public class NativeFileChooser {
         }
         folder2 += "/ ";
         cmd.append(folder2);
-        cmd.append("--class=" + Main.projectName + " ");
-        cmd.append("--name=" + Main.projectName + " ");
+        String windowClass = Main.projectName;
+        try {
+            Toolkit xToolkit = Toolkit.getDefaultToolkit();
+            Field awtAppClassNameField = xToolkit.getClass().getDeclaredField("awtAppClassName");
+            awtAppClassNameField.setAccessible(true);
+            windowClass = (String) awtAppClassNameField.get(xToolkit);
+        } catch(Exception ex) {
+            LOG.log(Level.SEVERE, null, ex);
+        }
+        cmd.append("--class=" + windowClass + " ");
+//        cmd.append("--name=" + Main.projectName + " ");
         cmd.append("--window-icon=").append(LinuxDesktopLauncher.getStore()).append("/icons/" + Main.projectName + ".png");
 //        cmd.append("--ok-label=TEXT ");
 //        cmd.append("--cancel-label=TEXT ");

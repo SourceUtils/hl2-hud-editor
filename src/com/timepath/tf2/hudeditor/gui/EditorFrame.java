@@ -228,7 +228,7 @@ public final class EditorFrame extends javax.swing.JFrame {
                         if(returnCode == JOptionPane.YES_OPTION) {
                             long startTime = System.currentTimeMillis();
 
-                            System.out.println("Connecting to Dropbox...\n");
+                            LOG.info("Connecting to Dropbox...");
 
                             URL latest = new URL("https://dl.dropbox.com/u/42745598/tf/Hud%20Editor/TF2%20HUD%20Editor.jar");
                             URLConnection editor = latest.openConnection();
@@ -609,24 +609,23 @@ public final class EditorFrame extends javax.swing.JFrame {
                 OSXAdapter.setQuitHandler(this, getClass().getDeclaredMethod("quit", (Class[]) null));
                 OSXAdapter.setAboutHandler(this, getClass().getDeclaredMethod("about", (Class[]) null));
                 OSXAdapter.setPreferencesHandler(this, getClass().getDeclaredMethod("preferences", (Class[]) null));
-                //            OSXAdapter.setFileHandler(this, getClass().getDeclaredMethod("loadImageFile", new Class[] { String.class }));
-
-                //            com.apple.eawt.Application app = com.apple.eawt.Application.getApplication();
-                //            app.setEnabledPreferencesMenu(true);
-                //            app.setEnabledAboutMenu(true);
-                //            app.setQuitStrategy(QuitStrategy.CLOSE_ALL_WINDOWS);
-                //            app.setAboutHandler(new com.apple.eawt.AboutHandler() {
-                //                public void handleAbout(AboutEvent e) {
-                //                    about();
-                //                }
-                //            });
-                //            app.setQuitHandler(new com.apple.eawt.QuitHandler() {
-                //                public void handleQuitRequestWith(QuitEvent qe, QuitResponse qr) {
-                //                    quit();
-                //                }
-                //            });
-                //            ImageIcon icon = ... // your code to load your icon
-                //            application.setDockIconImage(icon.getImage());
+//                OSXAdapter.setFileHandler(this, getClass().getDeclaredMethod("loadImageFile", new Class[] { String.class }));
+//                com.apple.eawt.Application app = com.apple.eawt.Application.getApplication();
+//                app.setEnabledPreferencesMenu(true);
+//                app.setEnabledAboutMenu(true);
+//                app.setQuitStrategy(QuitStrategy.CLOSE_ALL_WINDOWS);
+//                app.setAboutHandler(new com.apple.eawt.AboutHandler() {
+//                    public void handleAbout(AboutEvent e) {
+//                        about();
+//                    }
+//                });
+//                app.setQuitHandler(new com.apple.eawt.QuitHandler() {
+//                    public void handleQuitRequestWith(QuitEvent qe, QuitResponse qr) {
+//                        quit();
+//                    }
+//                });
+//                ImageIcon icon = ... // your code to load your icon
+//                application.setDockIconImage(icon.getImage());
             } catch(Exception e) {
                 LOG.severe(e.toString());
             }
