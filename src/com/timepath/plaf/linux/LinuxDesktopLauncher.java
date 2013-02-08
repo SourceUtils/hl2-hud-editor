@@ -71,9 +71,10 @@ public class LinuxDesktopLauncher {
         PrintWriter out = null;
         if(flag) {
             try {
-                destFile.delete();
-                destFile.getParentFile().mkdirs();
-                destFile.createNewFile();
+                if(!destFile.exists()) {
+                    destFile.getParentFile().mkdirs();
+                    destFile.createNewFile();
+                }
                 FileUtils.chmod777(destFile);
                 out = new PrintWriter(new FileOutputStream(destFile));
                 out.print(sb.toString());
