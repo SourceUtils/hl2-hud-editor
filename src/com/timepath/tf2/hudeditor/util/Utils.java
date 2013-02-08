@@ -112,8 +112,19 @@ public class Utils {
         }
     };
 
+    private static String[] blacklist = {".mp3", ".exe", ".sh", ".dll", ".dylib", ".so",
+                                         ".ttf", ".bik", ".mov", ".cfg", ".cache", ".manifest",
+                                         ".frag", ".vert", ".tga", ".png", ".html", ".wav",
+                                         ".ico", ".uifont", ".xml", ".css", ".dic", ".conf",
+                                         ".pak", ".py", ".flt", ".mix", ".asi", ".checksum",
+                                         ".xz", ".log", ".doc", ".webm", ".jpg", ".psd", ".avi",
+                                         ".zip", ".bin"};
+
     public static void recurseDirectoryToNode(File root, DefaultMutableTreeNode parent) {
         final File[] fileList = root.listFiles();
+        if(fileList.length == 0) {
+            return;
+        }
         Arrays.sort(fileList, Utils.getDirAlphaComparator());
         for(int i = 0; i < fileList.length; i++) {
             final DefaultMutableTreeNode child = new DefaultMutableTreeNode();
@@ -125,20 +136,41 @@ public class Utils {
                 }
                 parent.add(child);
             } else {
+                boolean flag = false;
+                for(int j = 0; j < blacklist.length; j++) {
+                    if(fileList[i].getName().endsWith(blacklist[j])) {
+                        flag = true;
+                        break;
+                    }
+                }
+                if(flag) {
+                    continue;
+                }
                 parent.add(child);
                 final int idx = i;
                 Thread t = new Thread(new Runnable() {
                     public void run() {
-                        if(fileList[idx].getName().endsWith(".txt") || fileList[idx].getName().endsWith(".vdf")) {
+                        if(fileList[idx].getName().endsWith(".txt")
+                           || fileList[idx].getName().endsWith(".vdf")
+                           || fileList[idx].getName().endsWith(".layout")
+                           || fileList[idx].getName().endsWith(".menu")
+                           || fileList[idx].getName().endsWith(".styles")) {
                             VDF.analyze(fileList[idx], child);
                         } else if(fileList[idx].getName().endsWith(".res")) {
                             RES.analyze(fileList[idx], child);
+                        } else if(fileList[idx].getName().endsWith(".vmt")) {
+//                            VDF.analyze(fileList[idx], child);
                         } else if(fileList[idx].getName().endsWith(".gcf")) {
                             GCF.analyze(fileList[idx], child);
                         }
                     }
                 });
-                t.run();
+                boolean multi = true;
+                if(multi) {
+                    t.start();
+                } else {
+                    t.run();
+                }
             }
         }
     }

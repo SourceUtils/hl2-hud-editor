@@ -80,17 +80,8 @@ public class NativeFileChooser {
         cmd.append("--file-selection ");
         cmd.append("--directory ");
         cmd.append("--title=Open ");
-        String folder = (directory != null ? ("--filename=" + directory.getPath()) + "" : ""); // FIXME: does not work when directory has spaces
-        String folder2 = "";
-        for(int i = 0; i < folder.length(); i++) {
-            String s = "" + folder.charAt(i);
-            if(" ".equals(s)) {
-                s = "\\ ";
-            }
-            folder2 += s;
-        }
-        folder2 += "/ ";
-        cmd.append(folder2);
+        String folder = (directory != null ? ("--filename=" + directory.getPath().replaceAll("\\ ", "\\\\ ")) + " " : ""); // FIXME: does not work when directory has spaces
+        cmd.append(folder);
         String windowClass = Main.projectName;
         try {
             Toolkit xToolkit = Toolkit.getDefaultToolkit();
@@ -100,9 +91,9 @@ public class NativeFileChooser {
         } catch(Exception ex) {
             LOG.log(Level.SEVERE, null, ex);
         }
-        cmd.append("--class=" + windowClass + " ");
+        cmd.append("--class=").append(windowClass).append(" ");
 //        cmd.append("--name=" + Main.projectName + " ");
-        cmd.append("--window-icon=").append(LinuxDesktopLauncher.getStore()).append("/icons/" + Main.projectName + ".png");
+        cmd.append("--window-icon=").append(LinuxDesktopLauncher.getStore()).append("icons/" + Main.projectName + ".png");
 //        cmd.append("--ok-label=TEXT ");
 //        cmd.append("--cancel-label=TEXT ");
 
