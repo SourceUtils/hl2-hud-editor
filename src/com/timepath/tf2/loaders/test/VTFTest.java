@@ -40,6 +40,7 @@ public class VTFTest {
         pane.setLayout(new BoxLayout(pane, BoxLayout.PAGE_AXIS));
         jsp.setViewportView(pane);
 
+        @SuppressWarnings("serial")
         class ImagePreviewPanel extends JPanel implements PropertyChangeListener {
 
             private int width, height;

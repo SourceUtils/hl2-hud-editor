@@ -39,7 +39,7 @@ public class BinaryVDF {
         RandomAccessFile rf = new RandomAccessFile(location, "r");
         byte[] magic = new byte[4];
         rf.read(magic);
-        ArrayList<Object> stuff = new ArrayList<Object>();
+        ArrayList<String> stuff = new ArrayList<String>();
 //        System.out.println(magic[2]);
         if(magic[2] == 0x56) {
             /**
@@ -136,7 +136,7 @@ public class BinaryVDF {
      *
      * @throws IOException
      */
-    private String parse(RandomAccessFile rf, ArrayList data, int end, int timesEndSeen) throws IOException {
+    private String parse(RandomAccessFile rf, ArrayList<String> data, int end, int timesEndSeen) throws IOException {
         ByteArrayOutputStream buf = new ByteArrayOutputStream();
         while(rf.getFilePointer() < rf.length()) {
             byte b = rf.readByte();

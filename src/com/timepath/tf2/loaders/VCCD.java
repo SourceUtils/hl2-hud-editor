@@ -112,7 +112,7 @@ public class VCCD {
 
             System.out.println("Blocks: " + blocks);
 
-            int dataOffset = (int) alignValue((6 * 4) + (directorySize * 12), 512);
+            int dataOffset = alignValue((6 * 4) + (directorySize * 12), 512);
 
             File f = new File(file);
             if(f.exists()) {

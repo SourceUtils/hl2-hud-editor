@@ -86,8 +86,6 @@ public class Player {
      *
      * @param v Victim
      * @param k Killer
-     *
-     * TODO: make the order unimportant
      */
     static void exchangeInfo(Player v, Player k) {
         ArrayList<Player> vAllies = new ArrayList<Player>(v.getAllies());

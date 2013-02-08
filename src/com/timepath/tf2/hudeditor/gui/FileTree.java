@@ -111,7 +111,7 @@ public class FileTree extends javax.swing.JTree {
             this.hasFocus = hasFocus;
             this.setText(stringValue);
             if(tColor != null) {
-                this.setForeground(sel ? tColor != newColor ? new Color(-tColor.getRed() + 255, -tColor.getGreen() + 255, -tColor.getBlue() + 255) : tColor.brighter() : tColor);
+                this.setForeground(sel ? (tColor != newColor ? new Color(-tColor.getRed() + 255, -tColor.getGreen() + 255, -tColor.getBlue() + 255) : tColor.brighter()) : tColor);
             } else {
                 this.setForeground(sel ? getTextSelectionColor() : getTextNonSelectionColor());
             }

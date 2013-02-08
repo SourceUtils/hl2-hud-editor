@@ -130,7 +130,7 @@ public class Blob {
             this.name = name;
         }
 
-        public ArrayList children = new ArrayList();
+        public ArrayList<BlobNode> children = new ArrayList<BlobNode>();
 
         @Override
         public String toString() {

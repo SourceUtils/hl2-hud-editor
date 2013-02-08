@@ -11,6 +11,7 @@ import javax.swing.table.TableCellRenderer;
  *
  * @author timepath
  */
+@SuppressWarnings("serial")
 public class PropertyTable extends JTable {
 
     private static final Logger logger = Logger.getLogger(PropertyTable.class.getName());

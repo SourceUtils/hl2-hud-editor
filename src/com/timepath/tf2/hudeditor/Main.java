@@ -1,19 +1,15 @@
 package com.timepath.tf2.hudeditor;
 
-//<editor-fold defaultstate="collapsed" desc="imports">
 import com.timepath.plaf.OS;
 import com.timepath.plaf.linux.GtkFixer;
 import com.timepath.plaf.linux.LinuxDesktopLauncher;
 import com.timepath.tf2.hudeditor.gui.EditorFrame;
 import com.timepath.tf2.hudeditor.util.Utils;
-import java.awt.Dimension;
 import java.awt.EventQueue;
 import java.awt.Toolkit;
 import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.io.UnsupportedEncodingException;
@@ -23,17 +19,13 @@ import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.URLDecoder;
-import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.ResourceBundle;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.prefs.Preferences;
-import javax.swing.JFrame;
-import javax.swing.JProgressBar;
 import javax.swing.UIManager;
 import net.tomahawk.XFileDialog;
-//</editor-fold>
 
 /**
  * Link dump:
@@ -58,7 +50,7 @@ public class Main {
 
     private static final Logger LOG = Logger.getLogger(Main.class.getName());
 
-    private static Preferences prefs = Preferences.userRoot().node(projectName);
+    public static Preferences prefs = Preferences.userRoot().node(projectName);
 
     static {
         String osVer = System.getProperty("os.name").toLowerCase();
@@ -90,7 +82,7 @@ public class Main {
 //            if(force) {
 //                System.setProperty("jayatana.force", "true");
 //            }
-            
+
             String n = projectName;
 //            n = Wrapper.class.getName().replaceAll("\\.", "-");
             System.setProperty("jayatana.startupWMClass", n);

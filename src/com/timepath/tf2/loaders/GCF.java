@@ -1,6 +1,5 @@
 package com.timepath.tf2.loaders;
 
-//<editor-fold defaultstate="collapsed" desc="Imports">
 import com.timepath.tf2.loaders.GCF.ManifestHeaderBitmask;
 import com.timepath.util.io.DataUtils;
 import java.io.ByteArrayOutputStream;
@@ -14,7 +13,6 @@ import java.util.logging.Logger;
 import java.util.zip.Adler32;
 import java.util.zip.Checksum;
 import javax.swing.tree.DefaultMutableTreeNode;
-//</editor-fold>
 
 /**
  *
@@ -286,7 +284,7 @@ public class GCF {
         }
         //</editor-fold>
 
-        LOG.log(Level.INFO, "{0}\n{1}\n{2}\n{3}\n{4}\n{5}\n{6}\n{7}\n", new Object[]{file.getPath(), "header:\t" + header.toString(), "blockHchecksumeader:\t" + blockAllocationTableHeader.toString(), "fragMap:\t" + fragMap.toString(), "directoryHeader:\t" + manifestHeader.toString(), "directoryMapHeader:\t" + directoryMapHeader.toString(), "checksumHeader:\t" + checksumHeader.toString(), "dataBlockHeader:\t" + dataBlockHeader.toString()});
+//        LOG.log(Level.INFO, "{0}\n{1}\n{2}\n{3}\n{4}\n{5}\n{6}\n{7}\n", new Object[]{file.getPath(), "header:\t" + header.toString(), "blockHchecksumeader:\t" + blockAllocationTableHeader.toString(), "fragMap:\t" + fragMap.toString(), "directoryHeader:\t" + manifestHeader.toString(), "directoryMapHeader:\t" + directoryMapHeader.toString(), "checksumHeader:\t" + checksumHeader.toString(), "dataBlockHeader:\t" + dataBlockHeader.toString()});
     }
 
     //<editor-fold defaultstate="collapsed" desc="Header info">
@@ -983,17 +981,17 @@ public class GCF {
 
         public final int headerVersion;			// Always 0x00000001
 
-        public final int ChecksumSize;		// Size of LPGCFCHECKSUMHEADER & LPGCFCHECKSUMMAPHEADER & in bytes.
+        public final int checksumSize;		// Size of LPGCFCHECKSUMHEADER & LPGCFCHECKSUMMAPHEADER & in bytes.
         // the number of bytes in the checksum section (excluding this structure and the following LatestApplicationVersion structure).
 
         private ChecksumHeader() throws IOException {
             headerVersion = DataUtils.readULEInt(rf);
-            ChecksumSize = DataUtils.readULEInt(rf);
+            checksumSize = DataUtils.readULEInt(rf);
         }
 
         @Override
         public String toString() {
-            return "headerVersion:" + headerVersion + ", ChecksumSize:" + ChecksumSize;
+            return "headerVersion:" + headerVersion + ", ChecksumSize:" + checksumSize;
         }
     }
     //</editor-fold>
@@ -1013,23 +1011,23 @@ public class GCF {
 
         public final int formatCode;			// Always 0x14893721
 
-        public final int Dummy1;			// Always 0x00000001
+        public final int dummy0;			// Always 0x00000001
 
-        public final int ItemCount;		// Number of items.
+        public final int itemCount;		// Number of items.
 
-        public final int ChecksumCount;		// Number of checksums.
+        public final int checksumCount;		// Number of checksums.
 
         private ChecksumMapHeader() throws IOException {
             pos = rf.getFilePointer();
             formatCode = DataUtils.readULEInt(rf);
-            Dummy1 = DataUtils.readULEInt(rf);
-            ItemCount = DataUtils.readULEInt(rf);
-            ChecksumCount = DataUtils.readULEInt(rf);
+            dummy0 = DataUtils.readULEInt(rf);
+            itemCount = DataUtils.readULEInt(rf);
+            checksumCount = DataUtils.readULEInt(rf);
 
-            checksumMapEntries = new ChecksumMapEntry[ItemCount];
+            checksumMapEntries = new ChecksumMapEntry[itemCount];
             rf.skipBytes(checksumMapEntries.length * ChecksumMapEntry.SIZE);
 
-            checksumEntries = new ChecksumEntry[ChecksumCount + 0x20];
+            checksumEntries = new ChecksumEntry[checksumCount + 0x20];
             rf.skipBytes(checksumEntries.length * ChecksumEntry.SIZE);
         }
     }
@@ -1127,6 +1125,15 @@ public class GCF {
             firstBlockOffset = DataUtils.readULEInt(rf);
             blocksUsed = DataUtils.readULEInt(rf);
             checksum = DataUtils.readULEInt(rf);
+        }
+
+        public int check() {
+            int checked = 0;
+            checked += DataUtils.updateChecksumAdd(blockCount);
+            checked += DataUtils.updateChecksumAdd(blockSize);
+            checked += DataUtils.updateChecksumAdd(firstBlockOffset);
+            checked += DataUtils.updateChecksumAdd(blocksUsed);
+            return checked;
         }
 
         @Override

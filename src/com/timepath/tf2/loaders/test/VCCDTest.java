@@ -305,13 +305,13 @@ public class VCCDTest extends javax.swing.JFrame {
     }
 
     TableCellEditor getKeyEditor() {
-        JComboBox comboBox = new JComboBox();
+        JComboBox<String> comboBox = new JComboBox<String>();
         comboBox.setEditable(true);
         hashmap = generateHash();
         Object[] vals = hashmap.values().toArray();
         Arrays.sort(vals);
         for(int i = 0; i < vals.length; i++) {
-            comboBox.addItem(vals[i]);
+            comboBox.addItem(vals[i].toString());
         }
         return new DefaultCellEditor(comboBox);
     }

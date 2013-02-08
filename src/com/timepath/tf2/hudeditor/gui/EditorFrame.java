@@ -56,6 +56,7 @@ import java.net.URLConnection;
 import java.net.UnknownHostException;
 import java.text.MessageFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
 import java.util.StringTokenizer;
@@ -395,7 +396,7 @@ public final class EditorFrame extends javax.swing.JFrame {
             }
         };
 
-        JComboBox dropDown = new JComboBox();
+        JComboBox<String> dropDown = new JComboBox<String>();
         File steamappsFolder = new File(Utils.locateSteamAppsDirectory());
         if(steamappsFolder == null) {
             error("Could not find Steam install directory!", "Steam not found");
@@ -553,11 +554,11 @@ public final class EditorFrame extends javax.swing.JFrame {
 //                docHeight.setDocumentFilter(new NumericDocumentFilter());
 //                jsHeight.getTextField().setDocument(docHeight);
 //            }
-        final JComboBox dropDown = new JComboBox();
+        final JComboBox<String> dropDown = new JComboBox<String>();
 
         GraphicsEnvironment env = GraphicsEnvironment.getLocalGraphicsEnvironment();
         GraphicsDevice[] devices = env.getScreenDevices();
-        ArrayList<Object> listItems = new ArrayList<Object>();
+        ArrayList<String> listItems = new ArrayList<String>();
         for(int i = 0; i < devices.length; i++) {
             DisplayMode[] resolutions = devices[i].getDisplayModes(); // TF2 has different resolutions
             for(int j = 0; j < resolutions.length; j++) {
@@ -769,7 +770,11 @@ public final class EditorFrame extends javax.swing.JFrame {
     }
 
     private void setLastLoaded(File root) {
+        if(root == null || !root.exists()) {
+            return;
+        }
         lastLoaded = root;
+        Main.prefs.put("lastLoaded", root.getPath());
         jmb.reloadItem.setEnabled(root != null);
     }
     //</editor-fold>
@@ -917,11 +922,16 @@ public final class EditorFrame extends javax.swing.JFrame {
         jmb = new EditorMenuBar();
         this.setJMenuBar(jmb);
 
+        String str = Main.prefs.get("lastLoaded", null);
+        if(str != null) {
+           this.setLastLoaded(new File(str));
+        }
+
         //<editor-fold defaultstate="collapsed" desc="Tree">
         fileSystemRoot = new DefaultMutableTreeNode("root");
         fileTree = new FileTree(fileSystemRoot);
         JScrollPane fileTreePane = new JScrollPane(fileTree);
-        fileTreePane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
+//        fileTreePane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
         sideSplit.setTopComponent(fileTreePane);
         fileTree.addTreeSelectionListener(new TreeSelectionListener() {
             @Override
@@ -955,17 +965,61 @@ public final class EditorFrame extends javax.swing.JFrame {
                 } else if(nodeInfo instanceof GCF) {
                     GCF g = (GCF) nodeInfo;
                     model.getDataVector().removeAllElements();
-                    model.insertRow(model.getRowCount(), new Object[]{"headerVersion", g.header.headerVersion, "Header"});
-                    model.insertRow(model.getRowCount(), new Object[]{"cacheType", g.header.cacheType, "Header"});
-                    model.insertRow(model.getRowCount(), new Object[]{"formatVersion", g.header.formatVersion, "Header"});
-                    model.insertRow(model.getRowCount(), new Object[]{"applicationID", g.header.applicationID, "Header"});
-                    model.insertRow(model.getRowCount(), new Object[]{"applicationVersion", g.header.applicationVersion, "Header"});
-                    model.insertRow(model.getRowCount(), new Object[]{"isMounted", g.header.isMounted, "Header"});
-                    model.insertRow(model.getRowCount(), new Object[]{"dummy0", g.header.dummy0, "Header"});
-                    model.insertRow(model.getRowCount(), new Object[]{"fileSize", g.header.fileSize, "Header"});
-                    model.insertRow(model.getRowCount(), new Object[]{"clusterSize", g.header.clusterSize, "Header"});
-                    model.insertRow(model.getRowCount(), new Object[]{"clusterCount", g.header.clusterCount, "Header"});
-                    model.insertRow(model.getRowCount(), new Object[]{"checksum", g.header.checksum, "Header"});
+                    Object[][] rows = {
+//                                       {"headerVersion", g.header.headerVersion, g.header.getClass().getSimpleName()},
+//                                       {"cacheType", g.header.cacheType},
+//                                       {"formatVersion", g.header.formatVersion},
+                                       {"applicationID", g.header.applicationID, g.header.getClass().getSimpleName()},
+                                       {"applicationVersion", g.header.applicationVersion},
+                                       {"isMounted", g.header.isMounted},
+//                                       {"dummy0", g.header.dummy0},
+                                       {"fileSize", g.header.fileSize},
+//                                       {"clusterSize", g.header.clusterSize},
+                                       {"clusterCount", g.header.clusterCount},
+                                       {"checksum", g.header.checksum + " vs " + g.header.check()},
+                                       {"blockCount", g.blockAllocationTableHeader.blockCount, g.blockAllocationTableHeader.getClass().getSimpleName()},
+                                       {"blocksUsed", g.blockAllocationTableHeader.blocksUsed},
+                                       {"lastBlockUsed", g.blockAllocationTableHeader.lastBlockUsed},
+//                                       {"dummy0", g.blockAllocationTableHeader.dummy0},
+//                                       {"dummy1", g.blockAllocationTableHeader.dummy1},
+//                                       {"dummy2", g.blockAllocationTableHeader.dummy2},
+//                                       {"dummy3", g.blockAllocationTableHeader.dummy3},
+                                       {"checksum", g.blockAllocationTableHeader.checksum + " vs " + g.blockAllocationTableHeader.check()},
+                                       {"clusterCount", g.fragMap.clusterCount, g.fragMap.getClass().getSimpleName()},
+                                       {"firstUnusedEntry", g.fragMap.firstUnusedEntry},
+//                                       {"isLongTerminator", g.fragMap.isLongTerminator},
+                                       {"checksum", g.fragMap.checksum + " vs " + g.fragMap.check()},
+//                                       {"headerVersion", g.manifestHeader.headerVersion, g.manifestHeader.getClass().getSimpleName()},
+//                                       {"applicationID", g.manifestHeader.applicationID},
+//                                       {"applicationVersion", g.manifestHeader.applicationVersion},
+                                       {"nodeCount", g.manifestHeader.nodeCount, g.manifestHeader.getClass().getSimpleName()},
+                                       {"fileCount", g.manifestHeader.fileCount},
+//                                       {"compressionBlockSize", g.manifestHeader.compressionBlockSize},
+                                       {"binarySize", g.manifestHeader.binarySize},
+                                       {"nameSize", g.manifestHeader.nameSize},
+                                       {"hashTableKeyCount", g.manifestHeader.hashTableKeyCount},
+                                       {"minimumFootprintCount", g.manifestHeader.minimumFootprintCount},
+                                       {"userConfigCount", g.manifestHeader.userConfigCount},
+                                       {"bitmask", g.manifestHeader.bitmask},
+                                       {"fingerprint", (((long)(g.manifestHeader.fingerprint)) & 0xFFFFFFFF)},
+                                       {"checksum", g.manifestHeader.checksum + " vs " + g.manifestHeader.check()},
+//                                       {"headerVersion", g.directoryMapHeader.headerVersion, g.directoryMapHeader.getClass().getSimpleName()},
+//                                       {"dummy0", g.directoryMapHeader.dummy0},
+//                                       {"headerVersion", g.checksumHeader.headerVersion, g.checksumHeader.getClass().getSimpleName()},
+                                       {"checksumSize", g.checksumHeader.checksumSize, g.checksumHeader.getClass().getSimpleName()},
+//                                       {"formatCode", g.checksumMapHeader.formatCode, g.checksumMapHeader.getClass().getSimpleName()},
+//                                       {"dummy0", g.checksumMapHeader.dummy0},
+                                       {"itemCount", g.checksumMapHeader.itemCount, g.checksumMapHeader.getClass().getSimpleName()},
+                                       {"checksumCount", g.checksumMapHeader.checksumCount},
+//                                       {"gcfRevision", g.dataBlockHeader.gcfRevision, g.dataBlockHeader.getClass().getSimpleName()},
+                                       {"blockCount", g.dataBlockHeader.blockCount, g.dataBlockHeader.getClass().getSimpleName()},
+//                                       {"blockSize", g.dataBlockHeader.blockSize},
+                                       {"firstBlockOffset", g.dataBlockHeader.firstBlockOffset},
+                                       {"blocksUsed", g.dataBlockHeader.blocksUsed},
+                                       {"checksum", g.dataBlockHeader.checksum + " vs " + g.dataBlockHeader.check()}};
+                    for(int i = 0; i < rows.length; i++) {
+                        model.insertRow(model.getRowCount(), rows[i]);
+                    }
                 } else if(nodeInfo instanceof DirectoryEntry) {
                     DirectoryEntry d = (DirectoryEntry) nodeInfo;
                     model.getDataVector().removeAllElements();
@@ -997,7 +1051,7 @@ public final class EditorFrame extends javax.swing.JFrame {
         //</editor-fold>
     }
 
-    public class EditorMenuBar extends JMenuBar {
+    private class EditorMenuBar extends JMenuBar {
 
         private JMenuItem newItem;
 
