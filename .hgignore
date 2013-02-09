@@ -4,3 +4,5 @@
 \.rej$
 \.conflict\~$
 ^archives$
+^out\.log$
+^out\.log\.lck$

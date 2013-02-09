@@ -9,8 +9,10 @@ import java.awt.EventQueue;
 import java.awt.Toolkit;
 import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.PrintStream;
 import java.io.PrintWriter;
 import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Field;
@@ -18,9 +20,12 @@ import java.net.BindException;
 import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.net.SocketException;
 import java.net.URLDecoder;
 import java.security.NoSuchAlgorithmException;
 import java.util.ResourceBundle;
+import java.util.logging.FileHandler;
+import java.util.logging.Handler;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.prefs.Preferences;
@@ -53,6 +58,16 @@ public class Main {
     public static Preferences prefs = Preferences.userRoot().node(projectName);
 
     static {
+
+        try {
+            Handler handler = new FileHandler("out.log");
+            Logger.getLogger("").addHandler(handler);
+        } catch(IOException ex) {
+            Logger.getLogger(Main.class.getName()).log(Level.SEVERE, null, ex);
+        } catch(SecurityException ex) {
+            Logger.getLogger(Main.class.getName()).log(Level.SEVERE, null, ex);
+        }
+
         String osVer = System.getProperty("os.name").toLowerCase();
         if(osVer.indexOf("windows") != -1) {
             os = OS.Windows;
@@ -173,6 +188,8 @@ public class Main {
             port = sock.getLocalPort();
             prefs.putInt("port", port);
 
+            LOG.log(Level.INFO, "Listening on port {0}", port);
+
             Runtime.getRuntime().addShutdownHook(new Thread() {
                 @Override
                 public void run() {
@@ -196,7 +213,9 @@ public class Main {
                             LOG.log(Level.INFO, "Request: {0}", request);
                             out.println(myVer);
 
-                            if(cVer == null || cVer.compareTo(myVer) > 0) {
+                            if(cVer.equals("null") || (!myVer.equals("null") && cVer.compareTo(myVer) > 0)) {
+                                LOG.info("Surrendering control to other process");
+                                out.flush();
                                 sock.close();
                                 System.exit(0);
                             } else {
@@ -207,7 +226,7 @@ public class Main {
                         }
                     }
                 }
-            });
+            }, "Process Listener");
             server.setDaemon(os != OS.Mac); // non-daemon threads work in the background. Stick around if on a mac until manually terminated
             server.start();
         } catch(BindException ex) {
@@ -232,9 +251,13 @@ public class Main {
             }
             out.println(sb.toString());
             String sVer = in.readLine();
-            if(sVer == null || myVer.compareTo(sVer) > 0) {
-                main(args);
+            if(myVer.equals("null") || (sVer.equals("null") && sVer.compareTo(myVer) > 0)) {
+                LOG.info("Overriding other running instance");
+                init(args);
             }
+        } catch(SocketException ex) {
+            LOG.info("Overriding other running instance");
+            init(args);
         } catch(IOException ex) {
             LOG.log(Level.SEVERE, null, ex);
             return false;
