@@ -202,7 +202,7 @@ public final class EditorFrame extends javax.swing.JFrame {
             private void doCheckForUpdates() {
                 try {
                     String md5;
-                    URL url = new URL("https://dl.dropbox.com/u/42745598/tf/Hud%20Editor/TF2%20HUD%20Editor.jar.MD5");
+                    URL url = new URL("https://dl.dropbox.com/u/42745598/tf/Hud%20Editor/TF2%20HUD%20Editor.jar.current");
                     URLConnection connection = url.openConnection();
 
                     InputStream is;
@@ -366,17 +366,17 @@ public final class EditorFrame extends javax.swing.JFrame {
 
     public void about() {
         String latestThread = "http://www.reddit.com/r/truetf2/comments/11xtwz/wysiwyg_hud_editor_coming_together/";
-        String aboutText = "<html><h2>This is a <u>W</u>hat <u>Y</u>ou <u>S</u>ee <u>I</u>s <u>W</u>hat <u>Y</u>ou <u>G</u>et HUD Editor for TF2.</h2>";
+        String aboutText = "<html><h2>This is a What You See Is What You Get HUD Editor for TF2.</h2>";
         aboutText += "<p>You can graphically edit TF2 HUDs with it!<br>";
         aboutText += "<p>It was written by <a href=\"http://www.reddit.com/user/TimePath/\">TimePath</a></p>";
         aboutText += "<p>Source available on <a href=\"http://code.google.com/p/tf2-hud-editor/\">Google code</a></p>";
         aboutText += "<p>I have an <a href=\"http://code.google.com/feeds/p/tf2-hud-editor/hgchanges/basic\">Atom feed</a> set up listing source commits</p>";
-        aboutText += "<p>Please give feedback or suggestions on <a href=\"" + latestThread + "\">the latest update thread</a></p>";
+        aboutText += "<p>Please leave feedback or suggestions on <a href=\"" + latestThread + "\">the latest update thread</a></p>";
         if(Main.myVer != null) {
             long time = Long.parseLong(Main.myVer) * 1000;
             DateFormat df = new SimpleDateFormat("EEE, dd MMM yyyy HH:mm:ss z");
             df.setTimeZone(TimeZone.getTimeZone("UTC"));
-            aboutText += "<p>Build date: " + df.format(new Date(time)) + "</p>";
+            aboutText += "<p>Build date: " + df.format(new Date(time)) + " / " +time+ "</p>";
         }
         aboutText += "</html>";
         JEditorPane pane = new JEditorPane("text/html", aboutText);
