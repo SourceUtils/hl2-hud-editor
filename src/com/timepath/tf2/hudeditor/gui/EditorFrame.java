@@ -229,7 +229,7 @@ public final class EditorFrame extends javax.swing.JFrame {
 
                     LOG.log(Level.INFO, "{0} ={1}= {2}", new Object[]{current, equal ? "" : "/", Main.myVer});
 
-                    if(!equal) {
+                    if(current.compareTo(Main.myVer) > 0) {
 //                        updateButton.setEnabled(true);
                         int returnCode = JOptionPane.showConfirmDialog(null, "Would you like to update to the latest version?", "A new update is available", JOptionPane.YES_NO_OPTION);
                         if(returnCode == JOptionPane.YES_OPTION) {
@@ -241,7 +241,7 @@ public final class EditorFrame extends javax.swing.JFrame {
                             URLConnection editor = latest.openConnection();
 
                             JProgressBar pb = new JProgressBar(0, editor.getContentLength());
-//                            pb.setPreferredSize(new Dimension(175,20));
+                            pb.setPreferredSize(new Dimension(175,20));
                             pb.setStringPainted(true);
                             pb.setValue(0);
 
@@ -251,16 +251,9 @@ public final class EditorFrame extends javax.swing.JFrame {
 //                            center_panel.add(label);
 //                            center_panel.add(pb);
 
-//                            JDialog dialog = new JDialog((JFrame) null, "Updating...");
-//                            dialog.getContentPane().add(center_panel, BorderLayout.CENTER);
-//                            dialog.pack();
-//                            dialog.setVisible(true);
-
 //                            statusBar.remove(updateButton);
                             status.add(pb);
-
-//                            dialog.setLocationRelativeTo(null); // center on screen
-//                            dialog.toFront(); // raise above other java windows
+                            status.revalidate();
 
                             InputStream in = latest.openStream();
 
