@@ -37,6 +37,7 @@
             <zipfileset src="${archive.dir}/temp_final.jar" excludes="META-INF/*.SF, META-INF/*.DSA, META-INF/*.RSA"/>
         </zip>
         <delete file="${store.dir}/temp_final.jar"/>
+        <checksum file="${store.jar}" forceOverwrite="yes"/>
         <echo file="${store.jar}.current" message="${now}" append="false"/>
         <chmod file="${store.jar}" perm="777"/>
 

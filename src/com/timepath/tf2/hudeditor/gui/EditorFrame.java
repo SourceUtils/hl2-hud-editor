@@ -1317,6 +1317,7 @@ public final class EditorFrame extends javax.swing.JFrame {
                     changeResolution();
                 }
             });
+            resolutionItem.setEnabled(false);
             viewMenu.add(resolutionItem);
 
             previewItem = new JMenuItem(new CustomAction("Full Screen Preview", null, KeyEvent.VK_F,
