@@ -229,7 +229,7 @@ public final class EditorFrame extends javax.swing.JFrame {
 
                     LOG.log(Level.INFO, "{0} ={1}= {2}", new Object[]{current, equal ? "" : "/", Main.myVer});
 
-                    if(current.compareTo(Main.myVer) > 0) {
+                    if(!equal || current.compareTo(Main.myVer) > 0) {
 //                        updateButton.setEnabled(true);
                         int returnCode = JOptionPane.showConfirmDialog(null, "Would you like to update to the latest version?", "A new update is available", JOptionPane.YES_NO_OPTION);
                         if(returnCode == JOptionPane.YES_OPTION) {
