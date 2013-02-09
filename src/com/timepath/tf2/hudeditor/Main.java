@@ -60,14 +60,15 @@ public class Main {
 
     public static final String myVer = Main.class.getPackage().getImplementationVersion();// = calcMD5();
 
+    public static final String logFile = Utils.workingDirectory() + "out.log";
+
     static {
 
+        Logger.getLogger("").setLevel(Level.INFO);
+
         try {
-            Handler handler = new FileHandler((myVer != null ? Main.class.getProtectionDomain().getCodeSource().getLocation().toURI().toString() : "") + "out.log");
+            Handler handler = new FileHandler(logFile);
             Logger.getLogger("").addHandler(handler);
-            Logger.getLogger("").setLevel(Level.INFO);
-        } catch(URISyntaxException ex) {
-            Logger.getLogger(Main.class.getName()).log(Level.SEVERE, null, ex);
         } catch(IOException ex) {
             Logger.getLogger(Main.class.getName()).log(Level.SEVERE, null, ex);
         } catch(SecurityException ex) {
@@ -217,7 +218,7 @@ public class Main {
                             LOG.log(Level.INFO, "Request: {0}", request);
                             out.println(myVer);
 
-                            if(cVer.equals("null") || (!myVer.equals("null") && cVer.compareTo(myVer) > 0)) {
+                            if(cVer.equals("null") || (myVer != null && cVer.compareTo(myVer) > 0)) {
                                 LOG.info("Surrendering control to other process");
                                 out.flush();
                                 sock.close();
@@ -255,7 +256,7 @@ public class Main {
             }
             out.println(sb.toString());
             String sVer = in.readLine();
-            if(myVer.equals("null") || (sVer.equals("null") && sVer.compareTo(myVer) > 0)) {
+            if(myVer == null || (sVer.equals("null") && sVer.compareTo(myVer) > 0)) {
                 LOG.info("Overriding other running instance");
                 init(args);
             }

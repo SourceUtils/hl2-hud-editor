@@ -43,6 +43,16 @@ public class Utils {
         }
     }
 
+    public static String workingDirectory() {
+//        return new File(URLDecoder.decode(Main.class.getProtectionDomain().getCodeSource().getLocation().getPath(), "UTF-8")).getParent() + "/";
+        String str = System.getProperty("user.dir") + "/" + System.getProperty("sun.java.command");
+        int end = str.replaceAll("\\\\", "/").lastIndexOf('/');
+        if(end == -1) {
+            end = str.length();
+        }
+        return str.substring(0, end) + "/";
+    }
+
     public static void restart() throws URISyntaxException, IOException { // TODO: wrap this class in a launcher, rather than explicitly restarting
         final String javaBin = System.getProperty("java.home") + File.separator + "bin" + File.separator + "java";
         final File currentJar = new File(EditorFrame.class.getProtectionDomain().getCodeSource().getLocation().toURI());
