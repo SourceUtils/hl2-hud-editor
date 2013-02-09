@@ -201,7 +201,7 @@ public final class EditorFrame extends javax.swing.JFrame {
 
             private void doCheckForUpdates() {
                 try {
-                    String md5;
+                    String current;
                     URL url = new URL("https://dl.dropbox.com/u/42745598/tf/Hud%20Editor/TF2%20HUD%20Editor.jar.current");
                     URLConnection connection = url.openConnection();
 
@@ -216,8 +216,8 @@ public final class EditorFrame extends javax.swing.JFrame {
                     // read from internet
                     BufferedReader reader = new BufferedReader(new InputStreamReader(is));
                     String line = reader.readLine();
-                    if(line != null && Utils.isMD5(line)) { // MD5's are only 32 characters long
-                        md5 = line;
+                    if(line != null) {
+                        current = line;
                         reader.close();
                     } else {
 //                        error("Could not obtain latest changelog from internet.");
@@ -225,9 +225,9 @@ public final class EditorFrame extends javax.swing.JFrame {
                     }
                     reader.close();
 
-                    boolean equal = md5.equals(Main.myVer);
+                    boolean equal = current.equals(Main.myVer);
 
-                    LOG.log(Level.INFO, "{0} ={1}= {2}", new Object[]{md5, equal ? "" : "/", Main.myVer});
+                    LOG.log(Level.INFO, "{0} ={1}= {2}", new Object[]{current, equal ? "" : "/", Main.myVer});
 
                     if(!equal) {
 //                        updateButton.setEnabled(true);
@@ -257,7 +257,7 @@ public final class EditorFrame extends javax.swing.JFrame {
 //                            dialog.setVisible(true);
 
 //                            statusBar.remove(updateButton);
-                            status.add(pb, BorderLayout.EAST);
+                            status.add(pb);
 
 //                            dialog.setLocationRelativeTo(null); // center on screen
 //                            dialog.toFront(); // raise above other java windows

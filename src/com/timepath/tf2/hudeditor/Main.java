@@ -62,11 +62,20 @@ public class Main {
 
     public static final String logFile;
 
+    public static final String runPath;
+
     static {
 
         Logger.getLogger("").setLevel(Level.INFO);
 
         logFile = Utils.workingDirectory() + "out.log";
+
+        Thread.setDefaultUncaughtExceptionHandler(new Thread.UncaughtExceptionHandler() {
+
+            public void uncaughtException(Thread thread, Throwable thrwbl) {
+                Logger.getLogger(thread.getName()).log(Level.SEVERE, null, thrwbl);
+            }
+        });
 
         try {
             Handler handler = new FileHandler(logFile);
@@ -76,6 +85,13 @@ public class Main {
         } catch(SecurityException ex) {
             Logger.getLogger(Main.class.getName()).log(Level.SEVERE, null, ex);
         }
+        String path = "download.jar";
+        try {
+            path = URLDecoder.decode(Main.class.getProtectionDomain().getCodeSource().getLocation().getPath(), "UTF-8");
+        } catch(UnsupportedEncodingException ex) {
+            Logger.getLogger(Main.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        runPath = path;
 
         String osVer = System.getProperty("os.name").toLowerCase();
         if(osVer.indexOf("windows") != -1) {
@@ -142,12 +158,10 @@ public class Main {
     }
 
     //<editor-fold defaultstate="collapsed" desc="Defunct">
-    public static String runPath;
 
     private static String calcMD5() {
         String md5 = "";
         try {
-            runPath = URLDecoder.decode(Main.class.getProtectionDomain().getCodeSource().getLocation().getPath(), "UTF-8");
             if(!runPath.endsWith(".jar")) {
 //                indev = true;
                 return "indev";
