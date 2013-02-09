@@ -11,7 +11,7 @@
 
     <property name="store.jar.name" value="TF2 HUD Editor"/>
     <property name="store.dir" value="${user.home}/Dropbox/Public/tf/Hud Editor"/>
-    <property name="archive.dir" value="archives"/>
+    <property name="archive.dir" value="temp"/>
 
     <property name="store.jar" value="${store.dir}/${store.jar.name}.jar"/>
 
