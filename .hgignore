@@ -3,6 +3,5 @@
 \.chg\..*$
 \.rej$
 \.conflict\~$
-^out\.log$
 ^out\.log\.lck$
 ^temp$

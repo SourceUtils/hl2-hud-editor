@@ -209,10 +209,10 @@ public class VTF {
         File f = null;
         try {
             File dest = File.createTempFile(path.replaceAll("/", "_"), "");
-            System.out.println(dest);
+            LOG.log(Level.INFO, "Extracted to: {0}", dest);
             if(mats.extract(path, dest) != null) {
                 f = new File(path);
-                System.out.println("Loading " + f);
+                LOG.log(Level.INFO, "Loading {0}", f);
             }
         } catch(IOException ex) {
             Logger.getLogger(VTF.class.getName()).log(Level.SEVERE, null, ex);

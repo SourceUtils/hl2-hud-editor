@@ -11,7 +11,9 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.UnsupportedEncodingException;
 import java.net.URISyntaxException;
+import java.net.URLDecoder;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
@@ -44,7 +46,13 @@ public class Utils {
     }
 
     public static String workingDirectory() {
-//        return new File(URLDecoder.decode(Main.class.getProtectionDomain().getCodeSource().getLocation().getPath(), "UTF-8")).getParent() + "/";
+        String ans;
+        try {
+            ans = new File(URLDecoder.decode(Main.class.getProtectionDomain().getCodeSource().getLocation().getPath(), "UTF-8")).getParent() + "/";
+            return ans;
+        } catch(UnsupportedEncodingException ex) {
+            Logger.getLogger(Utils.class.getName()).log(Level.SEVERE, null, ex);
+        }
         String str = System.getProperty("user.dir") + "/" + System.getProperty("sun.java.command");
         int end = str.replaceAll("\\\\", "/").lastIndexOf('/');
         if(end == -1) {

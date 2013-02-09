@@ -60,11 +60,13 @@ public class Main {
 
     public static final String myVer = Main.class.getPackage().getImplementationVersion();// = calcMD5();
 
-    public static final String logFile = Utils.workingDirectory() + "out.log";
+    public static final String logFile;
 
     static {
 
         Logger.getLogger("").setLevel(Level.INFO);
+
+        logFile = Utils.workingDirectory() + "out.log";
 
         try {
             Handler handler = new FileHandler(logFile);
