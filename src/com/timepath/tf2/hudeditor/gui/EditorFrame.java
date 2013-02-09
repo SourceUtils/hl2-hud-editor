@@ -54,12 +54,15 @@ import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.URLConnection;
 import java.net.UnknownHostException;
+import java.text.DateFormat;
 import java.text.MessageFormat;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
 import java.util.StringTokenizer;
+import java.util.TimeZone;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.zip.ZipEntry;
@@ -143,13 +146,14 @@ public final class EditorFrame extends javax.swing.JFrame {
                     String text = "";
                     BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getInputStream()));
                     String line;
+                    String grep = Main.myVer;
                     while((line = reader.readLine()) != null) {
-                        if(!Main.indev && line.contains(Main.myVer)) { // dev build cannot MD5
-                            String[] parts = line.split(Main.myVer);
+                        if(Main.myVer != null && line.contains(grep)) { // unpackaged builds do not have versions
+                            String[] parts = line.split(grep);
                             if(parts[0] != null) {
                                 text += parts[0];
                             }
-                            text += "<b><u>" + Main.myVer + "</u></b>";
+                            text += "<b><u>" + grep + "</u></b>";
                             if(parts[1] != null) {
                                 text += parts[1];
                             }
@@ -189,7 +193,7 @@ public final class EditorFrame extends javax.swing.JFrame {
     }
 
     private void checkForUpdates() {
-        if(Main.indev) {
+        if(Main.myVer == null) {
             return;
         }
         new Thread() {
@@ -368,7 +372,12 @@ public final class EditorFrame extends javax.swing.JFrame {
         aboutText += "<p>Source available on <a href=\"http://code.google.com/p/tf2-hud-editor/\">Google code</a></p>";
         aboutText += "<p>I have an <a href=\"http://code.google.com/feeds/p/tf2-hud-editor/hgchanges/basic\">Atom feed</a> set up listing source commits</p>";
         aboutText += "<p>Please give feedback or suggestions on <a href=\"" + latestThread + "\">the latest update thread</a></p>";
-        aboutText += "<p>Current version: " + Main.myVer + "</p>";
+        if(Main.myVer != null) {
+            long time = Long.parseLong(Main.myVer) * 1000;
+            DateFormat df = new SimpleDateFormat("EEE, dd MMM yyyy HH:mm:ss z");
+            df.setTimeZone(TimeZone.getTimeZone("UTC"));
+            aboutText += "<p>Build date: " + df.format(new Date(time)) + "</p>";
+        }
         aboutText += "</html>";
         JEditorPane pane = new JEditorPane("text/html", aboutText);
         pane.setEditable(false);
@@ -652,7 +661,7 @@ public final class EditorFrame extends javax.swing.JFrame {
     public void setVisible(boolean b) {
         super.setVisible(b);
         this.createBufferStrategy(3); // Triple buffered, any more sees minimal gain.
-        if(!Main.indev && autoCheck) {
+        if(Main.myVer != null && autoCheck) {
             this.checkForUpdates();
         }
     }
@@ -738,6 +747,7 @@ public final class EditorFrame extends javax.swing.JFrame {
             final long start = System.currentTimeMillis();
             Utils.recurseDirectoryToNode(root, fileSystemRoot);
             fileSystemRoot.setUserObject(root.getName());
+            fileTree.requestFocusInWindow();
 
             DefaultTreeModel model = (DefaultTreeModel) fileTree.getModel();
             model.reload();

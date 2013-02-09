@@ -11,6 +11,7 @@ import java.awt.Image;
 import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.RenderingHints;
+import java.awt.Shape;
 import java.awt.Toolkit;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
@@ -22,6 +23,7 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.logging.Logger;
 import javax.swing.JPanel;
+import javax.swing.JScrollBar;
 
 /**
  *
@@ -40,11 +42,11 @@ public final class Canvas extends JPanel implements MouseListener, MouseMotionLi
 
     private Color BG_COLOR = Color.GRAY;
 
-    private Color GRID_COLOR = Color.GRAY.brighter();
+    private Color GRID_COLOR = Color.WHITE;
 
-    private static int offX = 0; // left
+    private static int offX = 10; // left
 
-    private static int offY = 0; // top
+    private static int offY = 10; // top
 
     private Rectangle selectRect = new Rectangle();
 
@@ -147,7 +149,8 @@ public final class Canvas extends JPanel implements MouseListener, MouseMotionLi
     //</editor-fold>
     @Override
     public void setPreferredSize(Dimension preferredSize) {
-        super.setPreferredSize(preferredSize);
+        Dimension UISize = new Dimension(preferredSize.width + 2 * offX, preferredSize.height + 2 * offY);
+        super.setPreferredSize(UISize);
 
         currentbg = null;
         gridbg = null;
@@ -165,10 +168,33 @@ public final class Canvas extends JPanel implements MouseListener, MouseMotionLi
     }
 
     //<editor-fold defaultstate="collapsed" desc="Paint methods">
+    private Rectangle getOutliers() {
+        Rectangle r = new Rectangle(internal.width, internal.height);
+        for(int i = 0; i < elements.size(); i++) {
+            r.add(elements.get(i).getBounds());
+        }
+        return r;
+    }
+
     @Override
     protected void paintComponent(Graphics graphics) {
+//        Rectangle outliers = getOutliers();
+//        int left = -outliers.x;
+//        int right = outliers.width + outliers.x - internal.width;
+//        int top = -outliers.y;
+//        int down = outliers.height + outliers.y - internal.height;
+//        this.resize(this.getWidth() + left + right, this.getHeight() + top + down);
+        offX = ((this.getWidth() - internal.width) / 2);
+        offY = ((this.getHeight() - internal.height) / 2);
+
+//        offX = ((this.getWidth() - internal.width) / 2) + ((-outliers.x) - (outliers.width + outliers.x - internal.width));
+//        offY = ((this.getHeight() - internal.height) / 2) + ((-outliers.y) - (outliers.height + outliers.y - internal.height));
+
         super.paintComponent(graphics);
         Graphics2D g = (Graphics2D) graphics;
+
+        g.setColor(BG_COLOR);
+        g.fillRect(0, 0, this.getWidth(), this.getHeight());
 
         if(background != null) {
             if(currentbg == null) {
@@ -177,7 +203,7 @@ public final class Canvas extends JPanel implements MouseListener, MouseMotionLi
             g.drawImage(currentbg, offX, offY, this);
 //            g.drawImage(background, offX, offY, this);
         } else {
-            g.setColor(BG_COLOR);
+            g.setColor(Color.WHITE.darker().darker());
             g.fillRect(offX, offY, (int) Math.round(screen.width * scale), (int) Math.round(screen.height * scale));
         }
         if(true) {
@@ -191,7 +217,6 @@ public final class Canvas extends JPanel implements MouseListener, MouseMotionLi
 
         for(int i = 0; i < elements.size(); i++) {
             paintElement(elements.get(i), g);
-            //            System.out.println(elements.get(i).getParent());
         }
 
         //<editor-fold defaultstate="collapsed" desc="Selection rectangle">
@@ -259,8 +284,8 @@ public final class Canvas extends JPanel implements MouseListener, MouseMotionLi
         int maxY = h - (h % i);
         double multX = (screen.width / internal.width);
         double multY = (screen.height / internal.height);
-        for(int y = 0; y <= (maxY / i); y++) {
-            for(int x = 0; x <= (maxX / i); x++) {
+        for(int y = -1; y <= (maxY / i); y++) {
+            for(int x = -1; x <= (maxX / i); x++) {
                 int dx = (int) Math.round(((maxX * x * i * multX) / maxX) + offX);
                 int dy = (int) Math.round(((maxY * y * i * multY) / maxY) + offY);
                 g.drawLine(dx + cross, dy + cross, dx - (1 + cross), dy - (1 + cross));
@@ -281,6 +306,8 @@ public final class Canvas extends JPanel implements MouseListener, MouseMotionLi
                 elementX += _offX;
                 elementY += _offY;
             }
+            Rectangle bounds = new Rectangle(elementX, elementY, elementW, elementH);
+
             if(e.getFgColor() != null) {
                 g.setColor(e.getFgColor());
                 if(e.getLabelText() == null) {
@@ -315,7 +342,9 @@ public final class Canvas extends JPanel implements MouseListener, MouseMotionLi
                 int fontSize = (int) Math.round(12.0 * screenRes / 72.0);
                 g.setFont(e.getFont());
                 g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                Shape clip = g.getClip();
                 g.drawString(e.getLabelText(), elementX, elementY + fontSize);
+                g.setClip(clip);
             }
         }
 
@@ -324,9 +353,13 @@ public final class Canvas extends JPanel implements MouseListener, MouseMotionLi
         //        }
     }
 
+    /**
+     * Convenience method for repainting the bare minimum
+     * @param bounds
+     */
     public void doRepaint(Rectangle bounds) {
-        this.repaint(offX + bounds.x, offY + bounds.y, bounds.width - 1, bounds.height - 1); // repaint the bare minimum
-        //        this.repaint();
+        this.repaint(offX + bounds.x, offY + bounds.y, bounds.width - 1, bounds.height - 1);
+//        this.repaint();
     }
     //</editor-fold>
 

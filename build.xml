@@ -2,52 +2,49 @@
 <project name="TF2_WYSIWYG_HUD_EDITOR" default="default" basedir=".">
     <description>Builds, tests, and runs the project TF2 WYSIWYG HUD EDITOR.</description>
     <import file="nbproject/build-impl.xml"/>
-    
+
+    <script language="javascript">
+        <![CDATA[
+            property = project.setProperty("now",Math.floor((new Date()).getTime()/1000));
+        ]]>
+    </script>
+
     <property name="store.jar.name" value="TF2 HUD Editor"/>
     <property name="store.dir" value="${user.home}/Dropbox/Public/tf/Hud Editor"/>
     <property name="archive.dir" value="archives"/>
-    <tstamp prefix="build-info">
-        <format property="timestamp" pattern="yyyyMMdd/Hmm" locale="en" />
-    </tstamp>
-    
+
     <property name="store.jar" value="${store.dir}/${store.jar.name}.jar"/>
-    <property name="store.jar.dated" value="${archive.dir}/${build-info.timestamp}.jar"/>
-    
+
     <target name="-post-clean">
 <!--        <delete file="${store.jar}"/>-->
     </target>
-    
+
     <target name="-post-jar">
-        <echo message="Packaging ${application.title} into a single JAR at ${store.jar.dated}"/>
-        <mkdir dir="${store.dir}"/>
-        <delete file="${store.jar.dated}"/> <!-- Just in it already exists for some reason -->
+        <echo message="Packaging ${application.title} into a single JAR at ${store.jar}"/>
+        <mkdir dir="${archive.dir}"/>
         <mkdir dir="dist/lib"/> <!-- Just in case no external libraries are in use and we don't want the packaging to fail -->
+        <mkdir dir="${store.dir}"/>
         <jar destfile="${archive.dir}/temp_final.jar" filesetmanifest="skip">
             <zipgroupfileset dir="dist" includes="*.jar"/>
             <zipgroupfileset dir="dist/lib" includes="*.jar"/>
             <!--<zipgroupfileset dir="." includes="*.dll, *.so, *.dylib"/>-->
             <manifest>
                 <attribute name="Main-Class" value="${main.class}"/>
+                <attribute name="Implementation-Version" value="${now}"/>
             </manifest>
         </jar>
-        <zip destfile="${store.jar.dated}">
+        <zip destfile="${store.jar}">
             <zipfileset src="${archive.dir}/temp_final.jar" excludes="META-INF/*.SF, META-INF/*.DSA, META-INF/*.RSA"/>
         </zip>
         <delete file="${store.dir}/temp_final.jar"/>
-        
-        <copy file="${store.jar.dated}" tofile="${store.jar}"/>
-        <checksum file="${store.jar}" forceOverwrite="yes"/>
-        
-        <!--<chmod file="${store.jar.dated}" perm="777"/>-->
+        <echo file="${store.jar}.current" message="${now}" append="false"/>
         <chmod file="${store.jar}" perm="777"/>
-        
-        <!--<echo message="Testing ${application.title} (${store.jar.dated})"/>-->
-        
+
         <!--<exec executable="java">-->
           <!--<arg value="-jar"/>-->
-          <!--<arg value="${store.jar.dated}"/>-->
+          <!--<arg value="${store.jar}"/>-->
         <!--</exec>-->
-          
+
     </target>
-    
+
 </project>

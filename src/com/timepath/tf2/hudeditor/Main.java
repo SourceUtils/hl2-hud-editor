@@ -117,19 +117,17 @@ public class Main {
         }
     }
 
-    //<editor-fold defaultstate="collapsed" desc="TODO: Replace with timestamp system">
-    public static boolean indev;
-
+    //<editor-fold defaultstate="collapsed" desc="Defunct">
     public static String runPath;
 
-    public static String myVer = "";// = calcMD5();
+    public static String myVer = Main.class.getPackage().getImplementationVersion();// = calcMD5();
 
     private static String calcMD5() {
         String md5 = "";
         try {
             runPath = URLDecoder.decode(Main.class.getProtectionDomain().getCodeSource().getLocation().getPath(), "UTF-8");
             if(!runPath.endsWith(".jar")) {
-                indev = true;
+//                indev = true;
                 return "indev";
             }
             md5 = Utils.takeMD5(Utils.loadFile(new File(runPath)));
@@ -198,7 +196,7 @@ public class Main {
                             LOG.log(Level.INFO, "Request: {0}", request);
                             out.println(myVer);
 
-                            if(cVer.equals("indev") || !cVer.equals(myVer)) { // Or if timestamp is greater when timestamps are implemented
+                            if(cVer == null || cVer.compareTo(myVer) > 0) {
                                 sock.close();
                                 System.exit(0);
                             } else {
@@ -234,7 +232,7 @@ public class Main {
             }
             out.println(sb.toString());
             String sVer = in.readLine();
-            if(sVer.equals("indev") || !sVer.equals(myVer)) {
+            if(sVer == null || myVer.compareTo(sVer) > 0) {
                 main(args);
             }
         } catch(IOException ex) {
