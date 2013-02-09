@@ -21,6 +21,7 @@ import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.SocketException;
+import java.net.URISyntaxException;
 import java.net.URLDecoder;
 import java.security.NoSuchAlgorithmException;
 import java.util.ResourceBundle;
@@ -57,11 +58,16 @@ public class Main {
 
     public static Preferences prefs = Preferences.userRoot().node(projectName);
 
+    public static final String myVer = Main.class.getPackage().getImplementationVersion();// = calcMD5();
+
     static {
 
         try {
-            Handler handler = new FileHandler("out.log");
+            Handler handler = new FileHandler((myVer != null ? Main.class.getProtectionDomain().getCodeSource().getLocation().toURI().toString() : "") + "out.log");
             Logger.getLogger("").addHandler(handler);
+            Logger.getLogger("").setLevel(Level.INFO);
+        } catch(URISyntaxException ex) {
+            Logger.getLogger(Main.class.getName()).log(Level.SEVERE, null, ex);
         } catch(IOException ex) {
             Logger.getLogger(Main.class.getName()).log(Level.SEVERE, null, ex);
         } catch(SecurityException ex) {
@@ -134,8 +140,6 @@ public class Main {
 
     //<editor-fold defaultstate="collapsed" desc="Defunct">
     public static String runPath;
-
-    public static String myVer = Main.class.getPackage().getImplementationVersion();// = calcMD5();
 
     private static String calcMD5() {
         String md5 = "";
