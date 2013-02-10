@@ -68,6 +68,7 @@ public class Main {
         Logger.getLogger("").setLevel(Level.INFO);
 
         logFile = Utils.workingDirectory() + "out.log";
+        LOG.log(Level.INFO, "Logging to {0}", logFile);
 
         Thread.setDefaultUncaughtExceptionHandler(new Thread.UncaughtExceptionHandler() {
 

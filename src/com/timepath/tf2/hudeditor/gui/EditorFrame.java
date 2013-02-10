@@ -169,18 +169,7 @@ public final class EditorFrame extends javax.swing.JFrame {
                     pane.setEditable(false);
                     pane.setOpaque(false);
                     pane.setBackground(new Color(0, 0, 0, 0));
-                    pane.addHyperlinkListener(new HyperlinkListener() {
-                        @Override
-                        public void hyperlinkUpdate(HyperlinkEvent he) {
-                            if(he.getEventType().equals(HyperlinkEvent.EventType.ACTIVATED)) {
-                                try {
-                                    Desktop.getDesktop().browse(he.getURL().toURI());
-                                } catch(Exception e) {
-//                                    e.printStackTrace();
-                                }
-                            }
-                        }
-                    });
+                    pane.addHyperlinkListener(linkListener);
                     JScrollPane window = new JScrollPane(pane);
                     window.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
                     info(window, "Changes");
@@ -377,18 +366,7 @@ public final class EditorFrame extends javax.swing.JFrame {
         pane.setEditable(false);
         pane.setOpaque(false);
         pane.setBackground(new Color(0, 0, 0, 0));
-        pane.addHyperlinkListener(new HyperlinkListener() {
-            @Override
-            public void hyperlinkUpdate(HyperlinkEvent he) {
-                if(he.getEventType().equals(HyperlinkEvent.EventType.ACTIVATED)) {
-                    try {
-                        Desktop.getDesktop().browse(he.getURL().toURI()); // http://stackoverflow.com/questions/5116473/linux-command-to-open-url-in-default-browser
-                    } catch(Exception e) {
-//                        e.printStackTrace();
-                    }
-                }
-            }
-        });
+        pane.addHyperlinkListener(linkListener);
         info(pane, "About");
     }
 
@@ -474,7 +452,17 @@ public final class EditorFrame extends javax.swing.JFrame {
     }
 
     private void error(Object msg, String title) {
+        LOG.log(Level.SEVERE, "{0}:{1}", new Object[]{title, msg});
         JOptionPane.showMessageDialog(this, msg, title, JOptionPane.ERROR_MESSAGE);
+    }
+
+    private void warn(Object msg) {
+        error(msg, Main.getString("Warning"));
+    }
+
+    private void warn(Object msg, String title) {
+        LOG.log(Level.WARNING, "{0}:{1}", new Object[]{title, msg});
+        JOptionPane.showMessageDialog(this, msg, title, JOptionPane.WARNING_MESSAGE);
     }
 
     private void info(Object msg) {
@@ -482,6 +470,7 @@ public final class EditorFrame extends javax.swing.JFrame {
     }
 
     private void info(Object msg, String title) {
+        LOG.log(Level.INFO, "{0}:{1}", new Object[]{title, msg});
         JOptionPane.showMessageDialog(this, msg, title, JOptionPane.INFORMATION_MESSAGE);
     }
     //</editor-fold>
@@ -781,6 +770,24 @@ public final class EditorFrame extends javax.swing.JFrame {
         Main.prefs.put("lastLoaded", root.getPath());
         jmb.reloadItem.setEnabled(root != null);
     }
+
+    private HyperlinkListener linkListener = new HyperlinkListener() {
+        @Override
+        public void hyperlinkUpdate(HyperlinkEvent he) {
+            if(he.getEventType().equals(HyperlinkEvent.EventType.ACTIVATED)) {
+                if(Desktop.isDesktopSupported()) {
+                    try {
+                        Desktop.getDesktop().browse(he.getURL().toURI());
+                    } catch(Exception e) {
+                        error(e);
+                    }
+                } else {
+                   warn("Unable to follow link");
+                     // http://stackoverflow.com/questions/5116473/linux-command-to-open-url-in-default-browser
+                }
+            }
+        }
+    };
     //</editor-fold>
 
     //<editor-fold defaultstate="collapsed" desc="Interface">

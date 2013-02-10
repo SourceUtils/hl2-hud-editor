@@ -12,6 +12,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
+import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URLDecoder;
 import java.security.MessageDigest;
@@ -45,20 +46,39 @@ public class Utils {
         }
     }
 
+    public static String normalisePath(String str) {
+//        try {
+//            return new URI(str).normalize().getPath();
+//        } catch(URISyntaxException ex) {
+//            Logger.getLogger(Utils.class.getName()).log(Level.SEVERE, null, ex);
+//        }
+        str = str.replaceAll("\\\\", File.separator).replaceAll("/", File.separator); // slash consistency
+        while(str.indexOf(File.separator + File.separator) != -1) {
+            str = str.replaceAll(File.separator + File.separator, File.separator);
+        }
+        if(!str.endsWith(File.separator)) {
+            str += File.separator;
+        }
+        return str;
+    }
+
     public static String workingDirectory() {
         String ans;
         try {
-            ans = new File(URLDecoder.decode(Main.class.getProtectionDomain().getCodeSource().getLocation().getPath(), "UTF-8")).getParent() + "/";
-            return ans;
+            ans = new File(URLDecoder.decode(Main.class.getProtectionDomain().getCodeSource().getLocation().getPath(), "UTF-8")).getParentFile().getAbsolutePath();
         } catch(UnsupportedEncodingException ex) {
             Logger.getLogger(Utils.class.getName()).log(Level.SEVERE, null, ex);
+            ans = System.getProperty("user.dir") + File.separator;
+            String cmd = System.getProperty("sun.java.command");
+            int idx = cmd.lastIndexOf(File.separator);
+            if(idx != -1) {
+                cmd = cmd.substring(0, idx + 1);
+            } else {
+                cmd = "";
+            }
+            ans += cmd;
         }
-        String str = System.getProperty("user.dir") + "/" + System.getProperty("sun.java.command");
-        int end = str.replaceAll("\\\\", "/").lastIndexOf('/');
-        if(end == -1) {
-            end = str.length();
-        }
-        return str.substring(0, end) + "/";
+        return normalisePath(ans);
     }
 
     public static void restart() throws URISyntaxException, IOException { // TODO: wrap this class in a launcher, rather than explicitly restarting
