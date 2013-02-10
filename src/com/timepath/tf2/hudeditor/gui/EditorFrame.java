@@ -450,7 +450,7 @@ public final class EditorFrame extends javax.swing.JFrame {
         new Thread() {
             @Override
             public void run() {
-                NativeFileChooser nc = new NativeFileChooser(EditorFrame.this, Main.strings.getString("LoadHudDir"), lastLoaded);
+                NativeFileChooser nc = new NativeFileChooser(EditorFrame.this, Main.getString("LoadHudDir"), lastLoaded);
                 final File selection = nc.getFolder();
                 if(selection != null) {
                     new Thread() {
@@ -470,7 +470,7 @@ public final class EditorFrame extends javax.swing.JFrame {
 
     //<editor-fold defaultstate="collapsed" desc="Messages">
     private void error(Object msg) {
-        error(msg, Main.strings.getString("Error"));
+        error(msg, Main.getString("Error"));
     }
 
     private void error(Object msg, String title) {
@@ -478,7 +478,7 @@ public final class EditorFrame extends javax.swing.JFrame {
     }
 
     private void info(Object msg) {
-        info(msg, Main.strings.getString("Info"));
+        info(msg, Main.getString("Info"));
     }
 
     private void info(Object msg, String title) {
@@ -682,7 +682,7 @@ public final class EditorFrame extends javax.swing.JFrame {
             return;
         }
         if(!root.exists()) {
-            error(new MessageFormat(Main.strings.getString("FileAccessError")).format(new Object[]{root}));
+            error(new MessageFormat(Main.getString("FileAccessError")).format(new Object[]{root}));
         }
         setLastLoaded(root);
         LOG.log(Level.INFO, "You have selected: {0}", root.getAbsolutePath());
@@ -762,11 +762,11 @@ public final class EditorFrame extends javax.swing.JFrame {
             LOG.info("Quitting...");
             this.dispose();
             if(Main.os == OS.Mac) {
-                JFrame f = new JFrame();
-                f.setUndecorated(true);
-                f.setJMenuBar(this.getJMenuBar());
-                f.setLocation(-Integer.MAX_VALUE, -Integer.MAX_VALUE); // Hacky - should just use the OSX Application calls...
-                f.setVisible(true);
+//                JFrame f = new JFrame();
+//                f.setUndecorated(true);
+//                f.setJMenuBar(this.getJMenuBar());
+//                f.setLocation(-Integer.MAX_VALUE, -Integer.MAX_VALUE); // Hacky - should just use the OSX Application calls...
+//                f.setVisible(true);
             } else {
 //                System.exit(0);
             }
@@ -788,20 +788,20 @@ public final class EditorFrame extends javax.swing.JFrame {
      * Creates new form EditorFrame
      */
     public EditorFrame() {
-        initComponents();
-
-        URL url = getClass().getResource("/com/timepath/tf2/hudeditor/resources/Icon.png");
-        Image icon = Toolkit.getDefaultToolkit().getImage(url);
-        this.setIconImage(icon);
-        this.setTitle(Main.strings.getString("Title"));
         this.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
-
         this.addWindowListener(new WindowAdapter() {
             @Override
             public void windowClosing(WindowEvent e) {
                 quit();
             }
         });
+
+        URL url = getClass().getResource("/com/timepath/tf2/hudeditor/resources/Icon.png");
+        Image icon = Toolkit.getDefaultToolkit().getImage(url);
+        this.setIconImage(icon);
+        this.setTitle(Main.getString("Title"));
+
+        this.getRootPane().putClientProperty("apple.awt.brushMetalLook", Boolean.TRUE); // Mac tweak
 
         boolean buggyWM = true;
         //<editor-fold defaultstate="collapsed" desc="Menu fix for window managers that don't set position on resize">
@@ -858,18 +858,6 @@ public final class EditorFrame extends javax.swing.JFrame {
         }
         //</editor-fold>
 
-
-        GraphicsConfiguration gc = this.getGraphicsConfiguration();
-        Rectangle screenBounds = gc.getBounds();
-        Insets screenInsets = this.getToolkit().getScreenInsets(gc);
-        Dimension workspace = new Dimension(screenBounds.width - screenInsets.left - screenInsets.right, screenBounds.height - screenInsets.top - screenInsets.bottom);
-        DisplayMode d = GraphicsEnvironment.getLocalGraphicsEnvironment().getDefaultScreenDevice().getDisplayMode();
-
-        this.setMinimumSize(new Dimension(Math.min(workspace.width / 2, 640), 480));
-        this.setPreferredSize(new Dimension((int) (d.getWidth() / 1.5), (int) (d.getHeight() / 1.5)));
-
-        this.setLocation((d.getWidth() / 2) - (this.getPreferredSize().width / 2), (d.getHeight() / 2) - (this.getPreferredSize().height / 2));
-        this.setLocationRelativeTo(null);
         //<editor-fold defaultstate="collapsed" desc="Drag+drop">
         this.setDropTarget(new DropTarget() {
             @Override
@@ -920,16 +908,36 @@ public final class EditorFrame extends javax.swing.JFrame {
             }
         });
         //</editor-fold>
-        this.getRootPane().putClientProperty("apple.awt.brushMetalLook", Boolean.TRUE);
-        status.putClientProperty("Quaqua.ToolBar.style", "bottom");
 
+        //<editor-fold defaultstate="collapsed" desc="Dimensions">
+        GraphicsConfiguration gc = this.getGraphicsConfiguration();
+        Rectangle screenBounds = gc.getBounds();
+        Insets screenInsets = this.getToolkit().getScreenInsets(gc);
+        Dimension workspace = new Dimension(screenBounds.width - screenInsets.left - screenInsets.right, screenBounds.height - screenInsets.top - screenInsets.bottom);
+        DisplayMode d = GraphicsEnvironment.getLocalGraphicsEnvironment().getDefaultScreenDevice().getDisplayMode();
+
+        this.setMinimumSize(new Dimension(Math.max(workspace.width / 2, 640), Math.max(3 * workspace.height / 4, 480)));
+        this.setPreferredSize(new Dimension((int) (workspace.getWidth() / 1.5), (int) (workspace.getHeight() / 1.5)));
+
+        this.setLocation((d.getWidth() / 2) - (this.getPreferredSize().width / 2), (d.getHeight() / 2) - (this.getPreferredSize().height / 2));
+        this.setLocationRelativeTo(null);
+        //</editor-fold>
+
+        //<editor-fold defaultstate="collapsed" desc="Menubar">
         jmb = new EditorMenuBar();
         this.setJMenuBar(jmb);
 
         String str = Main.prefs.get("lastLoaded", null);
         if(str != null) {
-           this.setLastLoaded(new File(str));
+            this.setLastLoaded(new File(str));
         }
+        //</editor-fold>
+
+        //<editor-fold defaultstate="collapsed" desc="Base">
+        initComponents();
+        tools.putClientProperty("Quaqua.ToolBar.style", "title");
+        status.putClientProperty("Quaqua.ToolBar.style", "bottom");
+        //</editor-fold>
 
         //<editor-fold defaultstate="collapsed" desc="Tree">
         fileSystemRoot = new DefaultMutableTreeNode("root");
@@ -1044,15 +1052,16 @@ public final class EditorFrame extends javax.swing.JFrame {
         //<editor-fold defaultstate="collapsed" desc="Canvas">
         canvas = new Canvas();
         JScrollPane canvasPane = new JScrollPane(canvas);
-        canvasPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
+//        canvasPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
         canvasPane.getVerticalScrollBar().setBlockIncrement(30);
         canvasPane.getVerticalScrollBar().setUnitIncrement(20);
-        canvasPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_ALWAYS);
+//        canvasPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_ALWAYS);
         canvasPane.getHorizontalScrollBar().setBlockIncrement(30);
         canvasPane.getHorizontalScrollBar().setUnitIncrement(20);
-        tabbedContent.add(Main.strings.getString("Canvas"), canvasPane);
+        tabbedContent.add(Main.getString("Canvas"), canvasPane);
         canvas.requestFocusInWindow();
         //</editor-fold>
+
     }
 
     private class EditorMenuBar extends JMenuBar {
@@ -1111,11 +1120,11 @@ public final class EditorFrame extends javax.swing.JFrame {
             super();
 
             //<editor-fold defaultstate="collapsed" desc="File">
-            JMenu fileMenu = new JMenu(Main.strings.getString("File"));
+            JMenu fileMenu = new JMenu(Main.getString("File"));
             fileMenu.setMnemonic(KeyEvent.VK_F);
             this.add(fileMenu);
 
-            newItem = new JMenuItem(new CustomAction(Main.strings.getString("New"), null, KeyEvent.VK_N,
+            newItem = new JMenuItem(new CustomAction(Main.getString("New"), null, KeyEvent.VK_N,
                                                      KeyStroke.getKeyStroke(KeyEvent.VK_N, state)) {
                 @Override
                 public void actionPerformed(ActionEvent ae) {
@@ -1156,7 +1165,6 @@ public final class EditorFrame extends javax.swing.JFrame {
 
             if(Main.os == OS.Mac) {
                 fileMenu.add(closeItem);
-                fileMenu.addSeparator();
             }
 
             saveItem = new JMenuItem(new CustomAction("Save", null, KeyEvent.VK_S,
@@ -1190,9 +1198,8 @@ public final class EditorFrame extends javax.swing.JFrame {
             reloadItem.setEnabled(false);
             fileMenu.add(reloadItem);
 
-            fileMenu.addSeparator();
-
             if(Main.os != OS.Mac) {
+                fileMenu.addSeparator();
                 fileMenu.add(closeItem);
 
                 exitItem = new JMenuItem(new CustomAction("Exit", null, KeyEvent.VK_X,
@@ -1422,7 +1429,7 @@ public final class EditorFrame extends javax.swing.JFrame {
     private class CustomAction extends AbstractAction {
 
         private CustomAction(String string, Icon icon, int mnemonic, KeyStroke shortcut) {
-            super(Main.strings.containsKey(string) ? Main.strings.getString(string) : string, icon);
+            super(Main.getString(string), icon);
             this.putValue(Action.MNEMONIC_KEY, mnemonic);
             this.putValue(Action.ACCELERATOR_KEY, shortcut);
         }

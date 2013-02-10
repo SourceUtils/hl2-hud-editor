@@ -22,9 +22,9 @@ public class PropertyTable extends JTable {
     public PropertyTable() {
         initComponents();
         DefaultTableModel model = new DefaultTableModel();
-        model.addColumn(Main.strings.getString("Key"));
-        model.addColumn(Main.strings.getString("Value"));
-        model.addColumn(Main.strings.getString("Info"));
+        model.addColumn(Main.getString("Key"));
+        model.addColumn(Main.getString("Value"));
+        model.addColumn(Main.getString("Info"));
         model.insertRow(0, new String[]{"", "", ""});
         this.setModel(model);
     }

@@ -276,7 +276,7 @@ public final class Canvas extends JPanel implements MouseListener, MouseMotionLi
             return img;
         }
         if(i < 2) { // optimize for small numbers, stop division by zero
-            g.fillRect(offX, offY, screen.width, screen.height);
+            g.fillRect(0, 0, screen.width, screen.height);
             return img;
         }
         int cross = 0;
@@ -286,8 +286,8 @@ public final class Canvas extends JPanel implements MouseListener, MouseMotionLi
         double multY = (screen.height / internal.height);
         for(int y = -1; y <= (maxY / i); y++) {
             for(int x = -1; x <= (maxX / i); x++) {
-                int dx = (int) Math.round(((maxX * x * i * multX) / maxX) + offX);
-                int dy = (int) Math.round(((maxY * y * i * multY) / maxY) + offY);
+                int dx = (int) Math.round(((maxX * x * i * multX) / maxX));
+                int dy = (int) Math.round(((maxY * y * i * multY) / maxY));
                 g.drawLine(dx + cross, dy + cross, dx - (1 + cross), dy - (1 + cross));
                 g.drawLine(dx - (1 + cross), dy + cross, dx + cross, dy - (1 + cross));
             }

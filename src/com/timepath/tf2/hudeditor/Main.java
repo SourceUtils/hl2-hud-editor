@@ -9,10 +9,8 @@ import java.awt.EventQueue;
 import java.awt.Toolkit;
 import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.io.PrintStream;
 import java.io.PrintWriter;
 import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Field;
@@ -21,9 +19,9 @@ import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.SocketException;
-import java.net.URISyntaxException;
 import java.net.URLDecoder;
 import java.security.NoSuchAlgorithmException;
+import java.util.Collections;
 import java.util.ResourceBundle;
 import java.util.logging.FileHandler;
 import java.util.logging.Handler;
@@ -42,7 +40,7 @@ import net.tomahawk.XFileDialog;
  */
 public class Main {
 
-    public static final ResourceBundle strings = ResourceBundle.getBundle("com/timepath/tf2/hudeditor/resources/lang");
+    private static final ResourceBundle strings = ResourceBundle.getBundle("com/timepath/tf2/hudeditor/resources/lang");
 
     public final static String appName = "TF2 HUD Editor";
 
@@ -57,7 +55,7 @@ public class Main {
 
     private static final Logger LOG = Logger.getLogger(Main.class.getName());
 
-    public static Preferences prefs = Preferences.userRoot().node(projectName);
+    public static final Preferences prefs = Preferences.userRoot().node(projectName);
 
     public static final String myVer = Main.class.getPackage().getImplementationVersion();// = calcMD5();
 
@@ -140,6 +138,11 @@ public class Main {
 
             LinuxDesktopLauncher.create(n, projectName);
         }
+    }
+
+    public static String getString(String key) {
+//        return Main.strings.containsKey(key) ? Main.strings.getString(key) : key;
+        return Collections.list(Main.strings.getKeys()).contains(key) ? Main.strings.getString(key) : key;
     }
 
     public static void main(String... args) {

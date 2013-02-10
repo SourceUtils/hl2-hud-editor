@@ -1,5 +1,7 @@
 package com.timepath.swing;
 
+import com.timepath.plaf.OS;
+import com.timepath.tf2.hudeditor.Main;
 import java.awt.Graphics;
 import java.util.logging.Logger;
 import javax.swing.JMenuBar;
@@ -26,6 +28,10 @@ public final class BlendedToolBar extends JToolBar {
 
     @Override
     protected void paintComponent(Graphics g) {
+        if(Main.os == OS.Mac) { // Has its own metal look
+            super.paintComponent(g);
+            return;
+        }
         this.setForeground(mb.getForeground());
         this.setBackground(mb.getBackground());
 
