@@ -15,7 +15,7 @@ public class Wrapper {
 
     private static final Logger LOG = Logger.getLogger(Wrapper.class.getName());
 
-    public static void main(String[] args) {
+    public static void main(String... args) {
         JarClassLoader cl = new JarClassLoader();
         try {
             cl.invokeMain(Main.class.getName(), args);

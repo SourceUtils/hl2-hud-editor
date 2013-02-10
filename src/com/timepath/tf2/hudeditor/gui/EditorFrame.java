@@ -643,7 +643,7 @@ public final class EditorFrame extends javax.swing.JFrame {
     @Override
     public void setVisible(boolean b) {
         super.setVisible(b);
-        this.createBufferStrategy(3); // Triple buffered, any more sees minimal gain.
+        this.createBufferStrategy(2);
         if(Main.myVer != null && autoCheck) {
             this.checkForUpdates();
         }
@@ -878,7 +878,7 @@ public final class EditorFrame extends javax.swing.JFrame {
                         String data = (String) t.getTransferData(nixFileDataFlavor);
                         for(StringTokenizer st = new StringTokenizer(data, "\r\n"); st.hasMoreTokens();) {
                             String token = st.nextToken().trim();
-                            if(token.startsWith("#") || token.isEmpty()) {
+                            if(token.startsWith("#") || token.length() == 0) {
                                 // comment line, by RFC 2483
                                 continue;
                             }

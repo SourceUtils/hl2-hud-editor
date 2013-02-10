@@ -7,6 +7,8 @@ import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
+import java.awt.GraphicsConfiguration;
+import java.awt.GraphicsEnvironment;
 import java.awt.Image;
 import java.awt.Point;
 import java.awt.Rectangle;
@@ -23,7 +25,6 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.logging.Logger;
 import javax.swing.JPanel;
-import javax.swing.JScrollBar;
 
 /**
  *
@@ -50,9 +51,11 @@ public final class Canvas extends JPanel implements MouseListener, MouseMotionLi
 
     private Rectangle selectRect = new Rectangle();
 
-    private Image currentbg;
+    private BufferedImage currentbg;
 
-    private Image gridbg;
+    private BufferedImage gridbg;
+
+    private BufferedImage elementImage;
 
     private static final AlphaComposite ac = AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.25f);
 
@@ -167,7 +170,36 @@ public final class Canvas extends JPanel implements MouseListener, MouseMotionLi
         this.repaint();
     }
 
+
     //<editor-fold defaultstate="collapsed" desc="Paint methods">
+
+    private BufferedImage toCompatibleImage(BufferedImage image) {
+        // obtain the current system graphical settings
+        GraphicsConfiguration gfx_config = GraphicsEnvironment.getLocalGraphicsEnvironment().
+                getDefaultScreenDevice().getDefaultConfiguration();
+
+        /*
+         * if image is already compatible and optimized for current system
+         * settings, simply return it
+         */
+        if(image.getColorModel().equals(gfx_config.getColorModel())) {
+            return image;
+        }
+
+        // image is not optimized, so create a new image that is
+        BufferedImage new_image = gfx_config.createCompatibleImage(image.getWidth(), image.getHeight(), image.getTransparency());
+
+        // get the graphics context of the new image to draw the old image on
+        Graphics2D g2d = (Graphics2D) new_image.getGraphics();
+
+        // actually draw the image and dispose of context no longer needed
+        g2d.drawImage(image, 0, 0, null);
+        g2d.dispose();
+
+        // return the new optimized image
+        return new_image;
+    }
+
     private Rectangle getOutliers() {
         Rectangle r = new Rectangle(internal.width, internal.height);
         for(int i = 0; i < elements.size(); i++) {
@@ -175,6 +207,8 @@ public final class Canvas extends JPanel implements MouseListener, MouseMotionLi
         }
         return r;
     }
+
+    private Dimension size;
 
     @Override
     protected void paintComponent(Graphics graphics) {
@@ -190,7 +224,20 @@ public final class Canvas extends JPanel implements MouseListener, MouseMotionLi
 //        offX = ((this.getWidth() - internal.width) / 2) + ((-outliers.x) - (outliers.width + outliers.x - internal.width));
 //        offY = ((this.getHeight() - internal.height) / 2) + ((-outliers.y) - (outliers.height + outliers.y - internal.height));
 
-        super.paintComponent(graphics);
+//        super.paintComponent(graphics);
+
+        if(size == null || !size.equals(getSize())) {
+            size = getSize();
+            if(elementImage != null) {
+                BufferedImage img = new BufferedImage(screen.width + offX + offX, screen.height + offY + offY, BufferedImage.TYPE_INT_ARGB);
+                Graphics2D ge = img.createGraphics();
+                ge.translate((img.getWidth() - elementImage.getWidth()) / 2, (img.getHeight() - elementImage.getHeight()) / 2);
+                ge.drawImage(elementImage, 0, 0, this);
+                ge.dispose();
+                elementImage = toCompatibleImage(img);
+            }
+        }
+
         Graphics2D g = (Graphics2D) graphics;
 
         g.setColor(BG_COLOR);
@@ -198,26 +245,33 @@ public final class Canvas extends JPanel implements MouseListener, MouseMotionLi
 
         if(background != null) {
             if(currentbg == null) {
-                currentbg = resizeImage(background);
+                currentbg = toCompatibleImage(resizeImage(background));
             }
             g.drawImage(currentbg, offX, offY, this);
-//            g.drawImage(background, offX, offY, this);
         } else {
             g.setColor(Color.WHITE.darker().darker());
             g.fillRect(offX, offY, (int) Math.round(screen.width * scale), (int) Math.round(screen.height * scale));
         }
-        if(true) {
-            if(gridbg == null) {
-                gridbg = drawGrid();
+
+        if(gridbg == null) {
+            gridbg = toCompatibleImage(drawGrid());
+        }
+        g.drawImage(gridbg, offX, offY, this);
+
+        if(elementImage == null) {
+            BufferedImage img = new BufferedImage(screen.width + offX + offX, screen.height + offY + offY, BufferedImage.TYPE_INT_ARGB);
+            Graphics2D ge = img.createGraphics();
+            ge.translate(offX, offY);
+
+            Collections.sort(elements, layerSort);
+            for(int i = 0; i < elements.size(); i++) {
+                paintElement(elements.get(i), ge);
             }
-            g.drawImage(gridbg, offX, offY, this);
-        }
 
-        Collections.sort(elements, layerSort);
-
-        for(int i = 0; i < elements.size(); i++) {
-            paintElement(elements.get(i), g);
+            ge.dispose();
+            elementImage = toCompatibleImage(img);
         }
+        g.drawImage(elementImage, 0, 0, this);
 
         //<editor-fold defaultstate="collapsed" desc="Selection rectangle">
         g.setComposite(ac);
@@ -235,7 +289,7 @@ public final class Canvas extends JPanel implements MouseListener, MouseMotionLi
         }
     };
 
-    private Image resizeImage(Image i) { // TODO: aspect ratio tuning
+    private BufferedImage resizeImage(Image i) { // TODO: aspect ratio tuning
         int w = screen.width;
         int h = screen.height;
         int type = BufferedImage.TYPE_INT_ARGB;
@@ -259,7 +313,7 @@ public final class Canvas extends JPanel implements MouseListener, MouseMotionLi
     private int minGridSpacing = 10;
 
     // as soon as the height drops below 480, stops rendering
-    private Image drawGrid() {
+    private BufferedImage drawGrid() {
         BufferedImage img = new BufferedImage(screen.width, screen.height, BufferedImage.TYPE_INT_ARGB);
         Graphics2D g = img.createGraphics();
 
@@ -298,8 +352,8 @@ public final class Canvas extends JPanel implements MouseListener, MouseMotionLi
 
     private void paintElement(Element e, Graphics2D g) {
         if(e.getWidth() > 0 && e.getHeight() > 0) { // invisible? don't waste time
-            int elementX = (int) Math.round((double) e.getX() * ((double) screen.width / (double) internal.width) * scale) + offX;
-            int elementY = (int) Math.round((double) e.getY() * ((double) screen.height / (double) internal.height) * scale) + offY;
+            int elementX = (int) Math.round((double) e.getX() * ((double) screen.width / (double) internal.width) * scale);// + offX;
+            int elementY = (int) Math.round((double) e.getY() * ((double) screen.height / (double) internal.height) * scale);// + offY;
             int elementW = (int) Math.round((double) e.getWidth() * ((double) screen.width / (double) internal.width) * scale);
             int elementH = (int) Math.round((double) e.getHeight() * ((double) screen.height / (double) internal.height) * scale);
             if(selectedElements.contains(e)) {
@@ -307,6 +361,9 @@ public final class Canvas extends JPanel implements MouseListener, MouseMotionLi
                 elementY += _offY;
             }
             Rectangle bounds = new Rectangle(elementX, elementY, elementW, elementH);
+
+            Shape clip = g.getClip();
+            g.setClip(bounds);
 
             if(e.getFgColor() != null) {
                 g.setColor(e.getFgColor());
@@ -334,7 +391,7 @@ public final class Canvas extends JPanel implements MouseListener, MouseMotionLi
                 //                g.drawRect(elementX + offX - 1, elementY + offY - 1, e.getWidth() + 1, e.getHeight() + 1); // outer
             }
 
-            if(e.getLabelText() != null && !e.getLabelText().isEmpty()) {
+            if(e.getLabelText() != null && e.getLabelText().length() != 0) {
                 if(e.getFgColor() != null) {
                     g.setColor(e.getFgColor());
                 }
@@ -342,10 +399,10 @@ public final class Canvas extends JPanel implements MouseListener, MouseMotionLi
                 int fontSize = (int) Math.round(12.0 * screenRes / 72.0);
                 g.setFont(e.getFont());
                 g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-                Shape clip = g.getClip();
+
                 g.drawString(e.getLabelText(), elementX, elementY + fontSize);
-                g.setClip(clip);
             }
+            g.setClip(clip);
         }
 
         //        for(int i = 0; i < e.children.size(); i++) {
@@ -358,6 +415,7 @@ public final class Canvas extends JPanel implements MouseListener, MouseMotionLi
      * @param bounds
      */
     public void doRepaint(Rectangle bounds) {
+        elementImage = null;
         this.repaint(offX + bounds.x, offY + bounds.y, bounds.width - 1, bounds.height - 1);
 //        this.repaint();
     }
@@ -449,6 +507,7 @@ public final class Canvas extends JPanel implements MouseListener, MouseMotionLi
         } else if(isDragMoving) {
             _offX += p.x - dragStart.x;
             _offY += p.y - dragStart.y;
+            elementImage = null;
             this.repaint();
             dragStart = p; // hacky
         }
@@ -589,18 +648,19 @@ public final class Canvas extends JPanel implements MouseListener, MouseMotionLi
     }
 
     void hover(Element e) {
-        if(hoveredElement != e) { // don't waste time re-drawing
-            Rectangle oldBounds = null;
-            if(hoveredElement != null) { // there is something to clean up
-                oldBounds = hoveredElement.getBounds();
-            }
-            hoveredElement = e;
-            if(oldBounds != null) {
-                this.doRepaint(oldBounds);
-            }
-            if(e != null) {
-                this.doRepaint(e.getBounds());
-            }
+        if(hoveredElement == e) { // don't waste time re-drawing
+            return;
+        }
+        Rectangle oldBounds = null;
+        if(hoveredElement != null) { // there is something to clean up
+            oldBounds = hoveredElement.getBounds();
+        }
+        hoveredElement = e;
+        if(oldBounds != null) {
+            this.doRepaint(oldBounds);
+        }
+        if(e != null) {
+            this.doRepaint(e.getBounds());
         }
     }
 
