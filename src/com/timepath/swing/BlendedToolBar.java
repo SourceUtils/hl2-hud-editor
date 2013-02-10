@@ -43,8 +43,8 @@ public final class BlendedToolBar extends JToolBar {
     private void initComponents() {
 
         setFloatable(false);
-        setMinimumSize(new java.awt.Dimension(2, 16));
-        setPreferredSize(new java.awt.Dimension(2, 16));
+        setMinimumSize(new java.awt.Dimension(24, 24));
+        setPreferredSize(new java.awt.Dimension(24, 24));
     }// </editor-fold>//GEN-END:initComponents
     // Variables declaration - do not modify//GEN-BEGIN:variables
     // End of variables declaration//GEN-END:variables

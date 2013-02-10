@@ -1448,6 +1448,8 @@ public final class EditorFrame extends javax.swing.JFrame {
         tabbedContent = new javax.swing.JTabbedPane();
         status = new com.timepath.swing.StatusBar();
 
+        getContentPane().add(tools, java.awt.BorderLayout.PAGE_START);
+
         rootSplit.setDividerLocation(180);
         rootSplit.setContinuousLayout(true);
 
@@ -1458,23 +1460,8 @@ public final class EditorFrame extends javax.swing.JFrame {
         rootSplit.setLeftComponent(sideSplit);
         rootSplit.setRightComponent(tabbedContent);
 
-        javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
-        getContentPane().setLayout(layout);
-        layout.setHorizontalGroup(
-            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(tools, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-            .addComponent(status, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-            .addComponent(rootSplit, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, 480, Short.MAX_VALUE)
-        );
-        layout.setVerticalGroup(
-            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(layout.createSequentialGroup()
-                .addComponent(tools, javax.swing.GroupLayout.PREFERRED_SIZE, 25, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(0, 0, 0)
-                .addComponent(rootSplit, javax.swing.GroupLayout.DEFAULT_SIZE, 310, Short.MAX_VALUE)
-                .addGap(0, 0, 0)
-                .addComponent(status, javax.swing.GroupLayout.PREFERRED_SIZE, 25, javax.swing.GroupLayout.PREFERRED_SIZE))
-        );
+        getContentPane().add(rootSplit, java.awt.BorderLayout.CENTER);
+        getContentPane().add(status, java.awt.BorderLayout.PAGE_END);
 
         pack();
     }// </editor-fold>//GEN-END:initComponents

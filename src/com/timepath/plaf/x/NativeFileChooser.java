@@ -42,7 +42,9 @@ public class NativeFileChooser {
         if(Main.os == OS.Windows) {
             XFileDialog fd = new XFileDialog(parent);
             fd.setTitle(title);
-            fd.setDirectory(directory.getPath());
+            if(directory != null) {
+                fd.setDirectory(directory.getPath());
+            }
             selection = fd.getFolder();
             fd.dispose();
         } else if(Main.os == OS.Mac) {

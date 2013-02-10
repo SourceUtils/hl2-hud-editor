@@ -31,6 +31,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.prefs.Preferences;
 import javax.swing.UIManager;
+import javax.swing.UnsupportedLookAndFeelException;
 import net.tomahawk.XFileDialog;
 
 /**
@@ -181,11 +182,15 @@ public class Main {
     private static void lookAndFeel() {
         if(System.getProperty("swing.defaultlaf") == null) { // Do not override user specified theme
             try {
-                UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
-                if(os == OS.Mac) {
-                    UIManager.setLookAndFeel("ch.randelshofer.quaqua.QuaquaLookAndFeel"); // Apply quaqua if available
-                } else if(os == OS.Linux) {
-                    UIManager.setLookAndFeel("com.sun.java.swing.plaf.gtk.GTKLookAndFeel"); // Apply gtk+ theme if available
+                try {
+                    UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+                    if(os == OS.Mac) {
+                        UIManager.setLookAndFeel("ch.randelshofer.quaqua.QuaquaLookAndFeel"); // Apply quaqua if available
+                    } else if(os == OS.Linux) {
+                        UIManager.setLookAndFeel("com.sun.java.swing.plaf.gtk.GTKLookAndFeel"); // Apply gtk+ theme if available
+                    }
+                } catch(java.lang.ClassNotFoundException e) {
+
                 }
 
                 //<editor-fold defaultstate="collapsed" desc="Nimbus will eventually be removed in favour of native appearance">
@@ -198,6 +203,18 @@ public class Main {
                 //</editor-fold>
             } catch(Exception ex) {
                 LOG.log(Level.WARNING, null, ex);
+            }
+        } else if(System.getProperty("swing.defaultlaf").equals("system") || System.getProperty("swing.defaultlaf").equals("native")) {
+            try {
+                UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+            } catch(ClassNotFoundException ex) {
+                Logger.getLogger(Main.class.getName()).log(Level.SEVERE, null, ex);
+            } catch(InstantiationException ex) {
+                Logger.getLogger(Main.class.getName()).log(Level.SEVERE, null, ex);
+            } catch(IllegalAccessException ex) {
+                Logger.getLogger(Main.class.getName()).log(Level.SEVERE, null, ex);
+            } catch(UnsupportedLookAndFeelException ex) {
+                Logger.getLogger(Main.class.getName()).log(Level.SEVERE, null, ex);
             }
         }
         GtkFixer.installGtkPopupBugWorkaround(); // Apply clearlooks java menu fix if applicable
