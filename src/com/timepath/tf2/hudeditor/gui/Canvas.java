@@ -25,6 +25,7 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.logging.Logger;
 import javax.swing.JPanel;
+import javax.swing.SwingUtilities;
 
 /**
  *
@@ -114,42 +115,6 @@ public final class Canvas extends JPanel implements MouseListener, MouseMotionLi
     }
     //</editor-fold>
 
-    //<editor-fold defaultstate="collapsed" desc="Input">
-    private void initInput() {
-        this.addMouseListener(this);
-        this.addMouseMotionListener(this);
-    }
-
-    /*
-     * public void mouseClicked(MouseEvent me) {
-     * throw new UnsupportedOperationException("Not supported yet.");
-     * }
-     *
-     * public void mousePressed(MouseEvent me) {
-     * throw new UnsupportedOperationException("Not supported yet.");
-     * }
-     *
-     * public void mouseReleased(MouseEvent me) {
-     * throw new UnsupportedOperationException("Not supported yet.");
-     * }
-     *
-     * public void mouseEntered(MouseEvent me) {
-     * throw new UnsupportedOperationException("Not supported yet.");
-     * }
-     *
-     * public void mouseExited(MouseEvent me) {
-     * throw new UnsupportedOperationException("Not supported yet.");
-     * }
-     *
-     * public void mouseDragged(MouseEvent me) {
-     * throw new UnsupportedOperationException("Not supported yet.");
-     * }
-     *
-     * public void mouseMoved(MouseEvent me) {
-     * throw new UnsupportedOperationException("Not supported yet.");
-     * }
-     */
-    //</editor-fold>
     @Override
     public void setPreferredSize(Dimension preferredSize) {
         Dimension UISize = new Dimension(preferredSize.width + 2 * offX, preferredSize.height + 2 * offY);
@@ -169,7 +134,6 @@ public final class Canvas extends JPanel implements MouseListener, MouseMotionLi
         internal = new Dimension((int) Math.round(m * 480), 480);
         this.repaint();
     }
-
 
     //<editor-fold defaultstate="collapsed" desc="Paint methods">
 
@@ -421,7 +385,12 @@ public final class Canvas extends JPanel implements MouseListener, MouseMotionLi
     }
     //</editor-fold>
 
-    //<editor-fold defaultstate="collapsed" desc="Input methods">
+    //<editor-fold defaultstate="collapsed" desc="Input">
+    private void initInput() {
+        this.addMouseListener(this);
+        this.addMouseMotionListener(this);
+    }
+
     @Override
     public void mouseMoved(MouseEvent event) {
         Point p = new Point(event.getPoint());
@@ -435,9 +404,9 @@ public final class Canvas extends JPanel implements MouseListener, MouseMotionLi
         this.requestFocusInWindow();
         Point p = new Point(event.getPoint());
         p.translate(-offX, -offY);
-        int button = event.getButton(); // Button2 is middle click on linux. How odd.
+        int button = event.getButton();
 
-        if(button == MouseEvent.BUTTON1) {
+        if(SwingUtilities.isLeftMouseButton(event)) {
             dragStart = new Point(p.x, p.y);
             selectRect.x = p.x;
             selectRect.y = p.y;
@@ -472,7 +441,7 @@ public final class Canvas extends JPanel implements MouseListener, MouseMotionLi
         p.translate(-offX, -offY);
         int button = event.getButton();
 
-        if(button == MouseEvent.BUTTON1) {
+        if(SwingUtilities.isLeftMouseButton(event)) {
             isDragSelecting = false;
             isDragMoving = false;
             dragStart = null;
@@ -529,6 +498,7 @@ public final class Canvas extends JPanel implements MouseListener, MouseMotionLi
 
     //</editor-fold>
     //</editor-fold>
+
     private boolean isDragSelecting;
 
     private boolean isDragMoving;

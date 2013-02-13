@@ -1,5 +1,6 @@
 package com.timepath.tf2.hudeditor.gui;
 
+import apple.OSXAdapter;
 import com.timepath.plaf.OS;
 import com.timepath.plaf.mac.Application;
 import com.timepath.plaf.mac.Application.AboutEvent;
@@ -9,12 +10,11 @@ import com.timepath.plaf.mac.Application.PreferencesHandler;
 import com.timepath.plaf.mac.Application.QuitEvent;
 import com.timepath.plaf.mac.Application.QuitHandler;
 import com.timepath.plaf.mac.Application.QuitResponse;
-import apple.OSXAdapter;
 import com.timepath.plaf.x.NativeFileChooser;
 import com.timepath.tf2.hudeditor.Main;
+import com.timepath.tf2.hudeditor.Utils;
 import com.timepath.tf2.hudeditor.element.Element;
 import com.timepath.tf2.hudeditor.element.Property;
-import com.timepath.tf2.hudeditor.Utils;
 import com.timepath.tf2.io.GCF;
 import com.timepath.tf2.io.GCF.DirectoryEntry;
 import com.timepath.tf2.io.test.VCCDTest;

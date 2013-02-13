@@ -124,13 +124,7 @@ public class GCF {
             RandomAccessFile out = new RandomAccessFile(outFile, "rw");
             int dataIdx = block.firstClusterIndex;
             for(int q = 0;; q++) {
-                long pos = ((long) dataBlockHeader.firstBlockOffset + ((long) dataIdx * (long) dataBlockHeader.blockSize));
-                out.seek(pos);
-                byte[] buf = new byte[dataBlockHeader.blockSize];
-                if(block.fileDataOffset != 0) {
-//                    logger.log(Level.INFO, "off = {0}", block.fileDataOffset);
-                }
-                out.read(buf);
+                byte[] buf = this.readData(block, dataIdx);
                 out.seek(block.fileDataOffset + (q * dataBlockHeader.blockSize));
                 if(out.getFilePointer() + buf.length > block.fileDataSize) {
                     out.write(buf, 0, (block.fileDataSize % dataBlockHeader.blockSize));
@@ -144,6 +138,9 @@ public class GCF {
                 if(dataIdx == -1) {
                     break;
                 }
+            }
+            if(directoryEntries[index].itemSize != out.getFilePointer()) {
+                LOG.log(Level.WARNING, "size mismatch in {0}", outFile);
             }
             out.close();
             //</editor-fold>
@@ -197,6 +194,17 @@ public class GCF {
             return (checksumEntries[i] = new ChecksumEntry());
         }
         return ce;
+    }
+
+    public byte[] readData(BlockAllocationTableEntry block, int dataIdx) throws IOException {
+        long pos = ((long) dataBlockHeader.firstBlockOffset + ((long) dataIdx * (long) dataBlockHeader.blockSize));
+        rf.seek(pos);
+        byte[] buf = new byte[dataBlockHeader.blockSize];
+        if(block.fileDataOffset != 0) {
+            // logger.log(Level.INFO, "off = {0}", block.fileDataOffset);
+        }
+        rf.read(buf);
+        return buf;
     }
     //</editor-fold>
 
@@ -261,27 +269,26 @@ public class GCF {
 
         //</editor-fold>
 
-        directoryMapHeader = new DirectoryMapHeader();
+        directoryMapHeader = new GCF.DirectoryMapHeader();
 
         checksumHeader = new GCF.ChecksumHeader();
 
         checksumMapHeader = new GCF.ChecksumMapHeader();
 
-        // TODO: Slow. Takes about 73 seconds
-        //<editor-fold defaultstate="collapsed" desc="Data">
-        dataBlockHeader = new DataBlockHeader();
+        dataBlockHeader = new GCF.DataBlockHeader();
 
-        boolean skipRead = true;
-        if(skipRead) {
-            rf.seek(dataBlockHeader.firstBlockOffset + (dataBlockHeader.blockCount * dataBlockHeader.blockSize));
-        } else {
-            LOG.info("Loading Data ...");
-            rf.seek(dataBlockHeader.firstBlockOffset);
-            byte[] b = new byte[dataBlockHeader.blockSize];
-            for(int i = 0; i < dataBlockHeader.blockCount; i++) {
-                rf.read(b);
-            }
-        }
+        //<editor-fold defaultstate="collapsed" desc="Data">
+//        boolean skipRead = true;
+//        if(skipRead) {
+//            rf.seek(dataBlockHeader.firstBlockOffset + (dataBlockHeader.blockCount * dataBlockHeader.blockSize));
+//        } else {
+//            LOG.info("Loading Data ...");
+//            rf.seek(dataBlockHeader.firstBlockOffset);
+//            byte[] b = new byte[dataBlockHeader.blockSize];
+//            for(int i = 0; i < dataBlockHeader.blockCount; i++) {
+//                rf.read(b);
+//            }
+//        }
         //</editor-fold>
 
 //        LOG.log(Level.INFO, "{0}\n{1}\n{2}\n{3}\n{4}\n{5}\n{6}\n{7}\n", new Object[]{file.getPath(), "header:\t" + header.toString(), "blockHchecksumeader:\t" + blockAllocationTableHeader.toString(), "fragMap:\t" + fragMap.toString(), "directoryHeader:\t" + manifestHeader.toString(), "directoryMapHeader:\t" + directoryMapHeader.toString(), "checksumHeader:\t" + checksumHeader.toString(), "dataBlockHeader:\t" + dataBlockHeader.toString()});
@@ -857,6 +864,10 @@ public class GCF {
         @Override
         public String toString() {
             return nameForDirectoryIndex(index);
+        }
+
+        public GCF getGCF() {
+            return GCF.this;
         }
     }
 
