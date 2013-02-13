@@ -1,7 +1,7 @@
 package com.timepath.plaf.x;
 
+import com.timepath.io.FileUtils;
 import com.timepath.plaf.OS;
-import com.timepath.plaf.linux.LinuxDesktopLauncher;
 import com.timepath.tf2.hudeditor.Main;
 import java.awt.FileDialog;
 import java.awt.Frame;
@@ -12,6 +12,8 @@ import java.io.FilenameFilter;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.lang.reflect.Field;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.JFileChooser;
@@ -77,13 +79,12 @@ public class NativeFileChooser {
     }
 
     private String zenity() throws IOException {
-        StringBuilder cmd = new StringBuilder();
-        cmd.append("zenity ");
-        cmd.append("--file-selection ");
-        cmd.append("--directory ");
-        cmd.append("--title=Open ");
-        String folder = (directory != null ? ("--filename=" + directory.getPath().replaceAll("\\ ", "\\\\ ")) + " " : ""); // FIXME: does not work when directory has spaces
-        cmd.append(folder);
+        ArrayList<String> cmd = new ArrayList<String>();
+        cmd.add("zenity");
+        cmd.add("--file-selection");
+        cmd.add("--directory");
+        cmd.add("--title=Open");
+        cmd.add(directory != null ? "--filename=" + directory.getPath() : "");
         String windowClass = Main.projectName;
         try {
             Toolkit xToolkit = Toolkit.getDefaultToolkit();
@@ -93,16 +94,16 @@ public class NativeFileChooser {
         } catch(Exception ex) {
             LOG.log(Level.SEVERE, null, ex);
         }
-        cmd.append("--class=").append(windowClass).append(" ");
-//        cmd.append("--name=" + Main.projectName + " ");
-        cmd.append("--window-icon=").append(LinuxDesktopLauncher.getStore()).append("icons/" + Main.projectName + ".png");
-//        cmd.append("--ok-label=TEXT ");
-//        cmd.append("--cancel-label=TEXT ");
+        cmd.add("--class=" + windowClass);
+//        cmd.add("--name=" + Main.projectName + " ");
+        cmd.add("--window-icon=" + FileUtils.getLinuxStore() + "icons/" + Main.projectName + ".png");
+//        cmd.add("--ok-label=TEXT ");
+//        cmd.add("--cancel-label=TEXT ");
 
-        String zenity = cmd.toString();
-        LOG.log(Level.INFO, "zenity: {0}", zenity);
-
-        final Process proc = Runtime.getRuntime().exec(zenity);
+        String[] exec = new String[cmd.size()];
+        cmd.toArray(exec);
+        LOG.log(Level.INFO, "zenity: {0}", Arrays.toString(exec));
+        final Process proc = Runtime.getRuntime().exec(exec);
         Runtime.getRuntime().addShutdownHook(new Thread() {
             @Override
             public void run() {

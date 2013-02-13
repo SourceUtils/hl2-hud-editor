@@ -1,8 +1,8 @@
 package com.timepath.tf2.hudeditor.gui;
 
-import com.timepath.tf2.hudeditor.util.Element;
-import com.timepath.tf2.loaders.GCF;
-import com.timepath.tf2.loaders.GCF.DirectoryEntry;
+import com.timepath.tf2.hudeditor.element.Element;
+import com.timepath.tf2.io.GCF;
+import com.timepath.tf2.io.GCF.DirectoryEntry;
 import java.awt.Color;
 import java.awt.Component;
 import java.io.File;

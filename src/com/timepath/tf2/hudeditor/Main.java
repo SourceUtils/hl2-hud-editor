@@ -1,10 +1,9 @@
 package com.timepath.tf2.hudeditor;
 
 import com.timepath.plaf.OS;
+import com.timepath.plaf.linux.DesktopLauncher;
 import com.timepath.plaf.linux.GtkFixer;
-import com.timepath.plaf.linux.LinuxDesktopLauncher;
 import com.timepath.tf2.hudeditor.gui.EditorFrame;
-import com.timepath.tf2.hudeditor.util.Utils;
 import java.awt.EventQueue;
 import java.awt.Toolkit;
 import java.io.BufferedReader;
@@ -24,9 +23,9 @@ import java.security.NoSuchAlgorithmException;
 import java.util.Collections;
 import java.util.ResourceBundle;
 import java.util.logging.FileHandler;
-import java.util.logging.Handler;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.logging.SimpleFormatter;
 import java.util.prefs.Preferences;
 import javax.swing.UIManager;
 import javax.swing.UnsupportedLookAndFeelException;
@@ -64,10 +63,10 @@ public class Main {
     public static final String runPath;
 
     static {
-
         Logger.getLogger("").setLevel(Level.INFO);
 
         logFile = Utils.workingDirectory() + "out.log";
+//        logFile = Utils.workingDirectory() + "out%g.log"; // preferred, as the file will always end in .log
         LOG.log(Level.INFO, "Logging to {0}", logFile);
 
         Thread.setDefaultUncaughtExceptionHandler(new Thread.UncaughtExceptionHandler() {
@@ -78,8 +77,10 @@ public class Main {
         });
 
         try {
-            Handler handler = new FileHandler(logFile);
-            Logger.getLogger("").addHandler(handler);
+            FileHandler fh = new FileHandler(logFile, 1000000, 3);
+            SimpleFormatter formatter = new SimpleFormatter();
+            fh.setFormatter(formatter);
+            Logger.getLogger("").addHandler(fh);
         } catch(IOException ex) {
             Logger.getLogger(Main.class.getName()).log(Level.SEVERE, null, ex);
         } catch(SecurityException ex) {
@@ -137,7 +138,9 @@ public class Main {
                 LOG.log(Level.SEVERE, null, ex);
             }
 
-            LinuxDesktopLauncher.create(n, projectName);
+            DesktopLauncher.create(n, "/com/timepath/tf2/hudeditor/resources",
+                                      new String[]{"Icon.png", "Icon.svg"},
+                                      new String[]{projectName, projectName});
         }
     }
 
@@ -147,6 +150,8 @@ public class Main {
     }
 
     public static void main(String... args) {
+        LOG.log(Level.INFO, "Env = {0}", System.getenv().toString());
+        LOG.log(Level.INFO, "Properties = {0}", System.getProperties().toString());
         init(args);
     }
 

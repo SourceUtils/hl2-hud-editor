@@ -1,9 +1,6 @@
 package com.timepath.tf2.hudeditor;
 
-import com.jdotsoft.jarloader.JarClassLoader;
-import com.timepath.plaf.linux.LinuxDesktopLauncher;
-import java.awt.Toolkit;
-import java.lang.reflect.Field;
+import jdotsoft.JarClassLoader;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 

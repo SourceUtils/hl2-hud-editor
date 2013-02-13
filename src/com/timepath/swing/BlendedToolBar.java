@@ -2,8 +2,14 @@ package com.timepath.swing;
 
 import com.timepath.plaf.OS;
 import com.timepath.tf2.hudeditor.Main;
+import java.awt.Component;
+import java.awt.Cursor;
 import java.awt.Graphics;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
+import java.awt.event.MouseMotionListener;
 import java.util.logging.Logger;
+import javax.swing.JFrame;
 import javax.swing.JMenuBar;
 import javax.swing.JToolBar;
 
@@ -12,7 +18,7 @@ import javax.swing.JToolBar;
  * @author timepath
  */
 @SuppressWarnings("serial")
-public final class BlendedToolBar extends JToolBar {
+public final class BlendedToolBar extends JToolBar implements MouseListener, MouseMotionListener {
 
     /**
      * Creates new form BlendedToolBar
@@ -24,14 +30,24 @@ public final class BlendedToolBar extends JToolBar {
         mb.setVisible(false);
     }
 
+    public void setWindow(JFrame window) {
+        this.window = window;
+        if(window != null && Main.os != OS.Windows) {
+//            this.addMouseListener(this);
+//            this.addMouseMotionListener(this);
+        }
+    }
+
     private final JMenuBar mb;
+
+    private JFrame window;
 
     @Override
     protected void paintComponent(Graphics g) {
-        if(Main.os == OS.Mac) { // Has its own metal look
-            super.paintComponent(g);
-            return;
-        }
+//        if(Main.os == OS.Mac) { // Has its own metal look
+//            super.paintComponent(g);
+//            return;
+//        }
         this.setForeground(mb.getForeground());
         this.setBackground(mb.getBackground());
 
@@ -56,4 +72,30 @@ public final class BlendedToolBar extends JToolBar {
     // End of variables declaration//GEN-END:variables
 
     private static final Logger LOG = Logger.getLogger(BlendedToolBar.class.getName());
+
+    public void mouseDragged(MouseEvent me) {
+        me.translatePoint(window.getLocation().x, window.getLocation().y);
+        window.setLocation(me.getX(), me.getY());
+        this.setCursor(new Cursor(Cursor.MOVE_CURSOR));
+    }
+
+    public void mousePressed(MouseEvent me) {
+        this.setCursor(new Cursor(Cursor.MOVE_CURSOR));
+    }
+
+    public void mouseReleased(MouseEvent me) {
+        this.setCursor(new Cursor(Cursor.DEFAULT_CURSOR));
+    }
+
+    public void mouseMoved(MouseEvent me) {
+    }
+
+    public void mouseClicked(MouseEvent me) {
+    }
+
+    public void mouseEntered(MouseEvent me) {
+    }
+
+    public void mouseExited(MouseEvent me) {
+    }
 }

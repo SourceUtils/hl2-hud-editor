@@ -12,6 +12,7 @@ import javax.swing.UIManager;
 /**
  *
  * @author http://www.ailis.de/~k/archives/67-Workaround-for-borderless-Java-Swing-menus-on-Linux.html
+ * @author timepath
  */
 public class GtkFixer {
 
@@ -39,7 +40,7 @@ public class GtkFixer {
             Field field = lafClass.getDeclaredField("styleFactory");
             boolean accessible = field.isAccessible();
             field.setAccessible(true);
-            Object styleFactory = field.get(laf);
+            Object styleFactory = field.get(laf); // com.sun.java.swing.plaf.gtk.GTKStyleFactory
             field.setAccessible(accessible);
 
             // Fix the horizontal and vertical thickness of popup menu style
@@ -50,6 +51,15 @@ public class GtkFixer {
             // Fix the vertical thickness of the popup menu separator style
             style = getGtkStyle(styleFactory, new JSeparator(), "POPUP_MENU_SEPARATOR");
             fixGtkThickness(style, "yThickness");
+
+            // TODO: Fix the disabled menu text color
+//            style = getGtkStyle(styleFactory, new JLabel(), "LABEL");
+//            String fieldName = "WHITE_COLOR"; // the disabled text is white
+//            Field f2 = style.getClass().getDeclaredField(fieldName);
+//            boolean ac2 = f2.isAccessible();
+//            f2.setAccessible(true);
+//            f2.set(style, new ColorUIResource(new Color(255, 0, 0)));
+//            f2.setAccessible(ac2);
         } catch(Exception e) {
             // Silently ignored. Workaround can't be applied.
         }
@@ -88,14 +98,14 @@ public class GtkFixer {
         // Create the region object
         Class<?> regionClass = Class.forName("javax.swing.plaf.synth.Region");
         Field field = regionClass.getField(regionName);
-        Object region = field.get(regionClass);
+        Object region = field.get(regionClass); // javax.swing.plaf.synth.Region
 
         // Get and return the style
         Class<?> styleFactoryClass = styleFactory.getClass();
         Method method = styleFactoryClass.getMethod("getStyle", new Class<?>[]{JComponent.class, regionClass});
         boolean accessible = method.isAccessible();
         method.setAccessible(true);
-        Object style = method.invoke(styleFactory, component, region);
+        Object style = method.invoke(styleFactory, component, region); // javax.swing.plaf.synth.SynthStyle, com.sun.java.swing.plaf.gtk.GTKStyle
         method.setAccessible(accessible);
         return style;
     }

@@ -1,16 +1,24 @@
 package com.timepath.tf2.hudeditor.gui;
 
 import com.timepath.plaf.OS;
-import com.timepath.plaf.mac.OSXAdapter;
+import com.timepath.plaf.mac.Application;
+import com.timepath.plaf.mac.Application.AboutEvent;
+import com.timepath.plaf.mac.Application.AboutHandler;
+import com.timepath.plaf.mac.Application.PreferencesEvent;
+import com.timepath.plaf.mac.Application.PreferencesHandler;
+import com.timepath.plaf.mac.Application.QuitEvent;
+import com.timepath.plaf.mac.Application.QuitHandler;
+import com.timepath.plaf.mac.Application.QuitResponse;
+import apple.OSXAdapter;
 import com.timepath.plaf.x.NativeFileChooser;
 import com.timepath.tf2.hudeditor.Main;
-import com.timepath.tf2.hudeditor.util.Element;
-import com.timepath.tf2.hudeditor.util.Property;
-import com.timepath.tf2.hudeditor.util.Utils;
-import com.timepath.tf2.loaders.GCF;
-import com.timepath.tf2.loaders.GCF.DirectoryEntry;
-import com.timepath.tf2.loaders.test.VCCDTest;
-import com.timepath.tf2.loaders.test.VTFTest;
+import com.timepath.tf2.hudeditor.element.Element;
+import com.timepath.tf2.hudeditor.element.Property;
+import com.timepath.tf2.hudeditor.Utils;
+import com.timepath.tf2.io.GCF;
+import com.timepath.tf2.io.GCF.DirectoryEntry;
+import com.timepath.tf2.io.test.VCCDTest;
+import com.timepath.tf2.io.test.VTFTest;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Cursor;
@@ -86,7 +94,6 @@ import javax.swing.JProgressBar;
 import javax.swing.JScrollPane;
 import javax.swing.JSpinner;
 import javax.swing.KeyStroke;
-import javax.swing.ScrollPaneConstants;
 import javax.swing.SwingUtilities;
 import javax.swing.event.HyperlinkEvent;
 import javax.swing.event.HyperlinkListener;
@@ -230,7 +237,7 @@ public final class EditorFrame extends javax.swing.JFrame {
                             URLConnection editor = latest.openConnection();
 
                             JProgressBar pb = new JProgressBar(0, editor.getContentLength());
-                            pb.setPreferredSize(new Dimension(175,20));
+                            pb.setPreferredSize(new Dimension(175, 20));
                             pb.setStringPainted(true);
                             pb.setValue(0);
 
@@ -601,26 +608,34 @@ public final class EditorFrame extends javax.swing.JFrame {
         super.setJMenuBar(menubar);
         if(Main.os == OS.Mac) {
             try {
+                //<editor-fold defaultstate="collapsed" desc="Deprecated">
                 OSXAdapter.setQuitHandler(this, getClass().getDeclaredMethod("quit", (Class[]) null));
                 OSXAdapter.setAboutHandler(this, getClass().getDeclaredMethod("about", (Class[]) null));
                 OSXAdapter.setPreferencesHandler(this, getClass().getDeclaredMethod("preferences", (Class[]) null));
-//                OSXAdapter.setFileHandler(this, getClass().getDeclaredMethod("loadImageFile", new Class[] { String.class }));
-//                com.apple.eawt.Application app = com.apple.eawt.Application.getApplication();
-//                app.setEnabledPreferencesMenu(true);
-//                app.setEnabledAboutMenu(true);
-//                app.setQuitStrategy(QuitStrategy.CLOSE_ALL_WINDOWS);
-//                app.setAboutHandler(new com.apple.eawt.AboutHandler() {
-//                    public void handleAbout(AboutEvent e) {
-//                        about();
-//                    }
-//                });
-//                app.setQuitHandler(new com.apple.eawt.QuitHandler() {
-//                    public void handleQuitRequestWith(QuitEvent qe, QuitResponse qr) {
-//                        quit();
-//                    }
-//                });
-//                ImageIcon icon = ... // your code to load your icon
-//                application.setDockIconImage(icon.getImage());
+                //</editor-fold>
+
+                //<editor-fold defaultstate="collapsed" desc="Unimplemented">
+                Application app = Application.getApplication();
+
+                app.setAboutHandler(new AboutHandler() {
+                    public void handleAbout(AboutEvent e) {
+                        about();
+                    }
+                });
+                app.setPreferencesHandler(new PreferencesHandler() {
+                    public void handlePreferences(PreferencesEvent e) {
+                        preferences();
+                    }
+                });
+                app.setQuitHandler(new QuitHandler() {
+                    public void handleQuitRequestWith(QuitEvent qe, QuitResponse qr) {
+                        quit();
+                    }
+                });
+                URL url = getClass().getResource("/com/timepath/tf2/hudeditor/resources/Icon.png");
+                Image icon = Toolkit.getDefaultToolkit().getImage(url);
+                app.setDockIconImage(icon);
+                //</editor-fold>
             } catch(Exception e) {
                 LOG.severe(e.toString());
             }
@@ -631,7 +646,7 @@ public final class EditorFrame extends javax.swing.JFrame {
                     if(worked) {
                         super.setJMenuBar(null);
                     } else {
-                         error("AyatanaDesktop failed to load" + "\nDE:" + System.getenv("XDG_CURRENT_DESKTOP"));
+                        error("AyatanaDesktop failed to load" + "\nDE:" + System.getenv("XDG_CURRENT_DESKTOP"));
                     }
                 }
             } catch(UnsupportedClassVersionError e) { // crashes earlier versions of the JVM - particularly old macs
@@ -782,8 +797,8 @@ public final class EditorFrame extends javax.swing.JFrame {
                         error(e);
                     }
                 } else {
-                   warn("Unable to follow link");
-                     // http://stackoverflow.com/questions/5116473/linux-command-to-open-url-in-default-browser
+                    warn("Unable to follow link");
+                    // http://stackoverflow.com/questions/5116473/linux-command-to-open-url-in-default-browser
                 }
             }
         }
@@ -942,6 +957,7 @@ public final class EditorFrame extends javax.swing.JFrame {
 
         //<editor-fold defaultstate="collapsed" desc="Base">
         initComponents();
+        tools.setWindow(this);
         tools.putClientProperty("Quaqua.ToolBar.style", "title");
         status.putClientProperty("Quaqua.ToolBar.style", "bottom");
         //</editor-fold>
@@ -985,57 +1001,57 @@ public final class EditorFrame extends javax.swing.JFrame {
                     GCF g = (GCF) nodeInfo;
                     model.getDataVector().removeAllElements();
                     Object[][] rows = {
-//                                       {"headerVersion", g.header.headerVersion, g.header.getClass().getSimpleName()},
-//                                       {"cacheType", g.header.cacheType},
-//                                       {"formatVersion", g.header.formatVersion},
-                                       {"applicationID", g.header.applicationID, g.header.getClass().getSimpleName()},
-                                       {"applicationVersion", g.header.applicationVersion},
-                                       {"isMounted", g.header.isMounted},
-//                                       {"dummy0", g.header.dummy0},
-                                       {"fileSize", g.header.fileSize},
-//                                       {"clusterSize", g.header.clusterSize},
-                                       {"clusterCount", g.header.clusterCount},
-                                       {"checksum", g.header.checksum + " vs " + g.header.check()},
-                                       {"blockCount", g.blockAllocationTableHeader.blockCount, g.blockAllocationTableHeader.getClass().getSimpleName()},
-                                       {"blocksUsed", g.blockAllocationTableHeader.blocksUsed},
-                                       {"lastBlockUsed", g.blockAllocationTableHeader.lastBlockUsed},
-//                                       {"dummy0", g.blockAllocationTableHeader.dummy0},
-//                                       {"dummy1", g.blockAllocationTableHeader.dummy1},
-//                                       {"dummy2", g.blockAllocationTableHeader.dummy2},
-//                                       {"dummy3", g.blockAllocationTableHeader.dummy3},
-                                       {"checksum", g.blockAllocationTableHeader.checksum + " vs " + g.blockAllocationTableHeader.check()},
-                                       {"clusterCount", g.fragMap.clusterCount, g.fragMap.getClass().getSimpleName()},
-                                       {"firstUnusedEntry", g.fragMap.firstUnusedEntry},
-//                                       {"isLongTerminator", g.fragMap.isLongTerminator},
-                                       {"checksum", g.fragMap.checksum + " vs " + g.fragMap.check()},
-//                                       {"headerVersion", g.manifestHeader.headerVersion, g.manifestHeader.getClass().getSimpleName()},
-//                                       {"applicationID", g.manifestHeader.applicationID},
-//                                       {"applicationVersion", g.manifestHeader.applicationVersion},
-                                       {"nodeCount", g.manifestHeader.nodeCount, g.manifestHeader.getClass().getSimpleName()},
-                                       {"fileCount", g.manifestHeader.fileCount},
-//                                       {"compressionBlockSize", g.manifestHeader.compressionBlockSize},
-                                       {"binarySize", g.manifestHeader.binarySize},
-                                       {"nameSize", g.manifestHeader.nameSize},
-                                       {"hashTableKeyCount", g.manifestHeader.hashTableKeyCount},
-                                       {"minimumFootprintCount", g.manifestHeader.minimumFootprintCount},
-                                       {"userConfigCount", g.manifestHeader.userConfigCount},
-                                       {"bitmask", g.manifestHeader.bitmask},
-                                       {"fingerprint", (((long)(g.manifestHeader.fingerprint)) & 0xFFFFFFFF)},
-                                       {"checksum", g.manifestHeader.checksum + " vs " + g.manifestHeader.check()},
-//                                       {"headerVersion", g.directoryMapHeader.headerVersion, g.directoryMapHeader.getClass().getSimpleName()},
-//                                       {"dummy0", g.directoryMapHeader.dummy0},
-//                                       {"headerVersion", g.checksumHeader.headerVersion, g.checksumHeader.getClass().getSimpleName()},
-                                       {"checksumSize", g.checksumHeader.checksumSize, g.checksumHeader.getClass().getSimpleName()},
-//                                       {"formatCode", g.checksumMapHeader.formatCode, g.checksumMapHeader.getClass().getSimpleName()},
-//                                       {"dummy0", g.checksumMapHeader.dummy0},
-                                       {"itemCount", g.checksumMapHeader.itemCount, g.checksumMapHeader.getClass().getSimpleName()},
-                                       {"checksumCount", g.checksumMapHeader.checksumCount},
-//                                       {"gcfRevision", g.dataBlockHeader.gcfRevision, g.dataBlockHeader.getClass().getSimpleName()},
-                                       {"blockCount", g.dataBlockHeader.blockCount, g.dataBlockHeader.getClass().getSimpleName()},
-//                                       {"blockSize", g.dataBlockHeader.blockSize},
-                                       {"firstBlockOffset", g.dataBlockHeader.firstBlockOffset},
-                                       {"blocksUsed", g.dataBlockHeader.blocksUsed},
-                                       {"checksum", g.dataBlockHeader.checksum + " vs " + g.dataBlockHeader.check()}};
+                        //                                       {"headerVersion", g.header.headerVersion, g.header.getClass().getSimpleName()},
+                        //                                       {"cacheType", g.header.cacheType},
+                        //                                       {"formatVersion", g.header.formatVersion},
+                        {"applicationID", g.header.applicationID, g.header.getClass().getSimpleName()},
+                        {"applicationVersion", g.header.applicationVersion},
+                        {"isMounted", g.header.isMounted},
+                        //                                       {"dummy0", g.header.dummy0},
+                        {"fileSize", g.header.fileSize},
+                        //                                       {"clusterSize", g.header.clusterSize},
+                        {"clusterCount", g.header.clusterCount},
+                        {"checksum", g.header.checksum + " vs " + g.header.check()},
+                        {"blockCount", g.blockAllocationTableHeader.blockCount, g.blockAllocationTableHeader.getClass().getSimpleName()},
+                        {"blocksUsed", g.blockAllocationTableHeader.blocksUsed},
+                        {"lastBlockUsed", g.blockAllocationTableHeader.lastBlockUsed},
+                        //                                       {"dummy0", g.blockAllocationTableHeader.dummy0},
+                        //                                       {"dummy1", g.blockAllocationTableHeader.dummy1},
+                        //                                       {"dummy2", g.blockAllocationTableHeader.dummy2},
+                        //                                       {"dummy3", g.blockAllocationTableHeader.dummy3},
+                        {"checksum", g.blockAllocationTableHeader.checksum + " vs " + g.blockAllocationTableHeader.check()},
+                        {"clusterCount", g.fragMap.clusterCount, g.fragMap.getClass().getSimpleName()},
+                        {"firstUnusedEntry", g.fragMap.firstUnusedEntry},
+                        //                                       {"isLongTerminator", g.fragMap.isLongTerminator},
+                        {"checksum", g.fragMap.checksum + " vs " + g.fragMap.check()},
+                        //                                       {"headerVersion", g.manifestHeader.headerVersion, g.manifestHeader.getClass().getSimpleName()},
+                        //                                       {"applicationID", g.manifestHeader.applicationID},
+                        //                                       {"applicationVersion", g.manifestHeader.applicationVersion},
+                        {"nodeCount", g.manifestHeader.nodeCount, g.manifestHeader.getClass().getSimpleName()},
+                        {"fileCount", g.manifestHeader.fileCount},
+                        //                                       {"compressionBlockSize", g.manifestHeader.compressionBlockSize},
+                        {"binarySize", g.manifestHeader.binarySize},
+                        {"nameSize", g.manifestHeader.nameSize},
+                        {"hashTableKeyCount", g.manifestHeader.hashTableKeyCount},
+                        {"minimumFootprintCount", g.manifestHeader.minimumFootprintCount},
+                        {"userConfigCount", g.manifestHeader.userConfigCount},
+                        {"bitmask", g.manifestHeader.bitmask},
+                        {"fingerprint", (((long) (g.manifestHeader.fingerprint)) & 0xFFFFFFFF)},
+                        {"checksum", g.manifestHeader.checksum + " vs " + g.manifestHeader.check()},
+                        //                                       {"headerVersion", g.directoryMapHeader.headerVersion, g.directoryMapHeader.getClass().getSimpleName()},
+                        //                                       {"dummy0", g.directoryMapHeader.dummy0},
+                        //                                       {"headerVersion", g.checksumHeader.headerVersion, g.checksumHeader.getClass().getSimpleName()},
+                        {"checksumSize", g.checksumHeader.checksumSize, g.checksumHeader.getClass().getSimpleName()},
+                        //                                       {"formatCode", g.checksumMapHeader.formatCode, g.checksumMapHeader.getClass().getSimpleName()},
+                        //                                       {"dummy0", g.checksumMapHeader.dummy0},
+                        {"itemCount", g.checksumMapHeader.itemCount, g.checksumMapHeader.getClass().getSimpleName()},
+                        {"checksumCount", g.checksumMapHeader.checksumCount},
+                        //                                       {"gcfRevision", g.dataBlockHeader.gcfRevision, g.dataBlockHeader.getClass().getSimpleName()},
+                        {"blockCount", g.dataBlockHeader.blockCount, g.dataBlockHeader.getClass().getSimpleName()},
+                        //                                       {"blockSize", g.dataBlockHeader.blockSize},
+                        {"firstBlockOffset", g.dataBlockHeader.firstBlockOffset},
+                        {"blocksUsed", g.dataBlockHeader.blocksUsed},
+                        {"checksum", g.dataBlockHeader.checksum + " vs " + g.dataBlockHeader.check()}};
                     for(int i = 0; i < rows.length; i++) {
                         model.insertRow(model.getRowCount(), rows[i]);
                     }
