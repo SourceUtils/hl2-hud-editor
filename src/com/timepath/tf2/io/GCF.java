@@ -73,9 +73,9 @@ public class GCF {
 
     private String nameForDirectoryIndex(int idx) {
         String str;
-        if(idx == 0) {
-            str = "root";
-        } else {
+//        if(idx == 0) {
+//            str = "";
+//        } else {
             int off = directoryEntries[idx].nameOffset;
             ByteArrayOutputStream s = new ByteArrayOutputStream();
             while(ls[off] != 0) {
@@ -83,7 +83,7 @@ public class GCF {
                 off++;
             }
             str = new String(s.toByteArray());
-        }
+//        }
         return str + (directoryEntries[idx].firstChildIndex != 0 ? "/" : "");
     }
 
@@ -107,6 +107,10 @@ public class GCF {
             //<editor-fold defaultstate="collapsed" desc="Extract directory">
             outFile = new File(dest.getPath(), str);
             outFile.mkdirs();
+            DirectoryEntry[] children = this.getImmediateChildren(directoryEntries[index]);
+            for(int i = 0; i < children.length; i++) {
+                extract(children[i].index, dest);
+            }
             //</editor-fold>
         } else {
             //<editor-fold defaultstate="collapsed" desc="Extract file">

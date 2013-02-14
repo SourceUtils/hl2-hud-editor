@@ -131,8 +131,6 @@ public final class EditorFrame extends javax.swing.JFrame {
 
     public boolean autoCheck = true;
 
-    private File hudSelectionDir;
-
     private File lastLoaded;
 
     private JSpinner spinnerWidth;
@@ -668,20 +666,17 @@ public final class EditorFrame extends javax.swing.JFrame {
     //</editor-fold>
 
     //<editor-fold defaultstate="collapsed" desc="Actions">
-    private void close() {
+//    private void close() {
 //        canvas.removeAllElements();
-
-        fileSystemRoot.removeAllChildren();
-        fileSystemRoot.setUserObject(null);
-        DefaultTreeModel model1 = (DefaultTreeModel) fileTree.getModel();
-        model1.reload();
-        fileTree.setSelectionRow(0);
-
-        DefaultTableModel model2 = (DefaultTableModel) propTable.getModel();
-        model2.setRowCount(0);
-        model2.insertRow(0, new String[]{"", "", ""});
-        propTable.repaint();
-    }
+//
+//        fileSystemRoot.removeAllChildren();
+//        fileSystemRoot.setUserObject(null);
+//        DefaultTreeModel model1 = (DefaultTreeModel) fileTree.getModel();
+//        model1.reload();
+//        fileTree.setSelectionRow(0);
+//
+//        propTable.clear();
+//    }
 
     private void load(File root) {
         if(root == null) {
@@ -721,7 +716,7 @@ public final class EditorFrame extends javax.swing.JFrame {
                 locateHudDirectory();
                 return;
             }
-            close();
+//            close();
 
 //            SwingWorker<Void, Void> worker = new SwingWorker<Void, Void>() {
 //
@@ -745,8 +740,11 @@ public final class EditorFrame extends javax.swing.JFrame {
 
             this.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
             final long start = System.currentTimeMillis();
-            Utils.recurseDirectoryToNode(root, fileSystemRoot);
-            fileSystemRoot.setUserObject(root.getName());
+            DefaultMutableTreeNode project = new DefaultMutableTreeNode();
+            Utils.recurseDirectoryToNode(root, project);
+            project.setUserObject(root.getName());
+            fileSystemRoot.add(project);
+            fileTree.setSelectionRow(fileSystemRoot.getIndex(project));
             fileTree.requestFocusInWindow();
 
             DefaultTreeModel model = (DefaultTreeModel) fileTree.getModel();
@@ -978,13 +976,9 @@ public final class EditorFrame extends javax.swing.JFrame {
                 if(node == null) {
                     return;
                 }
+                propTable.clear();
 
                 DefaultTableModel model = (DefaultTableModel) propTable.getModel();
-                for(int i = model.getRowCount() - 1; i >= 0; i--) {
-                    model.removeRow(i);
-                }
-                propTable.scrollRectToVisible(new Rectangle(0, 0, 0, 0));
-
                 Object nodeInfo = node.getUserObject();
                 if(nodeInfo instanceof Element) {
                     Element element = (Element) nodeInfo;
@@ -1207,7 +1201,7 @@ public final class EditorFrame extends javax.swing.JFrame {
                                                        KeyStroke.getKeyStroke(KeyEvent.VK_W, state)) {
                 @Override
                 public void actionPerformed(ActionEvent ae) {
-                    close();
+//                    close();
                 }
             });
 
@@ -1317,6 +1311,7 @@ public final class EditorFrame extends javax.swing.JFrame {
                                                         KeyStroke.getKeyStroke(KeyEvent.VK_DELETE, 0)) {
                 @Override
                 public void actionPerformed(ActionEvent ae) {
+                    canvas.removeElements(canvas.getSelected());
                 }
             });
             editMenu.add(deleteItem);
@@ -1524,6 +1519,10 @@ public final class EditorFrame extends javax.swing.JFrame {
     }// </editor-fold>//GEN-END:initComponents
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JButton jButton1;
+    private javax.swing.JButton jButton2;
+    private javax.swing.JButton jButton3;
+    private javax.swing.JButton jButton4;
     private javax.swing.JSplitPane rootSplit;
     private javax.swing.JSplitPane sideSplit;
     private com.timepath.swing.StatusBar status;

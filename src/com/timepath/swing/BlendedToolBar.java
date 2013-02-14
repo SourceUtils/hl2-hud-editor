@@ -4,7 +4,7 @@ import com.timepath.plaf.OS;
 import com.timepath.tf2.hudeditor.Main;
 import java.awt.Component;
 import java.awt.Cursor;
-import java.awt.Graphics;
+import java.awt.Point;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
@@ -30,11 +30,18 @@ public final class BlendedToolBar extends JToolBar implements MouseListener, Mou
         mb.setVisible(false);
     }
 
+    @Override
+    public Component add(Component comp) {
+//        comp.setForeground(new Color(mb.getForeground().getRGB()));
+//        comp.setBackground(new Color(mb.getBackground().getRGB()));
+        return super.add(comp);
+    }
+
     public void setWindow(JFrame window) {
         this.window = window;
         if(window != null && Main.os != OS.Windows) {
-//            this.addMouseListener(this);
-//            this.addMouseMotionListener(this);
+            this.addMouseListener(this);
+            this.addMouseMotionListener(this);
         }
     }
 
@@ -42,18 +49,18 @@ public final class BlendedToolBar extends JToolBar implements MouseListener, Mou
 
     private JFrame window;
 
-    @Override
-    protected void paintComponent(Graphics g) {
-//        if(Main.os == OS.Mac) { // Has its own metal look
-//            super.paintComponent(g);
-//            return;
-//        }
-        this.setForeground(mb.getForeground());
-        this.setBackground(mb.getBackground());
-
-        g.setColor(this.getBackground());
-        g.fillRect(0, 0, this.getWidth(), this.getHeight());
-    }
+//    @Override
+//    protected void paintComponent(Graphics g) {
+////        if(Main.os == OS.Mac) { // Has its own metal look
+////            super.paintComponent(g);
+////            return;
+////        }
+//        this.setForeground(mb.getForeground());
+//        this.setBackground(mb.getBackground());
+//
+//        g.setColor(this.getBackground());
+//        g.fillRect(0, 0, this.getWidth(), this.getHeight());
+//    }
 
     /**
      * This method is called from within the constructor to initialize the form.
@@ -73,14 +80,18 @@ public final class BlendedToolBar extends JToolBar implements MouseListener, Mou
 
     private static final Logger LOG = Logger.getLogger(BlendedToolBar.class.getName());
 
+    private Point wloc, mloc;
+
     public void mouseDragged(MouseEvent me) {
-        me.translatePoint(window.getLocation().x, window.getLocation().y);
-        window.setLocation(me.getX(), me.getY());
+        Point p = me.getLocationOnScreen();
+        window.setLocation(wloc.x + (p.x - mloc.x), wloc.y + (p.y - mloc.y));
         this.setCursor(new Cursor(Cursor.MOVE_CURSOR));
     }
 
     public void mousePressed(MouseEvent me) {
         this.setCursor(new Cursor(Cursor.MOVE_CURSOR));
+        wloc = window.getLocation();
+        mloc = me.getLocationOnScreen();
     }
 
     public void mouseReleased(MouseEvent me) {

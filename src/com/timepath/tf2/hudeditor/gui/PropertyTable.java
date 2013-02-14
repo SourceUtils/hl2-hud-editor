@@ -2,8 +2,7 @@ package com.timepath.tf2.hudeditor.gui;
 
 import com.timepath.tf2.hudeditor.Main;
 import java.awt.Component;
-import java.awt.image.BufferedImage;
-import java.util.logging.Level;
+import java.awt.Rectangle;
 import java.util.logging.Logger;
 import javax.swing.Icon;
 import javax.swing.ImageIcon;
@@ -33,6 +32,14 @@ public class PropertyTable extends JTable {
         model.addColumn(Main.getString("Info"));
         this.setModel(model);
         renderer = new CustomTableCellRenderer();
+    }
+
+    public void clear() {
+        DefaultTableModel model = (DefaultTableModel) this.getModel();
+        for(int i = model.getRowCount() - 1; i >= 0; i--) {
+            model.removeRow(i);
+        }
+        this.scrollRectToVisible(new Rectangle(0, 0, 0, 0));
     }
 
     private final CustomTableCellRenderer renderer;

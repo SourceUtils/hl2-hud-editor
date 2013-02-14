@@ -18,6 +18,7 @@ import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeCellRenderer;
+import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreeSelectionModel;
 
@@ -31,13 +32,16 @@ public class FileTree extends javax.swing.JTree {
     public FileTree(TreeNode root) {
         super(root);
         initComponents();
-        getSelectionModel().setSelectionMode(TreeSelectionModel.SINGLE_TREE_SELECTION);
-        setCellRenderer(new CustomTreeCellRenderer());
+        this.setRootVisible(false);
+        this.getSelectionModel().setSelectionMode(TreeSelectionModel.SINGLE_TREE_SELECTION);
+        this.setCellRenderer(new CustomTreeCellRenderer());
     }
 
     private DirectoryEntry directoryEntryContext;
 
     private GCF gcfContext;
+
+    private DefaultMutableTreeNode projectContext;
 
     private class CustomTreeCellRenderer extends DefaultTreeCellRenderer {
 
@@ -153,6 +157,8 @@ public class FileTree extends javax.swing.JTree {
         jMenuItem1 = new javax.swing.JMenuItem();
         popupMenuGCF = new javax.swing.JPopupMenu();
         jMenuItem2 = new javax.swing.JMenuItem();
+        popupMenuProject = new javax.swing.JPopupMenu();
+        jMenuItem3 = new javax.swing.JMenuItem();
 
         jMenuItem1.setText("No action");
         jMenuItem1.setEnabled(false);
@@ -165,6 +171,14 @@ public class FileTree extends javax.swing.JTree {
             }
         });
         popupMenuGCF.add(jMenuItem2);
+
+        jMenuItem3.setText("Close");
+        jMenuItem3.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jMenuItem3ActionPerformed(evt);
+            }
+        });
+        popupMenuProject.add(jMenuItem3);
 
         setBorder(null);
         addMouseListener(new java.awt.event.MouseAdapter() {
@@ -180,16 +194,23 @@ public class FileTree extends javax.swing.JTree {
             Object clicked = this.getPathForRow(row).getLastPathComponent();
             this.setSelectionRow(row);
             if(clicked instanceof DefaultMutableTreeNode) {
-                Object obj = ((DefaultMutableTreeNode) clicked).getUserObject();
+                DefaultMutableTreeNode node = ((DefaultMutableTreeNode) clicked);
+                Object obj = node.getUserObject();
                 if(obj instanceof GCF) {
                     gcfContext = (GCF) obj;
                     directoryEntryContext = null;
                     popupMenuGCF.show(evt.getComponent(), evt.getX(), evt.getY());
+                    return;
                 } else if(obj instanceof DirectoryEntry) {
                     directoryEntryContext = (DirectoryEntry) obj;
                     gcfContext = directoryEntryContext.getGCF();
                     popupMenuGCF.show(evt.getComponent(), evt.getX(), evt.getY());
                     return;
+                } else if(obj instanceof String) {
+                    projectContext = node;
+                    popupMenuProject.show(evt.getComponent(), evt.getX(), evt.getY());
+                    return;
+                } else if(obj instanceof File) {
                 } else {
                     LOG.log(Level.WARNING, "Unknown user object {0}", obj.getClass());
                 }
@@ -201,35 +222,43 @@ public class FileTree extends javax.swing.JTree {
     }//GEN-LAST:event_formMouseClicked
 
     private void jMenuItem2ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jMenuItem2ActionPerformed
-        if(gcfContext != null) {
-            LOG.log(Level.INFO, "GCF: {0}", gcfContext);
-            if(directoryEntryContext != null) {
-                LOG.log(Level.INFO, "DirectoryEntry: {0}", directoryEntryContext);
-
-                new Thread() {
-                    @Override
-                    public void run() {
-                        File f = new NativeFileChooser(null, "extract", new File("")).getFolder();
-                        if(f != null) {
-                            LOG.log(Level.INFO, "Extracting to {0}", f);
-                            try {
-                                File ret = gcfContext.extract(directoryEntryContext.index, f);
-                                LOG.log(Level.INFO, "Extracted {0}", new Object[]{ret});
-                            } catch(IOException ex) {
-                                Logger.getLogger(FileTree.class.getName()).log(Level.SEVERE, null, ex);
-                            }
+        new Thread() {
+            @Override
+            public void run() {
+                if(gcfContext != null) {
+                    LOG.log(Level.INFO, "GCF: {0}", gcfContext);
+                    int index = 0;
+                    if(directoryEntryContext != null) {
+                        LOG.log(Level.INFO, "DirectoryEntry: {0}", directoryEntryContext);
+                        index = directoryEntryContext.index;
+                    }
+                    File f = new NativeFileChooser(null, "extract", new File("")).getFolder();
+                    if(f != null) {
+                        LOG.log(Level.INFO, "Extracting to {0}", f);
+                        try {
+                            File ret = gcfContext.extract(index, f);
+                            LOG.log(Level.INFO, "Extracted {0}", new Object[]{ret});
+                        } catch(IOException ex) {
+                            Logger.getLogger(FileTree.class.getName()).log(Level.SEVERE, null, ex);
                         }
                     }
-                }.start();
+                }
             }
-        }
+        }.start();
     }//GEN-LAST:event_jMenuItem2ActionPerformed
+
+    private void jMenuItem3ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jMenuItem3ActionPerformed
+
+        ((DefaultTreeModel)this.treeModel).removeNodeFromParent(projectContext);
+    }//GEN-LAST:event_jMenuItem3ActionPerformed
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JMenuItem jMenuItem1;
     private javax.swing.JMenuItem jMenuItem2;
+    private javax.swing.JMenuItem jMenuItem3;
     private javax.swing.JPopupMenu popupMenu;
     private javax.swing.JPopupMenu popupMenuGCF;
+    private javax.swing.JPopupMenu popupMenuProject;
     // End of variables declaration//GEN-END:variables
 
     private static final Logger LOG = Logger.getLogger(FileTree.class.getName());

@@ -558,7 +558,7 @@ public final class Canvas extends JPanel implements MouseListener, MouseMotionLi
     // List of currently selected elements
     private ArrayList<Element> selectedElements = new ArrayList<Element>();
 
-    private ArrayList<Element> getSelected() {
+    public ArrayList<Element> getSelected() {
         return selectedElements;
     }
 
