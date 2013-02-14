@@ -1,18 +1,17 @@
 package com.timepath.tf2.hudeditor;
 
 import com.timepath.plaf.OS;
-import com.timepath.tf2.hudeditor.Main;
 import com.timepath.tf2.hudeditor.gui.EditorFrame;
 import com.timepath.tf2.io.GCF;
 import com.timepath.tf2.io.RES;
 import com.timepath.tf2.io.VDF;
+import com.timepath.tf2.io.VTF;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
-import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URLDecoder;
 import java.security.MessageDigest;
@@ -196,6 +195,9 @@ public class Utils {
                             RES.analyze(fileList[idx], child);
                         } else if(fileList[idx].getName().endsWith(".vmt")) {
 //                            VDF.analyze(fileList[idx], child);
+                        } else if(fileList[idx].getName().endsWith(".vtf")) {
+                            VTF v = VTF.load(fileList[idx]);
+                            child.setUserObject(v);
                         } else if(fileList[idx].getName().endsWith(".gcf")) {
                             try {
                                 GCF g = new GCF(fileList[idx]);

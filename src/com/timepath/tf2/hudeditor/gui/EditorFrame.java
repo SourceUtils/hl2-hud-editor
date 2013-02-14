@@ -17,6 +17,7 @@ import com.timepath.tf2.hudeditor.element.Element;
 import com.timepath.tf2.hudeditor.element.Property;
 import com.timepath.tf2.io.GCF;
 import com.timepath.tf2.io.GCF.DirectoryEntry;
+import com.timepath.tf2.io.VTF;
 import com.timepath.tf2.io.test.VCCDTest;
 import com.timepath.tf2.io.test.VTFTest;
 import java.awt.BorderLayout;
@@ -79,6 +80,7 @@ import javax.swing.AbstractAction;
 import javax.swing.Action;
 import javax.swing.BoxLayout;
 import javax.swing.Icon;
+import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JDialog;
@@ -978,8 +980,9 @@ public final class EditorFrame extends javax.swing.JFrame {
                 }
 
                 DefaultTableModel model = (DefaultTableModel) propTable.getModel();
-                model.getDataVector().removeAllElements();
-                model.insertRow(0, new String[]{"", "", ""});
+                for(int i = model.getRowCount() - 1; i >= 0; i--) {
+                    model.removeRow(i);
+                }
                 propTable.scrollRectToVisible(new Rectangle(0, 0, 0, 0));
 
                 Object nodeInfo = node.getUserObject();
@@ -987,7 +990,6 @@ public final class EditorFrame extends javax.swing.JFrame {
                     Element element = (Element) nodeInfo;
                     canvas.load(element);
                     if(!element.getProps().isEmpty()) {
-                        model.getDataVector().removeAllElements();
                         element.validateDisplay();
                         for(int i = 0; i < element.getProps().size(); i++) {
                             Property entry = element.getProps().get(i);
@@ -997,9 +999,33 @@ public final class EditorFrame extends javax.swing.JFrame {
                             model.insertRow(model.getRowCount(), new Object[]{entry.getKey(), entry.getValue(), entry.getInfo()});
                         }
                     }
+                } else if(nodeInfo instanceof VTF) {
+                    VTF v = (VTF) nodeInfo;
+                    for(int i = Math.max(v.mipCount - 8, 0); i < Math.max(v.mipCount - 5, v.mipCount); i++) {
+                        try {
+                            ImageIcon img = new ImageIcon(v.getImage(i));
+                            model.insertRow(model.getRowCount(), new Object[]{"mip["+i+"]", img, ""});
+                        } catch(IOException ex) {
+                            Logger.getLogger(EditorFrame.class.getName()).log(Level.SEVERE, null, ex);
+                        }
+                    }
+                    model.insertRow(model.getRowCount(), new Object[]{"version", v.version, ""});
+                    model.insertRow(model.getRowCount(), new Object[]{"headerSize", v.headerSize, ""});
+                    model.insertRow(model.getRowCount(), new Object[]{"width", v.width, ""});
+                    model.insertRow(model.getRowCount(), new Object[]{"height", v.height, ""});
+                    model.insertRow(model.getRowCount(), new Object[]{"flags", v.flags, ""});
+                    model.insertRow(model.getRowCount(), new Object[]{"frameFirst", v.frameFirst, ""});
+                    model.insertRow(model.getRowCount(), new Object[]{"reflectivity", v.reflectivity, ""});
+                    model.insertRow(model.getRowCount(), new Object[]{"bumpScale", v.bumpScale, ""});
+                    model.insertRow(model.getRowCount(), new Object[]{"format", v.format, ""});
+                    model.insertRow(model.getRowCount(), new Object[]{"mipCount", v.mipCount, ""});
+                    model.insertRow(model.getRowCount(), new Object[]{"thumbFormat", v.thumbFormat, ""});
+                    model.insertRow(model.getRowCount(), new Object[]{"thumbWidth", v.thumbWidth, ""});
+                    model.insertRow(model.getRowCount(), new Object[]{"thumbHeight", v.thumbHeight, ""});
+                    model.insertRow(model.getRowCount(), new Object[]{"depth", v.depth, ""});
+
                 } else if(nodeInfo instanceof GCF) {
                     GCF g = (GCF) nodeInfo;
-                    model.getDataVector().removeAllElements();
                     Object[][] rows = {
                         //                                       {"headerVersion", g.header.headerVersion, g.header.getClass().getSimpleName()},
                         //                                       {"cacheType", g.header.cacheType},
@@ -1057,7 +1083,6 @@ public final class EditorFrame extends javax.swing.JFrame {
                     }
                 } else if(nodeInfo instanceof DirectoryEntry) {
                     DirectoryEntry d = (DirectoryEntry) nodeInfo;
-                    model.getDataVector().removeAllElements();
                     model.insertRow(model.getRowCount(), new Object[]{"index", d.index, ""});
                     model.insertRow(model.getRowCount(), new Object[]{"itemSize", d.itemSize, ""});
                     model.insertRow(model.getRowCount(), new Object[]{"attributes", d.attributes, ""});
@@ -1482,11 +1507,13 @@ public final class EditorFrame extends javax.swing.JFrame {
 
         rootSplit.setDividerLocation(180);
         rootSplit.setContinuousLayout(true);
+        rootSplit.setOneTouchExpandable(true);
 
         sideSplit.setBorder(null);
         sideSplit.setOrientation(javax.swing.JSplitPane.VERTICAL_SPLIT);
         sideSplit.setResizeWeight(0.5);
         sideSplit.setContinuousLayout(true);
+        sideSplit.setOneTouchExpandable(true);
         rootSplit.setLeftComponent(sideSplit);
         rootSplit.setRightComponent(tabbedContent);
 

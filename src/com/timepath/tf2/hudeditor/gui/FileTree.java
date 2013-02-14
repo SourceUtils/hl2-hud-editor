@@ -4,6 +4,7 @@ import com.timepath.plaf.x.NativeFileChooser;
 import com.timepath.tf2.hudeditor.element.Element;
 import com.timepath.tf2.io.GCF;
 import com.timepath.tf2.io.GCF.DirectoryEntry;
+import com.timepath.tf2.io.VTF;
 import java.awt.Color;
 import java.awt.Component;
 import java.io.File;
@@ -11,6 +12,7 @@ import java.io.IOException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.Icon;
+import javax.swing.ImageIcon;
 import javax.swing.JTree;
 import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
@@ -93,6 +95,15 @@ public class FileTree extends javax.swing.JTree {
                         setIcons(tree, UIManager.getIcon("FileChooser.detailsViewIcon"));
                     } else {
                         setIcons(tree, UIManager.getIcon("FileChooser.listViewIcon"));
+                    }
+                } else if(nodeValue instanceof VTF) {
+                    VTF v = (VTF)nodeValue;
+                    Icon i;
+                    try {
+                        i = new ImageIcon(v.getThumbImage());
+                        setIcons(tree, i);
+                    } catch(IOException ex) {
+                        Logger.getLogger(FileTree.class.getName()).log(Level.SEVERE, null, ex);
                     }
                 } else if(nodeValue instanceof GCF) {
                     Icon i = UIManager.getIcon("FileView.hardDriveIcon");

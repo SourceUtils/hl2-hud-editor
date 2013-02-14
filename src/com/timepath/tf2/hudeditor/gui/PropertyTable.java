@@ -1,8 +1,14 @@
 package com.timepath.tf2.hudeditor.gui;
 
 import com.timepath.tf2.hudeditor.Main;
+import java.awt.Component;
+import java.awt.image.BufferedImage;
+import java.util.logging.Level;
 import java.util.logging.Logger;
+import javax.swing.Icon;
+import javax.swing.ImageIcon;
 import javax.swing.JTable;
+import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableCellEditor;
 import javax.swing.table.TableCellRenderer;
@@ -14,7 +20,7 @@ import javax.swing.table.TableCellRenderer;
 @SuppressWarnings("serial")
 public class PropertyTable extends JTable {
 
-    private static final Logger logger = Logger.getLogger(PropertyTable.class.getName());
+    private static final Logger LOG = Logger.getLogger(PropertyTable.class.getName());
 
     /**
      * Creates new form PropertyTable
@@ -25,9 +31,11 @@ public class PropertyTable extends JTable {
         model.addColumn(Main.getString("Key"));
         model.addColumn(Main.getString("Value"));
         model.addColumn(Main.getString("Info"));
-        model.insertRow(0, new String[]{"", "", ""});
         this.setModel(model);
+        renderer = new CustomTableCellRenderer();
     }
+
+    private final CustomTableCellRenderer renderer;
 
     @Override
     public boolean isCellEditable(int row, int column) {
@@ -41,7 +49,31 @@ public class PropertyTable extends JTable {
 
     @Override
     public TableCellRenderer getCellRenderer(int row, int column) {
-        return super.getCellRenderer(row, column);
+        return renderer;
+    }
+
+    /**
+     *
+     */
+    public class CustomTableCellRenderer extends DefaultTableCellRenderer {
+
+        @Override
+        public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
+            super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+            Icon icon = null;
+            if(value instanceof ImageIcon) {
+                icon = (ImageIcon) value;
+            }
+            if(icon == null) {
+                this.setText((value == null) ? "" : value.toString());
+                this.setIcon(null);
+            } else {
+                this.setText("");
+                this.setIcon(icon);
+                PropertyTable.this.setRowHeight(row, Math.max(icon.getIconHeight(), PropertyTable.this.rowHeight));
+            }
+            return this;
+        }
     }
 
     /**

@@ -8,6 +8,7 @@ import java.awt.Graphics2D;
 import java.awt.Image;
 import java.awt.image.BufferedImage;
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.util.HashMap;
@@ -21,61 +22,66 @@ import java.util.logging.Logger;
  */
 public class VTF {
 
-    public VTF(RandomAccessFile file) {
+    public VTF(File file) {
         this.file = file;
+        try {
+            this.rf = new RandomAccessFile(file, "r");
+        } catch(FileNotFoundException ex) {
+            Logger.getLogger(VTF.class.getName()).log(Level.SEVERE, null, ex);
+        }
     }
 
     /**
      * The RandomAccessFile object that loaded this VTF
      */
-    RandomAccessFile file;
+    RandomAccessFile rf;
 
     /**
      * 8 bytes
      */
-    int[] version;
+    public int[] version;
 
     /**
      * 2 bytes
      * The size of the VTF header. Image data comes after this
      */
-    int headerSize;
+    public int headerSize;
 
     /**
      * 2 bytes
      */
-    int width;
+    public int width;
 
     /**
      * 2 bytes
      */
-    int height;
+    public int height;
 
     /**
      * 4 bytes
      */
-    int flags;
+    public int flags;
 
     /**
      * 2 bytes
      */
-    int frameCount;
+    public int frameCount;
 
     /**
      * 2 bytes
      * Zero indexed
      */
-    int frameFirst;
+    public int frameFirst;
 
     /**
      * 12 bytes
      */
-    float[] reflectivity;
+    public float[] reflectivity;
 
     /**
      * 4 bytes
      */
-    float bumpScale;
+    public float bumpScale;
 
     /**
      * 4 bytes
@@ -85,34 +91,36 @@ public class VTF {
     /**
      * 1 byte
      */
-    int mipCount;
+    public int mipCount;
 
     /**
      * 4 bytes
      */
-    Format thumbFormat;
+    public Format thumbFormat;
 
     /**
      * 1 byte
      */
-    int thumbWidth;
+    public int thumbWidth;
 
     /**
      * 1 byte
      */
-    int thumbHeight;
+    public int thumbHeight;
 
     /**
      * 1 byte
      * The documentation says 2, but I don't think so...
      */
-    int depth;
+    public int depth;
+
+    private final File file;
 
     public void getControls() throws IOException {
-        file.seek(this.headerSize - 8); // 8 bytes for CRC or other things. I have no idea what the data after the first 64 bytes up until here are for
+        rf.seek(this.headerSize - 8); // 8 bytes for CRC or other things. I have no idea what the data after the first 64 bytes up until here are for
 
-        String crcHead = new String(new byte[]{DataUtils.readByte(file), DataUtils.readByte(file), DataUtils.readByte(file), DataUtils.readByte(file)});
-        int crc = DataUtils.readULong(file);
+        String crcHead = new String(new byte[]{DataUtils.readByte(rf), DataUtils.readByte(rf), DataUtils.readByte(rf), DataUtils.readByte(rf)});
+        int crc = DataUtils.readULong(rf);
 
         if(!(crcHead.equals("CRC\2"))) {
             System.err.println("CRC=" + crcHead + ", invalid");
@@ -126,9 +134,9 @@ public class VTF {
 
     public Image getThumbImage() throws IOException {
         if(thumbImage == null) {
-            file.seek(this.headerSize);
+            rf.seek(this.headerSize);
             byte[] thumbData = new byte[Math.max(this.thumbWidth, 4) * Math.max(this.thumbHeight, 4) / 2]; // DXT1. Each 'block' is 4*4 pixels. 16 pixels become 8 bytes
-            file.read(thumbData);
+            rf.read(thumbData);
             thumbImage = loadDXT1(thumbData, this.thumbWidth, this.thumbHeight);
         }
         return thumbImage;
@@ -138,7 +146,7 @@ public class VTF {
         if(level >= this.mipCount) {
             return null;
         }
-        file.seek(this.headerSize + (Math.max(thumbWidth, 4) * Math.max(thumbHeight, 4) / 2));
+        rf.seek(this.headerSize + (Math.max(thumbWidth, 4) * Math.max(thumbHeight, 4) / 2));
 
         BufferedImage image = null;
 
@@ -172,7 +180,7 @@ public class VTF {
 
             if(this.mipCount - 1 - i == level && nBytes > 0) { // biggest
                 byte[] imageData = new byte[nBytes];
-                file.read(imageData);
+                rf.read(imageData);
 
                 image = new BufferedImage(w, h, BufferedImage.TYPE_INT_ARGB);
                 Graphics2D g = (Graphics2D) image.getGraphics();
@@ -188,7 +196,7 @@ public class VTF {
                     g.drawImage(loadUV(imageData, w, h), 0, 0, w, h, null);
                 }
             } else {
-                file.skipBytes(nBytes);
+                rf.skipBytes(nBytes);
             }
         }
         return image;
@@ -244,7 +252,7 @@ public class VTF {
                 cache.put(file, null);
                 return null;
             }
-            VTF vtf = new VTF(rf);
+            VTF vtf = new VTF(file);
             vtf.version = new int[]{DataUtils.readULEInt(rf), DataUtils.readULEInt(rf)};
             vtf.headerSize = DataUtils.readULEInt(rf);
             vtf.width = DataUtils.readULEShort(rf);
@@ -718,6 +726,11 @@ public class VTF {
         }
     }
     //</editor-fold>
+
+    @Override
+    public String toString() {
+        return file.getName();
+    }
 
     private static final Logger LOG = Logger.getLogger(VTF.class.getName());
 }
