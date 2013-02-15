@@ -257,7 +257,7 @@ public final class EditorFrame extends javax.swing.JFrame {
                             InputStream in = latest.openStream();
 
 
-                            FileOutputStream writer = new FileOutputStream(Main.runPath); // TODO: stop closing when this happens. Maybe make a backup..
+                            FileOutputStream writer = new FileOutputStream(Utils.workingDirectory()); // TODO: stop closing when this happens. Maybe make a backup..
                             byte[] buffer = new byte[153600]; // 150KB
                             int totalBytesRead = 0;
                             int bytesRead;

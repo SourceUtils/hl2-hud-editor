@@ -9,15 +9,12 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
-import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Field;
 import java.net.BindException;
 import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.SocketException;
-import java.net.URLDecoder;
-import java.security.NoSuchAlgorithmException;
 import java.util.Collections;
 import java.util.ResourceBundle;
 import java.util.logging.FileHandler;
@@ -51,17 +48,14 @@ public class Main {
 
     public static final Preferences prefs = Preferences.userRoot().node(projectName);
 
-    public static final String myVer = Main.class.getPackage().getImplementationVersion();// = calcMD5();
+    public static final String myVer = Main.class.getPackage().getImplementationVersion();
 
     public static final String logFile;
-
-    public static final String runPath;
 
     private static final Logger LOG = Logger.getLogger(Main.class.getName());
 
     static {
         Thread.setDefaultUncaughtExceptionHandler(new Thread.UncaughtExceptionHandler() {
-
             public void uncaughtException(Thread thread, Throwable thrwbl) {
                 Logger.getLogger(thread.getName()).log(Level.SEVERE, "Uncaught Exception", thrwbl);
             }
@@ -70,7 +64,7 @@ public class Main {
         Logger.getLogger("").setLevel(Level.INFO);
 
         //<editor-fold defaultstate="collapsed" desc="logfile">
-        logFile = Utils.workingDirectory() + "logs/"+System.currentTimeMillis()/1000+".log";
+        logFile = Utils.workingDirectory() + "logs/" + System.currentTimeMillis() / 1000 + ".log";
         LOG.log(Level.INFO, "Logging to {0}", logFile);
         try {
             new File(logFile).getParentFile().mkdirs();
@@ -83,16 +77,6 @@ public class Main {
         } catch(SecurityException ex) {
             Logger.getLogger(Main.class.getName()).log(Level.SEVERE, null, ex);
         }
-        //</editor-fold>
-
-        //<editor-fold defaultstate="collapsed" desc="Working directory">
-        String path = "download.jar";
-        try {
-            path = URLDecoder.decode(Main.class.getProtectionDomain().getCodeSource().getLocation().getPath(), "UTF-8");
-        } catch(UnsupportedEncodingException ex) {
-            Logger.getLogger(Main.class.getName()).log(Level.SEVERE, null, ex);
-        }
-        runPath = path;
         //</editor-fold>
 
         //<editor-fold defaultstate="collapsed" desc="OS detection">
@@ -122,8 +106,7 @@ public class Main {
             System.setProperty("com.apple.mrj.application.growbox.intrudes", "false");
             System.setProperty("com.apple.mrj.application.live-resize", "true");
         } else if(os == OS.Linux) {
-            String n = projectName;
-//            n = Wrapper.class.getName().replaceAll("\\.", "-");
+            String n = projectName; // Wrapper.class.getName().replaceAll("\\.", "-");
             //<editor-fold defaultstate="collapsed" desc="Global menu">
             System.setProperty("jayatana.startupWMClass", n);
             //            boolean force = "Unity".equals(System.getenv("XDG_CURRENT_DESKTOP")); // UBUNTU_MENUPROXY=libappmenu.so
@@ -146,8 +129,8 @@ public class Main {
 
             //<editor-fold defaultstate="collapsed" desc="Launcher">
             DesktopLauncher.create(n, "/com/timepath/tf2/hudeditor/resources",
-                          new String[]{"Icon.png", "Icon.svg"},
-                          new String[]{projectName, projectName});
+                                   new String[]{"Icon.png", "Icon.svg"},
+                                   new String[]{projectName, projectName});
             //</editor-fold>
         }
     }
@@ -178,6 +161,7 @@ public class Main {
      * Attempts to listen on the specified port
      *
      * @param port the port to listen on
+     *
      * @return true if a server was started
      */
     private static boolean startServer(int port) {
@@ -241,6 +225,7 @@ public class Main {
      *
      * @param port
      * @param args
+     *
      * @return true if connected
      */
     private static boolean startClient(int port, String... args) {
@@ -291,10 +276,12 @@ public class Main {
 
     /**
      *
-     * 'return Main.strings.containsKey(key) ? Main.strings.getString(key) : key' is unavailable prior to 1.6
+     * 'return Main.strings.containsKey(key) ? Main.strings.getString(key) : key' is
+     * unavailable prior to 1.6
      *
      * @param key
      * @param fallback
+     *
      * @return
      */
     public static String getString(String key, String fallback) {
@@ -304,17 +291,4 @@ public class Main {
     public static String getString(String key) {
         return getString(key, key);
     }
-
-    public static String selfCheck() {
-        String md5 = null;
-        if(runPath.endsWith(".jar")) {
-            try {
-                md5 = Utils.takeMD5(Utils.loadFile(new File(runPath)));
-            } catch(Exception ex) {
-                LOG.log(Level.SEVERE, null, ex);
-            }
-        }
-        return md5;
-    }
-
 }

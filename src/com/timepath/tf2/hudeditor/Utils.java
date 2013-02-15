@@ -113,6 +113,19 @@ public class Utils {
         return md5;
     }
 
+    public static String selfCheck() {
+        String md5 = null;
+        String runPath = workingDirectory();
+        if(runPath.endsWith(".jar")) {
+            try {
+                md5 = Utils.takeMD5(Utils.loadFile(new File(runPath)));
+            } catch(Exception ex) {
+                LOG.log(Level.SEVERE, null, ex);
+            }
+        }
+        return md5;
+    }
+
     public static byte[] loadFile(File f) throws FileNotFoundException, IOException {
         InputStream fis = new FileInputStream(f);
         byte[] buff = new byte[8192];
