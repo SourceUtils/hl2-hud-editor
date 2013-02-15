@@ -4,6 +4,8 @@ import java.util.logging.Logger;
 
 /**
  *
+ * aka KeyValue
+ *
  * @author timepath
  */
 public class Property {

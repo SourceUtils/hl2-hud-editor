@@ -29,6 +29,11 @@ import javax.swing.tree.DefaultMutableTreeNode;
  */
 public class Utils {
 
+    private static final Logger LOG = Logger.getLogger(Utils.class.getName());
+
+    private Utils() {
+    }
+
     public static String locateSteamAppsDirectory() {
         if(Main.os == OS.Windows) {
             String str = System.getenv("PROGRAMFILES(x86)");
@@ -145,7 +150,7 @@ public class Utils {
         return ret;
     }
 
-    private static Comparator<File> dirAlphaComparator = new Comparator<File>() {
+    public static Comparator<File> dirAlphaComparator = new Comparator<File>() {
         /**
          * Alphabetically sorts directories before files ignoring case.
          */
@@ -161,20 +166,19 @@ public class Utils {
         }
     };
 
-    private static String[] blacklist = {".mp3", ".exe", ".sh", ".dll", ".dylib", ".so",
-                                         ".ttf", ".bik", ".mov", ".cfg", ".cache", ".manifest",
-                                         ".frag", ".vert", ".tga", ".png", ".html", ".wav",
-                                         ".ico", ".uifont", ".xml", ".css", ".dic", ".conf",
-                                         ".pak", ".py", ".flt", ".mix", ".asi", ".checksum",
-                                         ".xz", ".log", ".doc", ".webm", ".jpg", ".psd", ".avi",
-                                         ".zip", ".bin"};
-
     public static void recurseDirectoryToNode(File root, final DefaultMutableTreeNode parent) {
+        String[] blacklist = {".mp3", ".exe", ".sh", ".dll", ".dylib", ".so",
+                              ".ttf", ".bik", ".mov", ".cfg", ".cache", ".manifest",
+                              ".frag", ".vert", ".tga", ".png", ".html", ".wav",
+                              ".ico", ".uifont", ".xml", ".css", ".dic", ".conf",
+                              ".pak", ".py", ".flt", ".mix", ".asi", ".checksum",
+                              ".xz", ".log", ".doc", ".webm", ".jpg", ".psd", ".avi",
+                              ".zip", ".bin"};
         final File[] fileList = root.listFiles();
         if(fileList.length == 0) {
             return;
         }
-        Arrays.sort(fileList, Utils.getDirAlphaComparator());
+        Arrays.sort(fileList, dirAlphaComparator);
         for(int i = 0; i < fileList.length; i++) {
             final DefaultMutableTreeNode child = new DefaultMutableTreeNode();
             child.setUserObject(fileList[i]);
@@ -231,17 +235,5 @@ public class Utils {
                 }
             }
         }
-    }
-
-    private static final Logger LOG = Logger.getLogger(Utils.class.getName());
-
-    /**
-     * @return the dirAlphaComparator
-     */
-    public static Comparator<File> getDirAlphaComparator() {
-        return dirAlphaComparator;
-    }
-
-    private Utils() {
     }
 }

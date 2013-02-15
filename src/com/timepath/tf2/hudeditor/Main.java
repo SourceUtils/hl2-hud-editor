@@ -64,7 +64,7 @@ public class Main {
         Logger.getLogger("").setLevel(Level.INFO);
 
         //<editor-fold defaultstate="collapsed" desc="logfile">
-        logFile = Utils.workingDirectory() + "logs/" + System.currentTimeMillis() / 1000 + ".log";
+        logFile = Utils.workingDirectory() + "logs/" + System.currentTimeMillis() / 1000 + "_log.txt";
         LOG.log(Level.INFO, "Logging to {0}", logFile);
         try {
             new File(logFile).getParentFile().mkdirs();

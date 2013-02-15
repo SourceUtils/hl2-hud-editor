@@ -9,6 +9,8 @@ import java.util.logging.Logger;
  */
 public class Player {
 
+    private static final Logger LOG = Logger.getLogger(Player.class.getName());
+
     private ArrayList<Player> enemies = new ArrayList<Player>();
 
     public void addEnemy(Player other) {
@@ -18,7 +20,7 @@ public class Player {
         if(!enemies.contains(other)) {
             getEnemies().add(other);
         }
-        if(!other.enemies.contains(this)) {
+        if(!other.hasEnemy(this)) {
             other.getEnemies().add(this);
         }
     }
@@ -48,7 +50,7 @@ public class Player {
         if(!allies.contains(other)) {
             getAllies().add(other);
         }
-        if(!other.allies.contains(this)) {
+        if(!other.hasAlly(this)) {
             other.getAllies().add(this);
         }
     }
@@ -121,8 +123,8 @@ public class Player {
                 v.getEnemies().get(i).getAllies().add(k);
             }
 
-            k.allies = new ArrayList<Player>();
-            k.enemies = new ArrayList<Player>();
+            k.getAllies().clear();
+            k.getEnemies().clear();
 
             k.getAllies().addAll(kEnemies);
 //            k.allies.addAll(vEnemies);
@@ -168,8 +170,6 @@ public class Player {
     }
     //</editor-fold>
 
-    private static final Logger LOG = Logger.getLogger(Player.class.getName());
-
     /**
      * @return the name
      */
@@ -196,5 +196,13 @@ public class Player {
      */
     public ArrayList<Player> getAllies() {
         return allies;
+    }
+
+    private boolean hasEnemy(Player player) {
+        return enemies.contains(player);
+    }
+
+    private boolean hasAlly(Player player) {
+        return allies.contains(player);
     }
 }
