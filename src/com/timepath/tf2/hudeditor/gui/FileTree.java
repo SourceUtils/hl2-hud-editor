@@ -232,7 +232,7 @@ public class FileTree extends javax.swing.JTree {
                         LOG.log(Level.INFO, "DirectoryEntry: {0}", directoryEntryContext);
                         index = directoryEntryContext.index;
                     }
-                    File f = new NativeFileChooser(null, "extract", new File("")).getFolder();
+                    File f = new NativeFileChooser(null, "extract", new File("")).choose(true, true);
                     if(f != null) {
                         LOG.log(Level.INFO, "Extracting to {0}", f);
                         try {

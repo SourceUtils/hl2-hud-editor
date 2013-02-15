@@ -3,6 +3,7 @@ package com.timepath.plaf.x;
 import com.timepath.io.FileUtils;
 import com.timepath.plaf.OS;
 import com.timepath.tf2.hudeditor.Main;
+import java.awt.Component;
 import java.awt.FileDialog;
 import java.awt.Frame;
 import java.awt.Toolkit;
@@ -31,36 +32,28 @@ public class NativeFileChooser {
 
     private String title;
 
-    private File directory;
+    private File root;
 
     public NativeFileChooser(Frame parent, String title, File directory) {
         this.parent = parent;
         this.title = title;
-        this.directory = directory;
+        this.root = directory;
     }
 
-    public File getFolder() {
+    public File choose(boolean directoryMode, boolean saveDialog) {
         String selection;
         if(Main.os == OS.Windows) {
-            XFileDialog fd = new XFileDialog(parent);
-            fd.setTitle(title);
-            if(directory != null) {
-                fd.setDirectory(directory.getPath());
-            }
-            selection = fd.getFolder();
-            fd.dispose();
+            selection = xfd(directoryMode, saveDialog);
         } else if(Main.os == OS.Mac) {
-            System.setProperty("apple.awt.fileDialogForDirectories", "true");
-            selection = awt();
+            selection = awt(directoryMode, saveDialog);
         } else if(Main.os == OS.Linux) {
             try {
-                selection = zenity();
+                selection = zenity(directoryMode, saveDialog);
             } catch(IOException ex) {
-//                UIManager.put("FileChooserUI", "eu.kostia.gtkjfilechooser.ui.GtkFileChooserUI");
-                selection = swing();
+                selection = swing(directoryMode, saveDialog);
             }
         } else {
-            selection = swing();
+            selection = swing(directoryMode, saveDialog);
         }
         if(selection == null) {
             return null;
@@ -69,34 +62,89 @@ public class NativeFileChooser {
         }
     }
 
-    private String swing() {
-        JFileChooser fd = new JFileChooser(directory);
-        fd.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
-        if(fd.showOpenDialog(parent) == JFileChooser.APPROVE_OPTION) {
+    private String awt(boolean directoryMode, boolean saveDialog) {
+        if(Main.os == OS.Mac) {
+            System.setProperty("apple.awt.fileDialogForDirectories", Boolean.toString(directoryMode));
+        }
+        FileDialog fd = new FileDialog(parent, title);
+        if(directoryMode) {
+            fd.setFilenameFilter(new FilenameFilter() {
+                public boolean accept(File dir, String name) {
+                    return new File(dir, name).isDirectory();
+                }
+            });
+        }
+        if(root != null) {
+            fd.setDirectory(root.getPath());
+        }
+        fd.setMode(saveDialog ? FileDialog.SAVE : FileDialog.LOAD);
+        fd.setVisible(true);
+        if(fd.getDirectory() == null || fd.getFile() == null) {
+            return null;
+        }
+        return fd.getDirectory() + fd.getFile();
+    }
+
+    private String swing(boolean directoryMode, boolean saveDialog) {
+        if(Main.os == OS.Linux) {
+//            UIManager.put("FileChooserUI", "eu.kostia.gtkjfilechooser.ui.GtkFileChooserUI");
+        }
+        JFileChooser fd = new JFileChooser(root);
+        fd.setFileSelectionMode(directoryMode ? JFileChooser.DIRECTORIES_ONLY : JFileChooser.FILES_AND_DIRECTORIES);
+        fd.setDialogType(saveDialog ? JFileChooser.SAVE_DIALOG : JFileChooser.OPEN_DIALOG);
+        if(fd.showDialog(parent, null) == JFileChooser.APPROVE_OPTION) {
             return fd.getSelectedFile().getPath();
         }
         return null;
     }
 
-    private String zenity() throws IOException {
+    private String xfd(boolean directoryMode, boolean saveDialog) {
+        String selection;
+        XFileDialog fd = new XFileDialog(parent);
+        fd.setTitle(title);
+        if(root != null) {
+            fd.setDirectory(root.getPath());
+        }
+        if(directoryMode) {
+            selection = fd.getFolder();
+        } else {
+            if(saveDialog) {
+                selection = fd.getSaveFile();
+            } else {
+                selection = fd.getFile();
+            }
+        }
+        fd.dispose();
+        return selection;
+    }
+
+    private String zenity(boolean directoryMode, boolean saveDialog) throws IOException {
         ArrayList<String> cmd = new ArrayList<String>();
         cmd.add("zenity");
+        //cmd.add("--multiple")
         cmd.add("--file-selection");
-        cmd.add("--directory");
-        cmd.add("--title=Open");
-        cmd.add(directory != null ? "--filename=" + directory.getPath() : "");
+        if(directoryMode) {
+            cmd.add("--directory");
+        }
+        if(saveDialog) {
+            cmd.add("--save");
+        }
+        cmd.add(root != null ? "--filename=" + root.getPath() : "");
         String windowClass = Main.projectName;
         try {
             Toolkit xToolkit = Toolkit.getDefaultToolkit();
             Field awtAppClassNameField = xToolkit.getClass().getDeclaredField("awtAppClassName");
+            boolean accessible = awtAppClassNameField.isAccessible();
             awtAppClassNameField.setAccessible(true);
             windowClass = (String) awtAppClassNameField.get(xToolkit);
+            awtAppClassNameField.setAccessible(accessible);
         } catch(Exception ex) {
             LOG.log(Level.SEVERE, null, ex);
         }
         cmd.add("--class=" + windowClass);
 //        cmd.add("--name=" + Main.projectName + " ");
         cmd.add("--window-icon=" + FileUtils.getLinuxStore() + "icons/" + Main.projectName + ".png");
+        cmd.add("--title=" + (saveDialog ? "Save" : "Open"));
 //        cmd.add("--ok-label=TEXT ");
 //        cmd.add("--cancel-label=TEXT ");
 
@@ -112,23 +160,5 @@ public class NativeFileChooser {
         });
         BufferedReader br = new BufferedReader(new InputStreamReader(proc.getInputStream()));
         return br.readLine();
-    }
-
-    private String awt() {
-        FileDialog fd = new FileDialog(parent, title);
-        fd.setFilenameFilter(new FilenameFilter() {
-            public boolean accept(File dir, String name) {
-                return new File(dir, name).isDirectory();
-            }
-        });
-        if(directory != null) {
-            fd.setDirectory(directory.getPath());
-        }
-        fd.setMode(FileDialog.LOAD);
-        fd.setVisible(true);
-        if(fd.getDirectory() == null || fd.getFile() == null) {
-            return null;
-        }
-        return fd.getDirectory() + fd.getFile();
     }
 }
