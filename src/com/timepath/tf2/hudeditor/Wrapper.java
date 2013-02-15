@@ -1,8 +1,8 @@
 package com.timepath.tf2.hudeditor;
 
-import jdotsoft.JarClassLoader;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import jdotsoft.JarClassLoader;
 
 /**
  *

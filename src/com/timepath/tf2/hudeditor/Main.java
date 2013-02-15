@@ -2,9 +2,7 @@ package com.timepath.tf2.hudeditor;
 
 import com.timepath.plaf.OS;
 import com.timepath.plaf.linux.DesktopLauncher;
-import com.timepath.plaf.linux.GtkFixer;
 import com.timepath.tf2.hudeditor.gui.EditorFrame;
-import java.awt.EventQueue;
 import java.awt.Toolkit;
 import java.io.BufferedReader;
 import java.io.File;
@@ -27,8 +25,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.logging.SimpleFormatter;
 import java.util.prefs.Preferences;
-import javax.swing.UIManager;
-import javax.swing.UnsupportedLookAndFeelException;
+import javax.swing.SwingUtilities;
 import net.tomahawk.XFileDialog;
 
 /**
@@ -39,20 +36,18 @@ import net.tomahawk.XFileDialog;
  */
 public class Main {
 
-    private static final ResourceBundle strings = ResourceBundle.getBundle("com/timepath/tf2/hudeditor/resources/lang");
+    public static final ResourceBundle strings = ResourceBundle.getBundle("com/timepath/tf2/hudeditor/resources/lang");
 
-    public final static String appName = "TF2 HUD Editor";
+    public static final String appName = "TF2 HUD Editor";
 
     /**
      * Used for storing preferences. Do not localize
      * The window class on Linux systems
      * The app name on Mac systems
      */
-    public final static String projectName = "tf2-hud-editor"; // in xfce, window grouping show this, unfortunately
+    public static final String projectName = "tf2-hud-editor"; // in xfce, window grouping show this, unfortunately
 
-    public final static OS os;
-
-    private static final Logger LOG = Logger.getLogger(Main.class.getName());
+    public static final OS os;
 
     public static final Preferences prefs = Preferences.userRoot().node(projectName);
 
@@ -62,22 +57,24 @@ public class Main {
 
     public static final String runPath;
 
+    private static final Logger LOG = Logger.getLogger(Main.class.getName());
+
     static {
-        Logger.getLogger("").setLevel(Level.INFO);
-
-        logFile = Utils.workingDirectory() + "out.log";
-//        logFile = Utils.workingDirectory() + "out%g.log"; // preferred, as the file will always end in .log
-        LOG.log(Level.INFO, "Logging to {0}", logFile);
-
         Thread.setDefaultUncaughtExceptionHandler(new Thread.UncaughtExceptionHandler() {
 
             public void uncaughtException(Thread thread, Throwable thrwbl) {
-                Logger.getLogger(thread.getName()).log(Level.SEVERE, null, thrwbl);
+                Logger.getLogger(thread.getName()).log(Level.SEVERE, "Uncaught Exception", thrwbl);
             }
         });
 
+        Logger.getLogger("").setLevel(Level.INFO);
+
+        //<editor-fold defaultstate="collapsed" desc="logfile">
+        logFile = Utils.workingDirectory() + "logs/"+System.currentTimeMillis()/1000+".log";
+        LOG.log(Level.INFO, "Logging to {0}", logFile);
         try {
-            FileHandler fh = new FileHandler(logFile, 1000000, 3);
+            new File(logFile).getParentFile().mkdirs();
+            FileHandler fh = new FileHandler(logFile, 0, 1, false);
             SimpleFormatter formatter = new SimpleFormatter();
             fh.setFormatter(formatter);
             Logger.getLogger("").addHandler(fh);
@@ -86,6 +83,9 @@ public class Main {
         } catch(SecurityException ex) {
             Logger.getLogger(Main.class.getName()).log(Level.SEVERE, null, ex);
         }
+        //</editor-fold>
+
+        //<editor-fold defaultstate="collapsed" desc="Working directory">
         String path = "download.jar";
         try {
             path = URLDecoder.decode(Main.class.getProtectionDomain().getCodeSource().getLocation().getPath(), "UTF-8");
@@ -93,18 +93,21 @@ public class Main {
             Logger.getLogger(Main.class.getName()).log(Level.SEVERE, null, ex);
         }
         runPath = path;
+        //</editor-fold>
 
+        //<editor-fold defaultstate="collapsed" desc="OS detection">
         String osVer = System.getProperty("os.name").toLowerCase();
         if(osVer.indexOf("windows") != -1) {
             os = OS.Windows;
-        } else if(osVer.indexOf("OS X") != -1 || osVer.indexOf("mac") != -1) {
+        } else if(osVer.indexOf("mac os x") != -1 || osVer.indexOf("OS X") != -1 || osVer.indexOf("mac") != -1) {
             os = OS.Mac;
-        } else if(osVer.indexOf("nix") != -1 || osVer.indexOf("nux") != -1) {
+        } else if(osVer.indexOf("Linux") != -1 || osVer.indexOf("nix") != -1 || osVer.indexOf("nux") != -1) {
             os = OS.Linux;
         } else {
             os = OS.Other;
             LOG.log(Level.WARNING, "Unrecognised OS: {0}", osVer);
         }
+        //</editor-fold>
 
         if(os == OS.Windows) {
             XFileDialog.setTraceLevel(0);
@@ -119,15 +122,17 @@ public class Main {
             System.setProperty("com.apple.mrj.application.growbox.intrudes", "false");
             System.setProperty("com.apple.mrj.application.live-resize", "true");
         } else if(os == OS.Linux) {
-//            boolean force = "Unity".equals(System.getenv("XDG_CURRENT_DESKTOP")); // UBUNTU_MENUPROXY=libappmenu.so
-//            if(force) {
-//                System.setProperty("jayatana.force", "true");
-//            }
-
             String n = projectName;
 //            n = Wrapper.class.getName().replaceAll("\\.", "-");
+            //<editor-fold defaultstate="collapsed" desc="Global menu">
             System.setProperty("jayatana.startupWMClass", n);
+            //            boolean force = "Unity".equals(System.getenv("XDG_CURRENT_DESKTOP")); // UBUNTU_MENUPROXY=libappmenu.so
+            //            if(force) {
+            //                System.setProperty("jayatana.force", "true");
+            //            }
+            //</editor-fold>
 
+            //<editor-fold defaultstate="collapsed" desc="Window class">
             // Doesn't seem to work all the time
             try {
                 Toolkit xToolkit = Toolkit.getDefaultToolkit();
@@ -137,99 +142,45 @@ public class Main {
             } catch(Exception ex) {
                 LOG.log(Level.SEVERE, null, ex);
             }
+            //</editor-fold>
 
+            //<editor-fold defaultstate="collapsed" desc="Launcher">
             DesktopLauncher.create(n, "/com/timepath/tf2/hudeditor/resources",
-                                      new String[]{"Icon.png", "Icon.svg"},
-                                      new String[]{projectName, projectName});
+                          new String[]{"Icon.png", "Icon.svg"},
+                          new String[]{projectName, projectName});
+            //</editor-fold>
         }
     }
 
-    public static String getString(String key) {
-//        return Main.strings.containsKey(key) ? Main.strings.getString(key) : key;
-        return Collections.list(Main.strings.getKeys()).contains(key) ? Main.strings.getString(key) : key;
-    }
-
+    //<editor-fold defaultstate="collapsed" desc="Entry point">
     public static void main(String... args) {
-        LOG.log(Level.INFO, "Env = {0}", System.getenv().toString());
-        LOG.log(Level.INFO, "Properties = {0}", System.getProperties().toString());
-        init(args);
-    }
+        LOG.log(Level.CONFIG, "Env = {0}", System.getenv().toString());
+        LOG.log(Level.CONFIG, "Properties = {0}", System.getProperties().toString());
 
-    private static void init(String... args) {
         int port = prefs.getInt("port", 0);
-        if(startServer(port, args)) {
-            lookAndFeel();
-            start(args);
-            return;
-        }
-        if(!startClient(port, args)) {
-            init(args);
-        }
-    }
-
-    //<editor-fold defaultstate="collapsed" desc="Defunct">
-
-    private static String calcMD5() {
-        String md5 = "";
-        try {
-            if(!runPath.endsWith(".jar")) {
-//                indev = true;
-                return "indev";
-            }
-            md5 = Utils.takeMD5(Utils.loadFile(new File(runPath)));
-        } catch(NoSuchAlgorithmException ex) {
-            LOG.log(Level.SEVERE, null, ex);
-        } catch(UnsupportedEncodingException ex) {
-            LOG.log(Level.SEVERE, null, ex);
-        } catch(IOException ex) {
-            LOG.log(Level.SEVERE, null, ex);
-        }
-        return md5;
-    }
-    //</editor-fold>
-
-    private static void lookAndFeel() {
-        if(System.getProperty("swing.defaultlaf") == null) { // Do not override user specified theme
-            try {
-                try {
-                    UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
-                    if(os == OS.Mac) {
-                        UIManager.setLookAndFeel("ch.randelshofer.quaqua.QuaquaLookAndFeel"); // Apply quaqua if available
-                    } else if(os == OS.Linux) {
-                        UIManager.setLookAndFeel("com.sun.java.swing.plaf.gtk.GTKLookAndFeel"); // Apply gtk+ theme if available
-                    }
-                } catch(java.lang.ClassNotFoundException e) {
-
-                }
-
-                //<editor-fold defaultstate="collapsed" desc="Nimbus will eventually be removed in favour of native appearance">
-                for(UIManager.LookAndFeelInfo info : UIManager.getInstalledLookAndFeels()) {
-                    if("Nimbus".equals(info.getName())) {
-                        UIManager.setLookAndFeel(info.getClassName());
+        if(port != 0) { // May not have been removed on shutdown
+            LOG.info("Checking for daemon...");
+            if(!startClient(port, args)) {
+                LOG.info("Daemon not running, starting...");
+                for(;;) {
+                    if(startServer(port)) {
                         break;
+                    } else if(startClient(port, args)) {
+                        return;
                     }
                 }
-                //</editor-fold>
-            } catch(Exception ex) {
-                LOG.log(Level.WARNING, null, ex);
-            }
-        } else if(System.getProperty("swing.defaultlaf").equals("system") || System.getProperty("swing.defaultlaf").equals("native")) {
-            try {
-                UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
-            } catch(ClassNotFoundException ex) {
-                Logger.getLogger(Main.class.getName()).log(Level.SEVERE, null, ex);
-            } catch(InstantiationException ex) {
-                Logger.getLogger(Main.class.getName()).log(Level.SEVERE, null, ex);
-            } catch(IllegalAccessException ex) {
-                Logger.getLogger(Main.class.getName()).log(Level.SEVERE, null, ex);
-            } catch(UnsupportedLookAndFeelException ex) {
-                Logger.getLogger(Main.class.getName()).log(Level.SEVERE, null, ex);
             }
         }
-        GtkFixer.installGtkPopupBugWorkaround(); // Apply clearlooks java menu fix if applicable
+        start(args);
     }
 
-    private static boolean startServer(int port, final String... args) {
+    /**
+     * Attempts to listen on the specified port
+     *
+     * @param port the port to listen on
+     * @return true if a server was started
+     */
+    private static boolean startServer(int port) {
         try {
             final ServerSocket sock = new ServerSocket(port, 0, InetAddress.getByName(null)); // cannot use java7 InetAddress.getLoopbackAddress(). On windows, this prevents firewall warnings. It's also good for security in general
             port = sock.getLocalPort();
@@ -242,7 +193,6 @@ public class Main {
                 public void run() {
                     LOG.info("Server shutting down...");
                     prefs.remove("port");
-//                    System.exit(0);
                 }
             });
 
@@ -264,7 +214,6 @@ public class Main {
                                 LOG.info("Surrendering control to other process");
                                 out.flush();
                                 sock.close();
-                                System.exit(0);
                             } else {
                                 start(request.split(" "));
                             }
@@ -272,9 +221,12 @@ public class Main {
                             LOG.log(Level.SEVERE, null, ex);
                         }
                     }
+                    LOG.info("Exiting...");
+                    System.exit(0);
                 }
             }, "Process Listener");
             server.setDaemon(os != OS.Mac); // non-daemon threads work in the background. Stick around if on a mac until manually terminated
+            //            server.setDaemon(false);
             server.start();
         } catch(BindException ex) {
             return false;
@@ -285,10 +237,15 @@ public class Main {
         return true;
     }
 
+    /**
+     *
+     * @param port
+     * @param args
+     * @return true if connected
+     */
     private static boolean startClient(int port, String... args) {
-        LOG.info("Communicating with other running instance");
         try {
-            Socket client = new Socket("localhost", port);
+            Socket client = new Socket(InetAddress.getByName(null), port);
             BufferedReader in = new BufferedReader(new InputStreamReader(client.getInputStream()));
             PrintWriter out = new PrintWriter(client.getOutputStream(), true);
             out.println(myVer);
@@ -298,35 +255,30 @@ public class Main {
             }
             out.println(sb.toString());
             String sVer = in.readLine();
-            if(myVer == null || (sVer.equals("null") && sVer.compareTo(myVer) > 0)) {
-                LOG.info("Overriding other running instance");
-                init(args);
+            if(myVer == null || (!sVer.equals("null") && sVer.compareTo(myVer) > 0)) {
+                return false;
+            } else {
+                return true;
             }
         } catch(SocketException ex) {
-            LOG.info("Overriding other running instance");
-            init(args);
         } catch(IOException ex) {
             LOG.log(Level.SEVERE, null, ex);
-            return false;
         }
-        return true;
+        return false;
     }
 
     private static void start(String... args) {
-        LOG.log(Level.FINE, "Env: {0}", System.getenv());
-        LOG.log(Level.FINE, "Properties: {0}", System.getProperties());
-
-        boolean flag = true;
+        boolean flag = false;
         for(int i = 0; i < args.length; i++) {
             String cmd = args[i].toLowerCase();
             if("-noupdate".equals(cmd)) {
-                flag = false;
+                flag = true;
                 break;
             }
         }
 
-        final boolean autoCheck = flag;
-        EventQueue.invokeLater(new Runnable() {
+        final boolean autoCheck = !flag;
+        SwingUtilities.invokeLater(new Runnable() {
             @Override
             public void run() {
                 EditorFrame frame = new EditorFrame();
@@ -335,4 +287,34 @@ public class Main {
             }
         });
     }
+    //</editor-fold>
+
+    /**
+     *
+     * 'return Main.strings.containsKey(key) ? Main.strings.getString(key) : key' is unavailable prior to 1.6
+     *
+     * @param key
+     * @param fallback
+     * @return
+     */
+    public static String getString(String key, String fallback) {
+        return Collections.list(Main.strings.getKeys()).contains(key) ? Main.strings.getString(key) : fallback;
+    }
+
+    public static String getString(String key) {
+        return getString(key, key);
+    }
+
+    public static String selfCheck() {
+        String md5 = null;
+        if(runPath.endsWith(".jar")) {
+            try {
+                md5 = Utils.takeMD5(Utils.loadFile(new File(runPath)));
+            } catch(Exception ex) {
+                LOG.log(Level.SEVERE, null, ex);
+            }
+        }
+        return md5;
+    }
+
 }

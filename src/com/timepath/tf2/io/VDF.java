@@ -91,10 +91,10 @@ public class VDF {
                 continue;
             } else if(line.startsWith("#")) {
                 String rest = line.substring(line.indexOf('#') + 1);
-                p.setKey("#" + rest.substring(0, rest.indexOf(" ")));
+                p.setKey("#" + rest);
                 p.setValue(rest.substring(rest.indexOf(" ")));
                 p.setInfo("");
-                LOG.log(Level.INFO, "Carrying: {0}", line);
+                LOG.log(Level.FINE, "Carrying: {0}", line);
                 carried.add(p);
                 continue;
             } else if(line.startsWith("//")) {

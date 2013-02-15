@@ -2,6 +2,7 @@ package com.timepath.tf2.hudeditor.gui;
 
 import apple.OSXAdapter;
 import com.timepath.plaf.OS;
+import com.timepath.plaf.linux.GtkFixer;
 import com.timepath.plaf.mac.Application;
 import com.timepath.plaf.mac.Application.AboutEvent;
 import com.timepath.plaf.mac.Application.AboutHandler;
@@ -97,6 +98,8 @@ import javax.swing.JScrollPane;
 import javax.swing.JSpinner;
 import javax.swing.KeyStroke;
 import javax.swing.SwingUtilities;
+import javax.swing.UIManager;
+import javax.swing.UnsupportedLookAndFeelException;
 import javax.swing.event.HyperlinkEvent;
 import javax.swing.event.HyperlinkListener;
 import javax.swing.event.TreeSelectionEvent;
@@ -810,6 +813,7 @@ public final class EditorFrame extends javax.swing.JFrame {
      * Creates new form EditorFrame
      */
     public EditorFrame() {
+        this.lookAndFeel();
         this.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
         this.addWindowListener(new WindowAdapter() {
             @Override
@@ -1104,6 +1108,50 @@ public final class EditorFrame extends javax.swing.JFrame {
         canvas.requestFocusInWindow();
         //</editor-fold>
 
+    }
+
+    /**
+     * Sets the look and feel
+     */
+    private static void lookAndFeel() {
+        if(System.getProperty("swing.defaultlaf") == null) { // Do not override user specified theme
+            try {
+                try {
+                    UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+                    if(Main.os == OS.Mac) {
+                        UIManager.setLookAndFeel("ch.randelshofer.quaqua.QuaquaLookAndFeel"); // Apply quaqua if available
+                    } else if(Main.os == OS.Linux) {
+                        UIManager.setLookAndFeel("com.sun.java.swing.plaf.gtk.GTKLookAndFeel"); // Apply gtk+ theme if available
+                    }
+                } catch(ClassNotFoundException e) {
+                    // silently fail
+                }
+
+                //<editor-fold defaultstate="collapsed" desc="Nimbus will eventually be removed in favour of native appearance">
+                for(UIManager.LookAndFeelInfo info : UIManager.getInstalledLookAndFeels()) {
+                    if("Nimbus".equals(info.getName())) {
+                        UIManager.setLookAndFeel(info.getClassName());
+                        break;
+                    }
+                }
+                //</editor-fold>
+            } catch(Exception ex) {
+                LOG.log(Level.WARNING, null, ex);
+            }
+        } else if(System.getProperty("swing.defaultlaf").equalsIgnoreCase("system") || System.getProperty("swing.defaultlaf").equalsIgnoreCase("native")) {
+            try {
+                UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+            } catch(ClassNotFoundException ex) {
+                Logger.getLogger(Main.class.getName()).log(Level.SEVERE, null, ex);
+            } catch(InstantiationException ex) {
+                Logger.getLogger(Main.class.getName()).log(Level.SEVERE, null, ex);
+            } catch(IllegalAccessException ex) {
+                Logger.getLogger(Main.class.getName()).log(Level.SEVERE, null, ex);
+            } catch(UnsupportedLookAndFeelException ex) {
+                Logger.getLogger(Main.class.getName()).log(Level.SEVERE, null, ex);
+            }
+        }
+        GtkFixer.installGtkPopupBugWorkaround(); // Apply clearlooks java menu fix if applicable
     }
 
     private class EditorMenuBar extends JMenuBar {
