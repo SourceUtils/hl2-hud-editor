@@ -2,6 +2,7 @@ package com.timepath.tf2.io;
 
 import com.timepath.io.DataUtils;
 import com.timepath.tf2.io.GCF.ManifestHeaderBitmask;
+import com.timepath.tf2.io.util.ViewableData;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
@@ -12,6 +13,8 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.zip.Adler32;
 import java.util.zip.Checksum;
+import javax.swing.Icon;
+import javax.swing.UIManager;
 import javax.swing.tree.DefaultMutableTreeNode;
 
 /**
@@ -20,7 +23,7 @@ import javax.swing.tree.DefaultMutableTreeNode;
  *
  * @author timepath
  */
-public class GCF {
+public class GCF implements ViewableData {
 
     private static final Logger LOG = Logger.getLogger(GCF.class.getName());
 
@@ -301,6 +304,14 @@ public class GCF {
     //<editor-fold defaultstate="collapsed" desc="Header info">
     //<editor-fold defaultstate="collapsed" desc="Header">
     public FileHeader header;
+
+    public Icon getIcon() {
+        Icon i = UIManager.getIcon("FileView.hardDriveIcon");
+        if(i == null) {
+            i = UIManager.getIcon("FileView.directoryIcon");
+        }
+        return i;
+    }
 
     /**
      *
@@ -818,7 +829,7 @@ public class GCF {
         }
     };
 
-    public class DirectoryEntry {
+    public class DirectoryEntry implements ViewableData {
 
         /**
          * Offset to the directory item name from the end of the directory items
@@ -872,6 +883,18 @@ public class GCF {
 
         public GCF getGCF() {
             return GCF.this;
+        }
+
+        public Icon getIcon() {
+            Icon i;
+            if(this.index == 0) {
+                return this.getGCF().getIcon();
+            }
+            if(this.attributes == 0) {
+                return UIManager.getIcon("FileView.directoryIcon");
+            } else {
+                return UIManager.getIcon("FileView.fileIcon");
+            }
         }
     }
 

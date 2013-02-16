@@ -1,10 +1,9 @@
 package com.timepath.tf2.hudeditor.gui;
 
 import com.timepath.plaf.x.NativeFileChooser;
-import com.timepath.tf2.hudeditor.element.Element;
 import com.timepath.tf2.io.GCF;
 import com.timepath.tf2.io.GCF.DirectoryEntry;
-import com.timepath.tf2.io.VTF;
+import com.timepath.tf2.io.util.ViewableData;
 import java.awt.Color;
 import java.awt.Component;
 import java.io.File;
@@ -12,7 +11,6 @@ import java.io.IOException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.Icon;
-import javax.swing.ImageIcon;
 import javax.swing.JTree;
 import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
@@ -81,10 +79,8 @@ public class FileTree extends javax.swing.JTree {
             if(value instanceof DefaultMutableTreeNode) {
                 Object nodeValue = ((DefaultMutableTreeNode) value).getUserObject();
                 if(nodeValue instanceof String) {
-                    tColor = sameColor;
                     setIcons(tree, UIManager.getIcon("FileView.computerIcon"));
-                } else if(nodeValue instanceof File) { // this will either be an actual file on the system (directories included), or an element within a file
-                    tColor = diffColor;
+                } else if(nodeValue instanceof File) {
                     File f = ((File) nodeValue);
                     valueText = f.getName();
                     if(f.isDirectory()) {
@@ -92,36 +88,9 @@ public class FileTree extends javax.swing.JTree {
                     } else {
                         setIcons(tree, UIManager.getIcon("FileView.fileIcon"));
                     }
-                } else if(nodeValue instanceof Element) {
-                    tColor = newColor;
-                    Element e = (Element) nodeValue;
-                    if(e.getProps().isEmpty() && leaf) { // If no properties, warn because irrelevant. Only care if leaves are empty
-                        setIcons(tree, UIManager.getIcon("FileChooser.detailsViewIcon"));
-                    } else {
-                        setIcons(tree, UIManager.getIcon("FileChooser.listViewIcon"));
-                    }
-                } else if(nodeValue instanceof VTF) {
-                    VTF v = (VTF)nodeValue;
-                    Icon i;
-                    try {
-                        i = new ImageIcon(v.getThumbImage());
-                        setIcons(tree, i);
-                    } catch(IOException ex) {
-                        Logger.getLogger(FileTree.class.getName()).log(Level.SEVERE, null, ex);
-                    }
-                } else if(nodeValue instanceof GCF) {
-                    Icon i = UIManager.getIcon("FileView.hardDriveIcon");
-                    if(i == null) {
-                        i = UIManager.getIcon("FileView.directoryIcon");
-                    }
-                    setIcons(tree, i);
-                } else if(nodeValue instanceof DirectoryEntry) {
-                    DirectoryEntry d = (DirectoryEntry) nodeValue;
-                    if(d.attributes == 0) {
-                        setIcons(tree, UIManager.getIcon("FileView.directoryIcon"));
-                    } else {
-                        setIcons(tree, UIManager.getIcon("FileView.fileIcon"));
-                    }
+                } else if(nodeValue instanceof ViewableData) {
+                    ViewableData v = (ViewableData) nodeValue;
+                    setIcons(tree, v.getIcon());
                 } else {
                     if(nodeValue != null) {
                         LOG.log(Level.FINE, "Node class: {0}", nodeValue.getClass());
@@ -164,7 +133,7 @@ public class FileTree extends javax.swing.JTree {
         jMenuItem1.setEnabled(false);
         popupMenu.add(jMenuItem1);
 
-        jMenuItem2.setLabel("Extract");
+        jMenuItem2.setText("Extract");
         jMenuItem2.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 jMenuItem2ActionPerformed(evt);
@@ -232,7 +201,7 @@ public class FileTree extends javax.swing.JTree {
                         LOG.log(Level.INFO, "DirectoryEntry: {0}", directoryEntryContext);
                         index = directoryEntryContext.index;
                     }
-                    File f = new NativeFileChooser(null, "extract", new File("")).choose(true, true);
+                    File f = new NativeFileChooser(null, "extract", new File(new File("").getPath())).choose(true, true);
                     if(f != null) {
                         LOG.log(Level.INFO, "Extracting to {0}", f);
                         try {

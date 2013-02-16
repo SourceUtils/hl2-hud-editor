@@ -1,5 +1,6 @@
-package com.timepath.tf2.hudeditor.element;
+package com.timepath.tf2.io.util;
 
+import com.timepath.tf2.io.util.ViewableData;
 import com.timepath.tf2.hudeditor.gui.Canvas;
 import com.timepath.tf2.io.RES;
 import com.timepath.tf2.io.VTF;
@@ -14,12 +15,14 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import javax.swing.Icon;
+import javax.swing.UIManager;
 
 /**
  *
  * @author timepath
  */
-public class Element {
+public class Element implements ViewableData {
 
     private static final Logger LOG = Logger.getLogger(Element.class.getName());
 
@@ -668,6 +671,10 @@ public class Element {
 
     public void setImage(Image image) {
         this.image = image;
+    }
+
+    public Icon getIcon() {
+        return UIManager.getIcon("FileChooser.listViewIcon");
     }
 
     public enum Alignment {

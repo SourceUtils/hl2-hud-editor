@@ -1,7 +1,7 @@
 package com.timepath.tf2.io;
 
-import com.timepath.tf2.hudeditor.element.Element;
-import com.timepath.tf2.hudeditor.element.Property;
+import com.timepath.tf2.io.util.Element;
+import com.timepath.tf2.io.util.Property;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.RandomAccessFile;

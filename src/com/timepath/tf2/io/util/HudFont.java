@@ -1,4 +1,4 @@
-package com.timepath.tf2.hudeditor.element;
+package com.timepath.tf2.io.util;
 
 import java.awt.Font;
 import java.awt.GraphicsEnvironment;

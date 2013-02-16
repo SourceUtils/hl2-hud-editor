@@ -3,7 +3,6 @@ package com.timepath.plaf.x;
 import com.timepath.io.FileUtils;
 import com.timepath.plaf.OS;
 import com.timepath.tf2.hudeditor.Main;
-import java.awt.Component;
 import java.awt.FileDialog;
 import java.awt.Frame;
 import java.awt.Toolkit;
@@ -125,8 +124,7 @@ public class NativeFileChooser {
         cmd.add("--file-selection");
         if(directoryMode) {
             cmd.add("--directory");
-        }
-        if(saveDialog) {
+        } else if(saveDialog) {
             cmd.add("--save");
         }
         cmd.add(root != null ? "--filename=" + root.getPath() : "");
