@@ -12,6 +12,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
+import java.lang.reflect.InvocationTargetException;
 import java.net.URISyntaxException;
 import java.net.URLDecoder;
 import java.security.MessageDigest;
@@ -21,6 +22,7 @@ import java.util.Arrays;
 import java.util.Comparator;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import javax.swing.SwingUtilities;
 import javax.swing.tree.DefaultMutableTreeNode;
 
 /**
@@ -51,12 +53,19 @@ public class Utils {
     }
 
     public static String normalisePath(String str) {
+        LOG.log(Level.INFO, "Normalising {0}", str);
 //        try {
 //            return new URI(str).normalize().getPath();
 //        } catch(URISyntaxException ex) {
 //            Logger.getLogger(Utils.class.getName()).log(Level.SEVERE, null, ex);
 //        }
-        str = str.replaceAll("\\\\", File.separator).replaceAll("/", File.separator); // slash consistency
+        // TODO: FIXME
+//        if(str.indexOf('\\') != -1) {
+//            str = str.replaceAll("\\\\", File.separator);
+//        }
+//        if(str.indexOf('/') != -1) {
+//            str = str.replaceAll("/", File.separator); // slash consistency
+//        }
         while(str.indexOf(File.separator + File.separator) != -1) {
             str = str.replaceAll(File.separator + File.separator, File.separator);
         }
@@ -150,90 +159,5 @@ public class Utils {
         return ret;
     }
 
-    public static Comparator<File> dirAlphaComparator = new Comparator<File>() {
-        /**
-         * Alphabetically sorts directories before files ignoring case.
-         */
-        @Override
-        public int compare(File a, File b) {
-            if(a.isDirectory() && !b.isDirectory()) {
-                return -1;
-            } else if(!a.isDirectory() && b.isDirectory()) {
-                return 1;
-            } else {
-                return a.getName().compareToIgnoreCase(b.getName());
-            }
-        }
-    };
-
-    public static void recurseDirectoryToNode(File root, final DefaultMutableTreeNode parent) {
-        String[] blacklist = {".mp3", ".exe", ".sh", ".dll", ".dylib", ".so",
-                              ".ttf", ".bik", ".mov", ".cfg", ".cache", ".manifest",
-                              ".frag", ".vert", ".tga", ".png", ".html", ".wav",
-                              ".ico", ".uifont", ".xml", ".css", ".dic", ".conf",
-                              ".pak", ".py", ".flt", ".mix", ".asi", ".checksum",
-                              ".xz", ".log", ".doc", ".webm", ".jpg", ".psd", ".avi",
-                              ".zip", ".bin"};
-        final File[] fileList = root.listFiles();
-        if(fileList.length == 0) {
-            return;
-        }
-        Arrays.sort(fileList, dirAlphaComparator);
-        for(int i = 0; i < fileList.length; i++) {
-            final DefaultMutableTreeNode child = new DefaultMutableTreeNode();
-            child.setUserObject(fileList[i]);
-            if(fileList[i].isDirectory()) {
-                recurseDirectoryToNode(fileList[i], child);
-                if(child.getChildCount() == 0) {
-                    continue;
-                }
-                parent.add(child);
-            } else {
-                boolean flag = false;
-                for(int j = 0; j < blacklist.length; j++) {
-                    if(fileList[i].getName().endsWith(blacklist[j])) {
-                        flag = true;
-                        break;
-                    }
-                }
-                if(flag) {
-                    continue;
-                }
-                final int idx = i;
-                Thread t = new Thread(new Runnable() {
-                    public void run() {
-                        if(fileList[idx].getName().endsWith(".txt")
-                           || fileList[idx].getName().endsWith(".vdf")
-                           || fileList[idx].getName().endsWith(".layout")
-                           || fileList[idx].getName().endsWith(".menu")
-                           || fileList[idx].getName().endsWith(".styles")) {
-                            VDF.analyze(fileList[idx], child);
-                        } else if(fileList[idx].getName().endsWith(".res")) {
-                            RES.analyze(fileList[idx], child);
-                        } else if(fileList[idx].getName().endsWith(".vmt")) {
-//                            VDF.analyze(fileList[idx], child);
-                        } else if(fileList[idx].getName().endsWith(".vtf")) {
-                            VTF v = VTF.load(fileList[idx]);
-                            child.setUserObject(v);
-                        } else if(fileList[idx].getName().endsWith(".gcf")) {
-                            try {
-                                GCF g = new GCF(fileList[idx]);
-                                child.setUserObject(g);
-                                g.analyze(g, child);
-                            } catch(IOException ex) {
-                                Logger.getLogger(Utils.class.getName()).log(Level.SEVERE, null, ex);
-                            }
-                        }
-                        parent.add(child);
-                    }
-                });
-                boolean multi = false;
-                if(multi) {
-                    t.start();
-                } else {
-                    t.run();
-                }
-            }
-        }
-    }
+    
 }

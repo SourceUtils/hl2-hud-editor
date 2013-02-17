@@ -21,6 +21,7 @@ import java.util.logging.FileHandler;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.logging.SimpleFormatter;
+import java.util.prefs.BackingStoreException;
 import java.util.prefs.Preferences;
 import javax.swing.SwingUtilities;
 import net.tomahawk.XFileDialog;
@@ -140,8 +141,8 @@ public class Main {
         LOG.log(Level.CONFIG, "Env = {0}", System.getenv().toString());
         LOG.log(Level.CONFIG, "Properties = {0}", System.getProperties().toString());
 
-        int port = prefs.getInt("port", 0);
-        if(port != 0) { // May not have been removed on shutdown
+        int port = prefs.getInt("port", -1);
+        if(port != -1) { // May not have been removed on shutdown
             LOG.info("Checking for daemon...");
             if(!startClient(port, args)) {
                 LOG.info("Daemon not running, starting...");
@@ -169,6 +170,7 @@ public class Main {
             final ServerSocket sock = new ServerSocket(port, 0, InetAddress.getByName(null)); // cannot use java7 InetAddress.getLoopbackAddress(). On windows, this prevents firewall warnings. It's also good for security in general
             port = sock.getLocalPort();
             prefs.putInt("port", port);
+            prefs.flush();
 
             LOG.log(Level.INFO, "Listening on port {0}", port);
 
@@ -177,6 +179,11 @@ public class Main {
                 public void run() {
                     LOG.info("Server shutting down...");
                     prefs.remove("port");
+                    try {
+                        prefs.flush();
+                    } catch(BackingStoreException ex) {
+                        Logger.getLogger(Main.class.getName()).log(Level.WARNING, null, ex);
+                    }
                 }
             });
 

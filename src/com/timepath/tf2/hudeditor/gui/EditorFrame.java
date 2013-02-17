@@ -18,6 +18,8 @@ import com.timepath.tf2.io.util.Element;
 import com.timepath.tf2.io.util.Property;
 import com.timepath.tf2.io.GCF;
 import com.timepath.tf2.io.GCF.DirectoryEntry;
+import com.timepath.tf2.io.RES;
+import com.timepath.tf2.io.VDF;
 import com.timepath.tf2.io.VTF;
 import com.timepath.tf2.io.test.VCCDTest;
 import com.timepath.tf2.io.test.VTFTest;
@@ -59,6 +61,7 @@ import java.io.FilenameFilter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.lang.reflect.InvocationTargetException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
@@ -68,6 +71,8 @@ import java.text.DateFormat;
 import java.text.MessageFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
@@ -107,6 +112,7 @@ import javax.swing.event.TreeSelectionListener;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
+import javax.swing.tree.TreePath;
 import org.java.ayatana.ApplicationMenu;
 import org.java.ayatana.AyatanaDesktop;
 
@@ -680,8 +686,7 @@ public final class EditorFrame extends javax.swing.JFrame {
 //
 //        propTable.clear();
 //    }
-
-    private void load(File root) {
+    private void load(final File root) {
         if(root == null) {
             return;
         }
@@ -721,46 +726,146 @@ public final class EditorFrame extends javax.swing.JFrame {
             }
 //            close();
 
-//            SwingWorker<Void, Void> worker = new SwingWorker<Void, Void>() {
-//
-//                @Override
-//                public Void doInBackground() {
-//                    while(!isCancelled()) {
-//                    }
-//                    return null;
-//                }
-//
-//                @Override
-//                public void done() {
-//                }
-//
-//                @Override
-//                protected void process(List<Void> chunks) {
-//                }
-//
-//            };
-//            worker.execute();
-
-            this.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
-            final long start = System.currentTimeMillis();
-            DefaultMutableTreeNode project = new DefaultMutableTreeNode();
-            Utils.recurseDirectoryToNode(root, project);
-            project.setUserObject(root.getName());
-            fileSystemRoot.add(project);
-            fileTree.setSelectionRow(fileSystemRoot.getIndex(project));
-            fileTree.requestFocusInWindow();
-
-            DefaultTreeModel model = (DefaultTreeModel) fileTree.getModel();
-            model.reload();
-            fileTree.setSelectionRow(0);
-
-            SwingUtilities.invokeLater(new Runnable() {
-                @Override
+            new Thread(new Runnable() {
                 public void run() {
+//                    SwingUtilities.invokeLater(new Runnable() {
+//                        @Override
+//                        public void run() {
+                            EditorFrame.this.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
+//                        }
+//                    });
+                    final DefaultMutableTreeNode project = new DefaultMutableTreeNode();
+                    project.setUserObject(root.getName());
+                    connectNodes(fileSystemRoot, project);
+                    DefaultTreeModel model = (DefaultTreeModel) fileTree.getModel();
+                    model.reload();
+                    final long start = System.currentTimeMillis();
+                    recurseDirectoryToNode(root, project);
                     LOG.log(Level.INFO, "Loaded hud - took {0}ms", (System.currentTimeMillis() - start));
-                    setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
+                    fileTree.expandPath(new TreePath(project.getPath()));
+                    fileTree.setSelectionRow(fileSystemRoot.getIndex(project));
+                    fileTree.requestFocusInWindow();
+                    EditorFrame.this.setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
+                }
+            }).start();
+        }
+    }
+
+    public static Comparator<File> dirAlphaComparator = new Comparator<File>() {
+        /**
+         * Alphabetically sorts directories before files ignoring case.
+         */
+        @Override
+        public int compare(File a, File b) {
+            if(a.isDirectory() && !b.isDirectory()) {
+                return -1;
+            } else if(!a.isDirectory() && b.isDirectory()) {
+                return 1;
+            } else {
+                return a.getName().compareToIgnoreCase(b.getName());
+            }
+        }
+    };
+
+    private synchronized void connectNodes(final DefaultMutableTreeNode parent, final DefaultMutableTreeNode child) {
+        try {
+            SwingUtilities.invokeAndWait(new Runnable() {
+                public void run() {
+//                    parent.add(child);
+                    DefaultTreeModel model = (DefaultTreeModel) fileTree.getModel();
+                    model.insertNodeInto(child, parent, parent.getChildCount());
                 }
             });
+        } catch(InterruptedException ex) {
+            Logger.getLogger(Utils.class.getName()).log(Level.SEVERE, null, ex);
+        } catch(InvocationTargetException ex) {
+            Logger.getLogger(Utils.class.getName()).log(Level.SEVERE, null, ex);
+        }
+    }
+
+    public void recurseDirectoryToNode(File root, final DefaultMutableTreeNode parent) {
+        final String[] blacklist = {".mp3", ".exe", ".sh", ".dll", ".dylib", ".so",
+                                    ".ttf", ".bik", ".mov", ".cfg", ".cache", ".manifest",
+                                    ".frag", ".vert", ".tga", ".png", ".html", ".wav",
+                                    ".ico", ".uifont", ".xml", ".css", ".dic", ".conf",
+                                    ".pak", ".py", ".flt", ".mix", ".asi", ".checksum",
+                                    ".xz", ".log", ".doc", ".webm", ".jpg", ".psd", ".avi",
+                                    ".zip", ".bin"};
+        final File[] fileList = root.listFiles();
+        final Thread[] threads = new Thread[fileList.length];
+        if(fileList.length == 0) {
+            return;
+        }
+        Arrays.sort(fileList, dirAlphaComparator);
+        for(int i = 0; i < fileList.length; i++) {
+            final File f = fileList[i];
+            final DefaultMutableTreeNode child = new DefaultMutableTreeNode();
+            child.setUserObject(f); // Unknown = File
+            if(f.isDirectory()) {
+                //<editor-fold defaultstate="collapsed" desc="Validate">
+                if(f.getName().toLowerCase().equals("common")
+                   || f.getName().toLowerCase().equals("downloading")
+                   || f.getName().toLowerCase().equals("temp")
+                   || f.getName().toLowerCase().equals("sourcemods")) {
+                    continue;
+                }
+                if(f.listFiles().length == 0) {
+                    continue;
+                }
+                //</editor-fold>
+                connectNodes(parent, child);
+                recurseDirectoryToNode(f, child);
+            } else {
+                //<editor-fold defaultstate="collapsed" desc="Validate">
+                boolean flag = false;
+                for(int j = 0; j < blacklist.length; j++) {
+                    if(f.getName().endsWith(blacklist[j])) {
+                        flag = true;
+                        break;
+                    }
+                }
+                if(flag) {
+                    continue;
+                }
+                //</editor-fold>
+                connectNodes(parent, child);
+                threads[i] = new Thread(new Runnable() {
+                    public void run() {
+                        if(f.getName().endsWith(".txt")
+                           || f.getName().endsWith(".vdf")
+                           || f.getName().endsWith(".layout")
+                           || f.getName().endsWith(".menu")
+                           || f.getName().endsWith(".styles")) {
+                            VDF.analyze(f, child);
+                        } else if(f.getName().endsWith(".res")) {
+                            RES.analyze(f, child);
+                        } else if(f.getName().endsWith(".vmt")) {
+//                            VDF.analyze(f, child);
+                        } else if(f.getName().endsWith(".vtf")) {
+                            VTF v = VTF.load(f);
+                            child.setUserObject(v);
+                        } else if(f.getName().endsWith(".gcf")) {
+                            try {
+                                GCF g = new GCF(f);
+                                child.setUserObject(g);
+                                g.analyze(g, child);
+                            } catch(IOException ex) {
+                                Logger.getLogger(Utils.class.getName()).log(Level.SEVERE, null, ex);
+                            }
+                        }
+                    }
+                });
+                threads[i].start();
+            }
+        }
+        for(int i = 0; i < threads.length; i++) {
+            try {
+                if(threads[i] != null) {
+                    threads[i].join();
+                }
+            } catch(InterruptedException ex) {
+                Logger.getLogger(Utils.class.getName()).log(Level.SEVERE, null, ex);
+            }
         }
     }
 
@@ -1002,7 +1107,7 @@ public final class EditorFrame extends javax.swing.JFrame {
                     for(int i = Math.max(v.mipCount - 8, 0); i < Math.max(v.mipCount - 5, v.mipCount); i++) {
                         try {
                             ImageIcon img = new ImageIcon(v.getImage(i));
-                            model.insertRow(model.getRowCount(), new Object[]{"mip["+i+"]", img, ""});
+                            model.insertRow(model.getRowCount(), new Object[]{"mip[" + i + "]", img, ""});
                         } catch(IOException ex) {
                             Logger.getLogger(EditorFrame.class.getName()).log(Level.SEVERE, null, ex);
                         }

@@ -40,6 +40,8 @@ public class VDF {
 //                    if(file.getName().equalsIgnoreCase("ClientScheme.res")) {
 //                        clientScheme(top);
 //                    }
+        } catch(StackOverflowError ex) {
+            LOG.log(Level.WARNING, "Taking too long on {0}", file);
         } catch(FileNotFoundException ex) {
             LOG.log(Level.SEVERE, null, ex);
         } finally {
@@ -92,7 +94,11 @@ public class VDF {
             } else if(line.startsWith("#")) {
                 String rest = line.substring(line.indexOf('#') + 1);
                 p.setKey("#" + rest);
-                p.setValue(rest.substring(rest.indexOf(" ")));
+                int idx2 = rest.indexOf(" ");
+                if(idx2 == -1) {
+                    idx2 = 0;
+                }
+                p.setValue(rest.substring(idx2));
                 p.setInfo("");
                 LOG.log(Level.FINE, "Carrying: {0}", line);
                 carried.add(p);
