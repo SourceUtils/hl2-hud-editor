@@ -33,6 +33,9 @@ import javax.swing.SwingUtilities;
 
 /**
  *
+ * OSX - http://i.imgur.com/KxiV3.jpg
+ * WIN - http://i.imgur.com/VqABM.jpg
+ *
  * @author timepath
  */
 @SuppressWarnings("serial")

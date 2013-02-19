@@ -1,6 +1,8 @@
 package com.timepath.tf2.hudeditor.gui;
 
 import apple.OSXAdapter;
+import com.boxysystems.jgoogleanalytics.FocusPoint;
+import com.boxysystems.jgoogleanalytics.JGoogleAnalyticsTracker;
 import com.timepath.plaf.OS;
 import com.timepath.plaf.linux.GtkFixer;
 import com.timepath.plaf.mac.Application;
@@ -670,6 +672,7 @@ public final class EditorFrame extends javax.swing.JFrame {
         this.createBufferStrategy(2);
         if(Main.myVer != null && autoCheck) {
             this.checkForUpdates();
+            track("ProgramLoad");
         }
     }
     //</editor-fold>
@@ -1260,6 +1263,19 @@ public final class EditorFrame extends javax.swing.JFrame {
             }
         }
         GtkFixer.installGtkPopupBugWorkaround(); // Apply clearlooks java menu fix if applicable
+    }
+
+    /**
+     * Google analytics tracking code
+     * @param state
+     */
+    private void track(String state) {
+        if(Main.myVer == null) {
+            return;
+        }
+        JGoogleAnalyticsTracker tracker = new JGoogleAnalyticsTracker(Main.appName, Main.myVer, "UA-35189411-2");
+        FocusPoint focusPoint = new FocusPoint(state);
+        tracker.trackAsynchronously(focusPoint);
     }
 
     private class EditorMenuBar extends JMenuBar {
