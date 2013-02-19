@@ -4,7 +4,9 @@ import com.timepath.tf2.io.util.Element;
 import com.timepath.tf2.io.util.Element.Alignment;
 import java.awt.AlphaComposite;
 import java.awt.Color;
+import java.awt.Cursor;
 import java.awt.Dimension;
+import java.awt.FontMetrics;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.GraphicsConfiguration;
@@ -15,6 +17,8 @@ import java.awt.Rectangle;
 import java.awt.RenderingHints;
 import java.awt.Shape;
 import java.awt.Toolkit;
+import java.awt.event.ComponentAdapter;
+import java.awt.event.ComponentEvent;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
@@ -36,6 +40,7 @@ public final class Canvas extends JPanel implements MouseListener, MouseMotionLi
 
     private static final Logger LOG = Logger.getLogger(Canvas.class.getName());
 
+    //<editor-fold defaultstate="collapsed" desc="Variables">
     public double scale = 1;
 
     public Dimension screen;
@@ -58,39 +63,38 @@ public final class Canvas extends JPanel implements MouseListener, MouseMotionLi
 
     private BufferedImage elementImage;
 
-    private static final AlphaComposite ac = AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.25f);
+    private static float gridAlpha = 0.25f;
 
-    //<editor-fold defaultstate="collapsed" desc="Utility methods">
-    /**
-     * Finds the greatest common multiple
-     *
-     * @param a
-     * @param b
-     *
-     * @return
-     */
-    public static long gcm(long a, long b) {
-        return b == 0 ? a : gcm(b, a % b);
-    }
+    private static float elementBgAlpha = 0.25f;
 
-    public static Rectangle fitRect(Point p1, Point p2, Rectangle r) {
-        Rectangle result = new Rectangle(r);
-        result.x = Math.min(p1.x, p2.x);
-        result.y = Math.min(p1.y, p2.y);
-        result.width = Math.abs(p2.x - p1.x);
-        result.height = Math.abs(p2.y - p1.y);
-        return result;
-    }
+    private static float selectAlpha = 0.25f;
+
+    private static final AlphaComposite ac = AlphaComposite.SrcOver;
     //</editor-fold>
 
-    /**
-     * Creates new form Canvas
-     */
     public Canvas() {
         initComponents();
         loadBackground();
         initInput();
         this.setPreferredSize(new Dimension(640, 480));
+        this.addComponentListener(new ComponentAdapter() {
+
+            @Override
+            public void componentResized(ComponentEvent e) {
+                offX = ((getWidth() - internal.width) / 2);
+                offY = ((getHeight() - internal.height) / 2);
+
+                if(elementImage != null) {
+                    BufferedImage img = new BufferedImage(screen.width + (2 * offX), screen.height + (2 * offY), BufferedImage.TYPE_INT_ARGB);
+                    Graphics2D ge = img.createGraphics();
+                    ge.translate((img.getWidth() - elementImage.getWidth()) / 2, (img.getHeight() - elementImage.getHeight()) / 2);
+                    ge.drawImage(elementImage, 0, 0, Canvas.this);
+                    ge.dispose();
+                    elementImage = toCompatibleImage(img);
+                }
+            }
+
+        });
     }
 
     /**
@@ -172,8 +176,6 @@ public final class Canvas extends JPanel implements MouseListener, MouseMotionLi
         return r;
     }
 
-    private Dimension size;
-
     @Override
     protected void paintComponent(Graphics graphics) {
 //        Rectangle outliers = getOutliers();
@@ -182,25 +184,14 @@ public final class Canvas extends JPanel implements MouseListener, MouseMotionLi
 //        int top = -outliers.y;
 //        int down = outliers.height + outliers.y - internal.height;
 //        this.resize(this.getWidth() + left + right, this.getHeight() + top + down);
-        offX = ((this.getWidth() - internal.width) / 2);
-        offY = ((this.getHeight() - internal.height) / 2);
+
+//        offX = ((this.getWidth() - internal.width) / 2);
+//        offY = ((this.getHeight() - internal.height) / 2);
 
 //        offX = ((this.getWidth() - internal.width) / 2) + ((-outliers.x) - (outliers.width + outliers.x - internal.width));
 //        offY = ((this.getHeight() - internal.height) / 2) + ((-outliers.y) - (outliers.height + outliers.y - internal.height));
 
 //        super.paintComponent(graphics);
-
-        if(size == null || !size.equals(getSize())) {
-            size = getSize();
-            if(elementImage != null) {
-                BufferedImage img = new BufferedImage(screen.width + offX + offX, screen.height + offY + offY, BufferedImage.TYPE_INT_ARGB);
-                Graphics2D ge = img.createGraphics();
-                ge.translate((img.getWidth() - elementImage.getWidth()) / 2, (img.getHeight() - elementImage.getHeight()) / 2);
-                ge.drawImage(elementImage, 0, 0, this);
-                ge.dispose();
-                elementImage = toCompatibleImage(img);
-            }
-        }
 
         Graphics2D g = (Graphics2D) graphics;
 
@@ -223,12 +214,13 @@ public final class Canvas extends JPanel implements MouseListener, MouseMotionLi
         g.drawImage(gridbg, offX, offY, this);
 
         if(elementImage == null) {
-            BufferedImage img = new BufferedImage(screen.width + offX + offX, screen.height + offY + offY, BufferedImage.TYPE_INT_ARGB);
+            BufferedImage img = new BufferedImage(screen.width + (2 * offX), screen.height + (2 * offY), BufferedImage.TYPE_INT_ARGB);
             Graphics2D ge = img.createGraphics();
             ge.translate(offX, offY);
 
             Collections.sort(elements, layerSort);
             for(int i = 0; i < elements.size(); i++) {
+                ge.setComposite(AlphaComposite.SrcOver);
                 paintElement(elements.get(i), ge);
             }
 
@@ -238,7 +230,7 @@ public final class Canvas extends JPanel implements MouseListener, MouseMotionLi
         g.drawImage(elementImage, 0, 0, this);
 
         //<editor-fold defaultstate="collapsed" desc="Selection rectangle">
-        g.setComposite(ac);
+        g.setComposite(ac.derive(selectAlpha));
         g.setColor(Color.CYAN.darker());
         g.fillRect(offX + selectRect.x + 1, offY + selectRect.y + 1, selectRect.width - 2, selectRect.height - 2);
         g.setColor(Color.BLUE);
@@ -261,7 +253,7 @@ public final class Canvas extends JPanel implements MouseListener, MouseMotionLi
         BufferedImage resizedImage = new BufferedImage(w, h, type);
         Graphics2D g = resizedImage.createGraphics();
 
-        g.setComposite(AlphaComposite.Src);
+        g.setComposite(ac);
         g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR);
         g.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
         g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
@@ -281,8 +273,7 @@ public final class Canvas extends JPanel implements MouseListener, MouseMotionLi
         BufferedImage img = new BufferedImage(screen.width, screen.height, BufferedImage.TYPE_INT_ARGB);
         Graphics2D g = img.createGraphics();
 
-//        g.setComposite(AlphaComposite.Src);
-        g.setComposite(ac);
+        g.setComposite(ac.derive(gridAlpha));
         g.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_SPEED);
 
         g.setColor(GRID_COLOR);
@@ -316,8 +307,8 @@ public final class Canvas extends JPanel implements MouseListener, MouseMotionLi
 
     private void paintElement(Element e, Graphics2D g) {
         if(e.getWidth() > 0 && e.getHeight() > 0) { // invisible? don't waste time
-            int elementX = (int) Math.round((double) e.getX() * ((double) screen.width / (double) internal.width) * scale);// + offX;
-            int elementY = (int) Math.round((double) e.getY() * ((double) screen.height / (double) internal.height) * scale);// + offY;
+            int elementX = (int) Math.round((double) e.getX() * ((double) screen.width / (double) internal.width) * scale);
+            int elementY = (int) Math.round((double) e.getY() * ((double) screen.height / (double) internal.height) * scale);
             int elementW = (int) Math.round((double) e.getWidth() * ((double) screen.width / (double) internal.width) * scale);
             int elementH = (int) Math.round((double) e.getHeight() * ((double) screen.height / (double) internal.height) * scale);
             if(selectedElements.contains(e)) {
@@ -331,12 +322,14 @@ public final class Canvas extends JPanel implements MouseListener, MouseMotionLi
 
             if(e.getFgColor() != null) {
                 g.setColor(e.getFgColor());
-                if(e.getLabelText() == null) {
-                    g.fillRect(elementX, elementY, elementW - 1, elementH - 1);
-                }
+                g.setComposite(ac.derive(elementBgAlpha));
+                g.fillRect(elementX, elementY, elementW - 1, elementH - 1);
             }
 
             if(e.getImage() != null) {
+                if(e.getFgColor() != null) {
+                    g.setComposite(ac.derive(e.getFgColor().getAlpha()));
+                }
                 g.drawImage(e.getImage(), elementX, elementY, elementW, elementH, this);
             }
 
@@ -347,24 +340,37 @@ public final class Canvas extends JPanel implements MouseListener, MouseMotionLi
             }
             g.drawRect(elementX, elementY, elementW - 1, elementH - 1);
 
-
             if(hoveredElement == e) {
                 g.setColor(new Color(255 - g.getColor().getRed(), 255 - g.getColor().getGreen(), 255 - g.getColor().getBlue()));
-                //                g.drawRect(elementX + offX, elementY + offY, e.getWidth() - 1, e.getHeight() - 1); // border
+                g.setComposite(ac);
+//                g.drawRect(elementX + offX, elementY + offY, e.getWidth() - 1, e.getHeight() - 1); // border
                 g.drawRect(elementX + 1, elementY + 1, elementW - 3, elementH - 3); // inner
-                //                g.drawRect(elementX + offX - 1, elementY + offY - 1, e.getWidth() + 1, e.getHeight() + 1); // outer
+//                g.drawRect(elementX + offX - 1, elementY + offY - 1, e.getWidth() + 1, e.getHeight() + 1); // outer
             }
 
             if(e.getLabelText() != null && e.getLabelText().length() != 0) {
                 if(e.getFgColor() != null) {
                     g.setColor(e.getFgColor());
+                } else {
+                    g.setColor(Color.WHITE);
                 }
+                g.setComposite(ac);
                 int screenRes = Toolkit.getDefaultToolkit().getScreenResolution();
-                int fontSize = (int) Math.round(12.0 * screenRes / 72.0);
+                int fontSize = (int) Math.round(14.0 * screenRes / 72.0); // Java2D = 72 DPI
+                if(e.getFont() == null) {
+                    e.setFont(g.getFont()); // a default
+                }
+                FontMetrics fm = getFontMetrics(e.getFont());
+                int width = fm.stringWidth(e.getLabelText());
                 g.setFont(e.getFont());
                 g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-
-                g.drawString(e.getLabelText(), elementX, elementY + fontSize);
+                if(e.getTextAlignment() == Alignment.Left) {
+                    g.drawString(e.getLabelText(), elementX, elementY + fontSize);
+                } else if(e.getTextAlignment() == Alignment.Right) {
+                    g.drawString(e.getLabelText(), (elementX + elementW) - width, elementY + fontSize);
+                } else if(e.getTextAlignment() == Alignment.Center) {
+                    g.drawString(e.getLabelText(), elementX + ((elementW - width) / 2), elementY + fontSize);
+                }
             }
             g.setClip(clip);
         }
@@ -442,6 +448,7 @@ public final class Canvas extends JPanel implements MouseListener, MouseMotionLi
         int button = event.getButton();
 
         if(SwingUtilities.isLeftMouseButton(event)) {
+            this.setCursor(Cursor.getDefaultCursor());
             isDragSelecting = false;
             isDragMoving = false;
             dragStart = null;
@@ -474,6 +481,7 @@ public final class Canvas extends JPanel implements MouseListener, MouseMotionLi
         if(isDragSelecting) {
             select(dragStart, p, event.isControlDown());
         } else if(isDragMoving) {
+            this.setCursor(Cursor.getPredefinedCursor(Cursor.MOVE_CURSOR));
             _offX += p.x - dragStart.x;
             _offY += p.y - dragStart.y;
             elementImage = null;
@@ -541,6 +549,10 @@ public final class Canvas extends JPanel implements MouseListener, MouseMotionLi
         }
     }
 
+    /**
+     * Special exceptions are handled here
+     * @param element
+     */
     public void load(Element element) {
         if(Element.areas.containsKey(element.getFile())) {
             Element p = Element.areas.get(element.getFile());
@@ -549,6 +561,10 @@ public final class Canvas extends JPanel implements MouseListener, MouseMotionLi
         } else if(element.getFile().equalsIgnoreCase("HudPlayerHealth")) { // better, but still not perfect
             // move by "CHealthAccountPanel" delta_item_x" and "delta_item_start_y"
             Element p = Element.areas.get("CHealthAccountPanel");
+            p.addChild(element);
+            this.addElement(p);
+        } else if(element.getFile().equalsIgnoreCase("HudAmmoWeapons")) {
+            Element p = Element.areas.get("HudWeaponAmmo");
             p.addChild(element);
             this.addElement(p);
         }
@@ -610,28 +626,68 @@ public final class Canvas extends JPanel implements MouseListener, MouseMotionLi
         }
     }
 
-    // List of currently selected elements
+    //<editor-fold defaultstate="collapsed" desc="Hovers">
     private Element hoveredElement;
 
     public Element getHovered() {
         return hoveredElement;
     }
 
-    void hover(Element e) {
+    private void hover(Element e) {
         if(hoveredElement == e) { // don't waste time re-drawing
             return;
         }
-        Rectangle oldBounds = null;
         if(hoveredElement != null) { // there is something to clean up
-            oldBounds = hoveredElement.getBounds();
+            this.doRepaint(hoveredElement.getBounds());
         }
         hoveredElement = e;
-        if(oldBounds != null) {
-            this.doRepaint(oldBounds);
-        }
         if(e != null) {
             this.doRepaint(e.getBounds());
         }
+    }
+    //</editor-fold>
+
+    public void select(Point p1, Point p2, boolean ctrl) {
+        if(p1 != null && p2 != null) {
+            Rectangle originalSelectRect = new Rectangle(selectRect);
+            selectRect = fitRect(p1, p2, selectRect);
+            for(int i = 0; i < elements.size(); i++) {
+                Element e = elements.get(i);
+                if(selectRect.intersects(e.getBounds())) {
+                    select(e); // TODO: not perfect, I want the selection inverted as it goes over
+                } else {
+                    if(!ctrl) {
+                        deselect(e);
+                    }
+                }
+            }
+            // This repaints the overlap a second time. A minor inefficiency...
+            this.doRepaint(new Rectangle(originalSelectRect.x, originalSelectRect.y, originalSelectRect.width + 1, originalSelectRect.height + 1));
+            this.doRepaint(new Rectangle(this.selectRect.x, this.selectRect.y, this.selectRect.width + 1, this.selectRect.height + 1));
+        }
+    }
+
+
+    //<editor-fold defaultstate="collapsed" desc="Utility methods">
+    /**
+     * Finds the greatest common multiple
+     *
+     * @param a
+     * @param b
+     *
+     * @return
+     */
+    public static long gcm(long a, long b) {
+        return b == 0 ? a : gcm(b, a % b);
+    }
+
+    public static Rectangle fitRect(Point p1, Point p2, Rectangle r) {
+        Rectangle result = new Rectangle(r);
+        result.x = Math.min(p1.x, p2.x);
+        result.y = Math.min(p1.y, p2.y);
+        result.width = Math.abs(p2.x - p1.x);
+        result.height = Math.abs(p2.y - p1.y);
+        return result;
     }
 
     // Checks if poing p is inside the bounds of any element
@@ -668,28 +724,8 @@ public final class Canvas extends JPanel implements MouseListener, MouseMotionLi
         return smallest;
     }
 
-    public void select(Point p1, Point p2, boolean ctrl) {
-        if(p1 != null && p2 != null) {
-            Rectangle originalSelectRect = new Rectangle(selectRect);
-            selectRect = fitRect(p1, p2, selectRect);
-            for(int i = 0; i < elements.size(); i++) {
-                Element e = elements.get(i);
-                if(selectRect.intersects(e.getBounds())) {
-                    select(e); // TODO: not perfect, I want the selection inverted as it goes over
-                } else {
-                    if(!ctrl) {
-                        deselect(e);
-                    }
-                }
-            }
-            // This repaints the overlap twice. A minor inefficiency...
-            this.doRepaint(new Rectangle(originalSelectRect.x, originalSelectRect.y, originalSelectRect.width + 1, originalSelectRect.height + 1));
-            this.doRepaint(new Rectangle(this.selectRect.x, this.selectRect.y, this.selectRect.width + 1, this.selectRect.height + 1));
-        }
-    }
-
     public void translate(Element e, double dx, double dy) { // todo: scaling (scale 5 = 5 pixels to move 1 x/y co-ord)
-//        Rectangle originalBounds = new Rectangle(e.getBounds());
+        //        Rectangle originalBounds = new Rectangle(e.getBounds());
         if(e.getXAlignment() == Alignment.Right) {
             dx *= -1;
         }
@@ -702,8 +738,8 @@ public final class Canvas extends JPanel implements MouseListener, MouseMotionLi
         double scaleY = ((double) screen.height / (double) internal.height);
         dy = Math.round(dy / scaleY);
         e.setLocalY(e.getLocalY() + dy);
-//        this.doRepaint(originalBounds);
-//        this.doRepaint(e.getBounds());
+        //        this.doRepaint(originalBounds);
+        //        this.doRepaint(e.getBounds());
         this.repaint(); // helps
     }
 
@@ -715,5 +751,6 @@ public final class Canvas extends JPanel implements MouseListener, MouseMotionLi
             this.doRepaint(e.getBounds());
         }
     }
+    //</editor-fold>
     //</editor-fold>
 }

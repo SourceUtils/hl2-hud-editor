@@ -25,8 +25,6 @@ public class Element implements ViewableData {
 
     private static final Logger LOG = Logger.getLogger(Element.class.getName());
 
-
-
     public static Map<String, Element> areas = new HashMap<String, Element>();
 
     public Element(String name, String info) {
@@ -38,7 +36,7 @@ public class Element implements ViewableData {
 
     private Dimension internal = new Dimension(640, 480);
 
-    private double scale;
+    private double scale = 1;
 
     public String save() {
         String str = "";
@@ -369,6 +367,14 @@ public class Element implements ViewableData {
                 this.setLocalHeight(Integer.parseInt(v));
             } else if("labelText".equalsIgnoreCase(k)) {
                 this.setLabelText(v);
+            } else if("textAlignment".equalsIgnoreCase(k)) {
+                if(v.equalsIgnoreCase("center")) {
+                    this.setTextAlignment(Alignment.Center);
+                } else if(v.equalsIgnoreCase("right")) {
+                    this.setTextAlignment(Alignment.Right);
+                } else {
+                    this.setTextAlignment(Alignment.Left);
+                }
             } else if("ControlName".equalsIgnoreCase(k)) { // others are areas
                 this.setControlName(v);
             } else if("fgcolor".equalsIgnoreCase(k)) {
@@ -558,9 +564,6 @@ public class Element implements ViewableData {
             } else {
                 LOG.log(Level.WARNING, "Unknown control: {0}", controlName);
             }
-            if(this.getFgColor() == null) {
-                this.setFgColor(new Color((int) (Math.random() * 255), (int) (Math.random() * 255), (int) (Math.random() * 255), 32));
-            }
         } else if(this.getFile().equalsIgnoreCase("hudlayout")) {
             areas.put(this.name, this);
 //            System.out.println("adding " + this.name + " to areas");
@@ -666,6 +669,16 @@ public class Element implements ViewableData {
 
     public void setLabelText(String labelText) {
         this.labelText = labelText;
+    }
+
+    private Alignment _textAlignment = Alignment.Left;
+
+    public Alignment getTextAlignment() {
+        return _textAlignment;
+    }
+
+    public void setTextAlignment(Alignment _yAlignment) {
+        this._textAlignment = _yAlignment;
     }
 
     private Image image;

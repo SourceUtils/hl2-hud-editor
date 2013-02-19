@@ -767,13 +767,15 @@ public final class EditorFrame extends javax.swing.JFrame {
         }
     };
 
-    private synchronized void connectNodes(final DefaultMutableTreeNode parent, final DefaultMutableTreeNode child) {
+    private void connectNodes(final DefaultMutableTreeNode parent, final DefaultMutableTreeNode child) {
         try {
             SwingUtilities.invokeAndWait(new Runnable() {
                 public void run() {
 //                    parent.add(child);
                     DefaultTreeModel model = (DefaultTreeModel) fileTree.getModel();
-                    model.insertNodeInto(child, parent, parent.getChildCount());
+                    synchronized(model) {
+                        model.insertNodeInto(child, parent, parent.getChildCount());
+                    }
                 }
             });
         } catch(InterruptedException ex) {
@@ -833,6 +835,7 @@ public final class EditorFrame extends javax.swing.JFrame {
                     public void run() {
                         if(f.getName().endsWith(".txt")
                            || f.getName().endsWith(".vdf")
+                           || f.getName().endsWith(".pop")
                            || f.getName().endsWith(".layout")
                            || f.getName().endsWith(".menu")
                            || f.getName().endsWith(".styles")) {
@@ -1387,7 +1390,12 @@ public final class EditorFrame extends javax.swing.JFrame {
                                                         KeyStroke.getKeyStroke(KeyEvent.VK_F5, 0)) {
                 @Override
                 public void actionPerformed(ActionEvent ae) {
-                    load(lastLoaded);
+                    new Thread() {
+                        @Override
+                        public void run() {
+                            load(lastLoaded);
+                        }
+                    }.start();
                 }
             });
             reloadItem.setEnabled(false);
@@ -1474,7 +1482,6 @@ public final class EditorFrame extends javax.swing.JFrame {
                                                            KeyStroke.getKeyStroke(KeyEvent.VK_A, state)) {
                 @Override
                 public void actionPerformed(ActionEvent ae) {
-                    LOG.info("Select All");
                     for(int i = 0; i < canvas.getElements().size(); i++) {
                         canvas.select(canvas.getElements().get(i));
                     }
