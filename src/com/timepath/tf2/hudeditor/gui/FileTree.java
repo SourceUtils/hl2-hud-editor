@@ -160,6 +160,7 @@ public class FileTree extends javax.swing.JTree {
     private void formMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_formMouseClicked
         if(SwingUtilities.isRightMouseButton(evt)) {
             int row = this.getClosestRowForLocation(evt.getX(), evt.getY());
+            if(row != -1) {
             Object clicked = this.getPathForRow(row).getLastPathComponent();
             this.setSelectionRow(row);
             if(clicked instanceof DefaultMutableTreeNode) {
@@ -185,6 +186,7 @@ public class FileTree extends javax.swing.JTree {
                 }
             } else {
                 LOG.log(Level.WARNING, "Unknown tree node {0}", clicked.getClass());
+            }
             }
             popupMenu.show(evt.getComponent(), evt.getX(), evt.getY());
         }

@@ -221,7 +221,7 @@ public class VTF implements ViewableData {
         File f = null;
         try {
             File dest = File.createTempFile(path.replaceAll("/", "_"), "");
-            LOG.log(Level.INFO, "Extracted to: {0}", dest);
+            LOG.log(Level.INFO, "Extracting {0} to {1}", new Object[]{path, dest});
             if(mats.extract(path, dest) != null) {
                 f = new File(path);
                 LOG.log(Level.INFO, "Loading {0}", f);

@@ -1,10 +1,9 @@
 package com.timepath.tf2.io.util;
 
-import com.timepath.tf2.io.util.ViewableData;
-import com.timepath.tf2.hudeditor.gui.Canvas;
 import com.timepath.tf2.io.RES;
 import com.timepath.tf2.io.VTF;
 import java.awt.Color;
+import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.Image;
 import java.awt.Rectangle;
@@ -26,7 +25,7 @@ public class Element implements ViewableData {
 
     private static final Logger LOG = Logger.getLogger(Element.class.getName());
 
-    Canvas canvas = new Canvas(); // TEMP
+
 
     public static Map<String, Element> areas = new HashMap<String, Element>();
 
@@ -34,6 +33,12 @@ public class Element implements ViewableData {
         this.name = name;
         this.info = info;
     }
+
+    private Dimension screen = new Dimension(640, 480);
+
+    private Dimension internal = new Dimension(640, 480);
+
+    private double scale;
 
     public String save() {
         String str = "";
@@ -118,10 +123,10 @@ public class Element implements ViewableData {
     }
 
     public Rectangle getBounds() {
-        int minX = (int) Math.round(this.getX() * ((double) canvas.screen.width / (double) canvas.internal.width) * canvas.scale);
-        int minY = (int) Math.round(this.getY() * ((double) canvas.screen.height / (double) canvas.internal.height) * canvas.scale);
-        int maxX = (int) Math.round(this.getWidth() * ((double) canvas.screen.width / (double) canvas.internal.width) * canvas.scale);
-        int maxY = (int) Math.round(this.getHeight() * ((double) canvas.screen.height / (double) canvas.internal.height) * canvas.scale);
+        int minX = (int) Math.round(this.getX() * ((double) screen.width / (double) internal.width) * scale);
+        int minY = (int) Math.round(this.getY() * ((double) screen.height / (double) internal.height) * scale);
+        int maxX = (int) Math.round(this.getWidth() * ((double) screen.width / (double) internal.width) * scale);
+        int maxY = (int) Math.round(this.getHeight() * ((double) screen.height / (double) internal.height) * scale);
         return new Rectangle(minX, minY, maxX + 1, maxY + 1);
     }
 
@@ -221,7 +226,7 @@ public class Element implements ViewableData {
 //            if(this.parent !hudRes= null) {
 //                return this.parent.getWidth() - wide;
 //            } else {
-            return canvas.internal.width - wide;
+            return internal.width - wide;
 //            }
         } else {
             return wide;
@@ -249,7 +254,7 @@ public class Element implements ViewableData {
     }
 
     public int getHeight() {
-        return (this.getHeightMode() == DimensionMode.Mode2 ? (this.parent != null ? this.parent.getHeight() - tall : canvas.internal.height - tall) : tall);
+        return (this.getHeightMode() == DimensionMode.Mode2 ? (this.parent != null ? this.parent.getHeight() - tall : internal.height - tall) : tall);
     }
 
     private DimensionMode _tallMode = DimensionMode.Mode1;
@@ -387,7 +392,7 @@ public class Element implements ViewableData {
                     continue;
                 }
                 try {
-                    VTF vtf = VTF.load("/tf/materials/HUD/" + v + ".vtf");
+                    VTF vtf = VTF.load(v + ".vtf");
                     if(vtf == null) {
                         continue;
                     }

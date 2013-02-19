@@ -90,8 +90,14 @@ public class GCF implements ViewableData {
         return str + (directoryEntries[idx].firstChildIndex != 0 ? "/" : "");
     }
 
+    /**
+     * TODO: fast directory extraction
+     * @param search
+     * @param dest
+     * @return
+     * @throws IOException
+     */
     public File extract(String search, File dest) throws IOException {
-        LOG.log(Level.INFO, "Extracting {0}", search);
         for(int i = 0; i < directoryEntries.length; i++) {
             String str = nameForDirectoryIndexRecursive(i);
             if(!str.equals(search)) {
@@ -99,7 +105,6 @@ public class GCF implements ViewableData {
             }
             return extract(i, dest);
         }
-        LOG.log(Level.INFO, "Could not extract {0}", search);
         return null;
     }
 

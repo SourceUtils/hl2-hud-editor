@@ -122,7 +122,7 @@ public class RES {
                 p.setKey("#" + rest.substring(0, rest.indexOf(' ')));
                 p.setValue(rest.substring(rest.indexOf(' ')));
                 p.setInfo("");
-                LOG.log(Level.INFO, "Carrying: {0}", line);
+                LOG.log(Level.FINE, "Carrying: {0}", line);
                 carried.add(p);
                 continue;
             } else if(line.startsWith("//")) {
