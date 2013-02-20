@@ -39,7 +39,7 @@ import javax.swing.SwingUtilities;
  * @author timepath
  */
 @SuppressWarnings("serial")
-public final class Canvas extends JPanel implements MouseListener, MouseMotionListener {
+public class Canvas extends JPanel implements MouseListener, MouseMotionListener {
 
     private static final Logger LOG = Logger.getLogger(Canvas.class.getName());
 
@@ -452,6 +452,9 @@ public final class Canvas extends JPanel implements MouseListener, MouseMotionLi
 
         if(SwingUtilities.isLeftMouseButton(event)) {
             this.setCursor(Cursor.getDefaultCursor());
+            if(isDragMoving) {
+                placed();
+            }
             isDragSelecting = false;
             isDragMoving = false;
             dragStart = null;
@@ -509,6 +512,10 @@ public final class Canvas extends JPanel implements MouseListener, MouseMotionLi
 
     //</editor-fold>
     //</editor-fold>
+
+    public void placed() {
+
+    }
 
     private boolean isDragSelecting;
 

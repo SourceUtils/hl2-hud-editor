@@ -734,7 +734,7 @@ public final class EditorFrame extends javax.swing.JFrame {
 //                    SwingUtilities.invokeLater(new Runnable() {
 //                        @Override
 //                        public void run() {
-                            EditorFrame.this.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
+                    EditorFrame.this.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
 //                        }
 //                    });
                     final DefaultMutableTreeNode project = new DefaultMutableTreeNode();
@@ -1098,16 +1098,7 @@ public final class EditorFrame extends javax.swing.JFrame {
                 if(nodeInfo instanceof Element) {
                     Element element = (Element) nodeInfo;
                     canvas.load(element);
-                    if(!element.getProps().isEmpty()) {
-                        element.validateDisplay();
-                        for(int i = 0; i < element.getProps().size(); i++) {
-                            Property entry = element.getProps().get(i);
-                            if(entry.getKey().equals("\\n")) {
-                                continue;
-                            }
-                            model.insertRow(model.getRowCount(), new Object[]{entry.getKey(), entry.getValue(), entry.getInfo()});
-                        }
-                    }
+                    loadProps(element);
                 } else if(nodeInfo instanceof VTF) {
                     VTF v = (VTF) nodeInfo;
                     for(int i = Math.max(v.mipCount - 8, 0); i < Math.max(v.mipCount - 5, v.mipCount); i++) {
@@ -1207,7 +1198,21 @@ public final class EditorFrame extends javax.swing.JFrame {
         //</editor-fold>
 
         //<editor-fold defaultstate="collapsed" desc="Canvas">
-        canvas = new Canvas();
+        canvas = new Canvas() {
+            @Override
+            public void placed() {
+                DefaultMutableTreeNode node = (DefaultMutableTreeNode) fileTree.getLastSelectedPathComponent();
+                if(node == null) {
+                    return;
+                }
+
+                Object nodeInfo = node.getUserObject();
+                if(nodeInfo instanceof Element) {
+                    Element element = (Element) nodeInfo;
+                    loadProps(element);
+                }
+            }
+        };
         JScrollPane canvasPane = new JScrollPane(canvas);
 //        canvasPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
         canvasPane.getVerticalScrollBar().setBlockIncrement(30);
@@ -1219,6 +1224,27 @@ public final class EditorFrame extends javax.swing.JFrame {
         canvas.requestFocusInWindow();
         //</editor-fold>
 
+    }
+
+    private void loadProps(final Element element) {
+        SwingUtilities.invokeLater(new Runnable() {
+            public void run() {
+                propTable.clear();
+                DefaultTableModel model = (DefaultTableModel) propTable.getModel();
+                if(!element.getProps().isEmpty()) {
+                    element.validateDisplay();
+                    for(int i = 0; i < element.getProps().size(); i++) {
+                        Property entry = element.getProps().get(i);
+                        if(entry.getKey().equals("\\n")) {
+                            continue;
+                        }
+                        model.addRow(new Object[]{entry.getKey(), entry.getValue(), entry.getInfo()});
+                    }
+                    model.fireTableDataChanged();
+                    propTable.repaint();
+                }
+            }
+        });
     }
 
     /**
@@ -1252,14 +1278,20 @@ public final class EditorFrame extends javax.swing.JFrame {
         } else if(System.getProperty("swing.defaultlaf").equalsIgnoreCase("system") || System.getProperty("swing.defaultlaf").equalsIgnoreCase("native")) {
             try {
                 UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+
+
             } catch(ClassNotFoundException ex) {
-                Logger.getLogger(Main.class.getName()).log(Level.SEVERE, null, ex);
+                Logger.getLogger(Main.class
+                        .getName()).log(Level.SEVERE, null, ex);
             } catch(InstantiationException ex) {
-                Logger.getLogger(Main.class.getName()).log(Level.SEVERE, null, ex);
+                Logger.getLogger(Main.class
+                        .getName()).log(Level.SEVERE, null, ex);
             } catch(IllegalAccessException ex) {
-                Logger.getLogger(Main.class.getName()).log(Level.SEVERE, null, ex);
+                Logger.getLogger(Main.class
+                        .getName()).log(Level.SEVERE, null, ex);
             } catch(UnsupportedLookAndFeelException ex) {
-                Logger.getLogger(Main.class.getName()).log(Level.SEVERE, null, ex);
+                Logger.getLogger(Main.class
+                        .getName()).log(Level.SEVERE, null, ex);
             }
         }
         GtkFixer.installGtkPopupBugWorkaround(); // Apply clearlooks java menu fix if applicable
@@ -1267,6 +1299,7 @@ public final class EditorFrame extends javax.swing.JFrame {
 
     /**
      * Google analytics tracking code
+     *
      * @param state
      */
     private void track(String state) {
@@ -1276,6 +1309,8 @@ public final class EditorFrame extends javax.swing.JFrame {
         JGoogleAnalyticsTracker tracker = new JGoogleAnalyticsTracker(Main.appName, Main.myVer, "UA-35189411-2");
         FocusPoint focusPoint = new FocusPoint(state);
         tracker.trackAsynchronously(focusPoint);
+
+
     }
 
     private class EditorMenuBar extends JMenuBar {

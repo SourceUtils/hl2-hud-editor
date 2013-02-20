@@ -148,9 +148,9 @@ public class Element implements ViewableData {
     public int getX() {
         if(parent == null || parent.name.replaceAll("\"", "").endsWith(".res")) {
             if(this.getXAlignment() == Alignment.Center) {
-                return (getLocalX() + Math.round(853 / 2));
+                return (getLocalX() + Math.round(internal.width / 2));
             } else if(this.getXAlignment() == Alignment.Right) {
-                return (853 - getLocalX());
+                return (internal.width - getLocalX());
             } else {
                 return getLocalX();
             }
@@ -180,9 +180,9 @@ public class Element implements ViewableData {
     public int getY() {
         if(parent == null || parent.name.replaceAll("\"", "").endsWith(".res")) {
             if(this.getYAlignment() == Alignment.Center) {
-                return (getLocalY() + Math.round(480 / 2));
+                return (getLocalY() + Math.round(internal.height / 2));
             } else if(this.getYAlignment() == Alignment.Right) {
-                return (480 - getLocalY());
+                return (internal.height - getLocalY());
             } else {
                 return getLocalY();
             }
