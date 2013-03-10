@@ -858,32 +858,26 @@ public class JarClassLoader extends ClassLoader {
         logInfo(LogArea.CONFIG, "initApplet() --> %s.init(); Loader: %s", sClass, clazz.getClassLoader());
         applet = (JApplet) clazz.newInstance();
         applet.setStub(new AppletStub() {
-            @Override
             public boolean isActive() {
                 return appletParent.isActive();
             }
 
-            @Override
             public URL getDocumentBase() {
                 return appletParent.getDocumentBase();
             }
 
-            @Override
             public URL getCodeBase() {
                 return appletParent.getCodeBase();
             }
 
-            @Override
             public String getParameter(String name) {
                 return appletParent.getParameter(name);
             }
 
-            @Override
             public AppletContext getAppletContext() {
                 return appletParent.getAppletContext();
             }
 
-            @Override
             public void appletResize(int width, int height) {
                 appletParent.resize(width, height);
             }

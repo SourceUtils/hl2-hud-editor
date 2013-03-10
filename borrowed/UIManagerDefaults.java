@@ -56,6 +56,7 @@ import javax.swing.table.TableCellRenderer;
  * This programs uses the information found in the UIManager
  * to create a table of key/value pairs for each Swing component.
  */
+@SuppressWarnings("rawtypes")
 public class UIManagerDefaults implements ActionListener, ItemListener {
 
     private final static String[] COLUMN_NAMES = {"Key", "Value", "Sample"};
@@ -169,7 +170,7 @@ public class UIManagerDefaults implements ActionListener, ItemListener {
         buildItemsMap();
 
         Vector<String> comboBoxItems = new Vector<String>(50);
-        Iterator keys = items.keySet().iterator();
+		Iterator keys = items.keySet().iterator();
 
         while(keys.hasNext()) {
             Object key = keys.next();
@@ -191,12 +192,12 @@ public class UIManagerDefaults implements ActionListener, ItemListener {
      * The item map will contain items for each component or
      * items for each attribute type.
      */
-    private TreeMap buildItemsMap() {
+    private TreeMap<String, TreeMap<String, Object>> buildItemsMap() {
         UIDefaults defaults = UIManager.getLookAndFeelDefaults();
 
         //  Build of Map of items and a Map of attributes for each item
 
-        for(Enumeration enumm = defaults.keys(); enumm.hasMoreElements();) {
+        for(Enumeration<Object> enumm = defaults.keys(); enumm.hasMoreElements();) {
             Object key = enumm.nextElement();
             Object value = defaults.get(key);
 
@@ -468,17 +469,14 @@ public class UIManagerDefaults implements ActionListener, ItemListener {
             this.wrappee = wrappee;
         }
 
-        @Override
         public int getIconHeight() {
             return wrappee.getIconHeight();
         }
 
-        @Override
         public int getIconWidth() {
             return wrappee.getIconWidth();
         }
 
-        @Override
         public void paintIcon(Component c, Graphics g, int x, int y) {
             if(standIn == this) {
                 paintFallback(c, g, x, y);
@@ -524,7 +522,8 @@ public class UIManagerDefaults implements ActionListener, ItemListener {
          *
          * @throws IllegalAccessException
          */
-        private JComponent getSubstitute(Class<?> clazz) throws IllegalAccessException {
+        @SuppressWarnings("serial")
+		private JComponent getSubstitute(Class<?> clazz) throws IllegalAccessException {
             JComponent standInComponent;
 
             try {
@@ -552,7 +551,8 @@ public class UIManagerDefaults implements ActionListener, ItemListener {
     }
 
 
-    /*
+    @SuppressWarnings("serial")
+	/*
      * Render the value based on its class.
      */
     class SampleRenderer extends JLabel implements TableCellRenderer {
@@ -603,7 +603,8 @@ public class UIManagerDefaults implements ActionListener, ItemListener {
      * Change the LAF and recreate the UIManagerDefaults so that the properties
      * of the new LAF are correctly displayed.
      */
-    class ChangeLookAndFeelAction extends AbstractAction {
+    @SuppressWarnings("serial")
+	class ChangeLookAndFeelAction extends AbstractAction {
 
         private UIManagerDefaults defaults;
 
@@ -649,7 +650,8 @@ public class UIManagerDefaults implements ActionListener, ItemListener {
     /*
      * Close the frame
      */
-    class ExitAction extends AbstractAction {
+    @SuppressWarnings("serial")
+	class ExitAction extends AbstractAction {
 
         public ExitAction() {
             putValue(Action.NAME, "Exit");
@@ -689,5 +691,6 @@ public class UIManagerDefaults implements ActionListener, ItemListener {
         });
     }
 
-    private static final Logger LOG = Logger.getLogger(UIManagerDefaults.class.getName());
+    @SuppressWarnings("unused")
+	private static final Logger LOG = Logger.getLogger(UIManagerDefaults.class.getName());
 }

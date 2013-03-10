@@ -47,5 +47,8 @@
         <!--</exec>-->
 
     </target>
+	
+	<target name="javadoc">
+	</target>
 
 </project>

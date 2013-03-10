@@ -106,7 +106,6 @@ import javax.swing.JSpinner;
 import javax.swing.KeyStroke;
 import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
-import javax.swing.UnsupportedLookAndFeelException;
 import javax.swing.event.HyperlinkEvent;
 import javax.swing.event.HyperlinkListener;
 import javax.swing.event.TreeSelectionEvent;
@@ -116,7 +115,6 @@ import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreePath;
 import org.java.ayatana.ApplicationMenu;
-import org.java.ayatana.AyatanaDesktop;
 
 /**
  *
@@ -395,12 +393,13 @@ public final class EditorFrame extends javax.swing.JFrame {
             }
         };
 
-        JComboBox<String> dropDown = new JComboBox<String>();
-        File steamappsFolder = new File(Utils.locateSteamAppsDirectory());
-        if(steamappsFolder == null) {
+        JComboBox dropDown = new JComboBox();
+        String location = Utils.locateSteamAppsDirectory();
+        if(location == null) {
             error("Could not find Steam install directory!", "Steam not found");
             return;
         }
+        File steamappsFolder = new File(location);
         File[] userFolders = steamappsFolder.listFiles(dirFilter);
         if(userFolders == null) {
             error("SteamApps is empty!", "Empty SteamApps directory");
@@ -564,7 +563,7 @@ public final class EditorFrame extends javax.swing.JFrame {
 //                docHeight.setDocumentFilter(new NumericDocumentFilter());
 //                jsHeight.getTextField().setDocument(docHeight);
 //            }
-        final JComboBox<String> dropDown = new JComboBox<String>();
+        final JComboBox dropDown = new JComboBox();
 
         GraphicsEnvironment env = GraphicsEnvironment.getLocalGraphicsEnvironment();
         GraphicsDevice[] devices = env.getScreenDevices();
@@ -616,6 +615,7 @@ public final class EditorFrame extends javax.swing.JFrame {
     //<editor-fold defaultstate="collapsed" desc="Overrides">
     @Override
     public void setJMenuBar(JMenuBar menubar) {
+    	LOG.info("Setting menubar for " + Main.os);
         super.setJMenuBar(menubar);
         if(Main.os == OS.Mac) {
             try {
@@ -652,14 +652,17 @@ public final class EditorFrame extends javax.swing.JFrame {
             }
         } else if(Main.os == OS.Linux) {
             try {
-                if(AyatanaDesktop.isSupported()) {
+//                if(AyatanaDesktop.isSupported()) {
                     boolean worked = ApplicationMenu.tryInstall(EditorFrame.this, menubar);
+                    LOG.info("Ayatana: " + worked);
                     if(worked) {
                         super.setJMenuBar(null);
                     } else {
                         error("AyatanaDesktop failed to load" + "\nDE:" + System.getenv("XDG_CURRENT_DESKTOP"));
                     }
-                }
+//                } else {
+//                	LOG.info("Ayatana: unsupported");
+//                }
             } catch(UnsupportedClassVersionError e) { // crashes earlier versions of the JVM - particularly old macs
 //                e.printStackTrace();
             }
@@ -758,7 +761,6 @@ public final class EditorFrame extends javax.swing.JFrame {
         /**
          * Alphabetically sorts directories before files ignoring case.
          */
-        @Override
         public int compare(File a, File b) {
             if(a.isDirectory() && !b.isDirectory()) {
                 return -1;
@@ -901,7 +903,6 @@ public final class EditorFrame extends javax.swing.JFrame {
     }
 
     private HyperlinkListener linkListener = new HyperlinkListener() {
-        @Override
         public void hyperlinkUpdate(HyperlinkEvent he) {
             if(he.getEventType().equals(HyperlinkEvent.EventType.ACTIVATED)) {
                 if(Desktop.isDesktopSupported()) {
@@ -924,7 +925,7 @@ public final class EditorFrame extends javax.swing.JFrame {
      * Creates new form EditorFrame
      */
     public EditorFrame() {
-        this.lookAndFeel();
+        EditorFrame.lookAndFeel();
         this.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
         this.addWindowListener(new WindowAdapter() {
             @Override
@@ -1084,7 +1085,6 @@ public final class EditorFrame extends javax.swing.JFrame {
 //        fileTreePane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
         sideSplit.setTopComponent(fileTreePane);
         fileTree.addTreeSelectionListener(new TreeSelectionListener() {
-            @Override
             public void valueChanged(TreeSelectionEvent e) {
 
                 DefaultMutableTreeNode node = (DefaultMutableTreeNode) fileTree.getLastSelectedPathComponent();
@@ -1251,6 +1251,7 @@ public final class EditorFrame extends javax.swing.JFrame {
      * Sets the look and feel
      */
     private static void lookAndFeel() {
+    	LOG.info("LaF: " + System.getProperty("swing.defaultlaf"));
         if(System.getProperty("swing.defaultlaf") == null) { // Do not override user specified theme
             try {
                 try {
@@ -1274,24 +1275,6 @@ public final class EditorFrame extends javax.swing.JFrame {
                 //</editor-fold>
             } catch(Exception ex) {
                 LOG.log(Level.WARNING, null, ex);
-            }
-        } else if(System.getProperty("swing.defaultlaf").equalsIgnoreCase("system") || System.getProperty("swing.defaultlaf").equalsIgnoreCase("native")) {
-            try {
-                UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
-
-
-            } catch(ClassNotFoundException ex) {
-                Logger.getLogger(Main.class
-                        .getName()).log(Level.SEVERE, null, ex);
-            } catch(InstantiationException ex) {
-                Logger.getLogger(Main.class
-                        .getName()).log(Level.SEVERE, null, ex);
-            } catch(IllegalAccessException ex) {
-                Logger.getLogger(Main.class
-                        .getName()).log(Level.SEVERE, null, ex);
-            } catch(UnsupportedLookAndFeelException ex) {
-                Logger.getLogger(Main.class
-                        .getName()).log(Level.SEVERE, null, ex);
             }
         }
         GtkFixer.installGtkPopupBugWorkaround(); // Apply clearlooks java menu fix if applicable
@@ -1635,7 +1618,7 @@ public final class EditorFrame extends javax.swing.JFrame {
                     EditorFrame.this.checkForUpdates();
                 }
             });
-//            updateItem.setEnabled(!inDev);
+            updateItem.setEnabled(Main.myVer != null);
             helpMenu.add(updateItem);
 
             changeLogItem = new JMenuItem(new CustomAction("Changelog", null, KeyEvent.VK_L, null) {
@@ -1688,7 +1671,6 @@ public final class EditorFrame extends javax.swing.JFrame {
             this.putValue(Action.ACCELERATOR_KEY, shortcut);
         }
 
-        @Override
         public void actionPerformed(ActionEvent ae) {
         }
     }

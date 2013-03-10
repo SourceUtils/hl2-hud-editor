@@ -3,6 +3,7 @@ package com.timepath.plaf.mac;
 import apple.OSXAdapter;
 import java.awt.Image;
 import java.awt.PopupMenu;
+import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 import java.util.logging.Level;
@@ -14,6 +15,7 @@ import javax.swing.JMenuBar;
  *
  * @author timepath
  */
+@SuppressWarnings("rawtypes")
 public class Application {
 
     private static final Logger LOG = Logger.getLogger(Application.class.getName());
@@ -92,7 +94,7 @@ public class Application {
     }
 
     public void	setQuitHandler(QuitHandler quitHandler) {
-
+    	setHandler(new OSXHandler(/*quitHandler*/));
     }
 
     //
@@ -106,10 +108,24 @@ public class Application {
     private void setMacOSXApplication(Object amacOSXApplication) {
         macOSXApplication = amacOSXApplication;
     }
+    
+    private class OSXHandler implements InvocationHandler {
+    	
+    	private OSXHandler() {
+    		
+    	}
 
-    private void setHandler(OSXAdapter adapter) {
+		public Object invoke(Object arg0, Method arg1, Object[] arg2)
+				throws Throwable {
+			// TODO Auto-generated method stub
+			return null;
+		}
+    	
+    }
+
+    private void setHandler(OSXHandler adapter) {
         try {
-            Class applicationClass = Class.forName("com.apple.eawt.Application");
+			Class<?> applicationClass = Class.forName("com.apple.eawt.Application");
             if(getMacOSXApplication() == null) {
                  // com.apple.eawt.Application()
                 setMacOSXApplication(applicationClass.getConstructor((Class[]) null).newInstance((Object[]) null));

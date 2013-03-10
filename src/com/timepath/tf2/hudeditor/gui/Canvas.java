@@ -242,7 +242,6 @@ public class Canvas extends JPanel implements MouseListener, MouseMotionListener
     }
 
     private static Comparator<Element> layerSort = new Comparator<Element>() {
-        @Override
         public int compare(Element e1, Element e2) {
             return e1.getLayer() - e2.getLayer();
         }
@@ -400,7 +399,6 @@ public class Canvas extends JPanel implements MouseListener, MouseMotionListener
         this.addMouseMotionListener(this);
     }
 
-    @Override
     public void mouseMoved(MouseEvent event) {
         Point p = new Point(event.getPoint());
         p.translate(-offX, -offY);
@@ -408,7 +406,6 @@ public class Canvas extends JPanel implements MouseListener, MouseMotionListener
         hover(chooseBest(pick(p, elements)));
     }
 
-    @Override
     public void mousePressed(MouseEvent event) {
         this.requestFocusInWindow();
         Point p = new Point(event.getPoint());
@@ -444,7 +441,6 @@ public class Canvas extends JPanel implements MouseListener, MouseMotionListener
         }
     }
 
-    @Override
     public void mouseReleased(MouseEvent event) {
         Point p = new Point(event.getPoint());
         p.translate(-offX, -offY);
@@ -478,7 +474,6 @@ public class Canvas extends JPanel implements MouseListener, MouseMotionListener
 
     private int _offY;
 
-    @Override
     public void mouseDragged(MouseEvent event) {
         Point p = new Point(event.getPoint());
         p.translate(-offX, -offY); // relative to top left of canvas
@@ -498,15 +493,12 @@ public class Canvas extends JPanel implements MouseListener, MouseMotionListener
     }
 
     //<editor-fold defaultstate="collapsed" desc="For later use">
-    @Override
     public void mouseEntered(MouseEvent e) {
     } // Needed for showing mouse coordinates later
 
-    @Override
     public void mouseExited(MouseEvent e) {
     } // Needed for hiding mouse coordinates later
 
-    @Override
     public void mouseClicked(MouseEvent event) {
     } // May be needed for double clicks later on
 

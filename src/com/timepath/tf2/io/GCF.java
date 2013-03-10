@@ -1,7 +1,6 @@
 package com.timepath.tf2.io;
 
 import com.timepath.io.DataUtils;
-import com.timepath.tf2.io.GCF.ManifestHeaderBitmask;
 import com.timepath.tf2.io.util.ViewableData;
 import java.io.ByteArrayOutputStream;
 import java.io.File;

@@ -1,9 +1,5 @@
 package com.timepath.tf2.io;
 
-import com.timepath.tf2.hudeditor.Utils;
-import com.timepath.io.DataUtils;
-import com.timepath.tf2.hudeditor.gui.FileTree;
-import com.timepath.tf2.io.util.ViewableData;
 import java.awt.AlphaComposite;
 import java.awt.Color;
 import java.awt.Graphics2D;
@@ -16,8 +12,13 @@ import java.io.RandomAccessFile;
 import java.util.HashMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+
 import javax.swing.Icon;
 import javax.swing.ImageIcon;
+
+import com.timepath.io.DataUtils;
+import com.timepath.tf2.hudeditor.Utils;
+import com.timepath.tf2.io.util.ViewableData;
 
 /**
  * TODO: .360.vtf files seem to be a slightly different format... and LZMA compressed.

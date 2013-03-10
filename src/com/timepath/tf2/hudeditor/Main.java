@@ -271,7 +271,6 @@ public class Main {
 
         final boolean autoCheck = !flag;
         SwingUtilities.invokeLater(new Runnable() {
-            @Override
             public void run() {
                 EditorFrame frame = new EditorFrame();
                 frame.autoCheck = autoCheck;

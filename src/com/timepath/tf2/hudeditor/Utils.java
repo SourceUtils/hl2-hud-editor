@@ -1,29 +1,21 @@
 package com.timepath.tf2.hudeditor;
 
-import com.timepath.plaf.OS;
-import com.timepath.tf2.hudeditor.gui.EditorFrame;
-import com.timepath.tf2.io.GCF;
-import com.timepath.tf2.io.RES;
-import com.timepath.tf2.io.VDF;
-import com.timepath.tf2.io.VTF;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
-import java.lang.reflect.InvocationTargetException;
 import java.net.URISyntaxException;
 import java.net.URLDecoder;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Comparator;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import javax.swing.SwingUtilities;
-import javax.swing.tree.DefaultMutableTreeNode;
+
+import com.timepath.plaf.OS;
+import com.timepath.tf2.hudeditor.gui.EditorFrame;
 
 /**
  *
@@ -59,7 +51,6 @@ public class Utils {
 //        } catch(URISyntaxException ex) {
 //            Logger.getLogger(Utils.class.getName()).log(Level.SEVERE, null, ex);
 //        }
-        // TODO: FIXME
 //        if(str.indexOf('\\') != -1) {
 //            str = str.replaceAll("\\\\", File.separator);
 //        }

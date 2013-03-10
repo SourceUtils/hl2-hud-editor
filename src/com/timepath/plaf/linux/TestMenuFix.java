@@ -15,7 +15,6 @@ public class TestMenuFix extends JFrame {
         GtkFixer.installGtkPopupBugWorkaround();
 
         SwingUtilities.invokeLater(new Runnable() {
-            @Override
             public void run() {
 
                 TestMenuFix test = new TestMenuFix();

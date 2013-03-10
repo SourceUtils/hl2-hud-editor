@@ -79,14 +79,14 @@ public class VCCDTest extends javax.swing.JFrame {
                 "CRC32", "Key", "Value"
             }
         ) {
-            Class[] types = new Class [] {
+            Class<?>[] types = new Class<?>[] {
                 java.lang.Object.class, java.lang.String.class, java.lang.String.class
             };
             boolean[] canEdit = new boolean [] {
                 false, true, true
             };
 
-            public Class getColumnClass(int columnIndex) {
+            public Class<?> getColumnClass(int columnIndex) {
                 return types [columnIndex];
             }
 
@@ -277,7 +277,7 @@ public class VCCDTest extends javax.swing.JFrame {
     }
 
     TableCellEditor getKeyEditor() {
-        JComboBox<String> comboBox = new JComboBox<String>();
+        JComboBox comboBox = new JComboBox();
         comboBox.setEditable(true);
         hashmap = generateHash();
         Object[] vals = hashmap.values().toArray();
@@ -354,7 +354,6 @@ public class VCCDTest extends javax.swing.JFrame {
         f.setVisible(true);
 
         new Thread(new Runnable() {
-            @Override
             public void run() {
                 final VCCDTest c = new VCCDTest();
                 c.setLocationRelativeTo(null);
