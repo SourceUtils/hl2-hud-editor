@@ -106,6 +106,7 @@ import javax.swing.JSpinner;
 import javax.swing.KeyStroke;
 import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
+import javax.swing.UnsupportedLookAndFeelException;
 import javax.swing.event.HyperlinkEvent;
 import javax.swing.event.HyperlinkListener;
 import javax.swing.event.TreeSelectionEvent;
@@ -115,6 +116,7 @@ import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreePath;
 import org.java.ayatana.ApplicationMenu;
+import org.java.ayatana.AyatanaDesktop;
 
 /**
  *
@@ -652,19 +654,19 @@ public final class EditorFrame extends javax.swing.JFrame {
             }
         } else if(Main.os == OS.Linux) {
             try {
-//                if(AyatanaDesktop.isSupported()) {
+                if(AyatanaDesktop.isSupported()) {
                     boolean worked = ApplicationMenu.tryInstall(EditorFrame.this, menubar);
-                    LOG.info("Ayatana: " + worked);
+                    LOG.log(Level.INFO, "Ayatana: {0}", worked);
                     if(worked) {
                         super.setJMenuBar(null);
                     } else {
                         error("AyatanaDesktop failed to load" + "\nDE:" + System.getenv("XDG_CURRENT_DESKTOP"));
                     }
-//                } else {
-//                	LOG.info("Ayatana: unsupported");
-//                }
+                } else {
+                	LOG.info("Ayatana: unsupported");
+                }
             } catch(UnsupportedClassVersionError e) { // crashes earlier versions of the JVM - particularly old macs
-//                e.printStackTrace();
+                e.printStackTrace();
             }
         }
     }
@@ -1251,33 +1253,81 @@ public final class EditorFrame extends javax.swing.JFrame {
      * Sets the look and feel
      */
     private static void lookAndFeel() {
-    	LOG.info("LaF: " + System.getProperty("swing.defaultlaf"));
+    	LOG.log(Level.INFO, "LaF: {0}", System.getProperty("swing.defaultlaf"));
         if(System.getProperty("swing.defaultlaf") == null) { // Do not override user specified theme
-            try {
+            boolean nimbus = false;
+            //<editor-fold defaultstate="collapsed" desc="Attempt to apply nimbus">
+            if(nimbus) {
                 try {
-                    UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
-                    if(Main.os == OS.Mac) {
-                        UIManager.setLookAndFeel("ch.randelshofer.quaqua.QuaquaLookAndFeel"); // Apply quaqua if available
-                    } else if(Main.os == OS.Linux) {
-                        UIManager.setLookAndFeel("com.sun.java.swing.plaf.gtk.GTKLookAndFeel"); // Apply gtk+ theme if available
+                    for(UIManager.LookAndFeelInfo info : UIManager.getInstalledLookAndFeels()) {
+                        if("Nimbus".equals(info.getName())) {
+                            UIManager.setLookAndFeel(info.getClassName());
+                            return;
+                        }
                     }
-                } catch(ClassNotFoundException e) {
-                    // silently fail
+                } catch(Exception ex) {
+                    LOG.log(Level.WARNING, null, ex);
                 }
-
-                //<editor-fold defaultstate="collapsed" desc="Nimbus will eventually be removed in favour of native appearance">
-                for(UIManager.LookAndFeelInfo info : UIManager.getInstalledLookAndFeels()) {
-                    if("Nimbus".equals(info.getName())) {
-                        UIManager.setLookAndFeel(info.getClassName());
-                        break;
+            }
+            //</editor-fold>
+            
+            boolean metal = false;
+            //<editor-fold defaultstate="collapsed" desc="Fall back to metal">
+            if(metal) {
+                try {
+                    UIManager.setLookAndFeel(UIManager.getCrossPlatformLookAndFeelClassName());
+                    return;
+                } catch(ClassNotFoundException ex) {
+                    Logger.getLogger(EditorFrame.class.getName()).log(Level.SEVERE, null, ex);
+                } catch(InstantiationException ex) {
+                    Logger.getLogger(EditorFrame.class.getName()).log(Level.SEVERE, null, ex);
+                } catch(IllegalAccessException ex) {
+                    Logger.getLogger(EditorFrame.class.getName()).log(Level.SEVERE, null, ex);
+                } catch(UnsupportedLookAndFeelException ex) {
+                    Logger.getLogger(EditorFrame.class.getName()).log(Level.SEVERE, null, ex);
+                }
+            }
+            //</editor-fold>
+            
+            //<editor-fold defaultstate="collapsed" desc="Fall back to native">
+            try {
+                UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+            } catch(ClassNotFoundException ex) {
+                Logger.getLogger(EditorFrame.class.getName()).log(Level.SEVERE, null, ex);
+            } catch(InstantiationException ex) {
+                Logger.getLogger(EditorFrame.class.getName()).log(Level.SEVERE, null, ex);
+            } catch(IllegalAccessException ex) {
+                Logger.getLogger(EditorFrame.class.getName()).log(Level.SEVERE, null, ex);
+            } catch(UnsupportedLookAndFeelException ex) {
+                Logger.getLogger(EditorFrame.class.getName()).log(Level.SEVERE, null, ex);
+            }
+            //</editor-fold>
+        }
+        
+        //<editor-fold defaultstate="collapsed" desc="Improve native LaF">
+        if(UIManager.getLookAndFeel().isNativeLookAndFeel()) {
+            try {
+                LOG.log(Level.INFO, "Adding swing enhancements for {0}", new Object[]{Main.os});
+                if(Main.os == OS.Mac) {
+                    UIManager.setLookAndFeel("ch.randelshofer.quaqua.QuaquaLookAndFeel"); // Apply quaqua if available
+                } else if(Main.os == OS.Linux) {
+                    if(UIManager.getLookAndFeel().getClass().getName().equals("com.sun.java.swing.plaf.gtk.GTKLookAndFeel")) {
+                        GtkFixer.installGtkPopupBugWorkaround(); // Apply clearlooks java menu fix if applicable
+                        UIManager.setLookAndFeel("org.gtk.laf.extended.GTKLookAndFeelExtended"); // Apply extended gtk theme is available. http://danjared.wordpress.com/2012/05/21/mejorando-la-integracion-de-javaswing-con-gtk/
                     }
                 }
-                //</editor-fold>
-            } catch(Exception ex) {
-                LOG.log(Level.WARNING, null, ex);
+                LOG.info("All swing enhancements installed");
+            } catch(InstantiationException ex) {
+                Logger.getLogger(EditorFrame.class.getName()).log(Level.SEVERE, null, ex);
+            } catch(IllegalAccessException ex) {
+                Logger.getLogger(EditorFrame.class.getName()).log(Level.SEVERE, null, ex);
+            } catch(UnsupportedLookAndFeelException ex) {
+                Logger.getLogger(EditorFrame.class.getName()).log(Level.SEVERE, null, ex);
+            } catch(ClassNotFoundException ex) {
+                Logger.getLogger(EditorFrame.class.getName()).log(Level.INFO, null, ex);
             }
         }
-        GtkFixer.installGtkPopupBugWorkaround(); // Apply clearlooks java menu fix if applicable
+        //</editor-fold>
     }
 
     /**

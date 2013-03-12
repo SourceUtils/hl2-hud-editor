@@ -1,12 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project name="TF2_WYSIWYG_HUD_EDITOR" default="default" basedir=".">
+<project name="TF2_WYSIWYG_HUD_EDITOR" basedir="." default="jar">
     <description>Builds, tests, and runs the project TF2 WYSIWYG HUD EDITOR.</description>
     <import file="nbproject/build-impl.xml"/>
 
     <script language="javascript">
-        <![CDATA[
-            property = project.setProperty("now",Math.floor((new Date()).getTime()/1000));
-        ]]>
+        <![CDATA[property = project.setProperty("now", Math.floor((new Date()).getTime() / 1000));]]>
     </script>
 
     <property name="store.jar.name" value="TF2 HUD Editor"/>
@@ -15,23 +13,20 @@
 
     <property name="store.jar" value="${store.dir}/${store.jar.name}.jar"/>
 
-    <target name="-post-clean">
-<!--        <delete file="${store.jar}"/>-->
-    </target>
-
     <target name="-post-jar">
         <echo message="Packaging ${application.title} into a single JAR at ${store.jar}"/>
         <mkdir dir="${archive.dir}"/>
         <mkdir dir="dist/lib"/> <!-- Just in case no external libraries are in use and we don't want the packaging to fail -->
         <mkdir dir="${store.dir}"/>
-        <jar destfile="${archive.dir}/temp_final.jar" filesetmanifest="skip">
+        <jar destfile="${archive.dir}/temp_final.jar">
+        	<manifest>
+        	    <attribute name="Main-Class" value="${main.class}"/>
+        	    <attribute name="Implementation-Version" value="${now}"/>
+        	</manifest>
             <zipgroupfileset dir="dist" includes="*.jar"/>
             <zipgroupfileset dir="dist/lib" includes="*.jar"/>
             <!--<zipgroupfileset dir="." includes="*.dll, *.so, *.dylib"/>-->
-            <manifest>
-                <attribute name="Main-Class" value="${main.class}"/>
-                <attribute name="Implementation-Version" value="${now}"/>
-            </manifest>
+            
         </jar>
         <zip destfile="${store.jar}">
             <zipfileset src="${archive.dir}/temp_final.jar" excludes="META-INF/*.SF, META-INF/*.DSA, META-INF/*.RSA"/>
@@ -50,5 +45,22 @@
 	
 	<target name="javadoc">
 	</target>
+	
+	<target name="create_run_jar">
+		<echo message="Buildin'"/>
+        <jar destfile="/home/timepath/Dropbox/Public/tf/Hud Editor/TF2 HUD Editor.jar">
+            <manifest>
+                <attribute name="Main-Class" value="org.eclipse.jdt.internal.jarinjarloader.JarRsrcLoader"/>
+                <attribute name="Rsrc-Main-Class" value="com.timepath.tf2.hudeditor.Wrapper"/>
+                <attribute name="Class-Path" value="."/>
+                <attribute name="Rsrc-Class-Path" value="./ xfiledialog.jar jayatana-1.2.4.jar JGoogleAnalytics_0.4.jar"/>
+            </manifest>
+            <zipfileset src="jar-in-jar-loader.zip"/>
+            <fileset dir="/home/timepath/workspace/tf2-hud-editor/bin"/>
+            <zipgroupfileset dir="/home/timepath/workspace/tf2-hud-editor/lib" includes="xfiledialog.jar"/>
+            <zipfileset dir="/home/timepath/workspace/tf2-hud-editor/lib" includes="jayatana-1.2.4.jar"/>
+            <zipfileset dir="/home/timepath/workspace/tf2-hud-editor/lib" includes="JGoogleAnalytics_0.4.jar"/>
+        </jar>
+    </target>
 
 </project>
