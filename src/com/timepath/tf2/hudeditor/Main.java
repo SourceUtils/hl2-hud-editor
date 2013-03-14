@@ -1,5 +1,6 @@
 package com.timepath.tf2.hudeditor;
 
+import com.timepath.Utils;
 import com.timepath.plaf.OS;
 import com.timepath.plaf.linux.DesktopLauncher;
 import com.timepath.tf2.hudeditor.gui.EditorFrame;
@@ -24,7 +25,6 @@ import java.util.logging.SimpleFormatter;
 import java.util.prefs.BackingStoreException;
 import java.util.prefs.Preferences;
 import javax.swing.SwingUtilities;
-import net.tomahawk.XFileDialog;
 
 /**
  * Link dump:
@@ -45,8 +45,6 @@ public class Main {
      */
     public static final String projectName = "tf2-hud-editor"; // in xfce, window grouping show this, unfortunately
 
-    public static final OS os;
-
     public static final Preferences prefs = Preferences.userRoot().node(projectName);
 
     public static final String myVer = Main.class.getPackage().getImplementationVersion();
@@ -56,6 +54,7 @@ public class Main {
     private static final Logger LOG = Logger.getLogger(Main.class.getName());
 
     static {
+        com.timepath.plaf.WindowToolkit.projectName = Main.projectName;
         Thread.setDefaultUncaughtExceptionHandler(new Thread.UncaughtExceptionHandler() {
             public void uncaughtException(Thread thread, Throwable thrwbl) {
                 Logger.getLogger(thread.getName()).log(Level.SEVERE, "Uncaught Exception", thrwbl);
@@ -80,23 +79,9 @@ public class Main {
         }
         //</editor-fold>
 
-        //<editor-fold defaultstate="collapsed" desc="OS detection">
-        String osVer = System.getProperty("os.name").toLowerCase();
-        if(osVer.indexOf("windows") != -1) {
-            os = OS.Windows;
-        } else if(osVer.indexOf("mac os x") != -1 || osVer.indexOf("OS X") != -1 || osVer.indexOf("mac") != -1) {
-            os = OS.Mac;
-        } else if(osVer.indexOf("Linux") != -1 || osVer.indexOf("nix") != -1 || osVer.indexOf("nux") != -1) {
-            os = OS.Linux;
-        } else {
-            os = OS.Other;
-            LOG.log(Level.WARNING, "Unrecognised OS: {0}", osVer);
-        }
-        //</editor-fold>
-
-        if(os == OS.Windows) {
-            XFileDialog.setTraceLevel(0);
-        } else if(os == OS.Mac) {
+        if(OS.isWindows()) {
+//            XFileDialog.setTraceLevel(0);
+        } else if(OS.isMac()) {
             System.setProperty("apple.awt.brushMetalLook", "false");
             System.setProperty("apple.awt.graphics.EnableQ2DX", "true");
             System.setProperty("apple.awt.showGrowBox", "true");
@@ -106,7 +91,7 @@ public class Main {
             System.setProperty("com.apple.mrj.application.apple.menu.about.name", appName);
             System.setProperty("com.apple.mrj.application.growbox.intrudes", "false");
             System.setProperty("com.apple.mrj.application.live-resize", "true");
-        } else if(os == OS.Linux) {
+        } else if(OS.isLinux()) {
             String n = projectName; // Wrapper.class.getName().replaceAll("\\.", "-");
             //<editor-fold defaultstate="collapsed" desc="Global menu">
             System.setProperty("jayatana.startupWMClass", n);
@@ -216,7 +201,7 @@ public class Main {
                     System.exit(0);
                 }
             }, "Process Listener");
-            server.setDaemon(os != OS.Mac); // non-daemon threads work in the background. Stick around if on a mac until manually terminated
+            server.setDaemon(!OS.isMac()); // non-daemon threads work in the background. Stick around if on a mac until manually terminated
             //            server.setDaemon(false);
             server.start();
         } catch(BindException ex) {

@@ -1,7 +1,6 @@
 package com.timepath.swing;
 
 import com.timepath.plaf.OS;
-import com.timepath.tf2.hudeditor.Main;
 import java.awt.Component;
 import java.awt.Cursor;
 import java.awt.Point;
@@ -39,7 +38,7 @@ public final class BlendedToolBar extends JToolBar implements MouseListener, Mou
 
     public void setWindow(JFrame window) {
         this.window = window;
-        if(window != null && Main.os != OS.Windows) {
+        if(window != null && !OS.isWindows()) {
             this.addMouseListener(this);
             this.addMouseMotionListener(this);
         }

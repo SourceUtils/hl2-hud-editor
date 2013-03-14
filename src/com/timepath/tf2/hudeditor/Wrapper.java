@@ -14,7 +14,7 @@ public class Wrapper {
     private static final Logger LOG = Logger.getLogger(Wrapper.class.getName());
 
     public static void main(String... args) {
-    	LOG.info("args = " + Arrays.toString(args));
+    	LOG.log(Level.INFO, "args = {0}", Arrays.toString(args));
         JarClassLoader cl = new JarClassLoader();
         try {
             cl.invokeMain(Main.class.getName(), args);

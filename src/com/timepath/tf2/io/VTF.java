@@ -17,7 +17,7 @@ import javax.swing.Icon;
 import javax.swing.ImageIcon;
 
 import com.timepath.io.DataUtils;
-import com.timepath.tf2.hudeditor.Utils;
+import com.timepath.tf2.hudeditor.SteamUtils;
 import com.timepath.tf2.io.util.ViewableData;
 
 /**
@@ -214,7 +214,7 @@ public class VTF implements ViewableData {
         path = new File(path).getAbsolutePath();
         if(mats == null) {
             try {
-                mats = new GCF(new File(Utils.locateSteamAppsDirectory() + "Team Fortress 2 Materials.gcf"));
+                mats = new GCF(new File(SteamUtils.locateSteamAppsDirectory() + "Team Fortress 2 Materials.gcf"));
             } catch(IOException ex) {
                 Logger.getLogger(VTF.class.getName()).log(Level.SEVERE, null, ex);
             }

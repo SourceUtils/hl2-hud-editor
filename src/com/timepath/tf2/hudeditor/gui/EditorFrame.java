@@ -3,6 +3,7 @@ package com.timepath.tf2.hudeditor.gui;
 import apple.OSXAdapter;
 import com.boxysystems.jgoogleanalytics.FocusPoint;
 import com.boxysystems.jgoogleanalytics.JGoogleAnalyticsTracker;
+import com.timepath.Utils;
 import com.timepath.plaf.OS;
 import com.timepath.plaf.linux.GtkFixer;
 import com.timepath.plaf.mac.Application;
@@ -15,7 +16,7 @@ import com.timepath.plaf.mac.Application.QuitHandler;
 import com.timepath.plaf.mac.Application.QuitResponse;
 import com.timepath.plaf.x.NativeFileChooser;
 import com.timepath.tf2.hudeditor.Main;
-import com.timepath.tf2.hudeditor.Utils;
+import com.timepath.tf2.hudeditor.SteamUtils;
 import com.timepath.tf2.io.util.Element;
 import com.timepath.tf2.io.util.Property;
 import com.timepath.tf2.io.GCF;
@@ -321,7 +322,7 @@ public final class EditorFrame extends javax.swing.JFrame {
 
                                 public void actionPerformed(ActionEvent ae) {
                                     try {
-                                        Utils.restart();
+                                        SteamUtils.restart();
                                     } catch(URISyntaxException ex) {
                                         LOG.log(Level.SEVERE, null, ex);
                                     } catch(IOException ex) {
@@ -396,7 +397,7 @@ public final class EditorFrame extends javax.swing.JFrame {
         };
 
         JComboBox dropDown = new JComboBox();
-        String location = Utils.locateSteamAppsDirectory();
+        String location = SteamUtils.locateSteamAppsDirectory();
         if(location == null) {
             error("Could not find Steam install directory!", "Steam not found");
             return;
@@ -617,9 +618,9 @@ public final class EditorFrame extends javax.swing.JFrame {
     //<editor-fold defaultstate="collapsed" desc="Overrides">
     @Override
     public void setJMenuBar(JMenuBar menubar) {
-    	LOG.info("Setting menubar for " + Main.os);
+    	LOG.info("Setting menubar for " + OS.get());
         super.setJMenuBar(menubar);
-        if(Main.os == OS.Mac) {
+        if(OS.isMac()) {
             try {
                 //<editor-fold defaultstate="collapsed" desc="Deprecated">
                 OSXAdapter.setQuitHandler(this, getClass().getDeclaredMethod("quit", (Class[]) null));
@@ -652,7 +653,7 @@ public final class EditorFrame extends javax.swing.JFrame {
             } catch(Exception e) {
                 LOG.severe(e.toString());
             }
-        } else if(Main.os == OS.Linux) {
+        } else if(OS.isLinux()) {
             try {
                 if(AyatanaDesktop.isSupported()) {
                     boolean worked = ApplicationMenu.tryInstall(EditorFrame.this, menubar);
@@ -786,9 +787,9 @@ public final class EditorFrame extends javax.swing.JFrame {
                 }
             });
         } catch(InterruptedException ex) {
-            Logger.getLogger(Utils.class.getName()).log(Level.SEVERE, null, ex);
+            Logger.getLogger(SteamUtils.class.getName()).log(Level.SEVERE, null, ex);
         } catch(InvocationTargetException ex) {
-            Logger.getLogger(Utils.class.getName()).log(Level.SEVERE, null, ex);
+            Logger.getLogger(SteamUtils.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
 
@@ -860,7 +861,7 @@ public final class EditorFrame extends javax.swing.JFrame {
                                 child.setUserObject(g);
                                 g.analyze(g, child);
                             } catch(IOException ex) {
-                                Logger.getLogger(Utils.class.getName()).log(Level.SEVERE, null, ex);
+                                Logger.getLogger(SteamUtils.class.getName()).log(Level.SEVERE, null, ex);
                             }
                         }
                     }
@@ -874,7 +875,7 @@ public final class EditorFrame extends javax.swing.JFrame {
                     threads[i].join();
                 }
             } catch(InterruptedException ex) {
-                Logger.getLogger(Utils.class.getName()).log(Level.SEVERE, null, ex);
+                Logger.getLogger(SteamUtils.class.getName()).log(Level.SEVERE, null, ex);
             }
         }
     }
@@ -883,7 +884,7 @@ public final class EditorFrame extends javax.swing.JFrame {
         if(!updating) {
             LOG.info("Quitting...");
             this.dispose();
-            if(Main.os == OS.Mac) {
+            if(OS.isMac()) {
 //                JFrame f = new JFrame();
 //                f.setUndecorated(true);
 //                f.setJMenuBar(this.getJMenuBar());
@@ -945,7 +946,7 @@ public final class EditorFrame extends javax.swing.JFrame {
 
         boolean buggyWM = true;
         //<editor-fold defaultstate="collapsed" desc="Menu fix for window managers that don't set position on resize">
-        if(Main.os == OS.Linux && buggyWM) {
+        if(OS.isLinux() && buggyWM) {
             this.addComponentListener(new ComponentAdapter() {
                 private boolean moved;
 
@@ -1006,7 +1007,7 @@ public final class EditorFrame extends javax.swing.JFrame {
                     DropTargetContext context = e.getDropTargetContext();
                     e.acceptDrop(DnDConstants.ACTION_COPY_OR_MOVE);
                     Transferable t = e.getTransferable();
-                    if(Main.os == OS.Linux) {
+                    if(OS.isLinux()) {
                         DataFlavor nixFileDataFlavor = new DataFlavor("text/uri-list;class=java.lang.String");
                         String data = (String) t.getTransferData(nixFileDataFlavor);
                         for(StringTokenizer st = new StringTokenizer(data, "\r\n"); st.hasMoreTokens();) {
@@ -1307,10 +1308,10 @@ public final class EditorFrame extends javax.swing.JFrame {
         //<editor-fold defaultstate="collapsed" desc="Improve native LaF">
         if(UIManager.getLookAndFeel().isNativeLookAndFeel()) {
             try {
-                LOG.log(Level.INFO, "Adding swing enhancements for {0}", new Object[]{Main.os});
-                if(Main.os == OS.Mac) {
+                LOG.log(Level.INFO, "Adding swing enhancements for {0}", new Object[]{OS.get()});
+                if(OS.isMac()) {
                     UIManager.setLookAndFeel("ch.randelshofer.quaqua.QuaquaLookAndFeel"); // Apply quaqua if available
-                } else if(Main.os == OS.Linux) {
+                } else if(OS.isLinux()) {
                     if(UIManager.getLookAndFeel().getClass().getName().equals("com.sun.java.swing.plaf.gtk.GTKLookAndFeel")) {
                         GtkFixer.installGtkPopupBugWorkaround(); // Apply clearlooks java menu fix if applicable
                         UIManager.setLookAndFeel("org.gtk.laf.extended.GTKLookAndFeelExtended"); // Apply extended gtk theme is available. http://danjared.wordpress.com/2012/05/21/mejorando-la-integracion-de-javaswing-con-gtk/
@@ -1445,7 +1446,7 @@ public final class EditorFrame extends javax.swing.JFrame {
                 }
             });
 
-            if(Main.os == OS.Mac) {
+            if(OS.isMac()) {
                 fileMenu.add(closeItem);
             }
 
@@ -1485,7 +1486,7 @@ public final class EditorFrame extends javax.swing.JFrame {
             reloadItem.setEnabled(false);
             fileMenu.add(reloadItem);
 
-            if(Main.os != OS.Mac) {
+            if(!OS.isMac()) {
                 fileMenu.addSeparator();
                 fileMenu.add(closeItem);
 
@@ -1575,7 +1576,7 @@ public final class EditorFrame extends javax.swing.JFrame {
 
             editMenu.addSeparator();
 
-            if(Main.os != OS.Mac) {
+            if(!OS.isMac()) {
                 preferencesItem = new JMenuItem(new CustomAction("Preferences", null, KeyEvent.VK_E, null) {
                     @Override
                     public void actionPerformed(ActionEvent ae) {
@@ -1679,7 +1680,7 @@ public final class EditorFrame extends javax.swing.JFrame {
             });
             helpMenu.add(changeLogItem);
 
-            if(Main.os != OS.Mac) {
+            if(OS.isMac()) {
                 aboutItem = new JMenuItem(new CustomAction("About", null, KeyEvent.VK_A, null) {
                     @Override
                     public void actionPerformed(ActionEvent ae) {

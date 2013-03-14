@@ -1,6 +1,6 @@
 package com.timepath.tf2.io.test;
 
-import com.timepath.tf2.hudeditor.Utils;
+import com.timepath.tf2.hudeditor.SteamUtils;
 import com.timepath.tf2.io.BinaryVDF;
 import java.io.IOException;
 import java.util.logging.Logger;
@@ -13,7 +13,7 @@ public class BinaryVDFTest {
 
     public static void main(String... args) throws IOException {
 //        System.out.println(new BinaryVDF(Utils.locateSteamAppsDirectory() + "../appcache/packageinfo.vdf"));
-        BinaryVDF bvdf = new BinaryVDF(Utils.locateSteamAppsDirectory() + "../appcache/appinfo.vdf");
+        BinaryVDF bvdf = new BinaryVDF(SteamUtils.locateSteamAppsDirectory() + "../appcache/appinfo.vdf");
         System.out.println(bvdf);
     }
 

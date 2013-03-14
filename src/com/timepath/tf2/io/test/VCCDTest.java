@@ -1,6 +1,6 @@
 package com.timepath.tf2.io.test;
 
-import com.timepath.tf2.hudeditor.Utils;
+import com.timepath.tf2.hudeditor.SteamUtils;
 import com.timepath.tf2.io.GCF;
 import com.timepath.tf2.io.VCCD;
 import com.timepath.tf2.io.VCCD.Entry;
@@ -371,7 +371,7 @@ public class VCCDTest extends javax.swing.JFrame {
         HashMap<Integer, String> map = new HashMap<Integer, String>();
         logger.info("Generating hash codes ...");
         try {
-            GCF gcf = new GCF(new File(Utils.locateSteamAppsDirectory() + "/Team Fortress 2 Content.gcf"));
+            GCF gcf = new GCF(new File(SteamUtils.locateSteamAppsDirectory() + "/Team Fortress 2 Content.gcf"));
 
             CRC32 crc = new CRC32();
 
