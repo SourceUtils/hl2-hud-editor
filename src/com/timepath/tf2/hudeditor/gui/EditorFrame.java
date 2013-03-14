@@ -14,18 +14,18 @@ import com.timepath.plaf.mac.Application.PreferencesHandler;
 import com.timepath.plaf.mac.Application.QuitEvent;
 import com.timepath.plaf.mac.Application.QuitHandler;
 import com.timepath.plaf.mac.Application.QuitResponse;
-import com.timepath.plaf.x.NativeFileChooser;
+import com.timepath.plaf.x.filechooser.NativeFileChooser;
 import com.timepath.tf2.hudeditor.Main;
-import com.timepath.tf2.hudeditor.SteamUtils;
-import com.timepath.tf2.io.util.Element;
-import com.timepath.tf2.io.util.Property;
-import com.timepath.tf2.io.GCF;
-import com.timepath.tf2.io.GCF.DirectoryEntry;
-import com.timepath.tf2.io.RES;
-import com.timepath.tf2.io.VDF;
-import com.timepath.tf2.io.VTF;
-import com.timepath.tf2.io.test.VCCDTest;
-import com.timepath.tf2.io.test.VTFTest;
+import com.timepath.steam.SteamUtils;
+import com.timepath.hl2.io.util.Element;
+import com.timepath.hl2.io.util.Property;
+import com.timepath.steam.io.GCF;
+import com.timepath.steam.io.GCF.DirectoryEntry;
+import com.timepath.steam.io.RES;
+import com.timepath.steam.io.VDF;
+import com.timepath.hl2.io.VTF;
+import com.timepath.hl2.io.test.VCCDTest;
+import com.timepath.hl2.io.test.VTFTest;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Cursor;
@@ -322,7 +322,7 @@ public final class EditorFrame extends javax.swing.JFrame {
 
                                 public void actionPerformed(ActionEvent ae) {
                                     try {
-                                        SteamUtils.restart();
+                                        EditorFrame.restart();
                                     } catch(URISyntaxException ex) {
                                         LOG.log(Level.SEVERE, null, ex);
                                     } catch(IOException ex) {
@@ -618,7 +618,7 @@ public final class EditorFrame extends javax.swing.JFrame {
     //<editor-fold defaultstate="collapsed" desc="Overrides">
     @Override
     public void setJMenuBar(JMenuBar menubar) {
-    	LOG.info("Setting menubar for " + OS.get());
+    	LOG.log(Level.INFO, "Setting menubar for {0}", OS.get());
         super.setJMenuBar(menubar);
         if(OS.isMac()) {
             try {
@@ -1248,6 +1248,24 @@ public final class EditorFrame extends javax.swing.JFrame {
                 }
             }
         });
+    }
+    
+    public static void restart() throws URISyntaxException, IOException { // TODO: wrap this class in a launcher, rather than explicitly restarting
+        final String javaBin = System.getProperty("java.home") + File.separator + "bin" + File.separator + "java";
+        final File currentJar = new File(EditorFrame.class.getProtectionDomain().getCodeSource().getLocation().toURI());
+
+        if(!currentJar.getName().endsWith(".jar")) {
+            return;
+        }
+
+        final ArrayList<String> command = new ArrayList<String>();
+        command.add(javaBin);
+        command.add("-jar");
+        command.add(currentJar.getPath());
+
+        final ProcessBuilder builder = new ProcessBuilder(command);
+        builder.start();
+        System.exit(0);
     }
 
     /**

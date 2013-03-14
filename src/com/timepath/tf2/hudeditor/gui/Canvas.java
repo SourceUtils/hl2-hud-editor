@@ -1,7 +1,7 @@
 package com.timepath.tf2.hudeditor.gui;
 
-import com.timepath.tf2.io.util.Element;
-import com.timepath.tf2.io.util.Element.Alignment;
+import com.timepath.hl2.io.util.Element;
+import com.timepath.hl2.io.util.Element.Alignment;
 import java.awt.AlphaComposite;
 import java.awt.Color;
 import java.awt.Cursor;

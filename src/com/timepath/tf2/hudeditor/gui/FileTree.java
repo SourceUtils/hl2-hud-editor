@@ -1,9 +1,9 @@
 package com.timepath.tf2.hudeditor.gui;
 
-import com.timepath.plaf.x.NativeFileChooser;
-import com.timepath.tf2.io.GCF;
-import com.timepath.tf2.io.GCF.DirectoryEntry;
-import com.timepath.tf2.io.util.ViewableData;
+import com.timepath.plaf.x.filechooser.NativeFileChooser;
+import com.timepath.steam.io.GCF;
+import com.timepath.steam.io.GCF.DirectoryEntry;
+import com.timepath.hl2.io.util.ViewableData;
 import java.awt.Color;
 import java.awt.Component;
 import java.io.File;

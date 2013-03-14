@@ -2,15 +2,13 @@ package com.timepath.tf2.hudeditor;
 
 import com.timepath.Utils;
 import com.timepath.plaf.OS;
-import com.timepath.plaf.linux.DesktopLauncher;
+import com.timepath.plaf.OS.WindowToolkit;
 import com.timepath.tf2.hudeditor.gui.EditorFrame;
-import java.awt.Toolkit;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
-import java.lang.reflect.Field;
 import java.net.BindException;
 import java.net.InetAddress;
 import java.net.ServerSocket;
@@ -54,15 +52,17 @@ public class Main {
     private static final Logger LOG = Logger.getLogger(Main.class.getName());
 
     static {
-        com.timepath.plaf.WindowToolkit.projectName = Main.projectName;
+        WindowToolkit.setWindowClass(projectName); // Wrapper.class.getName().replaceAll("\\.", "-");
+        
+        //<editor-fold defaultstate="collapsed" desc="Debugging">
         Thread.setDefaultUncaughtExceptionHandler(new Thread.UncaughtExceptionHandler() {
             public void uncaughtException(Thread thread, Throwable thrwbl) {
                 Logger.getLogger(thread.getName()).log(Level.SEVERE, "Uncaught Exception", thrwbl);
             }
         });
-
+        
         Logger.getLogger("").setLevel(Level.INFO);
-
+        
         //<editor-fold defaultstate="collapsed" desc="logfile">
         logFile = Utils.workingDirectory() + "logs/" + System.currentTimeMillis() / 1000 + "_log.txt";
         LOG.log(Level.INFO, "Logging to {0}", logFile);
@@ -78,10 +78,11 @@ public class Main {
             Logger.getLogger(Main.class.getName()).log(Level.SEVERE, null, ex);
         }
         //</editor-fold>
-
-        if(OS.isWindows()) {
-//            XFileDialog.setTraceLevel(0);
-        } else if(OS.isMac()) {
+        
+        com.timepath.plaf.x.filechooser.XFileDialogFileChooser.setTraceLevel(0);
+        //</editor-fold>
+   
+        if(OS.isMac()) {
             System.setProperty("apple.awt.brushMetalLook", "false");
             System.setProperty("apple.awt.graphics.EnableQ2DX", "true");
             System.setProperty("apple.awt.showGrowBox", "true");
@@ -91,33 +92,6 @@ public class Main {
             System.setProperty("com.apple.mrj.application.apple.menu.about.name", appName);
             System.setProperty("com.apple.mrj.application.growbox.intrudes", "false");
             System.setProperty("com.apple.mrj.application.live-resize", "true");
-        } else if(OS.isLinux()) {
-            String n = projectName; // Wrapper.class.getName().replaceAll("\\.", "-");
-            //<editor-fold defaultstate="collapsed" desc="Global menu">
-            System.setProperty("jayatana.startupWMClass", n);
-            //            boolean force = "Unity".equals(System.getenv("XDG_CURRENT_DESKTOP")); // UBUNTU_MENUPROXY=libappmenu.so
-            //            if(force) {
-            //                System.setProperty("jayatana.force", "true");
-            //            }
-            //</editor-fold>
-
-            //<editor-fold defaultstate="collapsed" desc="Window class">
-            // Doesn't seem to work all the time
-            try {
-                Toolkit xToolkit = Toolkit.getDefaultToolkit();
-                Field awtAppClassNameField = xToolkit.getClass().getDeclaredField("awtAppClassName");
-                awtAppClassNameField.setAccessible(true);
-                awtAppClassNameField.set(xToolkit, n);
-            } catch(Exception ex) {
-                LOG.log(Level.SEVERE, null, ex);
-            }
-            //</editor-fold>
-
-            //<editor-fold defaultstate="collapsed" desc="Launcher">
-            DesktopLauncher.create(n, "/com/timepath/tf2/hudeditor/resources",
-                                   new String[]{"Icon.png", "Icon.svg"},
-                                   new String[]{projectName, projectName});
-            //</editor-fold>
         }
     }
 
