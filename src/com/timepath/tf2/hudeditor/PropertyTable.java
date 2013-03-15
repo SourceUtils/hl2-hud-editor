@@ -1,6 +1,5 @@
 package com.timepath.tf2.hudeditor;
 
-import com.timepath.tf2.hudeditor.Main;
 import java.awt.Component;
 import java.awt.Rectangle;
 import java.util.logging.Logger;

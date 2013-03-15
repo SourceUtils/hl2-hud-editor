@@ -26,7 +26,6 @@ import com.timepath.steam.io.GCF;
 import com.timepath.steam.io.GCF.DirectoryEntry;
 import com.timepath.steam.io.RES;
 import com.timepath.steam.io.VDF;
-import com.timepath.tf2.hudeditor.Main;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Cursor;
