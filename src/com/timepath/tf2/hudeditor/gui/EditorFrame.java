@@ -4,7 +4,13 @@ import apple.OSXAdapter;
 import com.boxysystems.jgoogleanalytics.FocusPoint;
 import com.boxysystems.jgoogleanalytics.JGoogleAnalyticsTracker;
 import com.timepath.Utils;
+import com.timepath.hl2.io.VTF;
+import com.timepath.hl2.io.test.VCCDTest;
+import com.timepath.hl2.io.test.VTFTest;
+import com.timepath.hl2.io.util.Element;
+import com.timepath.hl2.io.util.Property;
 import com.timepath.plaf.OS;
+import com.timepath.plaf.linux.Ayatana;
 import com.timepath.plaf.linux.GtkFixer;
 import com.timepath.plaf.mac.Application;
 import com.timepath.plaf.mac.Application.AboutEvent;
@@ -15,17 +21,12 @@ import com.timepath.plaf.mac.Application.QuitEvent;
 import com.timepath.plaf.mac.Application.QuitHandler;
 import com.timepath.plaf.mac.Application.QuitResponse;
 import com.timepath.plaf.x.filechooser.NativeFileChooser;
-import com.timepath.tf2.hudeditor.Main;
 import com.timepath.steam.SteamUtils;
-import com.timepath.hl2.io.util.Element;
-import com.timepath.hl2.io.util.Property;
 import com.timepath.steam.io.GCF;
 import com.timepath.steam.io.GCF.DirectoryEntry;
 import com.timepath.steam.io.RES;
 import com.timepath.steam.io.VDF;
-import com.timepath.hl2.io.VTF;
-import com.timepath.hl2.io.test.VCCDTest;
-import com.timepath.hl2.io.test.VTFTest;
+import com.timepath.tf2.hudeditor.Main;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Cursor;
@@ -116,8 +117,6 @@ import javax.swing.table.DefaultTableModel;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreePath;
-import org.java.ayatana.ApplicationMenu;
-import org.java.ayatana.AyatanaDesktop;
 
 /**
  *
@@ -654,20 +653,8 @@ public final class EditorFrame extends javax.swing.JFrame {
                 LOG.severe(e.toString());
             }
         } else if(OS.isLinux()) {
-            try {
-                if(AyatanaDesktop.isSupported()) {
-                    boolean worked = ApplicationMenu.tryInstall(EditorFrame.this, menubar);
-                    LOG.log(Level.INFO, "Ayatana: {0}", worked);
-                    if(worked) {
-                        super.setJMenuBar(null);
-                    } else {
-                        error("AyatanaDesktop failed to load" + "\nDE:" + System.getenv("XDG_CURRENT_DESKTOP"));
-                    }
-                } else {
-                	LOG.info("Ayatana: unsupported");
-                }
-            } catch(UnsupportedClassVersionError e) { // crashes earlier versions of the JVM - particularly old macs
-                e.printStackTrace();
+            if(!Ayatana.installMenu((JFrame) this, menubar)) {
+                error("AyatanaDesktop failed to load" + "\nDE:" + System.getenv("XDG_CURRENT_DESKTOP"));
             }
         }
     }

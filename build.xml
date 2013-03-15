@@ -28,7 +28,7 @@
             <!--<zipgroupfileset dir="." includes="*.dll, *.so, *.dylib"/>-->
             
         </jar>
-        <zip destfile="${store.jar}">
+        <zip destfile="${store.jar}" level="9">
             <zipfileset src="${archive.dir}/temp_final.jar" excludes="META-INF/*.SF, META-INF/*.DSA, META-INF/*.RSA"/>
         </zip>
         <delete file="${store.dir}/temp_final.jar"/>
