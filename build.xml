@@ -30,7 +30,7 @@
         
         <mkdir dir="${store.dir}"/>
         <zip destfile="${store.jar}" level="9">
-            <zipfileset src="dist/small.jar" excludes="META-INF/*.SF, META-INF/*.DSA, META-INF/*.RSA"/>
+            <zipfileset src="${dist.jar}.jar" excludes="META-INF/*.SF, META-INF/*.DSA, META-INF/*.RSA"/>
         </zip>
         <checksum file="${store.jar}" forceOverwrite="yes"/>
         <echo file="${store.jar}.current" message="${now}" append="false"/>
