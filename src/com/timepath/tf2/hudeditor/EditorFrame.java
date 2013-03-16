@@ -1,4 +1,4 @@
-package com.timepath.tf2.hudeditor.gui;
+package com.timepath.tf2.hudeditor;
 
 import apple.OSXAdapter;
 import com.boxysystems.jgoogleanalytics.FocusPoint;
@@ -1768,10 +1768,6 @@ public class EditorFrame extends javax.swing.JFrame {
     }// </editor-fold>//GEN-END:initComponents
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JButton jButton1;
-    private javax.swing.JButton jButton2;
-    private javax.swing.JButton jButton3;
-    private javax.swing.JButton jButton4;
     private javax.swing.JSplitPane rootSplit;
     private javax.swing.JSplitPane sideSplit;
     private com.timepath.swing.StatusBar status;

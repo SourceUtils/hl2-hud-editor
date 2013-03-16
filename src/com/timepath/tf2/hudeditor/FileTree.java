@@ -1,4 +1,4 @@
-package com.timepath.tf2.hudeditor.gui;
+package com.timepath.tf2.hudeditor;
 
 import com.timepath.plaf.x.filechooser.NativeFileChooser;
 import com.timepath.steam.io.GCF;

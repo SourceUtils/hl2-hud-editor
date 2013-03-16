@@ -3,7 +3,6 @@ package com.timepath.tf2.hudeditor;
 import com.timepath.Utils;
 import com.timepath.plaf.OS;
 import com.timepath.plaf.OS.WindowToolkit;
-import com.timepath.tf2.hudeditor.gui.EditorFrame;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
