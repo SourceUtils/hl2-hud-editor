@@ -653,7 +653,7 @@ public class EditorFrame extends javax.swing.JFrame {
                 LOG.severe(e.toString());
             }
         } else if(OS.isLinux()) {
-            if(!Ayatana.setMenuBar((JFrame) this, menubar)) {
+            if(!Ayatana.installMenu((JFrame) this, menubar)) {
                 error("AyatanaDesktop failed to load" + "\nDE:" + System.getenv("XDG_CURRENT_DESKTOP"));
             }
         }
