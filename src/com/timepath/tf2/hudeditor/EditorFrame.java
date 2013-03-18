@@ -845,7 +845,7 @@ public class EditorFrame extends javax.swing.JFrame {
                             try {
                                 GCF g = new GCF(f);
                                 child.setUserObject(g);
-                                g.analyze(g, child);
+                                g.analyze(child);
                             } catch(IOException ex) {
                                 Logger.getLogger(SteamUtils.class.getName()).log(Level.SEVERE, null, ex);
                             }
