@@ -26,8 +26,8 @@ import com.timepath.hl2.io.VTF;
 import com.timepath.hl2.io.test.VCCDTest;
 import com.timepath.hl2.io.test.VTFTest;
 import com.timepath.plaf.linux.Ayatana;
-import com.timepath.steam.io.test.GCFTest;
-import com.timepath.steam.io.test.VDFTest;
+import com.timepath.steam.io.test.ArchiveTest;
+import com.timepath.steam.io.test.DataTest;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Cursor;
@@ -1725,7 +1725,7 @@ public class EditorFrame extends javax.swing.JFrame {
             vdfItem = new JMenuItem(new CustomAction("VDF Viewer", null, KeyEvent.VK_D, null) {
                 @Override
                 public void actionPerformed(ActionEvent ae) {
-                    VDFTest.main("");
+                    DataTest.main("");
                 }
             });
             extrasMenu.add(vdfItem);
@@ -1733,7 +1733,7 @@ public class EditorFrame extends javax.swing.JFrame {
             gcfItem = new JMenuItem(new CustomAction("GCF Viewer", null, KeyEvent.VK_G, null) {
                 @Override
                 public void actionPerformed(ActionEvent ae) {
-                    GCFTest.main("");
+                    ArchiveTest.main("");
                 }
             });
             extrasMenu.add(gcfItem);
