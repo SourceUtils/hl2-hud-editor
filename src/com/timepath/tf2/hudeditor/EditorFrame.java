@@ -27,6 +27,7 @@ import com.timepath.hl2.io.test.VCCDTest;
 import com.timepath.hl2.io.test.VTFTest;
 import com.timepath.plaf.linux.Ayatana;
 import com.timepath.steam.io.test.GCFTest;
+import com.timepath.steam.io.test.VDFTest;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Cursor;
@@ -1402,6 +1403,8 @@ public class EditorFrame extends javax.swing.JFrame {
 
         private JMenuItem captionItem;
         
+        private JMenuItem vdfItem;
+        
         private JMenuItem gcfItem;
 
         private int state = Toolkit.getDefaultToolkit().getMenuShortcutKeyMask();
@@ -1703,7 +1706,7 @@ public class EditorFrame extends javax.swing.JFrame {
             extrasMenu.setMnemonic(KeyEvent.VK_X);
             this.add(extrasMenu);
 
-            vtfItem = new JMenuItem(new CustomAction("VTF Viewer", null, KeyEvent.VK_V, null) {
+            vtfItem = new JMenuItem(new CustomAction("VTF Viewer", null, KeyEvent.VK_T, null) {
                 @Override
                 public void actionPerformed(ActionEvent ae) {
                     VTFTest.main("");
@@ -1718,6 +1721,14 @@ public class EditorFrame extends javax.swing.JFrame {
                 }
             });
             extrasMenu.add(captionItem);
+            
+            vdfItem = new JMenuItem(new CustomAction("VDF Viewer", null, KeyEvent.VK_D, null) {
+                @Override
+                public void actionPerformed(ActionEvent ae) {
+                    VDFTest.main("");
+                }
+            });
+            extrasMenu.add(vdfItem);
             
             gcfItem = new JMenuItem(new CustomAction("GCF Viewer", null, KeyEvent.VK_G, null) {
                 @Override
