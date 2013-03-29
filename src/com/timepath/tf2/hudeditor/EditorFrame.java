@@ -448,8 +448,7 @@ public class EditorFrame extends javax.swing.JFrame {
         new Thread() {
             @Override
             public void run() {
-                NativeFileChooser nc = new NativeFileChooser(EditorFrame.this, Main.getString("LoadHudDir"), lastLoaded);
-                final File selection = nc.choose(true, false);
+                final File selection = NativeFileChooser.choose(EditorFrame.this, Main.getString("LoadHudDir"), lastLoaded.getPath(), true, false);
                 if(selection != null) {
                     new Thread() {
                         @Override

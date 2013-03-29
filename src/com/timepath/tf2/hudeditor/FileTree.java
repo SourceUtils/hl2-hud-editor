@@ -150,6 +150,8 @@ public class FileTree extends javax.swing.JTree {
         popupMenuProject.add(jMenuItem3);
 
         setBorder(null);
+        javax.swing.tree.DefaultMutableTreeNode treeNode1 = new javax.swing.tree.DefaultMutableTreeNode("root");
+        setModel(new javax.swing.tree.DefaultTreeModel(treeNode1));
         addMouseListener(new java.awt.event.MouseAdapter() {
             public void mouseClicked(java.awt.event.MouseEvent evt) {
                 formMouseClicked(evt);
@@ -203,7 +205,7 @@ public class FileTree extends javax.swing.JTree {
                         LOG.log(Level.INFO, "DirectoryEntry: {0}", directoryEntryContext);
                         index = directoryEntryContext.index;
                     }
-                    File f = new NativeFileChooser(null, "extract", new File(new File("").getPath())).choose(true, true);
+                    File f = NativeFileChooser.choose(null, "extract", null, true, true);
                     if(f != null) {
                         LOG.log(Level.INFO, "Extracting to {0}", f);
                         try {
