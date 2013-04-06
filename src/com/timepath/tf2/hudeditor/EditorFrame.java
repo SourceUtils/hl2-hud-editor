@@ -1,12 +1,14 @@
 package com.timepath.tf2.hudeditor;
 
 import apple.OSXAdapter;
-import com.boxysystems.jgoogleanalytics.FocusPoint;
-import com.boxysystems.jgoogleanalytics.JGoogleAnalyticsTracker;
 import com.timepath.Utils;
+import com.timepath.hl2.io.VTF;
+import com.timepath.hl2.io.test.VCCDTest;
+import com.timepath.hl2.io.test.VTFTest;
 import com.timepath.hl2.io.util.Element;
 import com.timepath.hl2.io.util.Property;
 import com.timepath.plaf.OS;
+import com.timepath.plaf.linux.Ayatana;
 import com.timepath.plaf.linux.GtkFixer;
 import com.timepath.plaf.mac.Application;
 import com.timepath.plaf.mac.Application.AboutEvent;
@@ -22,10 +24,6 @@ import com.timepath.steam.io.GCF;
 import com.timepath.steam.io.GCF.DirectoryEntry;
 import com.timepath.steam.io.RES;
 import com.timepath.steam.io.VDF;
-import com.timepath.hl2.io.VTF;
-import com.timepath.hl2.io.test.VCCDTest;
-import com.timepath.hl2.io.test.VTFTest;
-import com.timepath.plaf.linux.Ayatana;
 import com.timepath.steam.io.test.ArchiveTest;
 import com.timepath.steam.io.test.DataTest;
 import java.awt.BorderLayout;
@@ -396,7 +394,7 @@ public class EditorFrame extends javax.swing.JFrame {
             }
         };
 
-        JComboBox dropDown = new JComboBox();
+        JComboBox<String> dropDown = new JComboBox<String>();
         String location = SteamUtils.locateSteamAppsDirectory();
         if(location == null) {
             error("Could not find Steam install directory!", "Steam not found");
@@ -565,7 +563,7 @@ public class EditorFrame extends javax.swing.JFrame {
 //                docHeight.setDocumentFilter(new NumericDocumentFilter());
 //                jsHeight.getTextField().setDocument(docHeight);
 //            }
-        final JComboBox dropDown = new JComboBox();
+        final JComboBox<String> dropDown = new JComboBox<String>();
 
         GraphicsEnvironment env = GraphicsEnvironment.getLocalGraphicsEnvironment();
         GraphicsDevice[] devices = env.getScreenDevices();
@@ -617,7 +615,7 @@ public class EditorFrame extends javax.swing.JFrame {
     //<editor-fold defaultstate="collapsed" desc="Overrides">
     @Override
     public void setJMenuBar(JMenuBar menubar) {
-    	LOG.log(Level.INFO, "Setting menubar for {0}", OS.get());
+        LOG.log(Level.INFO, "Setting menubar for {0}", OS.get());
         super.setJMenuBar(menubar);
         if(OS.isMac()) {
             try {
@@ -663,9 +661,9 @@ public class EditorFrame extends javax.swing.JFrame {
     public void setVisible(boolean b) {
         super.setVisible(b);
         this.createBufferStrategy(2);
+        track("ProgramLoad");
         if(Main.myVer != null && autoCheck) {
             this.checkForUpdates();
-            track("ProgramLoad");
         }
     }
     //</editor-fold>
@@ -1236,7 +1234,7 @@ public class EditorFrame extends javax.swing.JFrame {
             }
         });
     }
-    
+
     public static void restart() throws URISyntaxException, IOException { // TODO: wrap this class in a launcher, rather than explicitly restarting
         final String javaBin = System.getProperty("java.home") + File.separator + "bin" + File.separator + "java";
         final File currentJar = new File(EditorFrame.class.getProtectionDomain().getCodeSource().getLocation().toURI());
@@ -1259,7 +1257,7 @@ public class EditorFrame extends javax.swing.JFrame {
      * Sets the look and feel
      */
     private static void lookAndFeel() {
-    	LOG.log(Level.INFO, "LaF: {0}", System.getProperty("swing.defaultlaf"));
+        LOG.log(Level.INFO, "LaF: {0}", System.getProperty("swing.defaultlaf"));
         if(System.getProperty("swing.defaultlaf") == null) { // Do not override user specified theme
             boolean nimbus = false;
             //<editor-fold defaultstate="collapsed" desc="Attempt to apply nimbus">
@@ -1276,7 +1274,7 @@ public class EditorFrame extends javax.swing.JFrame {
                 }
             }
             //</editor-fold>
-            
+
             boolean metal = false;
             //<editor-fold defaultstate="collapsed" desc="Fall back to metal">
             if(metal) {
@@ -1294,7 +1292,7 @@ public class EditorFrame extends javax.swing.JFrame {
                 }
             }
             //</editor-fold>
-            
+
             //<editor-fold defaultstate="collapsed" desc="Fall back to native">
             try {
                 UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
@@ -1309,7 +1307,7 @@ public class EditorFrame extends javax.swing.JFrame {
             }
             //</editor-fold>
         }
-        
+
         //<editor-fold defaultstate="collapsed" desc="Improve native LaF">
         if(UIManager.getLookAndFeel().isNativeLookAndFeel()) {
             try {
@@ -1342,14 +1340,24 @@ public class EditorFrame extends javax.swing.JFrame {
      * @param state
      */
     private void track(String state) {
+        LOG.log(Level.INFO, "Tracking {0}", state);
         if(Main.myVer == null) {
-            return;
+//            return;
         }
-        JGoogleAnalyticsTracker tracker = new JGoogleAnalyticsTracker(Main.appName, Main.myVer, "UA-35189411-2");
-        FocusPoint focusPoint = new FocusPoint(state);
-        tracker.trackAsynchronously(focusPoint);
 
-
+        String appID = "UA-35189411-2";
+        String title = "TF2 HUD Editor";
+        
+//        com.boxysystems.jgoogleanalytics.JGoogleAnalyticsTracker track = new com.boxysystems.jgoogleanalytics.JGoogleAnalyticsTracker(title, "1", appID);
+//        com.boxysystems.jgoogleanalytics.FocusPoint focusPoint = new com.boxysystems.jgoogleanalytics.FocusPoint(state);
+//        track.trackAsynchronously(focusPoint);
+//
+//        com.dmurph.tracking.AnalyticsConfigData config = new com.dmurph.tracking.AnalyticsConfigData(appID);
+//        com.dmurph.tracking.JGoogleAnalyticsTracker tracker = new com.dmurph.tracking.JGoogleAnalyticsTracker(config, com.dmurph.tracking.JGoogleAnalyticsTracker.GoogleAnalyticsVersion.V_4_7_2);
+//        tracker.setEnabled(true);
+//        tracker.trackPageView(state, title, "");
+//        
+//        EasyTracker.getInstance().activityStart(this);
     }
 
     private class EditorMenuBar extends JMenuBar {
@@ -1401,9 +1409,9 @@ public class EditorFrame extends javax.swing.JFrame {
         private JMenuItem vtfItem;
 
         private JMenuItem captionItem;
-        
+
         private JMenuItem vdfItem;
-        
+
         private JMenuItem gcfItem;
 
         private int state = Toolkit.getDefaultToolkit().getMenuShortcutKeyMask();
@@ -1720,7 +1728,7 @@ public class EditorFrame extends javax.swing.JFrame {
                 }
             });
             extrasMenu.add(captionItem);
-            
+
             vdfItem = new JMenuItem(new CustomAction("VDF Viewer", null, KeyEvent.VK_D, null) {
                 @Override
                 public void actionPerformed(ActionEvent ae) {
@@ -1728,7 +1736,7 @@ public class EditorFrame extends javax.swing.JFrame {
                 }
             });
             extrasMenu.add(vdfItem);
-            
+
             gcfItem = new JMenuItem(new CustomAction("GCF Viewer", null, KeyEvent.VK_G, null) {
                 @Override
                 public void actionPerformed(ActionEvent ae) {
