@@ -1336,6 +1336,7 @@ public class EditorFrame extends javax.swing.JFrame {
 
     /**
      * Google analytics tracking code
+     * https://developers.google.com/analytics/resources/concepts/gaConceptsTrackingOverview
      *
      * @param state
      */
