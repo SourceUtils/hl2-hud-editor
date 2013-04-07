@@ -394,7 +394,7 @@ public class EditorFrame extends javax.swing.JFrame {
             }
         };
 
-        JComboBox<String> dropDown = new JComboBox<String>();
+        JComboBox dropDown = new JComboBox(); // <String>
         String location = SteamUtils.locateSteamAppsDirectory();
         if(location == null) {
             error("Could not find Steam install directory!", "Steam not found");
@@ -563,7 +563,7 @@ public class EditorFrame extends javax.swing.JFrame {
 //                docHeight.setDocumentFilter(new NumericDocumentFilter());
 //                jsHeight.getTextField().setDocument(docHeight);
 //            }
-        final JComboBox<String> dropDown = new JComboBox<String>();
+        final JComboBox dropDown = new JComboBox(); // <String>
 
         GraphicsEnvironment env = GraphicsEnvironment.getLocalGraphicsEnvironment();
         GraphicsDevice[] devices = env.getScreenDevices();
