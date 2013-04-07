@@ -3,6 +3,7 @@ package com.timepath.tf2.hudeditor;
 import apple.OSXAdapter;
 import com.timepath.Utils;
 import com.timepath.hl2.io.VTF;
+import com.timepath.hl2.io.test.VBFTest;
 import com.timepath.hl2.io.test.VCCDTest;
 import com.timepath.hl2.io.test.VTFTest;
 import com.timepath.hl2.io.util.Element;
@@ -1414,6 +1415,8 @@ public class EditorFrame extends javax.swing.JFrame {
         private JMenuItem vdfItem;
 
         private JMenuItem gcfItem;
+        
+        private JMenuItem bitmapItem;
 
         private int state = Toolkit.getDefaultToolkit().getMenuShortcutKeyMask();
 
@@ -1722,7 +1725,7 @@ public class EditorFrame extends javax.swing.JFrame {
             });
             extrasMenu.add(vtfItem);
 
-            captionItem = new JMenuItem(new CustomAction("Caption Viewer", null, KeyEvent.VK_C, null) {
+            captionItem = new JMenuItem(new CustomAction("Caption Editor", null, KeyEvent.VK_C, null) {
                 @Override
                 public void actionPerformed(ActionEvent ae) {
                     VCCDTest.main("");
@@ -1745,6 +1748,14 @@ public class EditorFrame extends javax.swing.JFrame {
                 }
             });
             extrasMenu.add(gcfItem);
+            
+            bitmapItem = new JMenuItem(new CustomAction("Bitmap Font Glyph Editor", null, KeyEvent.VK_C, null) {
+                @Override
+                public void actionPerformed(ActionEvent ae) {
+                    VBFTest.main("");
+                }
+            });
+            extrasMenu.add(bitmapItem);
         }
     }
 
