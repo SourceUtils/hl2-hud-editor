@@ -13,6 +13,7 @@ import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.SocketException;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.ResourceBundle;
 import java.util.logging.FileHandler;
@@ -51,36 +52,37 @@ public class Main {
     private static final Logger LOG = Logger.getLogger(Main.class.getName());
 
     static {
-        WindowToolkit.setWindowClass(projectName); // Wrapper.class.getName().replaceAll("\\.", "-");
-        
         //<editor-fold defaultstate="collapsed" desc="Debugging">
         Thread.setDefaultUncaughtExceptionHandler(new Thread.UncaughtExceptionHandler() {
             public void uncaughtException(Thread thread, Throwable thrwbl) {
                 Logger.getLogger(thread.getName()).log(Level.SEVERE, "Uncaught Exception", thrwbl);
             }
         });
-        
-        Logger.getLogger("").setLevel(Level.INFO);
-        
-        //<editor-fold defaultstate="collapsed" desc="logfile">
+
+        //<editor-fold defaultstate="collapsed" desc="Logging">
+        Logger.getLogger("com.timepath").setLevel(Level.ALL);
+
         logFile = Utils.workingDirectory(Main.class) + "logs/" + System.currentTimeMillis() / 1000 + "_log.txt";
-        LOG.log(Level.INFO, "Logging to {0}", logFile);
         try {
             new File(logFile).getParentFile().mkdirs();
             FileHandler fh = new FileHandler(logFile, 0, 1, false);
+            fh.setLevel(Level.ALL);
             SimpleFormatter formatter = new SimpleFormatter();
             fh.setFormatter(formatter);
             Logger.getLogger("").addHandler(fh);
+            LOG.log(Level.INFO, "Logging to {0}", logFile);
         } catch(IOException ex) {
-            Logger.getLogger(Main.class.getName()).log(Level.SEVERE, null, ex);
+            LOG.log(Level.SEVERE, null, ex);
         } catch(SecurityException ex) {
-            Logger.getLogger(Main.class.getName()).log(Level.SEVERE, null, ex);
+            LOG.log(Level.SEVERE, null, ex);
         }
         //</editor-fold>
-        
+
         com.timepath.plaf.x.filechooser.XFileDialogFileChooser.setTraceLevel(0);
         //</editor-fold>
-   
+
+        WindowToolkit.setWindowClass(projectName); // Wrapper.class.getName().replaceAll("\\.", "-");
+
         if(OS.isMac()) {
             System.setProperty("apple.awt.brushMetalLook", "false");
             System.setProperty("apple.awt.graphics.EnableQ2DX", "true");
@@ -96,6 +98,7 @@ public class Main {
 
     //<editor-fold defaultstate="collapsed" desc="Entry point">
     public static void main(String... args) {
+        LOG.log(Level.CONFIG, "Args = {0}", Arrays.toString(args));
         LOG.log(Level.CONFIG, "Env = {0}", System.getenv().toString());
         LOG.log(Level.CONFIG, "Properties = {0}", System.getProperties().toString());
 
@@ -126,11 +129,11 @@ public class Main {
     private static boolean startServer(int port) {
         try {
             final ServerSocket sock = new ServerSocket(port, 0, InetAddress.getByName(null)); // cannot use java7 InetAddress.getLoopbackAddress(). On windows, this prevents firewall warnings. It's also good for security in general
-            port = sock.getLocalPort();
-            prefs.putInt("port", port);
+            int truePort = sock.getLocalPort();
+            prefs.putInt("port", truePort);
             prefs.flush();
 
-            LOG.log(Level.INFO, "Listening on port {0}", port);
+            LOG.log(Level.INFO, "Listening on port {0}", truePort);
 
             Runtime.getRuntime().addShutdownHook(new Thread() {
                 @Override

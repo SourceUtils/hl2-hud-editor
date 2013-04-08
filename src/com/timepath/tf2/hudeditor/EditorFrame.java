@@ -653,7 +653,7 @@ public class EditorFrame extends javax.swing.JFrame {
             }
         } else if(OS.isLinux()) {
             if(!Ayatana.installMenu((JFrame) this, menubar)) {
-                error("AyatanaDesktop failed to load" + "\nDE:" + System.getenv("XDG_CURRENT_DESKTOP"));
+                LOG.log(Level.WARNING, "AyatanaDesktop failed to load for {0}", System.getenv("XDG_CURRENT_DESKTOP"));
             }
         }
     }
@@ -1342,14 +1342,14 @@ public class EditorFrame extends javax.swing.JFrame {
      * @param state
      */
     private void track(String state) {
-        LOG.log(Level.INFO, "Tracking {0}", state);
-        if(Main.myVer == null) {
+//        LOG.log(Level.INFO, "Tracking {0}", state);
+//        if(Main.myVer == null) {
 //            return;
-        }
-
-        String appID = "UA-35189411-2";
-        String title = "TF2 HUD Editor";
-        
+//        }
+//
+//        String appID = "UA-35189411-2";
+//        String title = "TF2 HUD Editor";
+//        
 //        com.boxysystems.jgoogleanalytics.JGoogleAnalyticsTracker track = new com.boxysystems.jgoogleanalytics.JGoogleAnalyticsTracker(title, "1", appID);
 //        com.boxysystems.jgoogleanalytics.FocusPoint focusPoint = new com.boxysystems.jgoogleanalytics.FocusPoint(state);
 //        track.trackAsynchronously(focusPoint);
