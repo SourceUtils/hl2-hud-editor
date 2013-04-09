@@ -292,7 +292,7 @@ public class EditorFrame extends javax.swing.JFrame {
                                 }
                                 LOG.info("Checking MD5...");
                                 if(!Utils.takeMD5(Utils.loadFile(downloaded)).equalsIgnoreCase(md5)) {
-                                    LOG.warning("Corrupt download");
+                                    LOG.warning("Corrupt or old download");
                                 } else {
                                     LOG.info("MD5 matches");
                                     break;
@@ -746,21 +746,6 @@ public class EditorFrame extends javax.swing.JFrame {
         }
     }
 
-    public static Comparator<File> dirAlphaComparator = new Comparator<File>() {
-        /**
-         * Alphabetically sorts directories before files ignoring case.
-         */
-        public int compare(File a, File b) {
-            if(a.isDirectory() && !b.isDirectory()) {
-                return -1;
-            } else if(!a.isDirectory() && b.isDirectory()) {
-                return 1;
-            } else {
-                return a.getName().compareToIgnoreCase(b.getName());
-            }
-        }
-    };
-
     private void connectNodes(final DefaultMutableTreeNode parent, final DefaultMutableTreeNode child) {
         try {
             SwingUtilities.invokeAndWait(new Runnable() {
@@ -792,7 +777,7 @@ public class EditorFrame extends javax.swing.JFrame {
         if(fileList.length == 0) {
             return;
         }
-        Arrays.sort(fileList, dirAlphaComparator);
+        Arrays.sort(fileList, Utils.ALPHA_COMPARATOR);
         for(int i = 0; i < fileList.length; i++) {
             final File f = fileList[i];
             final DefaultMutableTreeNode child = new DefaultMutableTreeNode();
@@ -890,12 +875,12 @@ public class EditorFrame extends javax.swing.JFrame {
     }
 
     private void setLastLoaded(File root) {
+        jmb.reloadItem.setEnabled(root != null);
         if(root == null || !root.exists()) {
             return;
         }
         lastLoaded = root;
         Main.prefs.put("lastLoaded", root.getPath());
-        jmb.reloadItem.setEnabled(root != null);
     }
 
     private HyperlinkListener linkListener = new HyperlinkListener() {
