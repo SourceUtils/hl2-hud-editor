@@ -70,7 +70,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.URLConnection;
-import java.net.UnknownHostException;
+import java.security.NoSuchAlgorithmException;
 import java.text.DateFormat;
 import java.text.MessageFormat;
 import java.text.SimpleDateFormat;
@@ -199,142 +199,142 @@ public class EditorFrame extends javax.swing.JFrame {
         }.start();
     }
 
+    private BufferedReader getPage(String s) throws IOException {
+        URL u = new URL(s);
+        URLConnection c = u.openConnection();
+        InputStream is = c.getInputStream();
+        return new BufferedReader(new InputStreamReader(is));
+    }
+
     private void checkForUpdates() {
-        if(Main.myVer == null) {
-            return;
-        }
         new Thread() {
+            private String currentVersion() throws IOException {
+                BufferedReader r = getPage("https://dl.dropbox.com/u/42745598/tf/Hud%20Editor/TF2%20HUD%20Editor.jar.current");
+                String l = r.readLine();
+                r.close();
+                return l;
+            }
+
+            private String checksum() throws IOException {
+                BufferedReader r = getPage("https://dl.dropbox.com/u/42745598/tf/Hud%20Editor/TF2%20HUD%20Editor.jar.MD5");
+                String l = r.readLine();
+                r.close();
+                return l;
+            }
+
             int retries = 3;
 
             private void doCheckForUpdates() {
                 try {
-                    String current;
-                    URL url = new URL("https://dl.dropbox.com/u/42745598/tf/Hud%20Editor/TF2%20HUD%20Editor.jar.current");
-                    URLConnection connection = url.openConnection();
-
-                    InputStream is;
-                    try {
-                        is = connection.getInputStream();
-                    } catch(UnknownHostException ex) {
-                        LOG.info("No internet connection");
-                        return;
-                    }
-
-                    // read from internet
-                    BufferedReader reader = new BufferedReader(new InputStreamReader(is));
-                    String line = reader.readLine();
-                    if(line != null) {
-                        current = line;
-                        reader.close();
-                    } else {
-//                        error("Could not obtain latest changelog from internet.");
-                        return;
-                    }
-                    reader.close();
-
+                    String current = currentVersion();
                     boolean equal = current.equals(Main.myVer);
-
                     LOG.log(Level.INFO, "{0} ={1}= {2}", new Object[]{current, equal ? "" : "/", Main.myVer});
-
-                    if(!equal || current.compareTo(Main.myVer) > 0) {
+                    if(Main.myVer == null || current.compareTo(Main.myVer) > 0) {
 //                        updateButton.setEnabled(true);
                         int returnCode = JOptionPane.showConfirmDialog(null, "Would you like to update to the latest version?", "A new update is available", JOptionPane.YES_NO_OPTION);
                         if(returnCode == JOptionPane.YES_OPTION) {
-                            long startTime = System.currentTimeMillis();
+                            String md5 = checksum();
 
-                            LOG.info("Connecting to Dropbox...");
+                            final File downloaded = new File(Utils.workingDirectory(EditorFrame.class) + "update.tmp");
+                            for(int attempt = 1;; attempt++) {
+                                LOG.log(Level.INFO, "Checking for {0}", downloaded);
+                                if(!downloaded.exists()) {
+                                    long startTime = System.currentTimeMillis();
 
-                            URL latest = new URL("https://dl.dropbox.com/u/42745598/tf/Hud%20Editor/TF2%20HUD%20Editor.jar");
-                            URLConnection editor = latest.openConnection();
+                                    LOG.info("Connecting to Dropbox...");
 
-                            JProgressBar pb = new JProgressBar(0, editor.getContentLength());
-                            pb.setPreferredSize(new Dimension(175, 20));
-                            pb.setStringPainted(true);
-                            pb.setValue(0);
+                                    URL latest = new URL("https://dl.dropbox.com/u/42745598/tf/Hud%20Editor/TF2%20HUD%20Editor.jar");
+                                    URLConnection editor = latest.openConnection();
 
-//                            JLabel label = new JLabel("Update Progress: ");
+                                    JProgressBar pb = new JProgressBar(0, editor.getContentLength());
+                                    pb.setPreferredSize(new Dimension(175, 20));
+                                    pb.setStringPainted(true);
+                                    pb.setValue(0);
 
-//                            JPanel center_panel = new JPanel();
-//                            center_panel.add(label);
-//                            center_panel.add(pb);
+                                    //                            JLabel label = new JLabel("Update Progress: ");
 
-//                            statusBar.remove(updateButton);
-                            status.add(pb);
-                            status.revalidate();
+                                    //                            JPanel center_panel = new JPanel();
+                                    //                            center_panel.add(label);
+                                    //                            center_panel.add(pb);
 
-                            InputStream in = latest.openStream();
+                                    //                            statusBar.remove(updateButton);
+                                    status.add(pb);
+                                    status.revalidate();
 
+                                    InputStream in = latest.openStream();
 
-                            FileOutputStream writer = new FileOutputStream(Utils.workingDirectory(EditorFrame.class)); // TODO: stop closing when this happens. Maybe make a backup..
-                            byte[] buffer = new byte[153600]; // 150KB
-                            int totalBytesRead = 0;
-                            int bytesRead;
+                                    // Utils.workingDirectory(EditorFrame.class)
+                                    FileOutputStream writer = new FileOutputStream(downloaded);
+                                    byte[] buffer = new byte[153600]; // 150KB
+                                    int totalBytesRead = 0;
+                                    int bytesRead;
 
-                            LOG.info("Downloading JAR file in 150KB blocks at a time.\n");
+                                    LOG.info("Downloading JAR file in 150KB blocks at a time.\n");
 
-                            updating = true;
+                                    updating = true;
 
-                            while((bytesRead = in.read(buffer)) > 0) {
-                                writer.write(buffer, 0, bytesRead); // I don't want to write directly over the top until I have all the data..
-                                buffer = new byte[153600];
-                                totalBytesRead += bytesRead;
-                                pb.setValue(totalBytesRead);
+                                    while((bytesRead = in.read(buffer)) > 0) {
+                                        writer.write(buffer, 0, bytesRead);
+                                        buffer = new byte[153600];
+                                        totalBytesRead += bytesRead;
+                                        pb.setValue(totalBytesRead);
+                                    }
+
+                                    long endTime = System.currentTimeMillis();
+
+                                    LOG.log(Level.INFO, "Done. {0} bytes read ({1} millseconds).\n", new Object[]{new Integer(totalBytesRead).toString(), new Long(endTime - startTime).toString()});
+                                    writer.close();
+                                    in.close();
+                                    //                            dialog.dispose();
+                                    status.remove(pb);
+                                } else {
+                                    LOG.info("Exists");
+                                }
+                                LOG.info("Checking MD5...");
+                                if(!Utils.takeMD5(Utils.loadFile(downloaded)).equalsIgnoreCase(md5)) {
+                                    LOG.warning("Corrupt download");
+                                } else {
+                                    LOG.info("MD5 matches");
+                                    break;
+                                }
+                                if(attempt == retries) {
+                                    LOG.warning("Update failed");
+                                    return;
+                                }
                             }
 
-                            long endTime = System.currentTimeMillis();
-
-                            LOG.log(Level.INFO, "Done. {0} bytes read ({1} millseconds).\n", new Object[]{new Integer(totalBytesRead).toString(), new Long(endTime - startTime).toString()});
-                            writer.close();
-                            in.close();
-
-//                            dialog.dispose();
-
-                            info("Downloaded the latest version. Please restart now.");
+                            info("Downloaded the latest version. Restart to apply.\nWill replace " + Utils.workingDirectory(EditorFrame.class));
 
                             updating = false;
 
                             final JButton rb = new JButton("Restart");
-                            rb.setAction(new Action() {
-                                public Object getValue(String string) {
-                                    throw new UnsupportedOperationException("Not supported yet.");
-                                }
-
-                                public void putValue(String string, Object o) {
-                                    throw new UnsupportedOperationException("Not supported yet.");
-                                }
-
-                                public void setEnabled(boolean bln) {
-                                    rb.setEnabled(bln);
-                                }
-
-                                public boolean isEnabled() {
-                                    return rb.isEnabled();
-                                }
-
-                                public void addPropertyChangeListener(PropertyChangeListener pl) {
-                                    throw new UnsupportedOperationException("Not supported yet.");
-                                }
-
-                                public void removePropertyChangeListener(PropertyChangeListener pl) {
-                                    throw new UnsupportedOperationException("Not supported yet.");
-                                }
-
+                            rb.setAction(new AbstractAction() {
                                 public void actionPerformed(ActionEvent ae) {
                                     try {
-                                        EditorFrame.restart();
-                                    } catch(URISyntaxException ex) {
-                                        LOG.log(Level.SEVERE, null, ex);
+                                        final String javaBin = System.getProperty("java.home") + File.separator + "bin" + File.separator + "java";
+
+                                        final ArrayList<String> cmd = new ArrayList<String>();
+                                        cmd.add(javaBin);
+                                        cmd.add("-jar");
+                                        cmd.add(downloaded.getPath());
+                                        cmd.add("-u");
+                                        cmd.add(Utils.workingDirectory(EditorFrame.class));
+                                        String[] exec = new String[cmd.size()];
+                                        cmd.toArray(exec);
+                                        final ProcessBuilder process = new ProcessBuilder(exec);
+                                        process.start();
+                                        System.exit(0);
                                     } catch(IOException ex) {
                                         LOG.log(Level.SEVERE, null, ex);
                                     }
                                 }
                             });
-                            status.remove(pb);
-                            status.add(rb, BorderLayout.EAST);
+                            status.add(rb);
                         }
                     } else {
                         info("You have the latest version.");
                     }
+                } catch(NoSuchAlgorithmException ex) {
                 } catch(IOException ex) {
                     retries--;
                     if(retries > 0) {
@@ -1243,22 +1243,28 @@ public class EditorFrame extends javax.swing.JFrame {
         });
     }
 
-    public static void restart() throws URISyntaxException, IOException { // TODO: wrap this class in a launcher, rather than explicitly restarting
+    public static void restart(File file) throws URISyntaxException, IOException {
         final String javaBin = System.getProperty("java.home") + File.separator + "bin" + File.separator + "java";
-        final File currentJar = new File(EditorFrame.class.getProtectionDomain().getCodeSource().getLocation().toURI());
 
-        if(!currentJar.getName().endsWith(".jar")) {
+        if(!file.getName().endsWith(".jar")) {
             return;
         }
 
         final ArrayList<String> command = new ArrayList<String>();
         command.add(javaBin);
         command.add("-jar");
-        command.add(currentJar.getPath());
+        command.add(file.getPath());
 
-        final ProcessBuilder builder = new ProcessBuilder(command);
-        builder.start();
+        final ProcessBuilder process = new ProcessBuilder(command);
+        process.start();
         System.exit(0);
+    }
+
+    /**
+     * TODO: wrap this class in a launcher, rather than explicitly restarting
+     */
+    public static void restart() throws URISyntaxException, IOException {
+        restart(new File(EditorFrame.class.getProtectionDomain().getCodeSource().getLocation().toURI()));
     }
 
     /**
@@ -1422,7 +1428,7 @@ public class EditorFrame extends javax.swing.JFrame {
         private JMenuItem vdfItem;
 
         private JMenuItem gcfItem;
-        
+
         private JMenuItem bitmapItem;
 
         private int state = Toolkit.getDefaultToolkit().getMenuShortcutKeyMask();
@@ -1697,7 +1703,8 @@ public class EditorFrame extends javax.swing.JFrame {
                     EditorFrame.this.checkForUpdates();
                 }
             });
-            updateItem.setEnabled(Main.myVer != null);
+            updateItem.setEnabled(Main.myVer != null); // XXX
+            updateItem.setEnabled(true);
             helpMenu.add(updateItem);
 
             changeLogItem = new JMenuItem(new CustomAction("Changelog", null, KeyEvent.VK_L, null) {
@@ -1755,7 +1762,7 @@ public class EditorFrame extends javax.swing.JFrame {
                 }
             });
             extrasMenu.add(gcfItem);
-            
+
             bitmapItem = new JMenuItem(new CustomAction("Bitmap Font Glyph Editor", null, KeyEvent.VK_C, null) {
                 @Override
                 public void actionPerformed(ActionEvent ae) {

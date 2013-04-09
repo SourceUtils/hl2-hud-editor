@@ -8,11 +8,14 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
+import java.io.RandomAccessFile;
 import java.net.BindException;
 import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.SocketException;
+import java.nio.channels.FileChannel;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.ResourceBundle;
@@ -98,9 +101,57 @@ public class Main {
 
     //<editor-fold defaultstate="collapsed" desc="Entry point">
     public static void main(String... args) {
-        LOG.log(Level.CONFIG, "Args = {0}", Arrays.toString(args));
+        LOG.log(Level.INFO, "Executing from {0}", Utils.workingDirectory(EditorFrame.class));
+        LOG.log(Level.INFO, "Args = {0}", Arrays.toString(args));
         LOG.log(Level.CONFIG, "Env = {0}", System.getenv().toString());
         LOG.log(Level.CONFIG, "Properties = {0}", System.getProperties().toString());
+
+
+        for(int i = 0; i < args.length; i++) {
+            if(args[i].equalsIgnoreCase("-u")) {
+                try {
+                    File destFile = new File(args[i + 1]);
+                    LOG.info("Updating " + destFile);
+                    File sourceFile = new File(Utils.workingDirectory(EditorFrame.class));
+                    if(!destFile.exists()) {
+                        destFile.createNewFile();
+                    }
+
+                    FileChannel source = null;
+                    FileChannel destination = null;
+                    try {
+                        source = new RandomAccessFile(sourceFile, "rw").getChannel();
+                        destination = new RandomAccessFile(destFile, "rw").getChannel();
+
+                        long position = 0;
+                        long count = source.size();
+
+                        source.transferTo(position, count, destination);
+                    } finally {
+                        if(source != null) {
+                            source.close();
+                        }
+                        if(destination != null) {
+                            destination.close();
+                        }
+                    }
+                    final String javaBin = System.getProperty("java.home") + File.separator + "bin" + File.separator + "java";
+                    final ArrayList<String> cmd = new ArrayList<String>();
+                    cmd.add(javaBin);
+                    cmd.add("-jar");
+                    cmd.add(destFile.getPath());
+                    cmd.add("updated");
+                    // TODO: carry other args
+                    String[] exec = new String[cmd.size()];
+                    cmd.toArray(exec);
+                    final ProcessBuilder process = new ProcessBuilder(exec);
+                    process.start();
+                    System.exit(0);
+                } catch(IOException ex) {
+                    Logger.getLogger(Main.class.getName()).log(Level.SEVERE, null, ex);
+                }
+            }
+        }
 
         int port = prefs.getInt("port", -1);
         if(port != -1) { // May not have been removed on shutdown
