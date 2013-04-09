@@ -839,8 +839,15 @@ public class EditorFrame extends javax.swing.JFrame {
                         } else if(f.getName().endsWith(".vmt")) {
 //                            VDF.analyze(f, child);
                         } else if(f.getName().endsWith(".vtf")) {
-                            VTF v = VTF.load(f);
-                            child.setUserObject(v);
+                            VTF v = null;
+                            try {
+                                v = VTF.load(new FileInputStream(f));
+                            } catch(IOException ex) {
+                                Logger.getLogger(EditorFrame.class.getName()).log(Level.SEVERE, null, ex);
+                            }
+                            if(v != null) {
+                                child.setUserObject(v);
+                            }
                         } else if(f.getName().endsWith(".gcf")) {
                             try {
                                 GCF g = new GCF(f);
