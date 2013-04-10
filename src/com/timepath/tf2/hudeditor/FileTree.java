@@ -229,7 +229,7 @@ public class FileTree extends javax.swing.JTree implements ActionListener, Mouse
                         LOG.log(Level.INFO, "DirectoryEntry: {0}", directoryEntryContext);
                         index = directoryEntryContext.index;
                     }
-                    File f;
+                    File f = null;
                     try {
                         f = new NativeFileChooser().setTitle("Extract").setDialogType(BaseFileChooser.DialogType.SAVE_DIALOG).setFileMode(BaseFileChooser.FileMode.DIRECTORIES_ONLY).choose();
                     } catch(IOException ex) {
