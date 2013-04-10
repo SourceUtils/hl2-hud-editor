@@ -27,7 +27,6 @@ import com.timepath.steam.io.RES;
 import com.timepath.steam.io.VDF;
 import com.timepath.steam.io.test.ArchiveTest;
 import com.timepath.steam.io.test.DataTest;
-import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Cursor;
 import java.awt.Desktop;
@@ -56,7 +55,6 @@ import java.awt.event.ComponentEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
-import java.beans.PropertyChangeListener;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
@@ -76,7 +74,6 @@ import java.text.MessageFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Comparator;
 import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
@@ -165,18 +162,20 @@ public class EditorFrame extends javax.swing.JFrame {
                     BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getInputStream()));
                     String line;
                     String grep = Main.myVer;
-                    while((line = reader.readLine()) != null) {
-                        if(Main.myVer != null && line.contains(grep)) { // unpackaged builds do not have versions
-                            String[] parts = line.split(grep);
-                            if(parts[0] != null) {
-                                text += parts[0];
+                    if(grep != null) { // unpackaged builds do not have versions
+                        while((line = reader.readLine()) != null) {
+                            if(line.contains(grep)) {
+                                String[] parts = line.split(grep);
+                                if(parts[0] != null) {
+                                    text += parts[0];
+                                }
+                                text += "<b><u>" + grep + "</u></b>";
+                                if(parts[1] != null) {
+                                    text += parts[1];
+                                }
+                            } else {
+                                text += line;
                             }
-                            text += "<b><u>" + grep + "</u></b>";
-                            if(parts[1] != null) {
-                                text += parts[1];
-                            }
-                        } else {
-                            text += line;
                         }
                     }
                     reader.close();
