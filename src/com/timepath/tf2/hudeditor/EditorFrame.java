@@ -19,6 +19,8 @@ import com.timepath.plaf.mac.Application.PreferencesHandler;
 import com.timepath.plaf.mac.Application.QuitEvent;
 import com.timepath.plaf.mac.Application.QuitHandler;
 import com.timepath.plaf.mac.Application.QuitResponse;
+import com.timepath.plaf.x.filechooser.BaseFileChooser;
+import com.timepath.plaf.x.filechooser.FileChooserTest;
 import com.timepath.plaf.x.filechooser.NativeFileChooser;
 import com.timepath.steam.SteamUtils;
 import com.timepath.steam.io.GCF;
@@ -446,15 +448,19 @@ public class EditorFrame extends javax.swing.JFrame {
         new Thread() {
             @Override
             public void run() {
-                final File selection = NativeFileChooser.choose(EditorFrame.this, Main.getString("LoadHudDir"), lastLoaded.getPath(), true, false);
-                if(selection != null) {
-                    new Thread() {
-                        @Override
-                        public void run() {
-                            load(selection);
-                        }
-                    }.start();
-                } else {
+                try {
+                    final File selection = new NativeFileChooser().setParent(EditorFrame.this).setTitle(Main.getString("LoadHudDir")).setDirectory(lastLoaded.getPath()).setFileMode(BaseFileChooser.FileMode.DIRECTORIES_ONLY).choose();
+                    if(selection != null) {
+                        new Thread() {
+                            @Override
+                            public void run() {
+                                load(selection);
+                            }
+                        }.start();
+                    } else {
+                    }
+                } catch(IOException ex) {
+                    Logger.getLogger(EditorFrame.class.getName()).log(Level.SEVERE, null, ex);
                 }
             }
         }.start();
@@ -1754,6 +1760,14 @@ public class EditorFrame extends javax.swing.JFrame {
                 }
             });
             extrasMenu.add(bitmapItem);
+            
+            JMenuItem i = new JMenuItem(new CustomAction("File chooser test", null, KeyEvent.VK_F, null) {
+                @Override
+                public void actionPerformed(ActionEvent ae) {
+                    FileChooserTest.main("");
+                }
+            });
+            extrasMenu.add(i);
         }
     }
 

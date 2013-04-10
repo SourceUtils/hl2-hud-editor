@@ -1,6 +1,7 @@
 package com.timepath.tf2.hudeditor;
 
 import com.timepath.hl2.io.util.ViewableData;
+import com.timepath.plaf.x.filechooser.BaseFileChooser;
 import com.timepath.plaf.x.filechooser.NativeFileChooser;
 import com.timepath.steam.io.GCF;
 import com.timepath.steam.io.GCF.DirectoryEntry;
@@ -228,7 +229,12 @@ public class FileTree extends javax.swing.JTree implements ActionListener, Mouse
                         LOG.log(Level.INFO, "DirectoryEntry: {0}", directoryEntryContext);
                         index = directoryEntryContext.index;
                     }
-                    File f = NativeFileChooser.choose(null, "extract", null, true, true);
+                    File f;
+                    try {
+                        f = new NativeFileChooser().setTitle("Extract").setDialogType(BaseFileChooser.DialogType.SAVE_DIALOG).setFileMode(BaseFileChooser.FileMode.DIRECTORIES_ONLY).choose();
+                    } catch(IOException ex) {
+                        Logger.getLogger(FileTree.class.getName()).log(Level.SEVERE, null, ex);
+                    }
                     if(f != null) {
                         LOG.log(Level.INFO, "Extracting to {0}", f);
                         try {
