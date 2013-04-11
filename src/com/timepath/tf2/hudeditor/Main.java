@@ -101,6 +101,7 @@ public class Main {
 
     //<editor-fold defaultstate="collapsed" desc="Entry point">
     public static void main(String... args) {
+        startTheOther(new File(Utils.workingDirectory(Main.class) + "update.tmp"));
         LOG.log(Level.INFO, "Executing from {0}", Utils.workingDirectory(EditorFrame.class));
         LOG.log(Level.INFO, "Args = {0}", Arrays.toString(args));
         LOG.log(Level.CONFIG, "Env = {0}", System.getenv().toString());
@@ -111,7 +112,7 @@ public class Main {
             if(args[i].equalsIgnoreCase("-u")) {
                 try {
                     File destFile = new File(args[i + 1]);
-                    LOG.info("Updating " + destFile);
+                    LOG.log(Level.INFO, "Updating {0}", destFile);
                     File sourceFile = new File(Utils.workingDirectory(EditorFrame.class));
                     if(!destFile.exists()) {
                         destFile.createNewFile();
@@ -308,5 +309,29 @@ public class Main {
 
     public static String getString(String key) {
         return getString(key, key);
+    }
+
+    static void startTheOther(File update) {
+        if(!update.exists()) {
+            return;
+        }
+        LOG.log(Level.INFO, "Updating from {0}", update);
+        try {
+            final String javaBin = System.getProperty("java.home") + File.separator + "bin" + File.separator + "java";
+
+            final ArrayList<String> cmd = new ArrayList<String>();
+            cmd.add(javaBin);
+            cmd.add("-jar");
+            cmd.add(update.getPath());
+            cmd.add("-u");
+            cmd.add(Utils.workingDirectory(Main.class));
+            String[] exec = new String[cmd.size()];
+            cmd.toArray(exec);
+            final ProcessBuilder process = new ProcessBuilder(exec);
+            process.start();
+            System.exit(0);
+        } catch(IOException ex) {
+            LOG.log(Level.SEVERE, null, ex);
+        }
     }
 }

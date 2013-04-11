@@ -92,6 +92,7 @@ import javax.swing.Icon;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
+import javax.swing.JComponent;
 import javax.swing.JDialog;
 import javax.swing.JEditorPane;
 import javax.swing.JFrame;
@@ -106,6 +107,7 @@ import javax.swing.JScrollPane;
 import javax.swing.JSpinner;
 import javax.swing.KeyStroke;
 import javax.swing.SwingUtilities;
+import javax.swing.Timer;
 import javax.swing.UIManager;
 import javax.swing.UnsupportedLookAndFeelException;
 import javax.swing.event.HyperlinkEvent;
@@ -149,38 +151,146 @@ public class EditorFrame extends javax.swing.JFrame {
     //</editor-fold>
 
     //<editor-fold defaultstate="collapsed" desc="Dialogs">
-    private void changelog() {
-        new Thread() {
-            @Override
-            public void run() {
-                try {
-                    URL url = new URL("https://dl.dropbox.com/u/42745598/tf/Hud%20Editor/TF2%20HUD%20Editor.jar.changes");
-                    URLConnection connection = url.openConnection();
-//                    HttpURLConnection connection = (HttpURLConnection) url.openConnection();
-                    int filesize = connection.getContentLength();
-                    LOG.log(Level.INFO, "Changelog size: {0}", filesize);
+    //<editor-fold defaultstate="collapsed" desc="Updates">
+    private BufferedReader getPage(String s) throws IOException {
+        URL u = new URL(s);
+        URLConnection c = u.openConnection();
+//        HttpURLConnection c = (HttpURLConnection) u.openConnection();
+        LOG.log(Level.INFO, "{0} size: {1}", new Object[]{s, c.getContentLength()});
+        InputStream is = c.getInputStream();
+        return new BufferedReader(new InputStreamReader(is));
+    }
 
-                    String text = "";
-                    BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getInputStream()));
-                    String line;
-                    String grep = Main.myVer;
-                    if(grep != null) { // unpackaged builds do not have versions
-                        while((line = reader.readLine()) != null) {
-                            if(line.contains(grep)) {
-                                String[] parts = line.split(grep);
-                                if(parts[0] != null) {
-                                    text += parts[0];
-                                }
-                                text += "<b><u>" + grep + "</u></b>";
-                                if(parts[1] != null) {
-                                    text += parts[1];
-                                }
-                            } else {
-                                text += line;
-                            }
-                        }
+    private String currentVersion() throws IOException {
+        BufferedReader r = getPage("https://dl.dropbox.com/u/42745598/tf/Hud%20Editor/TF2%20HUD%20Editor.jar.current");
+        String l = r.readLine();
+        r.close();
+        return l;
+    }
+
+    private String checksum() throws IOException {
+        BufferedReader r = getPage("https://dl.dropbox.com/u/42745598/tf/Hud%20Editor/TF2%20HUD%20Editor.jar.MD5");
+        String l = r.readLine();
+        r.close();
+        return l;
+    }
+
+    private String changelog() throws IOException {
+        BufferedReader r = getPage("https://dl.dropbox.com/u/42745598/tf/Hud%20Editor/TF2%20HUD%20Editor.jar.changes");
+        String text = "";
+        String grep = Main.myVer;
+        String line;
+        while((line = r.readLine()) != null) {
+            if(grep != null && line.contains(grep)) {
+                text += line.replace(grep, "<b><u>" + grep + "</u></b>");
+            } else {
+                text += line;
+            }
+        }
+        r.close();
+        return text;
+    }
+
+    private void checkForUpdates(final boolean force) {
+        new Thread() {
+            int retries = 3;
+
+            private String calculateTime(long diffInSeconds) {
+                StringBuilder sb = new StringBuilder();
+
+                long sec = (diffInSeconds >= 60 ? diffInSeconds % 60 : diffInSeconds);
+                long min = (diffInSeconds = (diffInSeconds / 60)) >= 60 ? diffInSeconds % 60 : diffInSeconds;
+                long hrs = (diffInSeconds = (diffInSeconds / 60)) >= 24 ? diffInSeconds % 24 : diffInSeconds;
+                //<editor-fold defaultstate="collapsed" desc="approximate d/m/y">
+                
+                //                long days = (diffInSeconds = (diffInSeconds / 24)) >= 30 ? diffInSeconds % 30 : diffInSeconds;
+                //                long months = (diffInSeconds = (diffInSeconds / 30)) >= 12 ? diffInSeconds % 12 : diffInSeconds;
+                //                long years = (diffInSeconds = (diffInSeconds / 12));
+                
+                //                if(years > 0) {
+                //                    if(years == 1) {
+                //                        sb.append("a year");
+                //                    } else {
+                //                        sb.append(years + " years");
+                //                    }
+                //                    if(years <= 6 && months > 0) {
+                //                        if(months == 1) {
+                //                            sb.append(" and a month");
+                //                        } else {
+                //                            sb.append(" and " + months + " months");
+                //                        }
+                //                    }
+                //                } else if(months > 0) {
+                //                    if(months == 1) {
+                //                        sb.append("a month");
+                //                    } else {
+                //                        sb.append(months + " months");
+                //                    }
+                //                    if(months <= 6 && days > 0) {
+                //                        if(days == 1) {
+                //                            sb.append(" and a day");
+                //                        } else {
+                //                            sb.append(" and " + days + " days");
+                //                        }
+                //                    }
+                //                } else if(days > 0) {
+                //                    if(days == 1) {
+                //                        sb.append("a day");
+                //                    } else {
+                //                        sb.append(days + " days");
+                //                    }
+                //                    if(days <= 3 && hrs > 0) {
+                //                        if(hrs == 1) {
+                //                            sb.append(" and an hour");
+                //                        } else {
+                //                            sb.append(" and " + hrs + " hours");
+                //                        }
+                //                    }
+                //                } else
+                //</editor-fold>
+                    if(hrs > 0) {
+                    if(hrs == 1) {
+                        sb.append("an hour");
+                    } else {
+                        sb.append(hrs + " hours");
                     }
-                    reader.close();
+                    if(min > 1) {
+                        sb.append(" and " + min + " minutes");
+                    }
+                } else if(min > 0) {
+                    if(min == 1) {
+                        sb.append("a minute");
+                    } else {
+                        sb.append(min + " minutes");
+                    }
+                    if(sec > 1) {
+                        sb.append(" and " + sec + " seconds");
+                    }
+                } else {
+                    if(sec <= 1) {
+                        sb.append("about a second");
+                    } else {
+                        sb.append("about " + sec + " seconds");
+                    }
+                }
+
+                sb.append(" ago");
+
+                return sb.toString();
+            }
+
+            private void doCheckForUpdates() {
+                try {
+                    String current = currentVersion();
+                    final long lastUpdate = Long.parseLong(current);
+                    boolean equal = current.equals(Main.myVer);
+                    LOG.log(Level.INFO, "{0} ={1}= {2}", new Object[]{current, equal ? "" : "/", Main.myVer});
+
+                    if((Main.myVer == null || current.compareTo(Main.myVer) > 0) && !force) {
+                        return;
+                    }
+                    
+                    String text = changelog();
 
                     final JEditorPane pane = new JEditorPane("text/html", text);
                     Dimension s = Toolkit.getDefaultToolkit().getScreenSize();
@@ -191,48 +301,19 @@ public class EditorFrame extends javax.swing.JFrame {
                     pane.addHyperlinkListener(linkListener);
                     JScrollPane window = new JScrollPane(pane);
                     window.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
-                    info(window, "Changes");
-                } catch(IOException ex) {
-                    error(ex);
-                    LOG.log(Level.SEVERE, null, ex);
-                }
-            }
-        }.start();
-    }
 
-    private BufferedReader getPage(String s) throws IOException {
-        URL u = new URL(s);
-        URLConnection c = u.openConnection();
-        InputStream is = c.getInputStream();
-        return new BufferedReader(new InputStreamReader(is));
-    }
+                    final JLabel lastUpdated = new JLabel();
 
-    private void checkForUpdates() {
-        new Thread() {
-            private String currentVersion() throws IOException {
-                BufferedReader r = getPage("https://dl.dropbox.com/u/42745598/tf/Hud%20Editor/TF2%20HUD%20Editor.jar.current");
-                String l = r.readLine();
-                r.close();
-                return l;
-            }
+                    new Timer(1000, new ActionListener() {
+                        @Override
+                        public void actionPerformed(ActionEvent e) {
+                            lastUpdated.setText(calculateTime((System.currentTimeMillis() - lastUpdate) / 1000));
+                        }
+                    }).start();
 
-            private String checksum() throws IOException {
-                BufferedReader r = getPage("https://dl.dropbox.com/u/42745598/tf/Hud%20Editor/TF2%20HUD%20Editor.jar.MD5");
-                String l = r.readLine();
-                r.close();
-                return l;
-            }
-
-            int retries = 3;
-
-            private void doCheckForUpdates() {
-                try {
-                    String current = currentVersion();
-                    boolean equal = current.equals(Main.myVer);
-                    LOG.log(Level.INFO, "{0} ={1}= {2}", new Object[]{current, equal ? "" : "/", Main.myVer});
-                    if(Main.myVer == null || current.compareTo(Main.myVer) > 0) {
+                    if((Main.myVer == null || current.compareTo(Main.myVer) > 0)) {
 //                        updateButton.setEnabled(true);
-                        int returnCode = JOptionPane.showConfirmDialog(null, "Would you like to update to the latest version?", "A new update is available", JOptionPane.YES_NO_OPTION);
+                        int returnCode = JOptionPane.showConfirmDialog(EditorFrame.this, new JComponent[]{new JLabel("Would you like to update to the latest version?"), new JLabel(), window, lastUpdated}, "A new update is available", JOptionPane.YES_NO_OPTION);
                         if(returnCode == JOptionPane.YES_OPTION) {
                             String md5 = checksum();
 
@@ -252,28 +333,27 @@ public class EditorFrame extends javax.swing.JFrame {
                                     pb.setStringPainted(true);
                                     pb.setValue(0);
 
-                                    //                            JLabel label = new JLabel("Update Progress: ");
+//                                    JLabel label = new JLabel("Update Progress: ");
 
-                                    //                            JPanel center_panel = new JPanel();
-                                    //                            center_panel.add(label);
-                                    //                            center_panel.add(pb);
+//                                    JPanel center_panel = new JPanel();
+//                                    center_panel.add(label);
+//                                    center_panel.add(pb);
 
-                                    //                            statusBar.remove(updateButton);
+//                                    statusBar.remove(updateButton);
                                     status.add(pb);
                                     status.revalidate();
 
                                     InputStream in = latest.openStream();
 
-                                    // Utils.workingDirectory(EditorFrame.class)
+//                                    Utils.workingDirectory(EditorFrame.class)
+
+                                    updating = true;
+
+                                    LOG.info("Downloading JAR file in 150KB blocks at a time.\n");
                                     FileOutputStream writer = new FileOutputStream(downloaded);
                                     byte[] buffer = new byte[153600]; // 150KB
                                     int totalBytesRead = 0;
                                     int bytesRead;
-
-                                    LOG.info("Downloading JAR file in 150KB blocks at a time.\n");
-
-                                    updating = true;
-
                                     while((bytesRead = in.read(buffer)) > 0) {
                                         writer.write(buffer, 0, bytesRead);
                                         buffer = new byte[153600];
@@ -283,14 +363,15 @@ public class EditorFrame extends javax.swing.JFrame {
 
                                     long endTime = System.currentTimeMillis();
 
-                                    LOG.log(Level.INFO, "Done. {0} bytes read ({1} millseconds).\n", new Object[]{new Integer(totalBytesRead).toString(), new Long(endTime - startTime).toString()});
+                                    LOG.log(Level.INFO, "Done. {0} kilobytes downloaded ({1} seconds).\n", new Object[]{new Integer(totalBytesRead / 1000).toString(), new Long((endTime - startTime) / 1000).toString()});
                                     writer.close();
                                     in.close();
-                                    //                            dialog.dispose();
+//                                    dialog.dispose();
                                     status.remove(pb);
                                 } else {
                                     LOG.info("Exists");
                                 }
+
                                 LOG.info("Checking MD5...");
                                 if(!Utils.takeMD5(Utils.loadFile(downloaded)).equalsIgnoreCase(md5)) {
                                     LOG.warning("Corrupt or old download");
@@ -298,42 +379,19 @@ public class EditorFrame extends javax.swing.JFrame {
                                     LOG.info("MD5 matches");
                                     break;
                                 }
+
                                 if(attempt == retries) {
                                     LOG.warning("Update failed");
                                     return;
                                 }
                             }
 
-                            info("Downloaded the latest version. Restart to apply.\nWill replace " + Utils.workingDirectory(EditorFrame.class));
+                            info("Restart to apply update to " + Utils.workingDirectory(EditorFrame.class));
 
                             updating = false;
-
-                            final JButton rb = new JButton("Restart");
-                            rb.setAction(new AbstractAction() {
-                                public void actionPerformed(ActionEvent ae) {
-                                    try {
-                                        final String javaBin = System.getProperty("java.home") + File.separator + "bin" + File.separator + "java";
-
-                                        final ArrayList<String> cmd = new ArrayList<String>();
-                                        cmd.add(javaBin);
-                                        cmd.add("-jar");
-                                        cmd.add(downloaded.getPath());
-                                        cmd.add("-u");
-                                        cmd.add(Utils.workingDirectory(EditorFrame.class));
-                                        String[] exec = new String[cmd.size()];
-                                        cmd.toArray(exec);
-                                        final ProcessBuilder process = new ProcessBuilder(exec);
-                                        process.start();
-                                        System.exit(0);
-                                    } catch(IOException ex) {
-                                        LOG.log(Level.SEVERE, null, ex);
-                                    }
-                                }
-                            });
-                            status.add(rb);
                         }
-                    } else {
-                        info("You have the latest version.");
+                    } else if(force) {
+                        JOptionPane.showMessageDialog(EditorFrame.this, new JComponent[]{new JLabel("You have the latest version."), new JLabel(""), window, lastUpdated}, "Info", JOptionPane.INFORMATION_MESSAGE);
                     }
                 } catch(NoSuchAlgorithmException ex) {
                 } catch(IOException ex) {
@@ -354,6 +412,7 @@ public class EditorFrame extends javax.swing.JFrame {
             }
         }.start();
     }
+    //</editor-fold>
 
     public void preferences() {
         String aboutText = "This is where preferences will go for the editor.\n";
@@ -669,7 +728,7 @@ public class EditorFrame extends javax.swing.JFrame {
         this.createBufferStrategy(2);
         track("ProgramLoad");
         if(Main.myVer != null && autoCheck) {
-            this.checkForUpdates();
+            this.checkForUpdates(false);
         }
     }
     //</editor-fold>
@@ -1332,7 +1391,8 @@ public class EditorFrame extends javax.swing.JFrame {
             } catch(UnsupportedLookAndFeelException ex) {
                 Logger.getLogger(EditorFrame.class.getName()).log(Level.SEVERE, null, ex);
             } catch(ClassNotFoundException ex) {
-                Logger.getLogger(EditorFrame.class.getName()).log(Level.INFO, null, ex);
+//                Logger.getLogger(EditorFrame.class.getName()).log(Level.INFO, null, ex);
+                LOG.warning("Unable to load custom LaF");
             }
         }
         //</editor-fold>
@@ -1408,8 +1468,6 @@ public class EditorFrame extends javax.swing.JFrame {
         private JMenuItem updateItem;
 
         private JMenuItem aboutItem;
-
-        private JMenuItem changeLogItem;
 
         private JMenuItem vtfItem;
 
@@ -1687,23 +1745,15 @@ public class EditorFrame extends javax.swing.JFrame {
 
             this.add(helpMenu);
 
-            updateItem = new JMenuItem(new CustomAction("Check for Updates", null, KeyEvent.VK_U, null) {
+            updateItem = new JMenuItem(new CustomAction("Updates", null, KeyEvent.VK_U, null) {
                 @Override
                 public void actionPerformed(ActionEvent ae) {
-                    EditorFrame.this.checkForUpdates();
+                    EditorFrame.this.checkForUpdates(true);
                 }
             });
             updateItem.setEnabled(Main.myVer != null); // XXX
             updateItem.setEnabled(true);
             helpMenu.add(updateItem);
-
-            changeLogItem = new JMenuItem(new CustomAction("Changelog", null, KeyEvent.VK_L, null) {
-                @Override
-                public void actionPerformed(ActionEvent ae) {
-                    changelog();
-                }
-            });
-            helpMenu.add(changeLogItem);
 
             if(OS.isMac()) {
                 aboutItem = new JMenuItem(new CustomAction("About", null, KeyEvent.VK_A, null) {
@@ -1760,7 +1810,7 @@ public class EditorFrame extends javax.swing.JFrame {
                 }
             });
             extrasMenu.add(bitmapItem);
-            
+
             JMenuItem i = new JMenuItem(new CustomAction("File chooser test", null, KeyEvent.VK_F, null) {
                 @Override
                 public void actionPerformed(ActionEvent ae) {

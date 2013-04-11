@@ -71,8 +71,6 @@ public class Canvas extends JPanel implements MouseListener, MouseMotionListener
     private static float elementBgAlpha = 0.25f;
 
     private static float selectAlpha = 0.25f;
-
-    private static final AlphaComposite ac = AlphaComposite.SrcOver;
     //</editor-fold>
 
     public Canvas() {
@@ -178,6 +176,13 @@ public class Canvas extends JPanel implements MouseListener, MouseMotionListener
         }
         return r;
     }
+    
+    /**
+     * No derive method on 1.5
+     */
+    private static AlphaComposite acSimple = AlphaComposite.SrcOver;
+    private static AlphaComposite acSelect = AlphaComposite.getInstance(AlphaComposite.SRC_OVER, selectAlpha);
+    private static AlphaComposite acGrid = AlphaComposite.getInstance(AlphaComposite.SRC_OVER, gridAlpha);
 
     @Override
     protected void paintComponent(Graphics graphics) {
@@ -223,7 +228,7 @@ public class Canvas extends JPanel implements MouseListener, MouseMotionListener
 
             Collections.sort(elements, layerSort);
             for(int i = 0; i < elements.size(); i++) {
-                ge.setComposite(AlphaComposite.SrcOver);
+                ge.setComposite(acSimple);
                 paintElement(elements.get(i), ge);
             }
 
@@ -233,7 +238,7 @@ public class Canvas extends JPanel implements MouseListener, MouseMotionListener
         g.drawImage(elementImage, 0, 0, this);
 
         //<editor-fold defaultstate="collapsed" desc="Selection rectangle">
-        g.setComposite(ac.derive(selectAlpha));
+        g.setComposite(acSelect);
         g.setColor(Color.CYAN.darker());
         g.fillRect(offX + selectRect.x + 1, offY + selectRect.y + 1, selectRect.width - 2, selectRect.height - 2);
         g.setColor(Color.BLUE);
@@ -255,7 +260,7 @@ public class Canvas extends JPanel implements MouseListener, MouseMotionListener
         BufferedImage resizedImage = new BufferedImage(w, h, type);
         Graphics2D g = resizedImage.createGraphics();
 
-        g.setComposite(ac);
+        g.setComposite(acSimple);
         g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR);
         g.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
         g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
@@ -275,7 +280,7 @@ public class Canvas extends JPanel implements MouseListener, MouseMotionListener
         BufferedImage img = new BufferedImage(screen.width, screen.height, BufferedImage.TYPE_INT_ARGB);
         Graphics2D g = img.createGraphics();
 
-        g.setComposite(ac.derive(gridAlpha));
+        g.setComposite(acGrid);
         g.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_SPEED);
 
         g.setColor(GRID_COLOR);
@@ -324,13 +329,13 @@ public class Canvas extends JPanel implements MouseListener, MouseMotionListener
 
             if(e.getFgColor() != null) {
                 g.setColor(e.getFgColor());
-                g.setComposite(ac.derive(elementBgAlpha));
+                g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, elementBgAlpha));
                 g.fillRect(elementX, elementY, elementW - 1, elementH - 1);
             }
 
             if(e.getImage() != null) {
                 if(e.getFgColor() != null) {
-                    g.setComposite(ac.derive(e.getFgColor().getAlpha()));
+                    g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, e.getFgColor().getAlpha()));
                 }
                 g.drawImage(e.getImage(), elementX, elementY, elementW, elementH, this);
             }
@@ -344,7 +349,7 @@ public class Canvas extends JPanel implements MouseListener, MouseMotionListener
 
             if(hoveredElement == e) {
                 g.setColor(new Color(255 - g.getColor().getRed(), 255 - g.getColor().getGreen(), 255 - g.getColor().getBlue()));
-                g.setComposite(ac);
+                g.setComposite(acSimple);
 //                g.drawRect(elementX + offX, elementY + offY, e.getWidth() - 1, e.getHeight() - 1); // border
                 g.drawRect(elementX + 1, elementY + 1, elementW - 3, elementH - 3); // inner
 //                g.drawRect(elementX + offX - 1, elementY + offY - 1, e.getWidth() + 1, e.getHeight() + 1); // outer
@@ -356,7 +361,7 @@ public class Canvas extends JPanel implements MouseListener, MouseMotionListener
                 } else {
                     g.setColor(Color.WHITE);
                 }
-                g.setComposite(ac);
+                g.setComposite(acSimple);
                 int screenRes = Toolkit.getDefaultToolkit().getScreenResolution();
                 int fontSize = (int) Math.round(14.0 * screenRes / 72.0); // Java2D = 72 DPI
                 if(e.getFont() == null) {
