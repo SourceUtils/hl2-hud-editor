@@ -508,7 +508,7 @@ public class EditorFrame extends javax.swing.JFrame {
             @Override
             public void run() {
                 try {
-                    final File selection = new NativeFileChooser().setParent(EditorFrame.this).setTitle(Main.getString("LoadHudDir")).setDirectory(lastLoaded.getPath()).setFileMode(BaseFileChooser.FileMode.DIRECTORIES_ONLY).choose();
+                    final File selection = new NativeFileChooser().setParent(EditorFrame.this).setTitle(Main.getString("LoadHudDir")).setDirectory(lastLoaded != null ? lastLoaded.getPath() : null).setFileMode(BaseFileChooser.FileMode.DIRECTORIES_ONLY).choose();
                     if(selection != null) {
                         new Thread() {
                             @Override
