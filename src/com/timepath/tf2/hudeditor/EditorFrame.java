@@ -90,7 +90,6 @@ import javax.swing.Action;
 import javax.swing.BoxLayout;
 import javax.swing.Icon;
 import javax.swing.ImageIcon;
-import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JComponent;
 import javax.swing.JDialog;
@@ -201,12 +200,11 @@ public class EditorFrame extends javax.swing.JFrame {
                 long sec = (diffInSeconds >= 60 ? diffInSeconds % 60 : diffInSeconds);
                 long min = (diffInSeconds = (diffInSeconds / 60)) >= 60 ? diffInSeconds % 60 : diffInSeconds;
                 long hrs = (diffInSeconds = (diffInSeconds / 60)) >= 24 ? diffInSeconds % 24 : diffInSeconds;
-                //<editor-fold defaultstate="collapsed" desc="approximate d/m/y">
-                
-                //                long days = (diffInSeconds = (diffInSeconds / 24)) >= 30 ? diffInSeconds % 30 : diffInSeconds;
+                long days = (diffInSeconds = (diffInSeconds / 24)) >= 30 ? diffInSeconds % 30 : diffInSeconds;
+                //<editor-fold defaultstate="collapsed" desc="approximate months/years">
                 //                long months = (diffInSeconds = (diffInSeconds / 30)) >= 12 ? diffInSeconds % 12 : diffInSeconds;
                 //                long years = (diffInSeconds = (diffInSeconds / 12));
-                
+
                 //                if(years > 0) {
                 //                    if(years == 1) {
                 //                        sb.append("a year");
@@ -233,44 +231,44 @@ public class EditorFrame extends javax.swing.JFrame {
                 //                            sb.append(" and " + days + " days");
                 //                        }
                 //                    }
-                //                } else if(days > 0) {
-                //                    if(days == 1) {
-                //                        sb.append("a day");
-                //                    } else {
-                //                        sb.append(days + " days");
-                //                    }
-                //                    if(days <= 3 && hrs > 0) {
-                //                        if(hrs == 1) {
-                //                            sb.append(" and an hour");
-                //                        } else {
-                //                            sb.append(" and " + hrs + " hours");
-                //                        }
-                //                    }
-                //                } else
+                //                } else 
                 //</editor-fold>
-                    if(hrs > 0) {
+                if(days > 0) {
+                    if(days == 1) {
+                        sb.append("a day");
+                    } else {
+                        sb.append(days).append(" days");
+                    }
+                    if(days <= 3 && hrs > 0) {
+                        if(hrs == 1) {
+                            sb.append(" and an hour");
+                        } else {
+                            sb.append(" and ").append(hrs).append(" hours");
+                        }
+                    }
+                } else if(hrs > 0) {
                     if(hrs == 1) {
                         sb.append("an hour");
                     } else {
-                        sb.append(hrs + " hours");
+                        sb.append(hrs).append(" hours");
                     }
                     if(min > 1) {
-                        sb.append(" and " + min + " minutes");
+                        sb.append(" and ").append(min).append(" minutes");
                     }
                 } else if(min > 0) {
                     if(min == 1) {
                         sb.append("a minute");
                     } else {
-                        sb.append(min + " minutes");
+                        sb.append(min).append(" minutes");
                     }
                     if(sec > 1) {
-                        sb.append(" and " + sec + " seconds");
+                        sb.append(" and ").append(sec).append(" seconds");
                     }
                 } else {
                     if(sec <= 1) {
                         sb.append("about a second");
                     } else {
-                        sb.append("about " + sec + " seconds");
+                        sb.append("about ").append(sec).append(" seconds");
                     }
                 }
 
@@ -286,10 +284,10 @@ public class EditorFrame extends javax.swing.JFrame {
                     boolean equal = current.equals(Main.myVer);
                     LOG.log(Level.INFO, "{0} ={1}= {2}", new Object[]{current, equal ? "" : "/", Main.myVer});
 
-                    if(current.compareTo(Main.myVer) <= 0 && !force) {
+                    if(Main.myVer != null && current.compareTo(Main.myVer) <= 0 && !force) {
                         return;
                     }
-                    
+
                     String text = changelog();
 
                     final JEditorPane pane = new JEditorPane("text/html", text);
@@ -307,7 +305,7 @@ public class EditorFrame extends javax.swing.JFrame {
                     new Timer(1000, new ActionListener() {
                         @Override
                         public void actionPerformed(ActionEvent e) {
-                            lastUpdated.setText(calculateTime((System.currentTimeMillis() - lastUpdate) / 1000));
+                            lastUpdated.setText(calculateTime((System.currentTimeMillis() / 1000) - lastUpdate));
                         }
                     }).start();
 
