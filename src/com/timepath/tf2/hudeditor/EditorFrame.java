@@ -286,7 +286,7 @@ public class EditorFrame extends javax.swing.JFrame {
                     boolean equal = current.equals(Main.myVer);
                     LOG.log(Level.INFO, "{0} ={1}= {2}", new Object[]{current, equal ? "" : "/", Main.myVer});
 
-                    if((Main.myVer == null || current.compareTo(Main.myVer) > 0) && !force) {
+                    if(current.compareTo(Main.myVer) <= 0 && !force) {
                         return;
                     }
                     
