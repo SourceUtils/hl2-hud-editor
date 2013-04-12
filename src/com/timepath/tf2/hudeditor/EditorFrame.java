@@ -24,7 +24,7 @@ import com.timepath.plaf.x.filechooser.FileChooserTest;
 import com.timepath.plaf.x.filechooser.NativeFileChooser;
 import com.timepath.steam.SteamUtils;
 import com.timepath.steam.io.GCF;
-import com.timepath.steam.io.GCF.DirectoryEntry;
+import com.timepath.steam.io.GCF.GCFDirectoryEntry;
 import com.timepath.steam.io.RES;
 import com.timepath.steam.io.VDF;
 import com.timepath.steam.io.test.ArchiveTest;
@@ -454,12 +454,7 @@ public class EditorFrame extends javax.swing.JFrame {
         };
 
         JComboBox dropDown = new JComboBox(); // <String>
-        String location = SteamUtils.locateSteamAppsDirectory();
-        if(location == null) {
-            error("Could not find Steam install directory!", "Steam not found");
-            return;
-        }
-        File steamappsFolder = new File(location);
+        File steamappsFolder = SteamUtils.getSteamApps();
         File[] userFolders = steamappsFolder.listFiles(dirFilter);
         if(userFolders == null) {
             error("SteamApps is empty!", "Empty SteamApps directory");
@@ -1224,8 +1219,8 @@ public class EditorFrame extends javax.swing.JFrame {
                     for(int i = 0; i < rows.length; i++) {
                         model.insertRow(model.getRowCount(), rows[i]);
                     }
-                } else if(nodeInfo instanceof DirectoryEntry) {
-                    DirectoryEntry d = (DirectoryEntry) nodeInfo;
+                } else if(nodeInfo instanceof GCFDirectoryEntry) {
+                    GCFDirectoryEntry d = (GCFDirectoryEntry) nodeInfo;
                     model.insertRow(model.getRowCount(), new Object[]{"index", d.index, ""});
                     model.insertRow(model.getRowCount(), new Object[]{"itemSize", d.itemSize, ""});
                     model.insertRow(model.getRowCount(), new Object[]{"attributes", d.attributes, ""});

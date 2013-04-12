@@ -4,7 +4,7 @@ import com.timepath.hl2.io.util.ViewableData;
 import com.timepath.plaf.x.filechooser.BaseFileChooser;
 import com.timepath.plaf.x.filechooser.NativeFileChooser;
 import com.timepath.steam.io.GCF;
-import com.timepath.steam.io.GCF.DirectoryEntry;
+import com.timepath.steam.io.GCF.GCFDirectoryEntry;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.event.ActionEvent;
@@ -42,7 +42,7 @@ public class FileTree extends javax.swing.JTree implements ActionListener, Mouse
         this.setCellRenderer(new CustomTreeCellRenderer());
     }
 
-    private DirectoryEntry directoryEntryContext;
+    private GCFDirectoryEntry directoryEntryContext;
 
     private GCF gcfContext;
 
@@ -197,8 +197,8 @@ public class FileTree extends javax.swing.JTree implements ActionListener, Mouse
                         directoryEntryContext = null;
                         fileMenu.show(evt.getComponent(), evt.getX(), evt.getY());
                         return;
-                    } else if(obj instanceof DirectoryEntry) {
-                        directoryEntryContext = (DirectoryEntry) obj;
+                    } else if(obj instanceof GCFDirectoryEntry) {
+                        directoryEntryContext = (GCFDirectoryEntry) obj;
                         gcfContext = directoryEntryContext.getGCF();
                         fileMenu.show(evt.getComponent(), evt.getX(), evt.getY());
                         return;
