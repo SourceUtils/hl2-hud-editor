@@ -199,7 +199,7 @@ public class FileTree extends javax.swing.JTree implements ActionListener, Mouse
                         return;
                     } else if(obj instanceof GCFDirectoryEntry) {
                         directoryEntryContext = (GCFDirectoryEntry) obj;
-                        gcfContext = directoryEntryContext.getGCF();
+                        gcfContext = directoryEntryContext.getArchive();
                         fileMenu.show(evt.getComponent(), evt.getX(), evt.getY());
                         return;
                     } else if(obj instanceof String) {

@@ -1788,7 +1788,7 @@ public class EditorFrame extends javax.swing.JFrame {
             });
             extrasMenu.add(vdfItem);
 
-            gcfItem = new JMenuItem(new CustomAction("GCF Viewer", null, KeyEvent.VK_G, null) {
+            gcfItem = new JMenuItem(new CustomAction("Archive Explorer", null, KeyEvent.VK_E, null) {
                 @Override
                 public void actionPerformed(ActionEvent ae) {
                     ArchiveTest.main("");
@@ -1796,7 +1796,7 @@ public class EditorFrame extends javax.swing.JFrame {
             });
             extrasMenu.add(gcfItem);
 
-            bitmapItem = new JMenuItem(new CustomAction("Bitmap Font Glyph Editor", null, KeyEvent.VK_C, null) {
+            bitmapItem = new JMenuItem(new CustomAction("Bitmap Font Glyph Editor", null, KeyEvent.VK_G, null) {
                 @Override
                 public void actionPerformed(ActionEvent ae) {
                     VBFTest.main("");
