@@ -315,7 +315,7 @@ public class EditorFrame extends javax.swing.JFrame {
                         if(returnCode == JOptionPane.YES_OPTION) {
                             String md5 = checksum();
 
-                            final File downloaded = new File(Utils.workingDirectory(EditorFrame.class) + "update.tmp");
+                            final File downloaded = new File(Utils.workingDirectory(EditorFrame.class), "update.tmp");
                             for(int attempt = 1;; attempt++) {
                                 LOG.log(Level.INFO, "Checking for {0}", downloaded);
                                 if(!downloaded.exists()) {
@@ -384,7 +384,7 @@ public class EditorFrame extends javax.swing.JFrame {
                                 }
                             }
 
-                            info("Restart to apply update to " + Utils.workingDirectory(EditorFrame.class));
+                            info("Restart to apply update to " + Utils.currentFile(Main.class));
 
                             updating = false;
                         }
