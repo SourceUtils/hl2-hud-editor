@@ -50,7 +50,7 @@ public class Main {
 
     public static final String myVer = Main.class.getPackage().getImplementationVersion();
 
-    public static final String logFile;
+    public static final File logFile;
 
     private static final Logger LOG = Logger.getLogger(Main.class.getName());
 
@@ -65,15 +65,15 @@ public class Main {
         //<editor-fold defaultstate="collapsed" desc="Logging">
         Logger.getLogger("com.timepath").setLevel(Level.ALL);
 
-        logFile = Utils.workingDirectory(Main.class) + "logs/" + System.currentTimeMillis() / 1000 + "_log.txt";
+        logFile = new File(Utils.workingDirectory(Main.class), "logs/" + System.currentTimeMillis() / 1000 + "_log.txt");
         try {
-            new File(logFile).getParentFile().mkdirs();
-            FileHandler fh = new FileHandler(logFile, 0, 1, false);
+            logFile.getParentFile().mkdirs();
+            FileHandler fh = new FileHandler(logFile.getPath(), 0, 1, false);
             fh.setLevel(Level.ALL);
             SimpleFormatter formatter = new SimpleFormatter();
             fh.setFormatter(formatter);
             Logger.getLogger("").addHandler(fh);
-            LOG.log(Level.INFO, "Logging to {0}", logFile);
+            LOG.log(Level.INFO, "Logging to {0}", logFile.getPath());
         } catch(IOException ex) {
             LOG.log(Level.SEVERE, null, ex);
         } catch(SecurityException ex) {
@@ -101,19 +101,32 @@ public class Main {
 
     //<editor-fold defaultstate="collapsed" desc="Entry point">
     public static void main(String... args) {
-        startTheOther(new File(Utils.workingDirectory(Main.class) + "update.tmp"));
-        LOG.log(Level.INFO, "Executing from {0}", Utils.workingDirectory(EditorFrame.class));
+        File current = Utils.currentFile(Main.class);
+        LOG.log(Level.INFO, "Current file = {0}", current);
+        File update = new File(Utils.workingDirectory(Main.class), "update.tmp");
+        if(update.exists()) {
+            LOG.log(Level.INFO, "Update file = {0}", update);
+        }
+        String cwd = Utils.workingDirectory(Main.class);
+        LOG.log(Level.INFO, "Working directory = {0}", cwd);
         LOG.log(Level.INFO, "Args = {0}", Arrays.toString(args));
         LOG.log(Level.CONFIG, "Env = {0}", System.getenv().toString());
         LOG.log(Level.CONFIG, "Properties = {0}", System.getProperties().toString());
-
+        for(int i = 0; i < args.length; i++) {
+            if(args[i].equalsIgnoreCase("updated")) {
+                update.delete();
+            }
+        }
+        if(!current.equals(update)) {
+            startTheOther(update);
+        }
 
         for(int i = 0; i < args.length; i++) {
             if(args[i].equalsIgnoreCase("-u")) {
                 try {
                     File destFile = new File(args[i + 1]);
                     LOG.log(Level.INFO, "Updating {0}", destFile);
-                    File sourceFile = new File(Utils.workingDirectory(EditorFrame.class));
+                    File sourceFile = Utils.currentFile(Main.class);
                     if(!destFile.exists()) {
                         destFile.createNewFile();
                     }
@@ -147,6 +160,7 @@ public class Main {
                     cmd.toArray(exec);
                     final ProcessBuilder process = new ProcessBuilder(exec);
                     process.start();
+                    sourceFile.deleteOnExit();
                     System.exit(0);
                 } catch(IOException ex) {
                     Logger.getLogger(Main.class.getName()).log(Level.SEVERE, null, ex);
@@ -324,9 +338,10 @@ public class Main {
             cmd.add("-jar");
             cmd.add(update.getPath());
             cmd.add("-u");
-            cmd.add(Utils.workingDirectory(Main.class));
+            cmd.add(Utils.currentFile(Main.class).getPath());
             String[] exec = new String[cmd.size()];
             cmd.toArray(exec);
+            LOG.log(Level.INFO, "Invoking other: {0}", Arrays.toString(exec));
             final ProcessBuilder process = new ProcessBuilder(exec);
             process.start();
             System.exit(0);

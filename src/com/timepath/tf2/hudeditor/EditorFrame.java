@@ -430,7 +430,7 @@ public class EditorFrame extends javax.swing.JFrame {
         aboutText += "<p>Source available on <a href=\"http://code.google.com/p/tf2-hud-editor/\">Google code</a></p>";
         aboutText += "<p>I have an <a href=\"http://code.google.com/feeds/p/tf2-hud-editor/hgchanges/basic\">Atom feed</a> set up listing source commits</p>";
         aboutText += "<p>Please leave feedback or suggestions on <a href=\"" + latestThread + "\">the latest update thread</a></p>";
-        aboutText += "<p>Logging to <a href=\"" + new File(Main.logFile).toURI() + "\">" + Main.logFile + "</a></p>";
+        aboutText += "<p>Logging to <a href=\"" + Main.logFile.toURI() + "\">" + Main.logFile + "</a></p>";
         if(Main.myVer != null) {
             long time = Long.parseLong(Main.myVer);
             DateFormat df = new SimpleDateFormat("EEE, dd MMM yyyy HH:mm:ss z");
@@ -1748,7 +1748,7 @@ public class EditorFrame extends javax.swing.JFrame {
             updateItem.setEnabled(true);
             helpMenu.add(updateItem);
 
-            if(OS.isMac()) {
+            if(!OS.isMac()) {
                 aboutItem = new JMenuItem(new CustomAction("About", null, KeyEvent.VK_A, null) {
                     @Override
                     public void actionPerformed(ActionEvent ae) {
