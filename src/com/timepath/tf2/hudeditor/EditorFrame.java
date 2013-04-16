@@ -180,7 +180,10 @@ public class EditorFrame extends javax.swing.JFrame {
     private String changelog() throws IOException {
         BufferedReader r = getPage("https://dl.dropbox.com/u/42745598/tf/Hud%20Editor/TF2%20HUD%20Editor.jar.changes");
         String text = "";
-        String grep = Long.toString(Main.myVer);
+        String grep = null;
+        if(Main.myVer != 0) {
+            grep = "" + Main.myVer;
+        }
         String line;
         while((line = r.readLine()) != null) {
             if(grep != null && line.contains(grep)) {
@@ -284,10 +287,10 @@ public class EditorFrame extends javax.swing.JFrame {
                 try {
                     String current = currentVersion();
                     final long lastUpdate = Long.parseLong(current);
-                    boolean equal = current.equals(Long.toString(Main.myVer));
-                    LOG.log(Level.INFO, "{0} ={1}= {2}", new Object[]{current, equal ? "" : "/", Main.myVer});
+                    boolean equal = lastUpdate == Main.myVer;
+                    LOG.log(Level.INFO, "{0} ={1}= {2}", new Object[]{lastUpdate, equal ? "" : "/", Main.myVer});
 
-                    if(Main.myVer != 0 && current.compareTo(Long.toString(Main.myVer)) <= 0 && !force) {
+                    if(Main.myVer != 0 && Main.myVer >= lastUpdate && !force) {
                         return;
                     }
 
@@ -312,7 +315,7 @@ public class EditorFrame extends javax.swing.JFrame {
                         }
                     }).start();
 
-                    if((Main.myVer == 0 || current.compareTo(Long.toBinaryString(Main.myVer)) > 0)) {
+                    if((Main.myVer == 0 || lastUpdate > Main.myVer)) {
 //                        updateButton.setEnabled(true);
                         int returnCode = JOptionPane.showConfirmDialog(EditorFrame.this, new JComponent[]{new JLabel("Would you like to update to the latest version?"), new JLabel(), window, lastUpdated}, "A new update is available", JOptionPane.YES_NO_OPTION);
                         if(returnCode == JOptionPane.YES_OPTION) {
