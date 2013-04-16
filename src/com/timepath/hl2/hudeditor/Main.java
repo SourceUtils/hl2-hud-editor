@@ -359,21 +359,9 @@ public class Main {
     }
 
     private static void start(String... args) {
-        boolean flag = false;
-        for(int i = 0; i < args.length; i++) {
-            String cmd = args[i].toLowerCase();
-            if("-noupdate".equals(cmd)) {
-                flag = true;
-                break;
-            }
-        }
-
-        final boolean autoCheck = !flag;
         SwingUtilities.invokeLater(new Runnable() {
             public void run() {
-                Frame frame = new Frame();
-                frame.autoCheck = autoCheck;
-                frame.setVisible(true);
+                new HUDEditor().setVisible(true);
             }
         });
     }

@@ -127,9 +127,9 @@ import javax.swing.tree.TreePath;
  * @author timepath
  */
 @SuppressWarnings("serial")
-public class Frame extends javax.swing.JFrame {
+public class HUDEditor extends javax.swing.JFrame {
 
-    private static final Logger LOG = Logger.getLogger(Frame.class.getName());
+    private static final Logger LOG = Logger.getLogger(HUDEditor.class.getName());
 
     //<editor-fold defaultstate="collapsed" desc="Variables">
     private final EditorMenuBar jmb;
@@ -143,8 +143,6 @@ public class Frame extends javax.swing.JFrame {
     private static VGUICanvas canvas;
 
     private boolean updating;
-
-    public boolean autoCheck = true;
 
     private File lastLoaded;
 
@@ -195,6 +193,8 @@ public class Frame extends javax.swing.JFrame {
         r.close();
         return text;
     }
+
+    private static boolean checked;
 
     private void checkForUpdates(final boolean force) {
         new Thread() {
@@ -317,11 +317,11 @@ public class Frame extends javax.swing.JFrame {
 
                     if((Main.myVer == 0 || lastUpdate > Main.myVer)) {
 //                        updateButton.setEnabled(true);
-                        int returnCode = JOptionPane.showConfirmDialog(Frame.this, new JComponent[]{new JLabel("Would you like to update to the latest version?"), new JLabel(), window, lastUpdated}, "A new update is available", JOptionPane.YES_NO_OPTION);
+                        int returnCode = JOptionPane.showConfirmDialog(HUDEditor.this, new JComponent[]{new JLabel("Would you like to update to the latest version?"), new JLabel(), window, lastUpdated}, "A new update is available", JOptionPane.YES_NO_OPTION);
                         if(returnCode == JOptionPane.YES_OPTION) {
                             String md5 = checksum();
 
-                            final File downloaded = new File(Utils.workingDirectory(Frame.class), "update.tmp");
+                            final File downloaded = new File(Utils.workingDirectory(HUDEditor.class), "update.tmp");
                             for(int attempt = 1;; attempt++) {
                                 LOG.log(Level.INFO, "Checking for {0}", downloaded);
                                 if(!downloaded.exists()) {
@@ -395,7 +395,7 @@ public class Frame extends javax.swing.JFrame {
                             updating = false;
                         }
                     } else if(force) {
-                        JOptionPane.showMessageDialog(Frame.this, new JComponent[]{new JLabel("You have the latest version."), new JLabel(""), window, lastUpdated}, "Info", JOptionPane.INFORMATION_MESSAGE);
+                        JOptionPane.showMessageDialog(HUDEditor.this, new JComponent[]{new JLabel("You have the latest version."), new JLabel(""), window, lastUpdated}, "Info", JOptionPane.INFORMATION_MESSAGE);
                     }
                 } catch(NoSuchAlgorithmException ex) {
                 } catch(IOException ex) {
@@ -412,20 +412,14 @@ public class Frame extends javax.swing.JFrame {
             @Override
             public void run() {
                 doCheckForUpdates();
-                autoCheck = false;
+                checked = true;
             }
         }.start();
     }
     //</editor-fold>
 
     public void preferences() {
-        String aboutText = "This is where preferences will go for the editor.\n";
-        aboutText += "There are none at this time";
-        JEditorPane pane = new JEditorPane("text/html", aboutText);
-        pane.setEditable(false);
-        pane.setOpaque(false);
-        pane.setBackground(new Color(0, 0, 0, 0));
-        info(pane, "About");
+        jDialog1.setVisible(true);
     }
 
     public void about() {
@@ -507,7 +501,7 @@ public class Frame extends javax.swing.JFrame {
             @Override
             public void run() {
                 try {
-                    final File[] selection = new NativeFileChooser().setParent(Frame.this).setTitle(Main.getString("LoadHudDir")).setDirectory(lastLoaded != null ? lastLoaded.getPath() : null).setFileMode(BaseFileChooser.FileMode.DIRECTORIES_ONLY).choose();
+                    final File[] selection = new NativeFileChooser().setParent(HUDEditor.this).setTitle(Main.getString("LoadHudDir")).setDirectory(lastLoaded != null ? lastLoaded.getPath() : null).setFileMode(BaseFileChooser.FileMode.DIRECTORIES_ONLY).choose();
                     if(selection != null) {
                         new Thread() {
                             @Override
@@ -518,7 +512,7 @@ public class Frame extends javax.swing.JFrame {
                     } else {
                     }
                 } catch(IOException ex) {
-                    Logger.getLogger(Frame.class.getName()).log(Level.SEVERE, null, ex);
+                    Logger.getLogger(HUDEditor.class.getName()).log(Level.SEVERE, null, ex);
                 }
             }
         }.start();
@@ -725,7 +719,7 @@ public class Frame extends javax.swing.JFrame {
         super.setVisible(b);
         this.createBufferStrategy(2);
         track("ProgramLoad");
-        if(Main.myVer != 0 && autoCheck) {
+        if(Main.myVer != 0 && Main.prefs.getBoolean("autoupdate", true) && !checked) {
             this.checkForUpdates(false);
         }
     }
@@ -788,7 +782,7 @@ public class Frame extends javax.swing.JFrame {
 //                    SwingUtilities.invokeLater(new Runnable() {
 //                        @Override
 //                        public void run() {
-                    Frame.this.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
+                    HUDEditor.this.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
 //                        }
 //                    });
                     final DefaultMutableTreeNode project = new DefaultMutableTreeNode();
@@ -802,7 +796,7 @@ public class Frame extends javax.swing.JFrame {
                     fileTree.expandPath(new TreePath(project.getPath()));
                     fileTree.setSelectionRow(fileSystemRoot.getIndex(project));
                     fileTree.requestFocusInWindow();
-                    Frame.this.setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
+                    HUDEditor.this.setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
                 }
             }).start();
         }
@@ -890,7 +884,7 @@ public class Frame extends javax.swing.JFrame {
                             try {
                                 v = VTF.load(new FileInputStream(f));
                             } catch(IOException ex) {
-                                Logger.getLogger(Frame.class.getName()).log(Level.SEVERE, null, ex);
+                                Logger.getLogger(HUDEditor.class.getName()).log(Level.SEVERE, null, ex);
                             }
                             if(v != null) {
                                 child.setUserObject(v);
@@ -967,8 +961,8 @@ public class Frame extends javax.swing.JFrame {
     /**
      * Creates new form EditorFrame
      */
-    public Frame() {
-        Frame.lookAndFeel();
+    public HUDEditor() {
+        HUDEditor.lookAndFeel();
         this.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
         this.addWindowListener(new WindowAdapter() {
             @Override
@@ -1000,8 +994,8 @@ public class Frame extends javax.swing.JFrame {
                  */
                 @Override
                 public void componentResized(ComponentEvent e) {
-                    Rectangle b = Frame.this.getBounds();
-                    Rectangle s = Frame.this.getGraphicsConfiguration().getBounds();
+                    Rectangle b = HUDEditor.this.getBounds();
+                    Rectangle s = HUDEditor.this.getGraphicsConfiguration().getBounds();
 
                     if(moved) {
                         moved = false;
@@ -1023,12 +1017,12 @@ public class Frame extends javax.swing.JFrame {
                         b.y = 0;
                         updateReal = false;
                     }
-                    Frame.this.setBounds(b);
+                    HUDEditor.this.setBounds(b);
                 }
 
                 @Override
                 public void componentMoved(ComponentEvent e) {
-                    Rectangle b = Frame.this.getBounds();
+                    Rectangle b = HUDEditor.this.getBounds();
                     moved = true;
                     real.x = b.x;
                     real.y = b.y;
@@ -1114,6 +1108,9 @@ public class Frame extends javax.swing.JFrame {
 
         //<editor-fold defaultstate="collapsed" desc="Base">
         initComponents();
+
+        jCheckBox1.setSelected(Main.prefs.getBoolean("autoupdate", true));
+
         tools.setWindow(this);
         tools.putClientProperty("Quaqua.ToolBar.style", "title");
         status.putClientProperty("Quaqua.ToolBar.style", "bottom");
@@ -1147,7 +1144,7 @@ public class Frame extends javax.swing.JFrame {
                             ImageIcon img = new ImageIcon(v.getImage(i));
                             model.insertRow(model.getRowCount(), new Object[]{"mip[" + i + "]", img, ""});
                         } catch(IOException ex) {
-                            Logger.getLogger(Frame.class.getName()).log(Level.SEVERE, null, ex);
+                            Logger.getLogger(HUDEditor.class.getName()).log(Level.SEVERE, null, ex);
                         }
                     }
                     model.insertRow(model.getRowCount(), new Object[]{"version", v.version, ""});
@@ -1255,7 +1252,7 @@ public class Frame extends javax.swing.JFrame {
             }
         };
         canvas.setBackgroundImage(getClass().getResource("/com/timepath/hl2/hudeditor/resources/Badlands1.png"));
-        
+
         JScrollPane canvasPane = new JScrollPane(canvas);
 //        canvasPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
         canvasPane.getVerticalScrollBar().setBlockIncrement(30);
@@ -1311,15 +1308,19 @@ public class Frame extends javax.swing.JFrame {
      * TODO: wrap this class in a launcher, rather than explicitly restarting
      */
     public static void restart() throws URISyntaxException, IOException {
-        restart(new File(Frame.class.getProtectionDomain().getCodeSource().getLocation().toURI()));
+        restart(new File(HUDEditor.class.getProtectionDomain().getCodeSource().getLocation().toURI()));
     }
 
     /**
      * Sets the look and feel
      */
     private static void lookAndFeel() {
-        LOG.log(Level.INFO, "LaF: {0}", System.getProperty("swing.defaultlaf"));
-        if(System.getProperty("swing.defaultlaf") == null) { // Do not override user specified theme
+        LOG.log(Level.INFO, "L&F: {0} | {1}", new Object[]{System.getProperty("swing.defaultlaf"), Main.prefs.get("theme", null)});
+
+        UIManager.installLookAndFeel("Quaqua", "ch.randelshofer.quaqua.QuaquaLookAndFeel");
+        UIManager.installLookAndFeel("GTK extended", "org.gtk.laf.extended.GTKLookAndFeelExtended");
+
+        if(System.getProperty("swing.defaultlaf") == null && Main.prefs.get("theme", null) == null) { // Do not override user specified theme
             boolean nimbus = false;
             //<editor-fold defaultstate="collapsed" desc="Attempt to apply nimbus">
             if(nimbus) {
@@ -1343,13 +1344,13 @@ public class Frame extends javax.swing.JFrame {
                     UIManager.setLookAndFeel(UIManager.getCrossPlatformLookAndFeelClassName());
                     return;
                 } catch(ClassNotFoundException ex) {
-                    Logger.getLogger(Frame.class.getName()).log(Level.SEVERE, null, ex);
+                    Logger.getLogger(HUDEditor.class.getName()).log(Level.SEVERE, null, ex);
                 } catch(InstantiationException ex) {
-                    Logger.getLogger(Frame.class.getName()).log(Level.SEVERE, null, ex);
+                    Logger.getLogger(HUDEditor.class.getName()).log(Level.SEVERE, null, ex);
                 } catch(IllegalAccessException ex) {
-                    Logger.getLogger(Frame.class.getName()).log(Level.SEVERE, null, ex);
+                    Logger.getLogger(HUDEditor.class.getName()).log(Level.SEVERE, null, ex);
                 } catch(UnsupportedLookAndFeelException ex) {
-                    Logger.getLogger(Frame.class.getName()).log(Level.SEVERE, null, ex);
+                    Logger.getLogger(HUDEditor.class.getName()).log(Level.SEVERE, null, ex);
                 }
             }
             //</editor-fold>
@@ -1358,19 +1359,37 @@ public class Frame extends javax.swing.JFrame {
             try {
                 UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
             } catch(ClassNotFoundException ex) {
-                Logger.getLogger(Frame.class.getName()).log(Level.SEVERE, null, ex);
+                Logger.getLogger(HUDEditor.class.getName()).log(Level.SEVERE, null, ex);
             } catch(InstantiationException ex) {
-                Logger.getLogger(Frame.class.getName()).log(Level.SEVERE, null, ex);
+                Logger.getLogger(HUDEditor.class.getName()).log(Level.SEVERE, null, ex);
             } catch(IllegalAccessException ex) {
-                Logger.getLogger(Frame.class.getName()).log(Level.SEVERE, null, ex);
+                Logger.getLogger(HUDEditor.class.getName()).log(Level.SEVERE, null, ex);
             } catch(UnsupportedLookAndFeelException ex) {
-                Logger.getLogger(Frame.class.getName()).log(Level.SEVERE, null, ex);
+                Logger.getLogger(HUDEditor.class.getName()).log(Level.SEVERE, null, ex);
             }
             //</editor-fold>
+        } else {
+            String theme = System.getProperty("swing.defaultlaf");
+            if(theme == null) {
+                theme = Main.prefs.get("theme", null);
+            }
+            try {
+                UIManager.setLookAndFeel(theme);
+            } catch(InstantiationException ex) {
+                Logger.getLogger(HUDEditor.class.getName()).log(Level.SEVERE, null, ex);
+            } catch(IllegalAccessException ex) {
+                Logger.getLogger(HUDEditor.class.getName()).log(Level.SEVERE, null, ex);
+            } catch(UnsupportedLookAndFeelException ex) {
+                Logger.getLogger(HUDEditor.class.getName()).log(Level.SEVERE, null, ex);
+            } catch(ClassNotFoundException ex) {
+//                    Logger.getLogger(HUDEditor.class.getName()).log(Level.SEVERE, null, ex);
+                LOG.warning("Unable to load user L&F");
+            }
         }
 
         //<editor-fold defaultstate="collapsed" desc="Improve native LaF">
-        if(UIManager.getLookAndFeel().isNativeLookAndFeel()) {
+        if(UIManager.getLookAndFeel()
+                .isNativeLookAndFeel()) {
             try {
                 LOG.log(Level.INFO, "Adding swing enhancements for {0}", new Object[]{OS.get()});
                 if(OS.isMac()) {
@@ -1383,14 +1402,14 @@ public class Frame extends javax.swing.JFrame {
                 }
                 LOG.info("All swing enhancements installed");
             } catch(InstantiationException ex) {
-                Logger.getLogger(Frame.class.getName()).log(Level.SEVERE, null, ex);
+                Logger.getLogger(HUDEditor.class.getName()).log(Level.SEVERE, null, ex);
             } catch(IllegalAccessException ex) {
-                Logger.getLogger(Frame.class.getName()).log(Level.SEVERE, null, ex);
+                Logger.getLogger(HUDEditor.class.getName()).log(Level.SEVERE, null, ex);
             } catch(UnsupportedLookAndFeelException ex) {
-                Logger.getLogger(Frame.class.getName()).log(Level.SEVERE, null, ex);
+                Logger.getLogger(HUDEditor.class.getName()).log(Level.SEVERE, null, ex);
             } catch(ClassNotFoundException ex) {
 //                Logger.getLogger(EditorFrame.class.getName()).log(Level.INFO, null, ex);
-                LOG.warning("Unable to load custom LaF");
+                LOG.warning("Unable to load enhanced L&F");
             }
         }
         //</editor-fold>
@@ -1695,13 +1714,13 @@ public class Frame extends javax.swing.JFrame {
 
                 @Override
                 public void actionPerformed(ActionEvent ae) {
-                    Frame.this.dispose();
-                    Frame.this.setUndecorated(!fullscreen);
-                    Frame.this.setExtendedState(fullscreen ? JFrame.NORMAL : JFrame.MAXIMIZED_BOTH);
-                    Frame.this.setVisible(true);
-                    Frame.this.setJMenuBar(jmb);
-                    Frame.this.pack();
-                    Frame.this.toFront();
+                    HUDEditor.this.dispose();
+                    HUDEditor.this.setUndecorated(!fullscreen);
+                    HUDEditor.this.setExtendedState(fullscreen ? JFrame.NORMAL : JFrame.MAXIMIZED_BOTH);
+                    HUDEditor.this.setVisible(true);
+                    HUDEditor.this.setJMenuBar(jmb);
+                    HUDEditor.this.pack();
+                    HUDEditor.this.toFront();
                     fullscreen = !fullscreen;
                 }
             });
@@ -1746,7 +1765,7 @@ public class Frame extends javax.swing.JFrame {
             updateItem = new JMenuItem(new CustomAction("Updates", null, KeyEvent.VK_U, null) {
                 @Override
                 public void actionPerformed(ActionEvent ae) {
-                    Frame.this.checkForUpdates(true);
+                    HUDEditor.this.checkForUpdates(true);
                 }
             });
             updateItem.setEnabled(Main.myVer != 0); // XXX
@@ -1816,7 +1835,7 @@ public class Frame extends javax.swing.JFrame {
                 }
             });
             extrasMenu.add(i);
-            
+
             JMenuItem i2 = new JMenuItem(new CustomAction("External Console", null, KeyEvent.VK_X, null) {
                 @Override
                 public void actionPerformed(ActionEvent ae) {
@@ -1824,7 +1843,7 @@ public class Frame extends javax.swing.JFrame {
                 }
             });
             extrasMenu.add(i2);
-            
+
             JMenuItem i3 = new JMenuItem(new CustomAction("External Scoreboard", null, KeyEvent.VK_S, null) {
                 @Override
                 public void actionPerformed(ActionEvent ae) {
@@ -1832,7 +1851,7 @@ public class Frame extends javax.swing.JFrame {
                 }
             });
             extrasMenu.add(i3);
-            
+
             JMenuItem i4 = new JMenuItem(new CustomAction("Model viewer", null, KeyEvent.VK_M, null) {
                 @Override
                 public void actionPerformed(ActionEvent ae) {
@@ -1864,12 +1883,59 @@ public class Frame extends javax.swing.JFrame {
     @SuppressWarnings("unchecked")
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
+        java.awt.GridBagConstraints gridBagConstraints;
 
+        jDialog1 = new javax.swing.JDialog(this);
+        jLabel1 = new javax.swing.JLabel();
+        themeSelector1 = new com.timepath.swing.ThemeSelector();
+        jLabel2 = new javax.swing.JLabel();
+        jCheckBox1 = new javax.swing.JCheckBox();
         tools = new com.timepath.swing.BlendedToolBar();
         rootSplit = new javax.swing.JSplitPane();
         sideSplit = new javax.swing.JSplitPane();
         tabbedContent = new javax.swing.JTabbedPane();
         status = new com.timepath.swing.StatusBar();
+
+        jDialog1.setTitle("Preferences");
+        jDialog1.setMinimumSize(new java.awt.Dimension(400, 300));
+        jDialog1.setModalityType(java.awt.Dialog.ModalityType.DOCUMENT_MODAL);
+        jDialog1.getContentPane().setLayout(new java.awt.GridBagLayout());
+
+        jLabel1.setText("Theme:");
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 0;
+        gridBagConstraints.gridy = 0;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.LINE_END;
+        jDialog1.getContentPane().add(jLabel1, gridBagConstraints);
+
+        themeSelector1.addPropertyChangeListener(new java.beans.PropertyChangeListener() {
+            public void propertyChange(java.beans.PropertyChangeEvent evt) {
+                themeSelector1PropertyChange(evt);
+            }
+        });
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 1;
+        gridBagConstraints.gridy = 0;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.LINE_START;
+        jDialog1.getContentPane().add(themeSelector1, gridBagConstraints);
+
+        jLabel2.setText("Auto update:");
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 0;
+        gridBagConstraints.gridy = 2;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.LINE_END;
+        jDialog1.getContentPane().add(jLabel2, gridBagConstraints);
+
+        jCheckBox1.addPropertyChangeListener(new java.beans.PropertyChangeListener() {
+            public void propertyChange(java.beans.PropertyChangeEvent evt) {
+                jCheckBox1PropertyChange(evt);
+            }
+        });
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 1;
+        gridBagConstraints.gridy = 2;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.LINE_START;
+        jDialog1.getContentPane().add(jCheckBox1, gridBagConstraints);
 
         getContentPane().add(tools, java.awt.BorderLayout.PAGE_START);
 
@@ -1891,11 +1957,24 @@ public class Frame extends javax.swing.JFrame {
         pack();
     }// </editor-fold>//GEN-END:initComponents
 
+    private void jCheckBox1PropertyChange(java.beans.PropertyChangeEvent evt) {//GEN-FIRST:event_jCheckBox1PropertyChange
+        Main.prefs.putBoolean("autoupdate", jCheckBox1.isSelected());
+    }//GEN-LAST:event_jCheckBox1PropertyChange
+
+    private void themeSelector1PropertyChange(java.beans.PropertyChangeEvent evt) {//GEN-FIRST:event_themeSelector1PropertyChange
+        Main.prefs.put("theme", UIManager.getLookAndFeel().getClass().getName());
+    }//GEN-LAST:event_themeSelector1PropertyChange
+
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JCheckBox jCheckBox1;
+    private javax.swing.JDialog jDialog1;
+    private javax.swing.JLabel jLabel1;
+    private javax.swing.JLabel jLabel2;
     private javax.swing.JSplitPane rootSplit;
     private javax.swing.JSplitPane sideSplit;
     private com.timepath.swing.StatusBar status;
     private javax.swing.JTabbedPane tabbedContent;
+    private com.timepath.swing.ThemeSelector themeSelector1;
     private com.timepath.swing.BlendedToolBar tools;
     // End of variables declaration//GEN-END:variables
     //</editor-fold>
