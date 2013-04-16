@@ -1,8 +1,10 @@
-package com.timepath.tf2.hudeditor;
+package com.timepath.hl2.hudeditor;
 
 import com.timepath.Utils;
 import com.timepath.plaf.OS;
-import com.timepath.plaf.OS.WindowToolkit;
+import com.timepath.plaf.linux.WindowToolkit;
+import com.timepath.plaf.mac.OSXProps;
+import com.timepath.plaf.x.filechooser.XFileDialogFileChooser;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
@@ -33,7 +35,7 @@ import javax.swing.SwingUtilities;
  */
 public class Main {
 
-    public static final ResourceBundle strings = ResourceBundle.getBundle("com/timepath/tf2/hudeditor/resources/lang");
+    public static final ResourceBundle strings = ResourceBundle.getBundle("com/timepath/hl2/hudeditor/resources/lang");
 
     public static final String appName = "TF2 HUD Editor";
 
@@ -60,6 +62,24 @@ public class Main {
 
     private static final Logger LOG = Logger.getLogger(Main.class.getName());
 
+    /**
+     *
+     * 'return Main.strings.containsKey(key) ? Main.strings.getString(key) : key' is
+     * unavailable prior to 1.6
+     *
+     * @param key
+     * @param fallback
+     *
+     * @return
+     */
+    public static String getString(String key, String fallback) {
+        return Collections.list(Main.strings.getKeys()).contains(key) ? Main.strings.getString(key) : fallback;
+    }
+
+    public static String getString(String key) {
+        return getString(key, key);
+    }
+
     static {
         //<editor-fold defaultstate="collapsed" desc="Debugging">
         Thread.setDefaultUncaughtExceptionHandler(new Thread.UncaughtExceptionHandler() {
@@ -67,6 +87,7 @@ public class Main {
                 Logger.getLogger(thread.getName()).log(Level.SEVERE, "Uncaught Exception", thrwbl);
             }
         });
+        //</editor-fold>
 
         //<editor-fold defaultstate="collapsed" desc="Logging">
         Logger.getLogger("com.timepath").setLevel(Level.ALL);
@@ -87,25 +108,25 @@ public class Main {
         }
         //</editor-fold>
 
-        com.timepath.plaf.x.filechooser.XFileDialogFileChooser.setTraceLevel(0);
-        //</editor-fold>
-
-        WindowToolkit.setWindowClass(projectName); // Wrapper.class.getName().replaceAll("\\.", "-");
-
-        if(OS.isMac()) {
-            System.setProperty("apple.awt.brushMetalLook", "false");
-            System.setProperty("apple.awt.graphics.EnableQ2DX", "true");
-            System.setProperty("apple.awt.showGrowBox", "true");
-            System.setProperty("apple.laf.useScreenMenuBar", "true");
-            System.setProperty("com.apple.macos.smallTabs", "true");
-            System.setProperty("com.apple.macos.use-file-dialog-packages", "true");
-            System.setProperty("com.apple.mrj.application.apple.menu.about.name", appName);
-            System.setProperty("com.apple.mrj.application.growbox.intrudes", "false");
-            System.setProperty("com.apple.mrj.application.live-resize", "true");
+        //<editor-fold defaultstate="collapsed" desc="OS tweaks">
+        if(OS.isWindows()) {
+            XFileDialogFileChooser.setTraceLevel(0);
+        } else if(OS.isLinux()) {
+            WindowToolkit.setWindowClass(projectName); // Wrapper.class.getName().replaceAll("\\.", "-");
+        } else if(OS.isMac()) {
+            OSXProps.metal(false);
+            OSXProps.quartz(true);
+            OSXProps.growBox(true);
+            OSXProps.globalMenu(true);
+            OSXProps.smallTabs(true);
+            OSXProps.fileDialogPackages(true);
+            OSXProps.name(appName);
+            OSXProps.growBoxIntrudes(false);
+            OSXProps.liveResize(true);
         }
+        //</editor-fold>
     }
 
-    //<editor-fold defaultstate="collapsed" desc="Entry point">
     public static void main(String... args) {
         //<editor-fold defaultstate="collapsed" desc="Initialize">
         LOG.log(Level.INFO, "Args = {0}", Arrays.toString(args));
@@ -243,101 +264,6 @@ public class Main {
         return true;
     }
 
-    /**
-     *
-     * @param port
-     * @param args
-     *
-     * @return true if connected
-     */
-    private static boolean startClient(int port, String... args) {
-        try {
-            Socket client = new Socket(InetAddress.getByName(null), port);
-            BufferedReader in = new BufferedReader(new InputStreamReader(client.getInputStream()));
-            PrintWriter out = new PrintWriter(client.getOutputStream(), true);
-            out.println(myVer);
-            StringBuilder sb = new StringBuilder();
-            for(int i = 0; i < args.length; i++) {
-                sb.append(args[i]).append(" ");
-            }
-            out.println(sb.toString());
-            long sVer = Long.parseLong(in.readLine());
-            if(myVer > sVer || myVer == 0) {
-                return false;
-            } else {
-                return true;
-            }
-        } catch(SocketException ex) {
-        } catch(IOException ex) {
-            LOG.log(Level.SEVERE, null, ex);
-        }
-        return false;
-    }
-
-    private static void start(String... args) {
-        boolean flag = false;
-        for(int i = 0; i < args.length; i++) {
-            String cmd = args[i].toLowerCase();
-            if("-noupdate".equals(cmd)) {
-                flag = true;
-                break;
-            }
-        }
-
-        final boolean autoCheck = !flag;
-        SwingUtilities.invokeLater(new Runnable() {
-            public void run() {
-                EditorFrame frame = new EditorFrame();
-                frame.autoCheck = autoCheck;
-                frame.setVisible(true);
-            }
-        });
-    }
-    //</editor-fold>
-
-    /**
-     *
-     * 'return Main.strings.containsKey(key) ? Main.strings.getString(key) : key' is
-     * unavailable prior to 1.6
-     *
-     * @param key
-     * @param fallback
-     *
-     * @return
-     */
-    public static String getString(String key, String fallback) {
-        return Collections.list(Main.strings.getKeys()).contains(key) ? Main.strings.getString(key) : fallback;
-    }
-
-    public static String getString(String key) {
-        return getString(key, key);
-    }
-
-    static void startTheOther(File update) {
-        if(!update.exists()) {
-            return;
-        }
-        LOG.log(Level.INFO, "Updating from {0}", update);
-        try {
-            final String javaBin = System.getProperty("java.home") + File.separator + "bin" + File.separator + "java";
-
-            final ArrayList<String> cmd = new ArrayList<String>();
-            cmd.add(javaBin);
-            cmd.add("-jar");
-            cmd.add(update.getPath());
-            cmd.add("-u");
-            cmd.add(Utils.currentFile(Main.class).getPath());
-            String[] exec = new String[cmd.size()];
-            cmd.toArray(exec);
-            LOG.log(Level.INFO, "Invoking other: {0}", Arrays.toString(exec));
-            final ProcessBuilder process = new ProcessBuilder(exec);
-            process.start();
-            System.exit(0);
-        } catch(IOException ex) {
-            LOG.log(Level.SEVERE, null, ex);
-        }
-    }
-
     private static class ServerRunnable implements Runnable {
 
         private ServerSocket sock;
@@ -376,4 +302,79 @@ public class Main {
         }
     }
 
+    /**
+     *
+     * @param port
+     * @param args
+     *
+     * @return true if connected
+     */
+    private static boolean startClient(int port, String... args) {
+        try {
+            Socket client = new Socket(InetAddress.getByName(null), port);
+            BufferedReader in = new BufferedReader(new InputStreamReader(client.getInputStream()));
+            PrintWriter out = new PrintWriter(client.getOutputStream(), true);
+            out.println(myVer);
+            StringBuilder sb = new StringBuilder();
+            for(int i = 0; i < args.length; i++) {
+                sb.append(args[i]).append(" ");
+            }
+            out.println(sb.toString());
+            long sVer = Long.parseLong(in.readLine());
+            if(myVer > sVer || myVer == 0) {
+                return false;
+            } else {
+                return true;
+            }
+        } catch(SocketException ex) {
+        } catch(IOException ex) {
+            LOG.log(Level.SEVERE, null, ex);
+        }
+        return false;
+    }
+
+    private static void startTheOther(File update) {
+        if(!update.exists()) {
+            return;
+        }
+        LOG.log(Level.INFO, "Updating from {0}", update);
+        try {
+            final String javaBin = System.getProperty("java.home") + File.separator + "bin" + File.separator + "java";
+
+            final ArrayList<String> cmd = new ArrayList<String>();
+            cmd.add(javaBin);
+            cmd.add("-jar");
+            cmd.add(update.getPath());
+            cmd.add("-u");
+            cmd.add(Utils.currentFile(Main.class).getPath());
+            String[] exec = new String[cmd.size()];
+            cmd.toArray(exec);
+            LOG.log(Level.INFO, "Invoking other: {0}", Arrays.toString(exec));
+            final ProcessBuilder process = new ProcessBuilder(exec);
+            process.start();
+            System.exit(0);
+        } catch(IOException ex) {
+            LOG.log(Level.SEVERE, null, ex);
+        }
+    }
+
+    private static void start(String... args) {
+        boolean flag = false;
+        for(int i = 0; i < args.length; i++) {
+            String cmd = args[i].toLowerCase();
+            if("-noupdate".equals(cmd)) {
+                flag = true;
+                break;
+            }
+        }
+
+        final boolean autoCheck = !flag;
+        SwingUtilities.invokeLater(new Runnable() {
+            public void run() {
+                Frame frame = new Frame();
+                frame.autoCheck = autoCheck;
+                frame.setVisible(true);
+            }
+        });
+    }
 }

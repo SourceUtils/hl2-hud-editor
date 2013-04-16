@@ -1,5 +1,6 @@
-package com.timepath.tf2.hudeditor;
+package com.timepath.hl2.hudeditor;
 
+import com.timepath.hl2.io.swing.VGUICanvas;
 import apple.OSXAdapter;
 import com.timepath.Utils;
 import com.timepath.hl2.gameinfo.ExternalConsole;
@@ -126,20 +127,20 @@ import javax.swing.tree.TreePath;
  * @author timepath
  */
 @SuppressWarnings("serial")
-public class EditorFrame extends javax.swing.JFrame {
+public class Frame extends javax.swing.JFrame {
 
-    private static final Logger LOG = Logger.getLogger(EditorFrame.class.getName());
+    private static final Logger LOG = Logger.getLogger(Frame.class.getName());
 
     //<editor-fold defaultstate="collapsed" desc="Variables">
     private final EditorMenuBar jmb;
 
     private final DefaultMutableTreeNode fileSystemRoot;
 
-    private final FileTree fileTree;
+    private final ProjectTree fileTree;
 
     private final PropertyTable propTable;
 
-    private static Canvas canvas;
+    private static VGUICanvas canvas;
 
     private boolean updating;
 
@@ -152,7 +153,6 @@ public class EditorFrame extends javax.swing.JFrame {
     private JSpinner spinnerHeight;
     //</editor-fold>
 
-    //<editor-fold defaultstate="collapsed" desc="Dialogs">
     //<editor-fold defaultstate="collapsed" desc="Updates">
     private BufferedReader getPage(String s) throws IOException {
         URL u = new URL(s);
@@ -317,11 +317,11 @@ public class EditorFrame extends javax.swing.JFrame {
 
                     if((Main.myVer == 0 || lastUpdate > Main.myVer)) {
 //                        updateButton.setEnabled(true);
-                        int returnCode = JOptionPane.showConfirmDialog(EditorFrame.this, new JComponent[]{new JLabel("Would you like to update to the latest version?"), new JLabel(), window, lastUpdated}, "A new update is available", JOptionPane.YES_NO_OPTION);
+                        int returnCode = JOptionPane.showConfirmDialog(Frame.this, new JComponent[]{new JLabel("Would you like to update to the latest version?"), new JLabel(), window, lastUpdated}, "A new update is available", JOptionPane.YES_NO_OPTION);
                         if(returnCode == JOptionPane.YES_OPTION) {
                             String md5 = checksum();
 
-                            final File downloaded = new File(Utils.workingDirectory(EditorFrame.class), "update.tmp");
+                            final File downloaded = new File(Utils.workingDirectory(Frame.class), "update.tmp");
                             for(int attempt = 1;; attempt++) {
                                 LOG.log(Level.INFO, "Checking for {0}", downloaded);
                                 if(!downloaded.exists()) {
@@ -395,7 +395,7 @@ public class EditorFrame extends javax.swing.JFrame {
                             updating = false;
                         }
                     } else if(force) {
-                        JOptionPane.showMessageDialog(EditorFrame.this, new JComponent[]{new JLabel("You have the latest version."), new JLabel(""), window, lastUpdated}, "Info", JOptionPane.INFORMATION_MESSAGE);
+                        JOptionPane.showMessageDialog(Frame.this, new JComponent[]{new JLabel("You have the latest version."), new JLabel(""), window, lastUpdated}, "Info", JOptionPane.INFORMATION_MESSAGE);
                     }
                 } catch(NoSuchAlgorithmException ex) {
                 } catch(IOException ex) {
@@ -507,7 +507,7 @@ public class EditorFrame extends javax.swing.JFrame {
             @Override
             public void run() {
                 try {
-                    final File[] selection = new NativeFileChooser().setParent(EditorFrame.this).setTitle(Main.getString("LoadHudDir")).setDirectory(lastLoaded != null ? lastLoaded.getPath() : null).setFileMode(BaseFileChooser.FileMode.DIRECTORIES_ONLY).choose();
+                    final File[] selection = new NativeFileChooser().setParent(Frame.this).setTitle(Main.getString("LoadHudDir")).setDirectory(lastLoaded != null ? lastLoaded.getPath() : null).setFileMode(BaseFileChooser.FileMode.DIRECTORIES_ONLY).choose();
                     if(selection != null) {
                         new Thread() {
                             @Override
@@ -518,7 +518,7 @@ public class EditorFrame extends javax.swing.JFrame {
                     } else {
                     }
                 } catch(IOException ex) {
-                    Logger.getLogger(EditorFrame.class.getName()).log(Level.SEVERE, null, ex);
+                    Logger.getLogger(Frame.class.getName()).log(Level.SEVERE, null, ex);
                 }
             }
         }.start();
@@ -674,7 +674,6 @@ public class EditorFrame extends javax.swing.JFrame {
             }
         }
     }
-    //</editor-fold>
 
     //<editor-fold defaultstate="collapsed" desc="Overrides">
     @Override
@@ -707,7 +706,7 @@ public class EditorFrame extends javax.swing.JFrame {
                         quit();
                     }
                 });
-                URL url = getClass().getResource("/com/timepath/tf2/hudeditor/resources/Icon.png");
+                URL url = getClass().getResource("/com/timepath/hl2/hudeditor/resources/Icon.png");
                 Image icon = Toolkit.getDefaultToolkit().getImage(url);
                 app.setDockIconImage(icon);
                 //</editor-fold>
@@ -789,7 +788,7 @@ public class EditorFrame extends javax.swing.JFrame {
 //                    SwingUtilities.invokeLater(new Runnable() {
 //                        @Override
 //                        public void run() {
-                    EditorFrame.this.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
+                    Frame.this.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
 //                        }
 //                    });
                     final DefaultMutableTreeNode project = new DefaultMutableTreeNode();
@@ -803,7 +802,7 @@ public class EditorFrame extends javax.swing.JFrame {
                     fileTree.expandPath(new TreePath(project.getPath()));
                     fileTree.setSelectionRow(fileSystemRoot.getIndex(project));
                     fileTree.requestFocusInWindow();
-                    EditorFrame.this.setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
+                    Frame.this.setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
                 }
             }).start();
         }
@@ -891,7 +890,7 @@ public class EditorFrame extends javax.swing.JFrame {
                             try {
                                 v = VTF.load(new FileInputStream(f));
                             } catch(IOException ex) {
-                                Logger.getLogger(EditorFrame.class.getName()).log(Level.SEVERE, null, ex);
+                                Logger.getLogger(Frame.class.getName()).log(Level.SEVERE, null, ex);
                             }
                             if(v != null) {
                                 child.setUserObject(v);
@@ -968,8 +967,8 @@ public class EditorFrame extends javax.swing.JFrame {
     /**
      * Creates new form EditorFrame
      */
-    public EditorFrame() {
-        EditorFrame.lookAndFeel();
+    public Frame() {
+        Frame.lookAndFeel();
         this.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
         this.addWindowListener(new WindowAdapter() {
             @Override
@@ -978,9 +977,7 @@ public class EditorFrame extends javax.swing.JFrame {
             }
         });
 
-        URL url = getClass().getResource("/com/timepath/tf2/hudeditor/resources/Icon.png");
-        Image icon = Toolkit.getDefaultToolkit().getImage(url);
-        this.setIconImage(icon);
+        this.setIconImage(new ImageIcon(getClass().getResource("/com/timepath/hl2/hudeditor/resources/Icon.png")).getImage());
         this.setTitle(Main.getString("Title"));
 
         this.getRootPane().putClientProperty("apple.awt.brushMetalLook", Boolean.TRUE); // Mac tweak
@@ -1003,8 +1000,8 @@ public class EditorFrame extends javax.swing.JFrame {
                  */
                 @Override
                 public void componentResized(ComponentEvent e) {
-                    Rectangle b = EditorFrame.this.getBounds();
-                    Rectangle s = EditorFrame.this.getGraphicsConfiguration().getBounds();
+                    Rectangle b = Frame.this.getBounds();
+                    Rectangle s = Frame.this.getGraphicsConfiguration().getBounds();
 
                     if(moved) {
                         moved = false;
@@ -1026,12 +1023,12 @@ public class EditorFrame extends javax.swing.JFrame {
                         b.y = 0;
                         updateReal = false;
                     }
-                    EditorFrame.this.setBounds(b);
+                    Frame.this.setBounds(b);
                 }
 
                 @Override
                 public void componentMoved(ComponentEvent e) {
-                    Rectangle b = EditorFrame.this.getBounds();
+                    Rectangle b = Frame.this.getBounds();
                     moved = true;
                     real.x = b.x;
                     real.y = b.y;
@@ -1124,7 +1121,7 @@ public class EditorFrame extends javax.swing.JFrame {
 
         //<editor-fold defaultstate="collapsed" desc="Tree">
         fileSystemRoot = new DefaultMutableTreeNode("root");
-        fileTree = new FileTree(fileSystemRoot);
+        fileTree = new ProjectTree(fileSystemRoot);
         JScrollPane fileTreePane = new JScrollPane(fileTree);
 //        fileTreePane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
         sideSplit.setTopComponent(fileTreePane);
@@ -1150,7 +1147,7 @@ public class EditorFrame extends javax.swing.JFrame {
                             ImageIcon img = new ImageIcon(v.getImage(i));
                             model.insertRow(model.getRowCount(), new Object[]{"mip[" + i + "]", img, ""});
                         } catch(IOException ex) {
-                            Logger.getLogger(EditorFrame.class.getName()).log(Level.SEVERE, null, ex);
+                            Logger.getLogger(Frame.class.getName()).log(Level.SEVERE, null, ex);
                         }
                     }
                     model.insertRow(model.getRowCount(), new Object[]{"version", v.version, ""});
@@ -1242,7 +1239,7 @@ public class EditorFrame extends javax.swing.JFrame {
         //</editor-fold>
 
         //<editor-fold defaultstate="collapsed" desc="Canvas">
-        canvas = new Canvas() {
+        canvas = new VGUICanvas() {
             @Override
             public void placed() {
                 DefaultMutableTreeNode node = (DefaultMutableTreeNode) fileTree.getLastSelectedPathComponent();
@@ -1257,6 +1254,8 @@ public class EditorFrame extends javax.swing.JFrame {
                 }
             }
         };
+        canvas.setBackgroundImage(getClass().getResource("/com/timepath/hl2/hudeditor/resources/Badlands1.png"));
+        
         JScrollPane canvasPane = new JScrollPane(canvas);
 //        canvasPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
         canvasPane.getVerticalScrollBar().setBlockIncrement(30);
@@ -1312,7 +1311,7 @@ public class EditorFrame extends javax.swing.JFrame {
      * TODO: wrap this class in a launcher, rather than explicitly restarting
      */
     public static void restart() throws URISyntaxException, IOException {
-        restart(new File(EditorFrame.class.getProtectionDomain().getCodeSource().getLocation().toURI()));
+        restart(new File(Frame.class.getProtectionDomain().getCodeSource().getLocation().toURI()));
     }
 
     /**
@@ -1344,13 +1343,13 @@ public class EditorFrame extends javax.swing.JFrame {
                     UIManager.setLookAndFeel(UIManager.getCrossPlatformLookAndFeelClassName());
                     return;
                 } catch(ClassNotFoundException ex) {
-                    Logger.getLogger(EditorFrame.class.getName()).log(Level.SEVERE, null, ex);
+                    Logger.getLogger(Frame.class.getName()).log(Level.SEVERE, null, ex);
                 } catch(InstantiationException ex) {
-                    Logger.getLogger(EditorFrame.class.getName()).log(Level.SEVERE, null, ex);
+                    Logger.getLogger(Frame.class.getName()).log(Level.SEVERE, null, ex);
                 } catch(IllegalAccessException ex) {
-                    Logger.getLogger(EditorFrame.class.getName()).log(Level.SEVERE, null, ex);
+                    Logger.getLogger(Frame.class.getName()).log(Level.SEVERE, null, ex);
                 } catch(UnsupportedLookAndFeelException ex) {
-                    Logger.getLogger(EditorFrame.class.getName()).log(Level.SEVERE, null, ex);
+                    Logger.getLogger(Frame.class.getName()).log(Level.SEVERE, null, ex);
                 }
             }
             //</editor-fold>
@@ -1359,13 +1358,13 @@ public class EditorFrame extends javax.swing.JFrame {
             try {
                 UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
             } catch(ClassNotFoundException ex) {
-                Logger.getLogger(EditorFrame.class.getName()).log(Level.SEVERE, null, ex);
+                Logger.getLogger(Frame.class.getName()).log(Level.SEVERE, null, ex);
             } catch(InstantiationException ex) {
-                Logger.getLogger(EditorFrame.class.getName()).log(Level.SEVERE, null, ex);
+                Logger.getLogger(Frame.class.getName()).log(Level.SEVERE, null, ex);
             } catch(IllegalAccessException ex) {
-                Logger.getLogger(EditorFrame.class.getName()).log(Level.SEVERE, null, ex);
+                Logger.getLogger(Frame.class.getName()).log(Level.SEVERE, null, ex);
             } catch(UnsupportedLookAndFeelException ex) {
-                Logger.getLogger(EditorFrame.class.getName()).log(Level.SEVERE, null, ex);
+                Logger.getLogger(Frame.class.getName()).log(Level.SEVERE, null, ex);
             }
             //</editor-fold>
         }
@@ -1384,11 +1383,11 @@ public class EditorFrame extends javax.swing.JFrame {
                 }
                 LOG.info("All swing enhancements installed");
             } catch(InstantiationException ex) {
-                Logger.getLogger(EditorFrame.class.getName()).log(Level.SEVERE, null, ex);
+                Logger.getLogger(Frame.class.getName()).log(Level.SEVERE, null, ex);
             } catch(IllegalAccessException ex) {
-                Logger.getLogger(EditorFrame.class.getName()).log(Level.SEVERE, null, ex);
+                Logger.getLogger(Frame.class.getName()).log(Level.SEVERE, null, ex);
             } catch(UnsupportedLookAndFeelException ex) {
-                Logger.getLogger(EditorFrame.class.getName()).log(Level.SEVERE, null, ex);
+                Logger.getLogger(Frame.class.getName()).log(Level.SEVERE, null, ex);
             } catch(ClassNotFoundException ex) {
 //                Logger.getLogger(EditorFrame.class.getName()).log(Level.INFO, null, ex);
                 LOG.warning("Unable to load custom LaF");
@@ -1696,13 +1695,13 @@ public class EditorFrame extends javax.swing.JFrame {
 
                 @Override
                 public void actionPerformed(ActionEvent ae) {
-                    EditorFrame.this.dispose();
-                    EditorFrame.this.setUndecorated(!fullscreen);
-                    EditorFrame.this.setExtendedState(fullscreen ? JFrame.NORMAL : JFrame.MAXIMIZED_BOTH);
-                    EditorFrame.this.setVisible(true);
-                    EditorFrame.this.setJMenuBar(jmb);
-                    EditorFrame.this.pack();
-                    EditorFrame.this.toFront();
+                    Frame.this.dispose();
+                    Frame.this.setUndecorated(!fullscreen);
+                    Frame.this.setExtendedState(fullscreen ? JFrame.NORMAL : JFrame.MAXIMIZED_BOTH);
+                    Frame.this.setVisible(true);
+                    Frame.this.setJMenuBar(jmb);
+                    Frame.this.pack();
+                    Frame.this.toFront();
                     fullscreen = !fullscreen;
                 }
             });
@@ -1747,7 +1746,7 @@ public class EditorFrame extends javax.swing.JFrame {
             updateItem = new JMenuItem(new CustomAction("Updates", null, KeyEvent.VK_U, null) {
                 @Override
                 public void actionPerformed(ActionEvent ae) {
-                    EditorFrame.this.checkForUpdates(true);
+                    Frame.this.checkForUpdates(true);
                 }
             });
             updateItem.setEnabled(Main.myVer != 0); // XXX

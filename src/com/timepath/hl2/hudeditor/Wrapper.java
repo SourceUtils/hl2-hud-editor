@@ -1,4 +1,4 @@
-package com.timepath.tf2.hudeditor;
+package com.timepath.hl2.hudeditor;
 
 public class Wrapper {
 

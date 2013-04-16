@@ -1,4 +1,4 @@
-package com.timepath.tf2.hudeditor;
+package com.timepath.hl2.hudeditor;
 
 import java.awt.Component;
 import java.awt.Rectangle;
@@ -30,7 +30,7 @@ public class PropertyTable extends JTable {
         model.addColumn(Main.getString("Value"));
         model.addColumn(Main.getString("Info"));
         this.setModel(model);
-        renderer = new CustomTableCellRenderer();
+        this.renderer = new CustomTableCellRenderer();
     }
 
     public void clear() {

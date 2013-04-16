@@ -1,4 +1,4 @@
-package com.timepath.tf2.hudeditor;
+package com.timepath.hl2.hudeditor;
 
 import com.timepath.hl2.io.util.ViewableData;
 import com.timepath.plaf.x.filechooser.BaseFileChooser;
@@ -32,9 +32,9 @@ import javax.swing.tree.TreeSelectionModel;
  * @author timepath
  */
 @SuppressWarnings("serial")
-public class FileTree extends javax.swing.JTree implements ActionListener, MouseListener {
+public class ProjectTree extends javax.swing.JTree implements ActionListener, MouseListener {
 
-    public FileTree(TreeNode root) {
+    public ProjectTree(TreeNode root) {
         super(root);
         initComponents();
         this.setRootVisible(false);
@@ -158,16 +158,16 @@ public class FileTree extends javax.swing.JTree implements ActionListener, Mouse
 
     public void actionPerformed(ActionEvent evt) {
         if (evt.getSource() == extractAction) {
-            FileTree.this.extractActionActionPerformed(evt);
+            ProjectTree.this.extractActionActionPerformed(evt);
         }
         else if (evt.getSource() == closeAction) {
-            FileTree.this.closeActionActionPerformed(evt);
+            ProjectTree.this.closeActionActionPerformed(evt);
         }
     }
 
     public void mouseClicked(MouseEvent evt) {
-        if (evt.getSource() == FileTree.this) {
-            FileTree.this.formMouseClicked(evt);
+        if (evt.getSource() == ProjectTree.this) {
+            ProjectTree.this.formMouseClicked(evt);
         }
     }
 
@@ -237,7 +237,7 @@ public class FileTree extends javax.swing.JTree implements ActionListener, Mouse
                             f = fs[0];
                         }
                     } catch(IOException ex) {
-                        Logger.getLogger(FileTree.class.getName()).log(Level.SEVERE, null, ex);
+                        Logger.getLogger(ProjectTree.class.getName()).log(Level.SEVERE, null, ex);
                     }
                     if(f != null) {
                         LOG.log(Level.INFO, "Extracting to {0}", f);
@@ -245,7 +245,7 @@ public class FileTree extends javax.swing.JTree implements ActionListener, Mouse
                             File ret = gcfContext.extract(index, f);
                             LOG.log(Level.INFO, "Extracted {0}", new Object[]{ret});
                         } catch(IOException ex) {
-                            Logger.getLogger(FileTree.class.getName()).log(Level.SEVERE, null, ex);
+                            Logger.getLogger(ProjectTree.class.getName()).log(Level.SEVERE, null, ex);
                         }
                     }
                 }
@@ -266,6 +266,6 @@ public class FileTree extends javax.swing.JTree implements ActionListener, Mouse
     private JPopupMenu projectMenu;
     // End of variables declaration//GEN-END:variables
 
-    private static final Logger LOG = Logger.getLogger(FileTree.class.getName());
+    private static final Logger LOG = Logger.getLogger(ProjectTree.class.getName());
 
 }
