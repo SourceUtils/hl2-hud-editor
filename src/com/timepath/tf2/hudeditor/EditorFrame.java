@@ -2,7 +2,10 @@ package com.timepath.tf2.hudeditor;
 
 import apple.OSXAdapter;
 import com.timepath.Utils;
+import com.timepath.hl2.gameinfo.ExternalConsole;
+import com.timepath.hl2.gameinfo.ExternalScoreboard;
 import com.timepath.hl2.io.VTF;
+import com.timepath.hl2.io.test.MDLTest;
 import com.timepath.hl2.io.test.VBFTest;
 import com.timepath.hl2.io.test.VCCDTest;
 import com.timepath.hl2.io.test.VTFTest;
@@ -20,7 +23,7 @@ import com.timepath.plaf.mac.Application.QuitEvent;
 import com.timepath.plaf.mac.Application.QuitHandler;
 import com.timepath.plaf.mac.Application.QuitResponse;
 import com.timepath.plaf.x.filechooser.BaseFileChooser;
-import com.timepath.plaf.x.filechooser.FileChooserTest;
+import com.timepath.plaf.x.filechooser.test.FileChooserTest;
 import com.timepath.plaf.x.filechooser.NativeFileChooser;
 import com.timepath.steam.SteamUtils;
 import com.timepath.steam.io.GCF;
@@ -1811,6 +1814,30 @@ public class EditorFrame extends javax.swing.JFrame {
                 }
             });
             extrasMenu.add(i);
+            
+            JMenuItem i2 = new JMenuItem(new CustomAction("External Console", null, KeyEvent.VK_X, null) {
+                @Override
+                public void actionPerformed(ActionEvent ae) {
+                    ExternalConsole.main("");
+                }
+            });
+            extrasMenu.add(i2);
+            
+            JMenuItem i3 = new JMenuItem(new CustomAction("External Scoreboard", null, KeyEvent.VK_S, null) {
+                @Override
+                public void actionPerformed(ActionEvent ae) {
+                    ExternalScoreboard.main("");
+                }
+            });
+            extrasMenu.add(i3);
+            
+            JMenuItem i4 = new JMenuItem(new CustomAction("Model viewer", null, KeyEvent.VK_M, null) {
+                @Override
+                public void actionPerformed(ActionEvent ae) {
+                    MDLTest.main("");
+                }
+            });
+            extrasMenu.add(i4);
         }
     }
 
