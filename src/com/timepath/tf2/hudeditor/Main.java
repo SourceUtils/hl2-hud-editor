@@ -46,7 +46,15 @@ public class Main {
 
     public static final Preferences prefs = Preferences.userRoot().node(projectName);
 
-    public static final String myVer = Main.class.getPackage().getImplementationVersion();
+    public static final long myVer = getVer();
+
+    private static long getVer() {
+        String impl = Main.class.getPackage().getImplementationVersion();
+        if(impl == null) {
+            return 0;
+        }
+        return Long.parseLong(impl);
+    }
 
     public static final File logFile;
 
@@ -99,6 +107,7 @@ public class Main {
 
     //<editor-fold defaultstate="collapsed" desc="Entry point">
     public static void main(String... args) {
+        //<editor-fold defaultstate="collapsed" desc="Initialize">
         LOG.log(Level.INFO, "Args = {0}", Arrays.toString(args));
         String cwd = Utils.workingDirectory(Main.class);
         LOG.log(Level.INFO, "Working directory = {0}", cwd);
@@ -165,28 +174,29 @@ public class Main {
                 }
             }
         }
+        //</editor-fold>
 
-        int port = prefs.getInt("port", -1);
-        if(port == -1) { // Was removed on shutdown
-            port = 0;
-            if(startServer(port)) {
-                start(args);
+        boolean daemon = false;
+        if(daemon) {
+            int port = prefs.getInt("port", -1);
+            if(port == -1) { // Was removed on shutdown
+                port = 0;
             } else {
+                LOG.info("Communicating with daemon...");
+            }
+            for(;;) {
+                if(startClient(port, args)) {
+                    break;
+                }
+                LOG.info("Daemon not running, starting...");
+                if(startServer(port)) {
+                    start(args);
+                    break;
+                }
                 LOG.info("Daemon already running, conecting...");
             }
         } else {
-            LOG.info("Checking for daemon...");
-        }
-        for(;;) {
-            if(startClient(port, args)) {
-                break;
-            }
-            LOG.info("Daemon not running, starting...");
-            if(startServer(port)) {
-                start(args);
-                break;
-            }
-            LOG.info("Daemon already running, conecting...");
+            start(args);
         }
     }
 
@@ -204,12 +214,12 @@ public class Main {
             prefs.putInt("port", truePort);
             prefs.flush();
 
-            LOG.log(Level.INFO, "Listening on port {0}", truePort);
+            LOG.log(Level.INFO, "Daemon listening on port {0}", truePort);
 
             Runtime.getRuntime().addShutdownHook(new Thread() {
                 @Override
                 public void run() {
-                    LOG.info("Server shutting down...");
+                    LOG.info("Daemon shutting down...");
                     prefs.remove("port");
                     try {
                         prefs.flush();
@@ -219,37 +229,10 @@ public class Main {
                 }
             });
 
-            Thread server = new Thread(new Runnable() {
-                public void run() {
-                    while(!sock.isClosed()) {
-                        try {
-                            Socket client = sock.accept();
-                            BufferedReader in = new BufferedReader(new InputStreamReader(client.getInputStream()));
-                            PrintWriter out = new PrintWriter(client.getOutputStream(), true);
-
-                            String cVer = in.readLine();
-                            LOG.log(Level.INFO, "client {0} vs host {1}", new Object[]{cVer, myVer});
-                            String request = "-noupdate " + in.readLine();
-                            LOG.log(Level.INFO, "Request: {0}", request);
-                            out.println(myVer);
-
-                            if(cVer.equals("null") || (myVer != null && cVer.compareTo(myVer) > 0)) {
-                                LOG.info("Surrendering control to other process");
-                                out.flush();
-                                sock.close();
-                            } else {
-                                start(request.split(" "));
-                            }
-                        } catch(Exception ex) {
-                            LOG.log(Level.SEVERE, null, ex);
-                        }
-                    }
-                    LOG.info("Exiting...");
-                    System.exit(0);
-                }
-            }, "Process Listener");
-            server.setDaemon(!OS.isMac()); // non-daemon threads work in the background. Stick around if on a mac until manually terminated
-            //            server.setDaemon(false);
+            Thread server = new Thread(new ServerRunnable(sock), "Process Listener");
+//            server.setDaemon(!OS.isMac()); // non-daemon threads work in the background. Stick around if on a mac until manually terminated
+//            server.setDaemon(false); // hang around
+            server.setDaemon(true); // die immediately
             server.start();
         } catch(BindException ex) {
             return false;
@@ -278,8 +261,8 @@ public class Main {
                 sb.append(args[i]).append(" ");
             }
             out.println(sb.toString());
-            String sVer = in.readLine();
-            if(myVer == null || (!sVer.equals("null") && sVer.compareTo(myVer) > 0)) {
+            long sVer = Long.parseLong(in.readLine());
+            if(myVer > sVer || myVer == 0) {
                 return false;
             } else {
                 return true;
@@ -354,4 +337,43 @@ public class Main {
             LOG.log(Level.SEVERE, null, ex);
         }
     }
+
+    private static class ServerRunnable implements Runnable {
+
+        private ServerSocket sock;
+
+        ServerRunnable(ServerSocket sock) {
+            this.sock = sock;
+        }
+
+        public void run() {
+            while(!sock.isClosed()) {
+                try {
+                    Socket client = sock.accept();
+                    BufferedReader in = new BufferedReader(new InputStreamReader(client.getInputStream()));
+                    PrintWriter out = new PrintWriter(client.getOutputStream(), true);
+
+                    long cVer = Long.parseLong(in.readLine());
+                    LOG.log(Level.INFO, "client {0} vs host {1}", new Object[]{cVer, myVer});
+                    String request = "-noupdate " + in.readLine();
+                    LOG.log(Level.INFO, "Request: {0}", request);
+                    out.println(myVer);
+
+                    if(cVer > myVer || cVer == 0) {
+                        LOG.info("Daemon surrendering control to other process");
+                        out.flush();
+                        sock.close();
+                    } else {
+                        start(request.split(" "));
+                    }
+                } catch(Exception ex) {
+                    LOG.log(Level.SEVERE, null, ex);
+                }
+            }
+
+            LOG.info("Exiting...");
+            System.exit(0);
+        }
+    }
+
 }

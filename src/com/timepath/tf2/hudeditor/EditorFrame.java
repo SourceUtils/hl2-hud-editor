@@ -180,7 +180,7 @@ public class EditorFrame extends javax.swing.JFrame {
     private String changelog() throws IOException {
         BufferedReader r = getPage("https://dl.dropbox.com/u/42745598/tf/Hud%20Editor/TF2%20HUD%20Editor.jar.changes");
         String text = "";
-        String grep = Main.myVer;
+        String grep = Long.toString(Main.myVer);
         String line;
         while((line = r.readLine()) != null) {
             if(grep != null && line.contains(grep)) {
@@ -284,10 +284,10 @@ public class EditorFrame extends javax.swing.JFrame {
                 try {
                     String current = currentVersion();
                     final long lastUpdate = Long.parseLong(current);
-                    boolean equal = current.equals(Main.myVer);
+                    boolean equal = current.equals(Long.toString(Main.myVer));
                     LOG.log(Level.INFO, "{0} ={1}= {2}", new Object[]{current, equal ? "" : "/", Main.myVer});
 
-                    if(Main.myVer != null && current.compareTo(Main.myVer) <= 0 && !force) {
+                    if(Main.myVer != 0 && current.compareTo(Long.toString(Main.myVer)) <= 0 && !force) {
                         return;
                     }
 
@@ -312,7 +312,7 @@ public class EditorFrame extends javax.swing.JFrame {
                         }
                     }).start();
 
-                    if((Main.myVer == null || current.compareTo(Main.myVer) > 0)) {
+                    if((Main.myVer == 0 || current.compareTo(Long.toBinaryString(Main.myVer)) > 0)) {
 //                        updateButton.setEnabled(true);
                         int returnCode = JOptionPane.showConfirmDialog(EditorFrame.this, new JComponent[]{new JLabel("Would you like to update to the latest version?"), new JLabel(), window, lastUpdated}, "A new update is available", JOptionPane.YES_NO_OPTION);
                         if(returnCode == JOptionPane.YES_OPTION) {
@@ -434,8 +434,8 @@ public class EditorFrame extends javax.swing.JFrame {
         aboutText += "<p>I have an <a href=\"http://code.google.com/feeds/p/tf2-hud-editor/hgchanges/basic\">Atom feed</a> set up listing source commits</p>";
         aboutText += "<p>Please leave feedback or suggestions on <a href=\"" + latestThread + "\">the latest update thread</a></p>";
         aboutText += "<p>Logging to <a href=\"" + Main.logFile.toURI() + "\">" + Main.logFile + "</a></p>";
-        if(Main.myVer != null) {
-            long time = Long.parseLong(Main.myVer);
+        if(Main.myVer != 0) {
+            long time = Main.myVer;
             DateFormat df = new SimpleDateFormat("EEE, dd MMM yyyy HH:mm:ss z");
             df.setTimeZone(TimeZone.getTimeZone("UTC"));
             aboutText += "<p>Build date: " + df.format(new Date(time * 1000)) + " (" + time + ")</p>";
@@ -723,7 +723,7 @@ public class EditorFrame extends javax.swing.JFrame {
         super.setVisible(b);
         this.createBufferStrategy(2);
         track("ProgramLoad");
-        if(Main.myVer != null && autoCheck) {
+        if(Main.myVer != 0 && autoCheck) {
             this.checkForUpdates(false);
         }
     }
@@ -920,7 +920,7 @@ public class EditorFrame extends javax.swing.JFrame {
 
     public void quit() {
         if(!updating) {
-            LOG.info("Quitting...");
+            LOG.info("Closing...");
             this.dispose();
             if(OS.isMac()) {
 //                JFrame f = new JFrame();
@@ -1747,7 +1747,7 @@ public class EditorFrame extends javax.swing.JFrame {
                     EditorFrame.this.checkForUpdates(true);
                 }
             });
-            updateItem.setEnabled(Main.myVer != null); // XXX
+            updateItem.setEnabled(Main.myVer != 0); // XXX
             updateItem.setEnabled(true);
             helpMenu.add(updateItem);
 
