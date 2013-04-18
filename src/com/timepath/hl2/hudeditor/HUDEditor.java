@@ -162,21 +162,21 @@ public class HUDEditor extends javax.swing.JFrame {
     }
 
     private String currentVersion() throws IOException {
-        BufferedReader r = getPage("https://dl.dropbox.com/u/42745598/tf/Hud%20Editor/TF2%20HUD%20Editor.jar.current");
+        BufferedReader r = getPage("https://dl.dropbox.com/u/42745598/tf/HUD%20Editor/TF2%20HUD%20Editor.jar.current");
         String l = r.readLine();
         r.close();
         return l;
     }
 
     private String checksum() throws IOException {
-        BufferedReader r = getPage("https://dl.dropbox.com/u/42745598/tf/Hud%20Editor/TF2%20HUD%20Editor.jar.MD5");
+        BufferedReader r = getPage("https://dl.dropbox.com/u/42745598/tf/HUD%20Editor/TF2%20HUD%20Editor.jar.MD5");
         String l = r.readLine();
         r.close();
         return l;
     }
 
     private String changelog() throws IOException {
-        BufferedReader r = getPage("https://dl.dropbox.com/u/42745598/tf/Hud%20Editor/TF2%20HUD%20Editor.jar.changes");
+        BufferedReader r = getPage("https://dl.dropbox.com/u/42745598/tf/HUD%20Editor/TF2%20HUD%20Editor.jar.changes");
         String text = "";
         String grep = null;
         if(Main.myVer != 0) {
@@ -329,7 +329,7 @@ public class HUDEditor extends javax.swing.JFrame {
 
                                     LOG.info("Connecting to Dropbox...");
 
-                                    URL latest = new URL("https://dl.dropbox.com/u/42745598/tf/Hud%20Editor/TF2%20HUD%20Editor.jar");
+                                    URL latest = new URL("https://dl.dropbox.com/u/42745598/tf/HUD%20Editor/TF2%20HUD%20Editor.jar");
                                     URLConnection editor = latest.openConnection();
 
                                     JProgressBar pb = new JProgressBar(0, editor.getContentLength());
