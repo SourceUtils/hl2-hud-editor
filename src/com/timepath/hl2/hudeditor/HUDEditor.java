@@ -3,6 +3,7 @@ package com.timepath.hl2.hudeditor;
 import com.timepath.hl2.io.swing.VGUICanvas;
 import apple.OSXAdapter;
 import com.timepath.Utils;
+import com.timepath.backports.javax.swing.SwingWorker;
 import com.timepath.hl2.gameinfo.ExternalConsole;
 import com.timepath.hl2.gameinfo.ExternalScoreboard;
 import com.timepath.hl2.io.VTF;
@@ -84,6 +85,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.StringTokenizer;
 import java.util.TimeZone;
+import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.zip.ZipEntry;
@@ -970,7 +972,8 @@ public class HUDEditor extends javax.swing.JFrame {
             }
         });
 
-        this.setIconImage(new ImageIcon(getClass().getResource("/com/timepath/hl2/hudeditor/resources/Icon.png")).getImage());
+        HUDEditor.this.setIconImage(new ImageIcon(getClass().getResource("/com/timepath/hl2/hudeditor/resources/Icon.png")).getImage());
+        
         this.setTitle(Main.getString("Title"));
 
         this.getRootPane().putClientProperty("apple.awt.brushMetalLook", Boolean.TRUE); // Mac tweak
@@ -1250,7 +1253,26 @@ public class HUDEditor extends javax.swing.JFrame {
                 }
             }
         };
-        canvas.setBackgroundImage(getClass().getResource("/com/timepath/hl2/hudeditor/resources/Badlands1.png"));
+        SwingWorker<Image, Void> worker = new SwingWorker<Image, Void>() {
+            Image i;
+            @Override
+            public Image doInBackground() {
+                i = new ImageIcon(getClass().getResource("/com/timepath/hl2/hudeditor/resources/Badlands1.png")).getImage();
+                return i;
+            }
+
+            @Override
+            public void done() {
+                try {
+                    canvas.setBackgroundImage(this.get());
+                } catch(InterruptedException ex) {
+                    Logger.getLogger(HUDEditor.class.getName()).log(Level.SEVERE, null, ex);
+                } catch(ExecutionException ex) {
+                    Logger.getLogger(HUDEditor.class.getName()).log(Level.SEVERE, null, ex);
+                }
+            }
+        };
+        worker.execute();
 
         JScrollPane canvasPane = new JScrollPane(canvas);
 //        canvasPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
