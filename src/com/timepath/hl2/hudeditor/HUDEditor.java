@@ -24,7 +24,6 @@ import com.timepath.plaf.mac.Application.QuitEvent;
 import com.timepath.plaf.mac.Application.QuitHandler;
 import com.timepath.plaf.mac.Application.QuitResponse;
 import com.timepath.plaf.x.filechooser.BaseFileChooser;
-import com.timepath.plaf.x.filechooser.test.FileChooserTest;
 import com.timepath.plaf.x.filechooser.NativeFileChooser;
 import com.timepath.steam.SteamUtils;
 import com.timepath.steam.io.GCF;
@@ -1828,37 +1827,29 @@ public class HUDEditor extends javax.swing.JFrame {
             });
             extrasMenu.add(bitmapItem);
 
-            JMenuItem i = new JMenuItem(new CustomAction("File chooser test", null, KeyEvent.VK_F, null) {
-                @Override
-                public void actionPerformed(ActionEvent ae) {
-                    FileChooserTest.main("");
-                }
-            });
-            extrasMenu.add(i);
-
-            JMenuItem i2 = new JMenuItem(new CustomAction("External Console", null, KeyEvent.VK_X, null) {
+            JMenuItem i1 = new JMenuItem(new CustomAction("External Console", null, KeyEvent.VK_X, null) {
                 @Override
                 public void actionPerformed(ActionEvent ae) {
                     ExternalConsole.main("");
                 }
             });
-            extrasMenu.add(i2);
+            extrasMenu.add(i1);
 
-            JMenuItem i3 = new JMenuItem(new CustomAction("External Scoreboard", null, KeyEvent.VK_S, null) {
+            JMenuItem i2 = new JMenuItem(new CustomAction("External Scoreboard", null, KeyEvent.VK_S, null) {
                 @Override
                 public void actionPerformed(ActionEvent ae) {
                     ExternalScoreboard.main("");
                 }
             });
-            extrasMenu.add(i3);
+            extrasMenu.add(i2);
 
-            JMenuItem i4 = new JMenuItem(new CustomAction("Model viewer", null, KeyEvent.VK_M, null) {
+            JMenuItem i3 = new JMenuItem(new CustomAction("Model viewer", null, KeyEvent.VK_M, null) {
                 @Override
                 public void actionPerformed(ActionEvent ae) {
                     MDLTest.main("");
                 }
             });
-            extrasMenu.add(i4);
+            extrasMenu.add(i3);
         }
     }
 
