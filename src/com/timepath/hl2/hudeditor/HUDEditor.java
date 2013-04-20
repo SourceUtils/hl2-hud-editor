@@ -7,6 +7,7 @@ import com.timepath.backports.javax.swing.SwingWorker;
 import com.timepath.hl2.gameinfo.ExternalConsole;
 import com.timepath.hl2.gameinfo.ExternalScoreboard;
 import com.timepath.hl2.io.VTF;
+import com.timepath.hl2.io.test.CVarTest;
 import com.timepath.hl2.io.test.MDLTest;
 import com.timepath.hl2.io.test.VBFTest;
 import com.timepath.hl2.io.test.VCCDTest;
@@ -973,7 +974,7 @@ public class HUDEditor extends javax.swing.JFrame {
         });
 
         HUDEditor.this.setIconImage(new ImageIcon(getClass().getResource("/com/timepath/hl2/hudeditor/resources/Icon.png")).getImage());
-        
+
         this.setTitle(Main.getString("Title"));
 
         this.getRootPane().putClientProperty("apple.awt.brushMetalLook", Boolean.TRUE); // Mac tweak
@@ -1255,6 +1256,7 @@ public class HUDEditor extends javax.swing.JFrame {
         };
         SwingWorker<Image, Void> worker = new SwingWorker<Image, Void>() {
             Image i;
+
             @Override
             public Image doInBackground() {
                 i = new ImageIcon(getClass().getResource("/com/timepath/hl2/hudeditor/resources/Badlands1.png")).getImage();
@@ -1337,9 +1339,14 @@ public class HUDEditor extends javax.swing.JFrame {
      */
     private static void lookAndFeel() {
         LOG.log(Level.INFO, "L&F: {0} | {1}", new Object[]{System.getProperty("swing.defaultlaf"), Main.prefs.get("theme", null)});
-
-        UIManager.installLookAndFeel("Quaqua", "ch.randelshofer.quaqua.QuaquaLookAndFeel");
-        UIManager.installLookAndFeel("GTK extended", "org.gtk.laf.extended.GTKLookAndFeelExtended");
+        switch(OS.get()) {
+            case OSX:
+                UIManager.installLookAndFeel("Quaqua", "ch.randelshofer.quaqua.QuaquaLookAndFeel");
+                break;
+            case Linux:
+                UIManager.installLookAndFeel("GTK extended", "org.gtk.laf.extended.GTKLookAndFeelExtended");
+                break;
+        }
 
         if(System.getProperty("swing.defaultlaf") == null && Main.prefs.get("theme", null) == null) { // Do not override user specified theme
             boolean nimbus = false;
@@ -1872,6 +1879,14 @@ public class HUDEditor extends javax.swing.JFrame {
                 }
             });
             extrasMenu.add(i3);
+            
+            JMenuItem i4 = new JMenuItem(new CustomAction("CVar test", null, KeyEvent.VK_M, null) {
+                @Override
+                public void actionPerformed(ActionEvent ae) {
+                    CVarTest.main("");
+                }
+            });
+            extrasMenu.add(i4);
         }
     }
 
