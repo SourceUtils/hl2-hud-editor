@@ -8,7 +8,6 @@ import com.timepath.hl2.gameinfo.ExternalConsole;
 import com.timepath.hl2.gameinfo.ExternalScoreboard;
 import com.timepath.hl2.io.VTF;
 import com.timepath.hl2.io.test.CVarTest;
-import com.timepath.hl2.io.test.MDLTest;
 import com.timepath.hl2.io.test.VBFTest;
 import com.timepath.hl2.io.test.VCCDTest;
 import com.timepath.hl2.io.test.VTFTest;
@@ -1855,6 +1854,8 @@ public class HUDEditor extends javax.swing.JFrame {
                 }
             });
             extrasMenu.add(bitmapItem);
+            
+            extrasMenu.addSeparator();
 
             JMenuItem i1 = new JMenuItem(new CustomAction("External Console", null, KeyEvent.VK_X, null) {
                 @Override
@@ -1871,22 +1872,14 @@ public class HUDEditor extends javax.swing.JFrame {
                 }
             });
             extrasMenu.add(i2);
-
-            JMenuItem i3 = new JMenuItem(new CustomAction("Model viewer", null, KeyEvent.VK_M, null) {
-                @Override
-                public void actionPerformed(ActionEvent ae) {
-                    MDLTest.main("");
-                }
-            });
-            extrasMenu.add(i3);
             
-            JMenuItem i4 = new JMenuItem(new CustomAction("CVar test", null, KeyEvent.VK_M, null) {
+            JMenuItem i3 = new JMenuItem(new CustomAction("CVar test", null, KeyEvent.VK_M, null) {
                 @Override
                 public void actionPerformed(ActionEvent ae) {
                     CVarTest.main("");
                 }
             });
-            extrasMenu.add(i4);
+            extrasMenu.add(i3);
         }
     }
 
