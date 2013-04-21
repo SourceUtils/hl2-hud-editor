@@ -342,9 +342,9 @@ public class Main {
             String md5 = Utils.takeMD5(Utils.loadFile(update));
             File updateChecksum = new File(update.getPath() + ".MD5");
             String expectedMd5 = new String(Utils.loadFile(updateChecksum));
-            updateChecksum.deleteOnExit();
             if(!md5.equals(expectedMd5)) {
                 LOG.log(Level.WARNING, "Corrupt update file");
+                updateChecksum.delete();
                 update.delete();
                 return;
             }

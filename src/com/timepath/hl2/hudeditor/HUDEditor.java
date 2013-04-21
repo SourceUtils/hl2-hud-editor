@@ -230,7 +230,7 @@ public class HUDEditor extends javax.swing.JFrame {
                 try {
                     String current = currentVersion();
                     lastUpdate = Long.parseLong(current);
-                    updateAvailable = lastUpdate >= Main.myVer;
+                    updateAvailable = lastUpdate > Main.myVer;
                     String sign = "==";
                     if(Main.myVer > lastUpdate) {
                         sign = ">";
@@ -943,15 +943,15 @@ public class HUDEditor extends javax.swing.JFrame {
 //        if(!updating) {
         LOG.info("Closing...");
         this.dispose();
-        if(OS.isMac()) {
+//        if(OS.isMac()) {
 //                JFrame f = new JFrame();
 //                f.setUndecorated(true);
 //                f.setJMenuBar(this.getJMenuBar());
 //                f.setLocation(-Integer.MAX_VALUE, -Integer.MAX_VALUE); // Hacky - should just use the OSX Application calls...
 //                f.setVisible(true);
-        } else {
-//                System.exit(0);
-        }
+//        } else {
+                System.exit(0);
+//        }
 //        }
     }
 
