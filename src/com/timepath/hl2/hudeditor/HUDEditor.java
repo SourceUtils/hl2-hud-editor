@@ -1,18 +1,19 @@
 package com.timepath.hl2.hudeditor;
 
-import com.timepath.hl2.io.swing.VGUICanvas;
 import apple.OSXAdapter;
 import com.timepath.Utils;
 import com.timepath.backports.javax.swing.SwingWorker;
 import com.timepath.hl2.gameinfo.ExternalConsole;
 import com.timepath.hl2.gameinfo.ExternalScoreboard;
 import com.timepath.hl2.io.VTF;
+import com.timepath.hl2.io.swing.VGUICanvas;
 import com.timepath.hl2.io.test.CVarTest;
 import com.timepath.hl2.io.test.VBFTest;
 import com.timepath.hl2.io.test.VCCDTest;
 import com.timepath.hl2.io.test.VTFTest;
 import com.timepath.hl2.io.util.Element;
 import com.timepath.hl2.io.util.Property;
+import com.timepath.plaf.IconList;
 import com.timepath.plaf.OS;
 import com.timepath.plaf.linux.Ayatana;
 import com.timepath.plaf.linux.GtkFixer;
@@ -34,8 +35,8 @@ import com.timepath.steam.io.VDF;
 import com.timepath.steam.io.test.ArchiveTest;
 import com.timepath.steam.io.test.DataTest;
 import java.awt.Color;
+import java.awt.Container;
 import java.awt.Cursor;
-import java.awt.Desktop;
 import java.awt.Dimension;
 import java.awt.DisplayMode;
 import java.awt.GraphicsConfiguration;
@@ -69,12 +70,10 @@ import java.io.FilenameFilter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.lang.reflect.InvocationTargetException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.URLConnection;
-import java.security.NoSuchAlgorithmException;
 import java.text.DateFormat;
 import java.text.MessageFormat;
 import java.text.SimpleDateFormat;
@@ -95,8 +94,8 @@ import javax.swing.Action;
 import javax.swing.BoxLayout;
 import javax.swing.Icon;
 import javax.swing.ImageIcon;
+import javax.swing.JButton;
 import javax.swing.JComboBox;
-import javax.swing.JComponent;
 import javax.swing.JDialog;
 import javax.swing.JEditorPane;
 import javax.swing.JFrame;
@@ -114,7 +113,6 @@ import javax.swing.SwingUtilities;
 import javax.swing.Timer;
 import javax.swing.UIManager;
 import javax.swing.UnsupportedLookAndFeelException;
-import javax.swing.event.HyperlinkEvent;
 import javax.swing.event.HyperlinkListener;
 import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
@@ -132,7 +130,6 @@ public class HUDEditor extends javax.swing.JFrame {
 
     private static final Logger LOG = Logger.getLogger(HUDEditor.class.getName());
 
-    //<editor-fold defaultstate="collapsed" desc="Variables">
     private final EditorMenuBar jmb;
 
     private final DefaultMutableTreeNode fileSystemRoot;
@@ -143,14 +140,13 @@ public class HUDEditor extends javax.swing.JFrame {
 
     private static VGUICanvas canvas;
 
-    private boolean updating;
-
     private File lastLoaded;
 
     private JSpinner spinnerWidth;
 
     private JSpinner spinnerHeight;
-    //</editor-fold>
+
+    HyperlinkListener linkListener = Utils.getLinkListener();
 
     //<editor-fold defaultstate="collapsed" desc="Updates">
     private BufferedReader getPage(String s) throws IOException {
@@ -176,249 +172,305 @@ public class HUDEditor extends javax.swing.JFrame {
         return l;
     }
 
-    private String changelog() throws IOException {
-        BufferedReader r = getPage("https://dl.dropbox.com/u/42745598/tf/HUD%20Editor/TF2%20HUD%20Editor.jar.changes");
-        String text = "";
-        String grep = null;
-        if(Main.myVer != 0) {
-            grep = "" + Main.myVer;
-        }
-        String line;
-        while((line = r.readLine()) != null) {
-            if(grep != null && line.contains(grep)) {
-                text += line.replace(grep, "<b><u>" + grep + "</u></b>");
-            } else {
-                text += line;
-            }
-        }
-        r.close();
-        return text;
-    }
-
     private static boolean checked;
 
+    private long lastUpdate;
+
     private void checkForUpdates(final boolean force) {
-        new Thread() {
-            int retries = 3;
+        final JEditorPane pane = new JEditorPane("text/html", "");
+        Dimension s = Toolkit.getDefaultToolkit().getScreenSize();
+        pane.setPreferredSize(new Dimension(s.width / 4, s.height / 2));
+        pane.setEditable(false);
+        pane.setOpaque(false);
+        pane.setBackground(new Color(0, 0, 0, 0));
+        pane.addHyperlinkListener(HUDEditor.this.linkListener);
+        final JScrollPane scroll = new JScrollPane(pane);
+        scroll.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
 
-            private String calculateTime(long diffInSeconds) {
-                StringBuilder sb = new StringBuilder();
+        final JLabel lastUpdated = new JLabel("\n");
 
-                long sec = (diffInSeconds >= 60 ? diffInSeconds % 60 : diffInSeconds);
-                long min = (diffInSeconds = (diffInSeconds / 60)) >= 60 ? diffInSeconds % 60 : diffInSeconds;
-                long hrs = (diffInSeconds = (diffInSeconds / 60)) >= 24 ? diffInSeconds % 24 : diffInSeconds;
-                long days = (diffInSeconds = (diffInSeconds / 24)) >= 30 ? diffInSeconds % 30 : diffInSeconds;
-                //<editor-fold defaultstate="collapsed" desc="approximate months/years">
-                //                long months = (diffInSeconds = (diffInSeconds / 30)) >= 12 ? diffInSeconds % 12 : diffInSeconds;
-                //                long years = (diffInSeconds = (diffInSeconds / 12));
+        final Object[] components = {scroll, lastUpdated};
+        final JButton[] options = {new JButton("Close"), new JButton("Update")};
+        options[1].setEnabled(true);
 
-                //                if(years > 0) {
-                //                    if(years == 1) {
-                //                        sb.append("a year");
-                //                    } else {
-                //                        sb.append(years + " years");
-                //                    }
-                //                    if(years <= 6 && months > 0) {
-                //                        if(months == 1) {
-                //                            sb.append(" and a month");
-                //                        } else {
-                //                            sb.append(" and " + months + " months");
-                //                        }
-                //                    }
-                //                } else if(months > 0) {
-                //                    if(months == 1) {
-                //                        sb.append("a month");
-                //                    } else {
-                //                        sb.append(months + " months");
-                //                    }
-                //                    if(months <= 6 && days > 0) {
-                //                        if(days == 1) {
-                //                            sb.append(" and a day");
-                //                        } else {
-                //                            sb.append(" and " + days + " days");
-                //                        }
-                //                    }
-                //                } else 
-                //</editor-fold>
-                if(days > 0) {
-                    if(days == 1) {
-                        sb.append("a day");
-                    } else {
-                        sb.append(days).append(" days");
-                    }
-                    if(days <= 3 && hrs > 0) {
-                        if(hrs == 1) {
-                            sb.append(" and an hour");
-                        } else {
-                            sb.append(" and ").append(hrs).append(" hours");
-                        }
-                    }
-                } else if(hrs > 0) {
-                    if(hrs == 1) {
-                        sb.append("an hour");
-                    } else {
-                        sb.append(hrs).append(" hours");
-                    }
-                    if(min > 1) {
-                        sb.append(" and ").append(min).append(" minutes");
-                    }
-                } else if(min > 0) {
-                    if(min == 1) {
-                        sb.append("a minute");
-                    } else {
-                        sb.append(min).append(" minutes");
-                    }
-                    if(sec > 1) {
-                        sb.append(" and ").append(sec).append(" seconds");
-                    }
-                } else {
-                    if(sec <= 1) {
-                        sb.append("about a second");
-                    } else {
-                        sb.append("about ").append(sec).append(" seconds");
-                    }
-                }
+        final JOptionPane optionPane = new JOptionPane(components,
+                                                       JOptionPane.INFORMATION_MESSAGE,
+                                                       JOptionPane.YES_NO_OPTION,
+                                                       null,
+                                                       options,
+                                                       options[0]);
 
-                sb.append(" ago");
+        final JDialog d = new JDialog(HUDEditor.this, "Updates", false);
+        d.setContentPane(optionPane);
+        d.setDefaultCloseOperation(JDialog.DO_NOTHING_ON_CLOSE);
 
-                return sb.toString();
+        this.addWindowListener(new WindowAdapter() {
+            @Override
+            public void windowClosing(WindowEvent e) {
+                d.setVisible(!options[0].isEnabled());
             }
+        });
 
-            private void doCheckForUpdates() {
+        options[0].addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent ae) {
+                d.setVisible(false);
+            }
+        });
+
+        if(force) {
+            d.pack();
+            d.setVisible(true);
+        }
+
+        new SwingWorker<Boolean, Void>() {
+            private int retries = 3;
+
+            private boolean checkUpdates() {
+                boolean updateAvailable = false;
                 try {
                     String current = currentVersion();
-                    final long lastUpdate = Long.parseLong(current);
-                    boolean equal = lastUpdate == Main.myVer;
-                    LOG.log(Level.INFO, "{0} ={1}= {2}", new Object[]{lastUpdate, equal ? "" : "/", Main.myVer});
-
-                    if(Main.myVer != 0 && Main.myVer >= lastUpdate && !force) {
-                        return;
+                    lastUpdate = Long.parseLong(current);
+                    updateAvailable = lastUpdate >= Main.myVer;
+                    String sign = "==";
+                    if(Main.myVer > lastUpdate) {
+                        sign = ">";
+                    } else if(Main.myVer < lastUpdate) {
+                        sign = "<";
                     }
-
-                    String text = changelog();
-
-                    final JEditorPane pane = new JEditorPane("text/html", text);
-                    Dimension s = Toolkit.getDefaultToolkit().getScreenSize();
-                    pane.setPreferredSize(new Dimension(s.width / 4, s.height / 2));
-                    pane.setEditable(false);
-                    pane.setOpaque(false);
-                    pane.setBackground(new Color(0, 0, 0, 0));
-                    pane.addHyperlinkListener(linkListener);
-                    JScrollPane window = new JScrollPane(pane);
-                    window.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
-
-                    final JLabel lastUpdated = new JLabel();
-
-                    new Timer(1000, new ActionListener() {
-                        @Override
-                        public void actionPerformed(ActionEvent e) {
-                            lastUpdated.setText(calculateTime((System.currentTimeMillis() / 1000) - lastUpdate));
-                        }
-                    }).start();
-
-                    if((Main.myVer == 0 || lastUpdate > Main.myVer)) {
-//                        updateButton.setEnabled(true);
-                        int returnCode = JOptionPane.showConfirmDialog(HUDEditor.this, new JComponent[]{new JLabel("Would you like to update to the latest version?"), new JLabel(), window, lastUpdated}, "A new update is available", JOptionPane.YES_NO_OPTION);
-                        if(returnCode == JOptionPane.YES_OPTION) {
-                            String md5 = checksum();
-
-                            final File downloaded = new File(Utils.workingDirectory(HUDEditor.class), "update.tmp");
-                            for(int attempt = 1;; attempt++) {
-                                LOG.log(Level.INFO, "Checking for {0}", downloaded);
-                                if(!downloaded.exists()) {
-                                    long startTime = System.currentTimeMillis();
-
-                                    LOG.info("Connecting to Dropbox...");
-
-                                    URL latest = new URL("https://dl.dropbox.com/u/42745598/tf/HUD%20Editor/TF2%20HUD%20Editor.jar");
-                                    URLConnection editor = latest.openConnection();
-
-                                    JProgressBar pb = new JProgressBar(0, editor.getContentLength());
-                                    pb.setPreferredSize(new Dimension(175, 20));
-                                    pb.setStringPainted(true);
-                                    pb.setValue(0);
-
-//                                    JLabel label = new JLabel("Update Progress: ");
-
-//                                    JPanel center_panel = new JPanel();
-//                                    center_panel.add(label);
-//                                    center_panel.add(pb);
-
-//                                    statusBar.remove(updateButton);
-                                    status.add(pb);
-                                    status.revalidate();
-
-                                    InputStream in = latest.openStream();
-
-//                                    Utils.workingDirectory(EditorFrame.class)
-
-                                    updating = true;
-
-                                    LOG.info("Downloading JAR file in 150KB blocks at a time.\n");
-                                    FileOutputStream writer = new FileOutputStream(downloaded);
-                                    byte[] buffer = new byte[153600]; // 150KB
-                                    int totalBytesRead = 0;
-                                    int bytesRead;
-                                    while((bytesRead = in.read(buffer)) > 0) {
-                                        writer.write(buffer, 0, bytesRead);
-                                        buffer = new byte[153600];
-                                        totalBytesRead += bytesRead;
-                                        pb.setValue(totalBytesRead);
-                                    }
-
-                                    long endTime = System.currentTimeMillis();
-
-                                    LOG.log(Level.INFO, "Done. {0} kilobytes downloaded ({1} seconds).\n", new Object[]{new Integer(totalBytesRead / 1000).toString(), new Long((endTime - startTime) / 1000).toString()});
-                                    writer.close();
-                                    in.close();
-//                                    dialog.dispose();
-                                    status.remove(pb);
-                                } else {
-                                    LOG.info("Exists");
-                                }
-
-                                LOG.info("Checking MD5...");
-                                if(!Utils.takeMD5(Utils.loadFile(downloaded)).equalsIgnoreCase(md5)) {
-                                    LOG.warning("Corrupt or old download");
-                                } else {
-                                    LOG.info("MD5 matches");
-                                    break;
-                                }
-
-                                if(attempt == retries) {
-                                    LOG.warning("Update failed");
-                                    return;
-                                }
-                            }
-
-                            info("Restart to apply update to " + Utils.currentFile(Main.class));
-
-                            updating = false;
-                        }
-                    } else if(force) {
-                        JOptionPane.showMessageDialog(HUDEditor.this, new JComponent[]{new JLabel("You have the latest version."), new JLabel(""), window, lastUpdated}, "Info", JOptionPane.INFORMATION_MESSAGE);
-                    }
-                } catch(NoSuchAlgorithmException ex) {
+                    LOG.log(Level.INFO, "{0} {2} {1}", new Object[]{Main.myVer, lastUpdate, sign});
                 } catch(IOException ex) {
                     retries--;
                     if(retries > 0) {
-                        doCheckForUpdates();
+                        updateAvailable = checkUpdates();
                     } else {
                         LOG.log(Level.SEVERE, null, ex);
-                        updating = false;
                     }
                 }
+                return updateAvailable;
             }
 
             @Override
-            public void run() {
-                doCheckForUpdates();
-                checked = true;
+            protected Boolean doInBackground() throws Exception {
+                return checkUpdates();
             }
-        }.start();
+
+            @Override
+            protected void done() {
+                try {
+                    boolean updateAvailable = get();
+                    if(updateAvailable) {
+                        options[1].setEnabled(true);
+                        if(!force) {
+                            d.pack();
+                            d.setVisible(true);
+                        }
+                    }
+                } catch(InterruptedException ex) {
+                    Logger.getLogger(HUDEditor.class.getName()).log(Level.SEVERE, null, ex);
+                } catch(ExecutionException ex) {
+                    Logger.getLogger(HUDEditor.class.getName()).log(Level.SEVERE, null, ex);
+                }
+            }
+        }.execute();
+
+        final JProgressBar changelogBar = new JProgressBar(0, 100);
+        changelogBar.setPreferredSize(new Dimension(175, 20));
+        changelogBar.setMinimumSize(new Dimension(175, 20));
+        changelogBar.setStringPainted(true);
+        changelogBar.setString("Fetching changelog");
+        changelogBar.setIndeterminate(true);
+        scroll.getParent().add(changelogBar);
+
+        new SwingWorker<String, Void>() {
+            private int retries = 3;
+
+            private String fetchChangelog() {
+                String changelog = "Unable to fetch changelog";
+                try {
+                    BufferedReader r = getPage("https://dl.dropbox.com/u/42745598/tf/HUD%20Editor/TF2%20HUD%20Editor.jar.changes");
+                    String text = "";
+                    String grep = null;
+                    if(Main.myVer != 0) {
+                        grep = "" + Main.myVer;
+                    }
+                    String line;
+                    while((line = r.readLine()) != null) {
+                        if(grep != null && line.contains(grep)) {
+                            text += line.replace(grep, "<b><u>" + grep + "</u></b>");
+                        } else {
+                            text += line;
+                        }
+                    }
+                    r.close();
+                    changelog = text;
+                } catch(IOException ex) {
+                    retries--;
+                    if(retries > 0) {
+                        changelog = fetchChangelog();
+                    } else {
+                        LOG.log(Level.SEVERE, null, ex);
+                    }
+                }
+                return changelog;
+            }
+
+            @Override
+            protected String doInBackground() throws Exception {
+                return fetchChangelog();
+            }
+
+            @Override
+            protected void done() {
+                try {
+                    Container c = changelogBar.getParent();
+                    c.remove(changelogBar);
+                    c.repaint();
+                    pane.setText(get());
+                    pane.setCaretPosition(0);
+                    new Timer(1000, new ActionListener() {
+                        @Override
+                        public void actionPerformed(ActionEvent e) {
+                            lastUpdated.setText("Last updated " + Utils.timePeriod((System.currentTimeMillis() / 1000) - lastUpdate) + " ago");
+                        }
+                    }).start();
+                } catch(InterruptedException ex) {
+                    Logger.getLogger(HUDEditor.class.getName()).log(Level.SEVERE, null, ex);
+                } catch(ExecutionException ex) {
+                    Logger.getLogger(HUDEditor.class.getName()).log(Level.SEVERE, null, ex);
+                }
+            }
+        }.execute();
+
+        final JProgressBar updateBar = new JProgressBar();
+        options[1].addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent ae) {
+                //<editor-fold defaultstate="collapsed" desc="Update">
+                options[1].setEnabled(false);
+                updateBar.setPreferredSize(new Dimension(175, 20));
+                updateBar.setMinimumSize(new Dimension(175, 20));
+                updateBar.setStringPainted(true);
+                updateBar.setIndeterminate(true);
+                updateBar.setValue(0);
+                scroll.getParent().add(updateBar);
+                scroll.getParent().repaint();
+                new SwingWorker<Boolean, Void>() {
+                    @Override
+                    protected Boolean doInBackground() throws Exception {
+                        String md5 = checksum();
+                        final File md5File = new File(Utils.workingDirectory(HUDEditor.class), "update.tmp.MD5");
+                        if(md5File.exists()) {
+                            md5File.delete();
+                        }
+                        md5File.createNewFile();
+                        FileOutputStream md5Writer = new FileOutputStream(md5File);
+                        md5Writer.write(md5.getBytes());
+                        final File downloaded = new File(Utils.workingDirectory(HUDEditor.class), "update.tmp");
+                        int retries = 3;
+                        for(int attempt = 1; attempt < retries; attempt++) {
+                            LOG.log(Level.INFO, "Checking for {0}", downloaded);
+                            if(!downloaded.exists()) {
+                                long startTime = System.currentTimeMillis();
+
+                                LOG.info("Connecting to Dropbox...");
+
+                                URL latest = new URL("https://dl.dropbox.com/u/42745598/tf/HUD%20Editor/TF2%20HUD%20Editor.jar");
+                                URLConnection editor = latest.openConnection();
+                                updateBar.setMaximum(editor.getContentLength());
+                                updateBar.setIndeterminate(false);
+
+                                InputStream in = latest.openStream();
+
+                                LOG.info("Downloading JAR file in 150KB blocks at a time.\n");
+                                FileOutputStream writer = new FileOutputStream(downloaded);
+                                byte[] buffer = new byte[153600]; // 150KB
+                                int totalBytesRead = 0;
+                                int bytesRead;
+                                while((bytesRead = in.read(buffer)) > 0) {
+                                    writer.write(buffer, 0, bytesRead);
+                                    buffer = new byte[153600];
+                                    totalBytesRead += bytesRead;
+                                    updateBar.setValue(totalBytesRead);
+                                }
+
+                                long endTime = System.currentTimeMillis();
+
+                                LOG.log(Level.INFO, "Done. {0} kilobytes downloaded ({1} seconds).\n", new Object[]{new Integer(totalBytesRead / 1000).toString(), new Long((endTime - startTime) / 1000).toString()});
+                                writer.close();
+                                in.close();
+                                status.remove(updateBar);
+                            } else {
+                                LOG.info("Exists");
+                            }
+
+                            LOG.info("Checking MD5...");
+                            if(!Utils.takeMD5(Utils.loadFile(downloaded)).equalsIgnoreCase(md5)) {
+                                LOG.warning("Corrupt or old download");
+                                continue;
+                            }
+                            LOG.info("MD5 matches");
+
+                            info("Restart to apply update to " + Utils.currentFile(Main.class));
+                            return true;
+                        }
+                        LOG.warning("Update failed");
+                        return false;
+                    }
+
+                    @Override
+                    protected void done() {
+                        try {
+                            boolean success = get();
+                            if(!success) {
+                                updateBar.setString("Update failed");
+                                updateBar.setIndeterminate(false);
+                                updateBar.setValue(0);
+                                options[1].setEnabled(true);
+                            } else {
+                                updateBar.setString("Downloaded successfully");
+                            }
+                        } catch(InterruptedException ex) {
+                            Logger.getLogger(HUDEditor.class.getName()).log(Level.SEVERE, null, ex);
+                        } catch(ExecutionException ex) {
+                            Logger.getLogger(HUDEditor.class.getName()).log(Level.SEVERE, null, ex);
+                        }
+                    }
+                }.execute();
+                //</editor-fold>
+            }
+        });
     }
     //</editor-fold>
 
+    //<editor-fold defaultstate="collapsed" desc="Messages">
+    private void error(Object msg) {
+        error(msg, Main.getString("Error"));
+    }
+
+    private void error(Object msg, String title) {
+        LOG.log(Level.SEVERE, "{0}:{1}", new Object[]{title, msg});
+        JOptionPane.showMessageDialog(this, msg, title, JOptionPane.ERROR_MESSAGE);
+    }
+
+    private void warn(Object msg) {
+        error(msg, Main.getString("Warning"));
+    }
+
+    private void warn(Object msg, String title) {
+        LOG.log(Level.WARNING, "{0}:{1}", new Object[]{title, msg});
+        JOptionPane.showMessageDialog(this, msg, title, JOptionPane.WARNING_MESSAGE);
+    }
+
+    private void info(Object msg) {
+        info(msg, Main.getString("Info"));
+    }
+
+    private void info(Object msg, String title) {
+        LOG.log(Level.INFO, "{0}:{1}", new Object[]{title, msg});
+        JOptionPane.showMessageDialog(this, msg, title, JOptionPane.INFORMATION_MESSAGE);
+    }
+    //</editor-fold>
+
+    //<editor-fold defaultstate="collapsed" desc="Dialogs">
     public void preferences() {
         jDialog1.setVisible(true);
     }
@@ -443,7 +495,7 @@ public class HUDEditor extends javax.swing.JFrame {
         pane.setEditable(false);
         pane.setOpaque(false);
         pane.setBackground(new Color(0, 0, 0, 0));
-        pane.addHyperlinkListener(linkListener);
+        pane.addHyperlinkListener(HUDEditor.this.linkListener);
         info(pane, "About");
     }
 
@@ -498,58 +550,48 @@ public class HUDEditor extends javax.swing.JFrame {
      * mac = ?
      */
     private void locateHudDirectory() {
-        new Thread() {
+        try {
+            final File[] selection = new NativeFileChooser().setParent(HUDEditor.this).setTitle(Main.getString("LoadHudDir")).setFile(lastLoaded).setFileMode(BaseFileChooser.FileMode.DIRECTORIES_ONLY).choose();
+            if(selection == null) {
+                return;
+            }
+            load(selection[0]);
+        } catch(IOException ex) {
+            Logger.getLogger(HUDEditor.class.getName()).log(Level.SEVERE, null, ex);
+        }
+    }
+
+    private void load(final File f) {
+        HUDEditor.this.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
+        new SwingWorker<DefaultMutableTreeNode, Void>() {
             @Override
-            public void run() {
+            public DefaultMutableTreeNode doInBackground() {
+                return doLoad(f);
+            }
+
+            @Override
+            protected void done() {
                 try {
-                    final File[] selection = new NativeFileChooser().setParent(HUDEditor.this).setTitle(Main.getString("LoadHudDir")).setDirectory(lastLoaded != null ? lastLoaded.getPath() : null).setFileMode(BaseFileChooser.FileMode.DIRECTORIES_ONLY).choose();
-                    if(selection != null) {
-                        new Thread() {
-                            @Override
-                            public void run() {
-                                load(selection[0]);
-                            }
-                        }.start();
-                    } else {
+                    DefaultMutableTreeNode project = get();
+                    HUDEditor.this.setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
+                    if(project != null) {
+                        fileSystemRoot.add(project);
+                        fileTree.expandPath(new TreePath(project.getPath()));
+                        fileTree.setSelectionRow(fileSystemRoot.getIndex(project));
+                        fileTree.requestFocusInWindow();
                     }
-                } catch(IOException ex) {
+                } catch(InterruptedException ex) {
+                    Logger.getLogger(HUDEditor.class.getName()).log(Level.SEVERE, null, ex);
+                } catch(ExecutionException ex) {
                     Logger.getLogger(HUDEditor.class.getName()).log(Level.SEVERE, null, ex);
                 }
             }
-        }.start();
+        }.execute();
+
     }
 
     private void locateZippedHud() {
     }
-
-    //<editor-fold defaultstate="collapsed" desc="Messages">
-    private void error(Object msg) {
-        error(msg, Main.getString("Error"));
-    }
-
-    private void error(Object msg, String title) {
-        LOG.log(Level.SEVERE, "{0}:{1}", new Object[]{title, msg});
-        JOptionPane.showMessageDialog(this, msg, title, JOptionPane.ERROR_MESSAGE);
-    }
-
-    private void warn(Object msg) {
-        error(msg, Main.getString("Warning"));
-    }
-
-    private void warn(Object msg, String title) {
-        LOG.log(Level.WARNING, "{0}:{1}", new Object[]{title, msg});
-        JOptionPane.showMessageDialog(this, msg, title, JOptionPane.WARNING_MESSAGE);
-    }
-
-    private void info(Object msg) {
-        info(msg, Main.getString("Info"));
-    }
-
-    private void info(Object msg, String title) {
-        LOG.log(Level.INFO, "{0}:{1}", new Object[]{title, msg});
-        JOptionPane.showMessageDialog(this, msg, title, JOptionPane.INFORMATION_MESSAGE);
-    }
-    //</editor-fold>
 
     private void changeResolution() {
 
@@ -586,42 +628,42 @@ public class HUDEditor extends javax.swing.JFrame {
         //    }
         //</editor-fold>
 
-//            spinnerWidth = new JSpinner(new SpinnerNumberModel(canvas.screen.width, 640, 7680, 1)); // WHUXGA
+        //            spinnerWidth = new JSpinner(new SpinnerNumberModel(canvas.screen.width, 640, 7680, 1)); // WHUXGA
         spinnerWidth.setEnabled(false);
-//            NumberEditor jsWidth = (NumberEditor) spinnerWidth.getEditor();
-//            final Document jsWidthDoc = jsWidth.getTextField().getDocument();
-//            if(jsWidthDoc instanceof PlainDocument) {
-//                AbstractDocument docWidth = new PlainDocument() {
-//
-//
-//                    @Override
-//                    public void setDocumentFilter(DocumentFilter filter) {
-//                        if(filter instanceof NumericDocumentFilter) {
-//                            super.setDocumentFilter(filter);
-//                        }
-//                    }
-//                };
-//                docWidth.setDocumentFilter(new NumericDocumentFilter());
-//                jsWidth.getTextField().setDocument(docWidth);
-//            }
-//            spinnerHeight = new JSpinner(new SpinnerNumberModel(canvas.screen.height, 480, 4800, 1)); // WHUXGA
+        //            NumberEditor jsWidth = (NumberEditor) spinnerWidth.getEditor();
+        //            final Document jsWidthDoc = jsWidth.getTextField().getDocument();
+        //            if(jsWidthDoc instanceof PlainDocument) {
+        //                AbstractDocument docWidth = new PlainDocument() {
+        //
+        //
+        //                    @Override
+        //                    public void setDocumentFilter(DocumentFilter filter) {
+        //                        if(filter instanceof NumericDocumentFilter) {
+        //                            super.setDocumentFilter(filter);
+        //                        }
+        //                    }
+        //                };
+        //                docWidth.setDocumentFilter(new NumericDocumentFilter());
+        //                jsWidth.getTextField().setDocument(docWidth);
+        //            }
+        //            spinnerHeight = new JSpinner(new SpinnerNumberModel(canvas.screen.height, 480, 4800, 1)); // WHUXGA
         spinnerHeight.setEnabled(false);
-//            NumberEditor jsHeight = (NumberEditor) spinnerHeight.getEditor();
-//            final Document jsHeightDoc = jsHeight.getTextField().getDocument();
-//            if(jsHeightDoc instanceof PlainDocument) {
-//                AbstractDocument docHeight = new PlainDocument() {
-//
-//
-//                    @Override
-//                    public void setDocumentFilter(DocumentFilter filter) {
-//                        if (filter instanceof NumericDocumentFilter) {
-//                            super.setDocumentFilter(filter);
-//                        }
-//                    }
-//                };
-//                docHeight.setDocumentFilter(new NumericDocumentFilter());
-//                jsHeight.getTextField().setDocument(docHeight);
-//            }
+        //            NumberEditor jsHeight = (NumberEditor) spinnerHeight.getEditor();
+        //            final Document jsHeightDoc = jsHeight.getTextField().getDocument();
+        //            if(jsHeightDoc instanceof PlainDocument) {
+        //                AbstractDocument docHeight = new PlainDocument() {
+        //
+        //
+        //                    @Override
+        //                    public void setDocumentFilter(DocumentFilter filter) {
+        //                        if (filter instanceof NumericDocumentFilter) {
+        //                            super.setDocumentFilter(filter);
+        //                        }
+        //                    }
+        //                };
+        //                docHeight.setDocumentFilter(new NumericDocumentFilter());
+        //                jsHeight.getTextField().setDocument(docHeight);
+        //            }
         final JComboBox dropDown = new JComboBox(); // <String>
 
         GraphicsEnvironment env = GraphicsEnvironment.getLocalGraphicsEnvironment();
@@ -669,6 +711,7 @@ public class HUDEditor extends javax.swing.JFrame {
             }
         }
     }
+    //</editor-fold>
 
     //<editor-fold defaultstate="collapsed" desc="Overrides">
     @Override
@@ -738,9 +781,10 @@ public class HUDEditor extends javax.swing.JFrame {
 //
 //        propTable.clear();
 //    }
-    private void load(final File root) {
+    
+    private DefaultMutableTreeNode doLoad(final File root) {
         if(root == null) {
-            return;
+            return null;
         }
         if(!root.exists()) {
             error(new MessageFormat(Main.getString("FileAccessError")).format(new Object[]{root}));
@@ -759,7 +803,7 @@ public class HUDEditor extends javax.swing.JFrame {
                 zin.close();
             } catch(IOException e) {
             }
-            return;
+            return null;
         }
 
         if(root.isDirectory()) {
@@ -774,54 +818,34 @@ public class HUDEditor extends javax.swing.JFrame {
             if(!valid) {
                 error("Selection not valid. Please choose a folder containing \'resources\' or \'scripts\'.");
                 locateHudDirectory();
-                return;
+                return null;
             }
-//            close();
 
-            new Thread(new Runnable() {
-                public void run() {
-//                    SwingUtilities.invokeLater(new Runnable() {
-//                        @Override
-//                        public void run() {
-                    HUDEditor.this.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
-//                        }
-//                    });
-                    final DefaultMutableTreeNode project = new DefaultMutableTreeNode();
-                    project.setUserObject(root.getName());
-                    connectNodes(fileSystemRoot, project);
-                    DefaultTreeModel model = (DefaultTreeModel) fileTree.getModel();
-                    model.reload();
-                    final long start = System.currentTimeMillis();
-                    recurseDirectoryToNode(root, project);
-                    LOG.log(Level.INFO, "Loaded hud - took {0}ms", (System.currentTimeMillis() - start));
-                    fileTree.expandPath(new TreePath(project.getPath()));
-                    fileTree.setSelectionRow(fileSystemRoot.getIndex(project));
-                    fileTree.requestFocusInWindow();
-                    HUDEditor.this.setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
-                }
-            }).start();
+//            new SwingWorker<DefaultMutableTreeNode, Void>() {
+
+            long start = System.currentTimeMillis();
+
+//                @Override
+//                protected DefaultMutableTreeNode doInBackground() throws Exception {
+            final DefaultMutableTreeNode project = new DefaultMutableTreeNode();
+            project.setUserObject(root.getName());
+            recurseDirectoryToNode(root, project);
+//                    return project;
+//                }
+
+//                @Override
+//                protected void done() {
+            LOG.log(Level.INFO, "Loaded hud - took {0}ms", (System.currentTimeMillis() - start));
+//                }
+
+//            }.execute();
+
+            return project;
         }
+        return null;
     }
 
-    private void connectNodes(final DefaultMutableTreeNode parent, final DefaultMutableTreeNode child) {
-        try {
-            SwingUtilities.invokeAndWait(new Runnable() {
-                public void run() {
-//                    parent.add(child);
-                    DefaultTreeModel model = (DefaultTreeModel) fileTree.getModel();
-                    synchronized(model) {
-                        model.insertNodeInto(child, parent, parent.getChildCount());
-                    }
-                }
-            });
-        } catch(InterruptedException ex) {
-            Logger.getLogger(SteamUtils.class.getName()).log(Level.SEVERE, null, ex);
-        } catch(InvocationTargetException ex) {
-            Logger.getLogger(SteamUtils.class.getName()).log(Level.SEVERE, null, ex);
-        }
-    }
-
-    public void recurseDirectoryToNode(File root, final DefaultMutableTreeNode parent) {
+    private void recurseDirectoryToNode(File root, final DefaultMutableTreeNode parent) {
         final String[] blacklist = {".mp3", ".exe", ".sh", ".dll", ".dylib", ".so",
                                     ".ttf", ".bik", ".mov", ".cfg", ".cache", ".manifest",
                                     ".frag", ".vert", ".tga", ".png", ".html", ".wav",
@@ -851,7 +875,7 @@ public class HUDEditor extends javax.swing.JFrame {
                     continue;
                 }
                 //</editor-fold>
-                connectNodes(parent, child);
+                parent.add(child);
                 recurseDirectoryToNode(f, child);
             } else {
                 //<editor-fold defaultstate="collapsed" desc="Validate">
@@ -866,7 +890,7 @@ public class HUDEditor extends javax.swing.JFrame {
                     continue;
                 }
                 //</editor-fold>
-                connectNodes(parent, child);
+                parent.add(child);
                 threads[i] = new Thread(new Runnable() {
                     public void run() {
                         if(f.getName().endsWith(".txt")
@@ -916,19 +940,19 @@ public class HUDEditor extends javax.swing.JFrame {
     }
 
     public void quit() {
-        if(!updating) {
-            LOG.info("Closing...");
-            this.dispose();
-            if(OS.isMac()) {
+//        if(!updating) {
+        LOG.info("Closing...");
+        this.dispose();
+        if(OS.isMac()) {
 //                JFrame f = new JFrame();
 //                f.setUndecorated(true);
 //                f.setJMenuBar(this.getJMenuBar());
 //                f.setLocation(-Integer.MAX_VALUE, -Integer.MAX_VALUE); // Hacky - should just use the OSX Application calls...
 //                f.setVisible(true);
-            } else {
+        } else {
 //                System.exit(0);
-            }
         }
+//        }
     }
 
     private void setLastLoaded(File root) {
@@ -940,28 +964,8 @@ public class HUDEditor extends javax.swing.JFrame {
         Main.prefs.put("lastLoaded", root.getPath());
     }
 
-    private HyperlinkListener linkListener = new HyperlinkListener() {
-        public void hyperlinkUpdate(HyperlinkEvent he) {
-            if(he.getEventType().equals(HyperlinkEvent.EventType.ACTIVATED)) {
-                if(Desktop.isDesktopSupported()) {
-                    try {
-                        Desktop.getDesktop().browse(he.getURL().toURI());
-                    } catch(Exception e) {
-                        error(e);
-                    }
-                } else {
-                    warn("Unable to follow link");
-                    // http://stackoverflow.com/questions/5116473/linux-command-to-open-url-in-default-browser
-                }
-            }
-        }
-    };
     //</editor-fold>
-
     //<editor-fold defaultstate="collapsed" desc="Interface">
-    /**
-     * Creates new form EditorFrame
-     */
     public HUDEditor() {
         HUDEditor.lookAndFeel();
         this.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
@@ -972,7 +976,7 @@ public class HUDEditor extends javax.swing.JFrame {
             }
         });
 
-        HUDEditor.this.setIconImage(new ImageIcon(getClass().getResource("/com/timepath/hl2/hudeditor/resources/Icon.png")).getImage());
+        HUDEditor.this.setIconImages(new IconList("/com/timepath/hl2/hudeditor/resources/Icon", "png", new int[]{16, 22, 24, 32, 40, 48, 64, 128, 512, 1024}).getIcons());
 
         this.setTitle(Main.getString("Title"));
 
@@ -1041,6 +1045,7 @@ public class HUDEditor extends javax.swing.JFrame {
                     DropTargetContext context = e.getDropTargetContext();
                     e.acceptDrop(DnDConstants.ACTION_COPY_OR_MOVE);
                     Transferable t = e.getTransferable();
+                    File file = null;
                     if(OS.isLinux()) {
                         DataFlavor nixFileDataFlavor = new DataFlavor("text/uri-list;class=java.lang.String");
                         String data = (String) t.getTransferData(nixFileDataFlavor);
@@ -1051,8 +1056,7 @@ public class HUDEditor extends javax.swing.JFrame {
                                 continue;
                             }
                             try {
-                                File file = new File(new URI(token));
-                                load(file);
+                                file = new File(new URI(token));
                             } catch(Exception ex) {
                             }
                         }
@@ -1062,12 +1066,14 @@ public class HUDEditor extends javax.swing.JFrame {
                             for(Iterator<?> it = ((List<?>) data).iterator(); it.hasNext();) {
                                 Object o = it.next();
                                 if(o instanceof File) {
-                                    load((File) o);
+                                    file = (File) o;
                                 }
                             }
                         }
                     }
-                    context.dropComplete(true);
+                    if(file != null) {
+                        load(file);
+                    }
                 } catch(ClassNotFoundException ex) {
                     LOG.log(Level.SEVERE, null, ex);
                 } catch(InvalidDnDOperationException ex) {
@@ -1120,7 +1126,8 @@ public class HUDEditor extends javax.swing.JFrame {
 
         //<editor-fold defaultstate="collapsed" desc="Tree">
         fileSystemRoot = new DefaultMutableTreeNode("root");
-        fileTree = new ProjectTree(fileSystemRoot);
+        fileTree = new ProjectTree();
+        ((DefaultTreeModel) fileTree.getModel()).setRoot(fileSystemRoot);
         JScrollPane fileTreePane = new JScrollPane(fileTree);
 //        fileTreePane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
         sideSplit.setTopComponent(fileTreePane);
@@ -1258,6 +1265,20 @@ public class HUDEditor extends javax.swing.JFrame {
 
             @Override
             public Image doInBackground() {
+                // vanity: timepath
+
+                // id64: 76561198030141031
+                // ID: STEAM_#:1:34937651
+                // UID: U:1:69875303 // double + 1
+
+                // ID: STEAM_#:0:34937651
+                // UID: U:1:69875302 // double + 0
+
+                // https://developer.valvesoftware.com/wiki/SteamID
+                // http://api.steampowered.com/ISteamWebAPIUtil/GetSupportedAPIList/v0001/?key=303E8E7C12216D62FD8F522602CE141C&format=vdf
+                // new File(SteamUtils.getSteam(), "userdata/" + "[UserID]" + "/760/remote/440/screenshots/image.jpg").listFiles();
+                // Can pull username from root/config/SteamAppData.vdf
+                // Can check username in root/userdata/UserID/config/localconfig.vdf
                 i = new ImageIcon(getClass().getResource("/com/timepath/hl2/hudeditor/resources/Badlands1.png")).getImage();
                 return i;
             }
@@ -1307,30 +1328,6 @@ public class HUDEditor extends javax.swing.JFrame {
                 }
             }
         });
-    }
-
-    public static void restart(File file) throws URISyntaxException, IOException {
-        final String javaBin = System.getProperty("java.home") + File.separator + "bin" + File.separator + "java";
-
-        if(!file.getName().endsWith(".jar")) {
-            return;
-        }
-
-        final ArrayList<String> command = new ArrayList<String>();
-        command.add(javaBin);
-        command.add("-jar");
-        command.add(file.getPath());
-
-        final ProcessBuilder process = new ProcessBuilder(command);
-        process.start();
-        System.exit(0);
-    }
-
-    /**
-     * TODO: wrap this class in a launcher, rather than explicitly restarting
-     */
-    public static void restart() throws URISyntaxException, IOException {
-        restart(new File(HUDEditor.class.getProtectionDomain().getCodeSource().getLocation().toURI()));
     }
 
     /**
@@ -1468,62 +1465,21 @@ public class HUDEditor extends javax.swing.JFrame {
 //        
 //        EasyTracker.getInstance().activityStart(this);
     }
+    //<editor-fold defaultstate="collapsed" desc="Menu Bar">
 
     private class EditorMenuBar extends JMenuBar {
 
-        private JMenuItem newItem;
+        private JMenuItem newItem, openItem, openZippedItem, saveItem, saveAsItem, reloadItem, closeItem, exitItem;
 
-        private JMenuItem openItem;
+        private JMenuItem undoItem, redoItem, cutItem, copyItem, pasteItem, deleteItem, selectAllItem, preferencesItem, locateUserItem;
 
-        private JMenuItem openZippedItem;
+        private JMenuItem resolutionItem, previewItem;
 
-        private JMenuItem saveItem;
+        private JMenuItem updateItem, aboutItem;
 
-        private JMenuItem saveAsItem;
+        private JMenuItem vtfItem, captionItem, vdfItem, gcfItem, bitmapItem;
 
-        private JMenuItem reloadItem;
-
-        private JMenuItem closeItem;
-
-        private JMenuItem exitItem;
-
-        private JMenuItem undoItem;
-
-        private JMenuItem redoItem;
-
-        private JMenuItem cutItem;
-
-        private JMenuItem copyItem;
-
-        private JMenuItem pasteItem;
-
-        private JMenuItem deleteItem;
-
-        private JMenuItem selectAllItem;
-
-        private JMenuItem preferencesItem;
-
-        private JMenuItem locateUserItem;
-
-        private JMenuItem resolutionItem;
-
-        private JMenuItem previewItem;
-
-        private JMenuItem updateItem;
-
-        private JMenuItem aboutItem;
-
-        private JMenuItem vtfItem;
-
-        private JMenuItem captionItem;
-
-        private JMenuItem vdfItem;
-
-        private JMenuItem gcfItem;
-
-        private JMenuItem bitmapItem;
-
-        private int state = Toolkit.getDefaultToolkit().getMenuShortcutKeyMask();
+        private int modifier = Toolkit.getDefaultToolkit().getMenuShortcutKeyMask();
 
         EditorMenuBar() {
             super();
@@ -1534,7 +1490,7 @@ public class HUDEditor extends javax.swing.JFrame {
             this.add(fileMenu);
 
             newItem = new JMenuItem(new CustomAction(Main.getString("New"), null, KeyEvent.VK_N,
-                                                     KeyStroke.getKeyStroke(KeyEvent.VK_N, state)) {
+                                                     KeyStroke.getKeyStroke(KeyEvent.VK_N, modifier)) {
                 @Override
                 public void actionPerformed(ActionEvent ae) {
                     throw new UnsupportedOperationException("Not supported yet.");
@@ -1544,7 +1500,7 @@ public class HUDEditor extends javax.swing.JFrame {
             fileMenu.add(newItem);
 
             openItem = new JMenuItem(new CustomAction("Open", null, KeyEvent.VK_O,
-                                                      KeyStroke.getKeyStroke(KeyEvent.VK_O, state)) {
+                                                      KeyStroke.getKeyStroke(KeyEvent.VK_O, modifier)) {
                 @Override
                 public void actionPerformed(ActionEvent ae) {
                     locateHudDirectory();
@@ -1553,7 +1509,7 @@ public class HUDEditor extends javax.swing.JFrame {
             fileMenu.add(openItem);
 
             openZippedItem = new JMenuItem(new CustomAction("OpenArchive", null, KeyEvent.VK_Z,
-                                                            KeyStroke.getKeyStroke(KeyEvent.VK_O, state + ActionEvent.SHIFT_MASK)) {
+                                                            KeyStroke.getKeyStroke(KeyEvent.VK_O, modifier + ActionEvent.SHIFT_MASK)) {
                 @Override
                 public void actionPerformed(ActionEvent ae) {
                     locateZippedHud();
@@ -1565,10 +1521,10 @@ public class HUDEditor extends javax.swing.JFrame {
             fileMenu.addSeparator();
 
             closeItem = new JMenuItem(new CustomAction("Close", null, KeyEvent.VK_C,
-                                                       KeyStroke.getKeyStroke(KeyEvent.VK_W, state)) {
+                                                       KeyStroke.getKeyStroke(KeyEvent.VK_W, modifier)) {
                 @Override
                 public void actionPerformed(ActionEvent ae) {
-//                    close();
+                    //                    close();
                 }
             });
 
@@ -1577,7 +1533,7 @@ public class HUDEditor extends javax.swing.JFrame {
             }
 
             saveItem = new JMenuItem(new CustomAction("Save", null, KeyEvent.VK_S,
-                                                      KeyStroke.getKeyStroke(KeyEvent.VK_S, state)) {
+                                                      KeyStroke.getKeyStroke(KeyEvent.VK_S, modifier)) {
                 @Override
                 public void actionPerformed(ActionEvent ae) {
                     if(canvas.getElements().size() > 0) {
@@ -1589,7 +1545,7 @@ public class HUDEditor extends javax.swing.JFrame {
             fileMenu.add(saveItem);
 
             saveAsItem = new JMenuItem(new CustomAction("Save As...", null, KeyEvent.VK_A,
-                                                        KeyStroke.getKeyStroke(KeyEvent.VK_S, state + ActionEvent.SHIFT_MASK)) {
+                                                        KeyStroke.getKeyStroke(KeyEvent.VK_S, modifier + ActionEvent.SHIFT_MASK)) {
                 @Override
                 public void actionPerformed(ActionEvent ae) {
                 }
@@ -1601,12 +1557,7 @@ public class HUDEditor extends javax.swing.JFrame {
                                                         KeyStroke.getKeyStroke(KeyEvent.VK_F5, 0)) {
                 @Override
                 public void actionPerformed(ActionEvent ae) {
-                    new Thread() {
-                        @Override
-                        public void run() {
-                            load(lastLoaded);
-                        }
-                    }.start();
+                    load(lastLoaded);
                 }
             });
             reloadItem.setEnabled(false);
@@ -1617,7 +1568,7 @@ public class HUDEditor extends javax.swing.JFrame {
                 fileMenu.add(closeItem);
 
                 exitItem = new JMenuItem(new CustomAction("Exit", null, KeyEvent.VK_X,
-                                                          KeyStroke.getKeyStroke(KeyEvent.VK_Q, state)) {
+                                                          KeyStroke.getKeyStroke(KeyEvent.VK_Q, modifier)) {
                     @Override
                     public void actionPerformed(ActionEvent ae) {
                         quit();
@@ -1633,7 +1584,7 @@ public class HUDEditor extends javax.swing.JFrame {
             this.add(editMenu);
 
             undoItem = new JMenuItem(new CustomAction("Undo", null, KeyEvent.VK_U,
-                                                      KeyStroke.getKeyStroke(KeyEvent.VK_Z, state)) {
+                                                      KeyStroke.getKeyStroke(KeyEvent.VK_Z, modifier)) {
                 @Override
                 public void actionPerformed(ActionEvent ae) {
                 }
@@ -1642,7 +1593,7 @@ public class HUDEditor extends javax.swing.JFrame {
             editMenu.add(undoItem);
 
             redoItem = new JMenuItem(new CustomAction("Redo", null, KeyEvent.VK_R,
-                                                      KeyStroke.getKeyStroke(KeyEvent.VK_Y, state)) { // TODO: ctrl + shift + z
+                                                      KeyStroke.getKeyStroke(KeyEvent.VK_Y, modifier)) { // TODO: ctrl + shift + z
                 @Override
                 public void actionPerformed(ActionEvent ae) {
                 }
@@ -1653,7 +1604,7 @@ public class HUDEditor extends javax.swing.JFrame {
             editMenu.addSeparator();
 
             cutItem = new JMenuItem(new CustomAction("Cut", null, KeyEvent.VK_T,
-                                                     KeyStroke.getKeyStroke(KeyEvent.VK_X, state)) {
+                                                     KeyStroke.getKeyStroke(KeyEvent.VK_X, modifier)) {
                 @Override
                 public void actionPerformed(ActionEvent ae) {
                 }
@@ -1662,7 +1613,7 @@ public class HUDEditor extends javax.swing.JFrame {
             editMenu.add(cutItem);
 
             copyItem = new JMenuItem(new CustomAction("Copy", null, KeyEvent.VK_C,
-                                                      KeyStroke.getKeyStroke(KeyEvent.VK_C, state)) {
+                                                      KeyStroke.getKeyStroke(KeyEvent.VK_C, modifier)) {
                 @Override
                 public void actionPerformed(ActionEvent ae) {
                 }
@@ -1671,7 +1622,7 @@ public class HUDEditor extends javax.swing.JFrame {
             editMenu.add(copyItem);
 
             pasteItem = new JMenuItem(new CustomAction("Paste", null, KeyEvent.VK_P,
-                                                       KeyStroke.getKeyStroke(KeyEvent.VK_V, state)) {
+                                                       KeyStroke.getKeyStroke(KeyEvent.VK_V, modifier)) {
                 @Override
                 public void actionPerformed(ActionEvent ae) {
                 }
@@ -1690,7 +1641,7 @@ public class HUDEditor extends javax.swing.JFrame {
             editMenu.addSeparator();
 
             selectAllItem = new JMenuItem(new CustomAction("Select All", null, KeyEvent.VK_A,
-                                                           KeyStroke.getKeyStroke(KeyEvent.VK_A, state)) {
+                                                           KeyStroke.getKeyStroke(KeyEvent.VK_A, modifier)) {
                 @Override
                 public void actionPerformed(ActionEvent ae) {
                     for(int i = 0; i < canvas.getElements().size(); i++) {
@@ -1726,7 +1677,7 @@ public class HUDEditor extends javax.swing.JFrame {
             this.add(viewMenu);
 
             resolutionItem = new JMenuItem(new CustomAction("Change Resolution", null, KeyEvent.VK_R,
-                                                            KeyStroke.getKeyStroke(KeyEvent.VK_R, state)) {
+                                                            KeyStroke.getKeyStroke(KeyEvent.VK_R, modifier)) {
                 @Override
                 public void actionPerformed(ActionEvent ae) {
                     changeResolution();
@@ -1810,6 +1761,7 @@ public class HUDEditor extends javax.swing.JFrame {
             }
         }
 
+        //<editor-fold defaultstate="collapsed" desc="Extras">
         private void extras() {
             JMenu extrasMenu = new JMenu("Extras");
             extrasMenu.setMnemonic(KeyEvent.VK_X);
@@ -1854,7 +1806,7 @@ public class HUDEditor extends javax.swing.JFrame {
                 }
             });
             extrasMenu.add(bitmapItem);
-            
+
             extrasMenu.addSeparator();
 
             JMenuItem i1 = new JMenuItem(new CustomAction("External Console", null, KeyEvent.VK_X, null) {
@@ -1872,7 +1824,7 @@ public class HUDEditor extends javax.swing.JFrame {
                 }
             });
             extrasMenu.add(i2);
-            
+
             JMenuItem i3 = new JMenuItem(new CustomAction("CVar test", null, KeyEvent.VK_M, null) {
                 @Override
                 public void actionPerformed(ActionEvent ae) {
@@ -1881,6 +1833,7 @@ public class HUDEditor extends javax.swing.JFrame {
             });
             extrasMenu.add(i3);
         }
+        //</editor-fold>
     }
 
     private class CustomAction extends AbstractAction {
@@ -1894,8 +1847,9 @@ public class HUDEditor extends javax.swing.JFrame {
         public void actionPerformed(ActionEvent ae) {
         }
     }
-
+    //</editor-fold>
 //<editor-fold defaultstate="collapsed" desc="Generated Code">
+
     /**
      * This method is called from within the constructor to initialize the form.
      * WARNING: Do NOT modify this code. The content of this method is always

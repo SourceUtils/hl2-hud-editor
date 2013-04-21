@@ -1,5 +1,6 @@
 package com.timepath.hl2.hudeditor;
 
+import com.timepath.backports.javax.swing.SwingWorker;
 import com.timepath.hl2.io.util.ViewableData;
 import com.timepath.plaf.x.filechooser.BaseFileChooser;
 import com.timepath.plaf.x.filechooser.NativeFileChooser;
@@ -13,6 +14,7 @@ import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.io.File;
 import java.io.IOException;
+import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.Icon;
@@ -24,7 +26,6 @@ import javax.swing.UIManager;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeCellRenderer;
 import javax.swing.tree.DefaultTreeModel;
-import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreeSelectionModel;
 
 /**
@@ -34,10 +35,9 @@ import javax.swing.tree.TreeSelectionModel;
 @SuppressWarnings("serial")
 public class ProjectTree extends javax.swing.JTree implements ActionListener, MouseListener {
 
-    public ProjectTree(TreeNode root) {
-        super(root);
+    public ProjectTree() {
         initComponents();
-        this.setRootVisible(false);
+//        this.setRootVisible(false);
         this.getSelectionModel().setSelectionMode(TreeSelectionModel.SINGLE_TREE_SELECTION);
         this.setCellRenderer(new CustomTreeCellRenderer());
     }
@@ -219,38 +219,50 @@ public class ProjectTree extends javax.swing.JTree implements ActionListener, Mo
     }//GEN-LAST:event_formMouseClicked
 
     private void extractActionActionPerformed(ActionEvent evt) {//GEN-FIRST:event_extractActionActionPerformed
-        new Thread() {
-            @Override
-            public void run() {
-                if(gcfContext != null) {
-                    LOG.log(Level.INFO, "GCF: {0}", gcfContext);
-                    int index = 0;
-                    if(directoryEntryContext != null) {
-                        LOG.log(Level.INFO, "DirectoryEntry: {0}", directoryEntryContext);
-                        index = directoryEntryContext.index;
-                    }
-                    File[] fs = null;
-                    File f = null;
+        if(gcfContext == null) {
+            return;
+        }
+        if(directoryEntryContext == null) {
+            return;
+        }
+        LOG.log(Level.INFO, "GCF: {0}", gcfContext);
+        LOG.log(Level.INFO, "DirectoryEntry: {0}", directoryEntryContext);
+        final int index = directoryEntryContext.index;
+        try {
+            final File[] fs = new NativeFileChooser().setTitle("Extract").setDialogType(BaseFileChooser.DialogType.SAVE_DIALOG).setFileMode(BaseFileChooser.FileMode.DIRECTORIES_ONLY).choose();
+            if(fs == null) {
+                return;
+            }
+            LOG.log(Level.INFO, "Extracting to {0}", fs[0]);
+            new SwingWorker<File, Integer>() {
+                @Override
+                protected File doInBackground() throws Exception {
+                    File ret = null;
+
                     try {
-                        fs = new NativeFileChooser().setTitle("Extract").setDialogType(BaseFileChooser.DialogType.SAVE_DIALOG).setFileMode(BaseFileChooser.FileMode.DIRECTORIES_ONLY).choose();
-                        if(fs != null) {
-                            f = fs[0];
-                        }
+                        ret = gcfContext.extract(index, fs[0]);
                     } catch(IOException ex) {
                         Logger.getLogger(ProjectTree.class.getName()).log(Level.SEVERE, null, ex);
                     }
-                    if(f != null) {
-                        LOG.log(Level.INFO, "Extracting to {0}", f);
-                        try {
-                            File ret = gcfContext.extract(index, f);
-                            LOG.log(Level.INFO, "Extracted {0}", new Object[]{ret});
-                        } catch(IOException ex) {
-                            Logger.getLogger(ProjectTree.class.getName()).log(Level.SEVERE, null, ex);
-                        }
+
+                    return ret;
+                }
+
+                @Override
+                protected void done() {
+                    try {
+                        LOG.log(Level.INFO, "Extracted {0}", new Object[]{get()});
+                    } catch(InterruptedException ex) {
+                        Logger.getLogger(ProjectTree.class.getName()).log(Level.SEVERE, null, ex);
+                    } catch(ExecutionException ex) {
+                        Logger.getLogger(ProjectTree.class.getName()).log(Level.SEVERE, null, ex);
                     }
                 }
-            }
-        }.start();
+            }.execute();
+
+        } catch(IOException ex) {
+            Logger.getLogger(ProjectTree.class.getName()).log(Level.SEVERE, null, ex);
+        }
     }//GEN-LAST:event_extractActionActionPerformed
 
     private void closeActionActionPerformed(ActionEvent evt) {//GEN-FIRST:event_closeActionActionPerformed

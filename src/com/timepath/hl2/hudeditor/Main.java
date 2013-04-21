@@ -17,6 +17,7 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.SocketException;
 import java.nio.channels.FileChannel;
+import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -335,6 +336,23 @@ public class Main {
 
     private static void startTheOther(File update) {
         if(!update.exists()) {
+            return;
+        }
+        try {
+            String md5 = Utils.takeMD5(Utils.loadFile(update));
+            File updateChecksum = new File(update.getPath() + ".MD5");
+            String expectedMd5 = new String(Utils.loadFile(updateChecksum));
+            updateChecksum.deleteOnExit();
+            if(!md5.equals(expectedMd5)) {
+                LOG.log(Level.WARNING, "Corrupt update file");
+                update.delete();
+                return;
+            }
+        } catch(IOException ex) {
+            Logger.getLogger(Main.class.getName()).log(Level.SEVERE, null, ex);
+            return;
+        } catch(NoSuchAlgorithmException ex) {
+            Logger.getLogger(Main.class.getName()).log(Level.SEVERE, null, ex);
             return;
         }
         LOG.log(Level.INFO, "Updating from {0}", update);
