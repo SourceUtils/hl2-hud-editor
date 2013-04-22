@@ -37,7 +37,7 @@ public class ProjectTree extends javax.swing.JTree implements ActionListener, Mo
 
     public ProjectTree() {
         initComponents();
-//        this.setRootVisible(false);
+        this.setRootVisible(false);
         this.getSelectionModel().setSelectionMode(TreeSelectionModel.SINGLE_TREE_SELECTION);
         this.setCellRenderer(new CustomTreeCellRenderer());
     }
@@ -222,12 +222,15 @@ public class ProjectTree extends javax.swing.JTree implements ActionListener, Mo
         if(gcfContext == null) {
             return;
         }
+        final GCF context = gcfContext;
+        LOG.log(Level.INFO, "GCF: {0}", context);
+        final int index;
         if(directoryEntryContext == null) {
-            return;
+            index = 0;
+        } else {
+            index = directoryEntryContext.index;
+            LOG.log(Level.INFO, "DirectoryEntry: {0}", directoryEntryContext);
         }
-        LOG.log(Level.INFO, "GCF: {0}", gcfContext);
-        LOG.log(Level.INFO, "DirectoryEntry: {0}", directoryEntryContext);
-        final int index = directoryEntryContext.index;
         try {
             final File[] fs = new NativeFileChooser().setTitle("Extract").setDialogType(BaseFileChooser.DialogType.SAVE_DIALOG).setFileMode(BaseFileChooser.FileMode.DIRECTORIES_ONLY).choose();
             if(fs == null) {
@@ -240,7 +243,7 @@ public class ProjectTree extends javax.swing.JTree implements ActionListener, Mo
                     File ret = null;
 
                     try {
-                        ret = gcfContext.extract(index, fs[0]);
+                        ret = context.extract(index, fs[0]);
                     } catch(IOException ex) {
                         Logger.getLogger(ProjectTree.class.getName()).log(Level.SEVERE, null, ex);
                     }

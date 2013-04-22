@@ -34,6 +34,7 @@ import com.timepath.steam.io.RES;
 import com.timepath.steam.io.VDF;
 import com.timepath.steam.io.test.ArchiveTest;
 import com.timepath.steam.io.test.DataTest;
+import com.timepath.steam.io.util.VDFNode;
 import java.awt.Color;
 import java.awt.Container;
 import java.awt.Cursor;
@@ -131,7 +132,7 @@ public class HUDEditor extends javax.swing.JFrame {
 
     private final EditorMenuBar jmb;
 
-    private final DefaultMutableTreeNode fileSystemRoot;
+    private final DefaultMutableTreeNode fileSystemRoot, archiveRoot;
 
     private final ProjectTree fileTree;
 
@@ -780,7 +781,6 @@ public class HUDEditor extends javax.swing.JFrame {
 //
 //        propTable.clear();
 //    }
-    
     private DefaultMutableTreeNode doLoad(final File root) {
         if(root == null) {
             return null;
@@ -842,6 +842,49 @@ public class HUDEditor extends javax.swing.JFrame {
             return project;
         }
         return null;
+    }
+
+    private void mount() {
+        File r = SteamUtils.getSteamApps();
+        File[] gcf = r.listFiles(new java.io.FilenameFilter() {
+            public boolean accept(File dir, String name) {
+                return name.toLowerCase().endsWith(".gcf");
+            }
+        });
+        for(final File f : gcf) {
+            LOG.log(Level.INFO, "Mounting {0}", f);
+            new SwingWorker<DefaultMutableTreeNode, Void>() {
+                @Override
+                protected DefaultMutableTreeNode doInBackground() throws Exception {
+                    DefaultMutableTreeNode child = null;
+                    try {
+                        GCF g = new GCF(f);
+                        child = new DefaultMutableTreeNode();
+                        g.analyze(child);
+                        child.setUserObject(g);
+
+                    } catch(IOException ex) {
+                        Logger.getLogger(SteamUtils.class.getName()).log(Level.SEVERE, null, ex);
+                    }
+                    return child;
+                }
+
+                @Override
+                protected void done() {
+                    try {
+                        DefaultMutableTreeNode g = get();
+                        if(g != null) {
+                            archiveRoot.add(g);
+                            LOG.log(Level.INFO, "Mounted {0}", f);
+                        }
+                    } catch(InterruptedException ex) {
+                        Logger.getLogger(HUDEditor.class.getName()).log(Level.SEVERE, null, ex);
+                    } catch(ExecutionException ex) {
+                        Logger.getLogger(HUDEditor.class.getName()).log(Level.SEVERE, null, ex);
+                    }
+                }
+            }.execute();
+        }
     }
 
     private void recurseDirectoryToNode(File root, final DefaultMutableTreeNode parent) {
@@ -913,14 +956,6 @@ public class HUDEditor extends javax.swing.JFrame {
                             if(v != null) {
                                 child.setUserObject(v);
                             }
-                        } else if(f.getName().endsWith(".gcf")) {
-                            try {
-                                GCF g = new GCF(f);
-                                child.setUserObject(g);
-                                g.analyze(child);
-                            } catch(IOException ex) {
-                                Logger.getLogger(SteamUtils.class.getName()).log(Level.SEVERE, null, ex);
-                            }
                         }
                     }
                 });
@@ -949,7 +984,7 @@ public class HUDEditor extends javax.swing.JFrame {
 //                f.setLocation(-Integer.MAX_VALUE, -Integer.MAX_VALUE); // Hacky - should just use the OSX Application calls...
 //                f.setVisible(true);
 //        } else {
-                System.exit(0);
+        System.exit(0);
 //        }
 //        }
     }
@@ -1099,7 +1134,7 @@ public class HUDEditor extends javax.swing.JFrame {
         this.setMinimumSize(new Dimension(Math.max(workspace.width / 2, 640), Math.max(3 * workspace.height / 4, 480)));
         this.setPreferredSize(new Dimension((int) (workspace.getWidth() / 1.5), (int) (workspace.getHeight() / 1.5)));
 
-        this.setLocation((d.getWidth() / 2) - (this.getPreferredSize().width / 2), (d.getHeight() / 2) - (this.getPreferredSize().height / 2));
+//        this.setLocation((d.getWidth() / 2) - (this.getSize().width / 2), (d.getHeight() / 2) - (this.getSize().height / 2));
         this.setLocationRelativeTo(null);
         //</editor-fold>
 
@@ -1124,11 +1159,17 @@ public class HUDEditor extends javax.swing.JFrame {
         //</editor-fold>
 
         //<editor-fold defaultstate="collapsed" desc="Tree">
-        fileSystemRoot = new DefaultMutableTreeNode("root");
+        archiveRoot = new DefaultMutableTreeNode("Archives");
+        fileSystemRoot = new DefaultMutableTreeNode("Projects");
         fileTree = new ProjectTree();
-        ((DefaultTreeModel) fileTree.getModel()).setRoot(fileSystemRoot);
+        DefaultMutableTreeNode root = new DefaultMutableTreeNode();
+        ((DefaultTreeModel) fileTree.getModel()).setRoot(root);
+        root.add(archiveRoot);
+        root.add(fileSystemRoot);
+        ((DefaultTreeModel) fileTree.getModel()).reload();
+
         JScrollPane fileTreePane = new JScrollPane(fileTree);
-//        fileTreePane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
+        fileTreePane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
         sideSplit.setTopComponent(fileTreePane);
         fileTree.addTreeSelectionListener(new TreeSelectionListener() {
             public void valueChanged(TreeSelectionEvent e) {
@@ -1141,10 +1182,14 @@ public class HUDEditor extends javax.swing.JFrame {
 
                 DefaultTableModel model = (DefaultTableModel) propTable.getModel();
                 Object nodeInfo = node.getUserObject();
-                if(nodeInfo instanceof Element) {
-                    Element element = (Element) nodeInfo;
-                    canvas.load(element);
+                if(node instanceof VDFNode) {
+                    Element element = Element.importVdf((VDFNode) node);
                     loadProps(element);
+                    try {
+                        canvas.load(element);
+                    } catch(NullPointerException ex) {
+                        ex.printStackTrace();
+                    }
                 } else if(nodeInfo instanceof VTF) {
                     VTF v = (VTF) nodeInfo;
                     for(int i = Math.max(v.mipCount - 8, 0); i < Math.max(v.mipCount - 5, v.mipCount); i++) {
@@ -1283,7 +1328,7 @@ public class HUDEditor extends javax.swing.JFrame {
                 // int 
                 // Can check username in root/userdata/UserID/config/localconfig.vdf
                 // new File(SteamUtils.getSteam(), "userdata/" + "[UserID]" + "/760/remote/440/screenshots/image.jpg").listFiles();
-                
+
                 i = new ImageIcon(getClass().getResource("/com/timepath/hl2/hudeditor/resources/Badlands1.png")).getImage();
                 return i;
             }
@@ -1312,27 +1357,25 @@ public class HUDEditor extends javax.swing.JFrame {
         canvas.requestFocusInWindow();
         //</editor-fold>
 
+        mount();
+
     }
 
     private void loadProps(final Element element) {
-        SwingUtilities.invokeLater(new Runnable() {
-            public void run() {
-                propTable.clear();
-                DefaultTableModel model = (DefaultTableModel) propTable.getModel();
-                if(!element.getProps().isEmpty()) {
-                    element.validateDisplay();
-                    for(int i = 0; i < element.getProps().size(); i++) {
-                        Property entry = element.getProps().get(i);
-                        if(entry.getKey().equals("\\n")) {
-                            continue;
-                        }
-                        model.addRow(new Object[]{entry.getKey(), entry.getValue(), entry.getInfo()});
-                    }
-                    model.fireTableDataChanged();
-                    propTable.repaint();
+        propTable.clear();
+        DefaultTableModel model = (DefaultTableModel) propTable.getModel();
+        if(!element.getProps().isEmpty()) {
+            element.validateDisplay();
+            for(int i = 0; i < element.getProps().size(); i++) {
+                Property entry = element.getProps().get(i);
+                if(entry.getKey().equals("\\n")) {
+                    continue;
                 }
+                model.addRow(new Object[]{entry.getKey(), entry.getValue(), entry.getInfo()});
             }
-        });
+            model.fireTableDataChanged();
+            propTable.repaint();
+        }
     }
 
     /**
