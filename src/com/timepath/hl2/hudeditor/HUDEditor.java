@@ -71,7 +71,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.URI;
-import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.URLConnection;
 import java.text.DateFormat;
@@ -146,7 +145,7 @@ public class HUDEditor extends javax.swing.JFrame {
 
     private JSpinner spinnerHeight;
 
-    HyperlinkListener linkListener = Utils.getLinkListener();
+    private HyperlinkListener linkListener = Utils.getLinkListener();
 
     //<editor-fold defaultstate="collapsed" desc="Updates">
     private BufferedReader getPage(String s) throws IOException {
@@ -1267,6 +1266,7 @@ public class HUDEditor extends javax.swing.JFrame {
             public Image doInBackground() {
                 // vanity: timepath
 
+                //       76561197900000000
                 // id64: 76561198030141031
                 // ID: STEAM_#:1:34937651
                 // UID: U:1:69875303 // double + 1
@@ -1276,9 +1276,14 @@ public class HUDEditor extends javax.swing.JFrame {
 
                 // https://developer.valvesoftware.com/wiki/SteamID
                 // http://api.steampowered.com/ISteamWebAPIUtil/GetSupportedAPIList/v0001/?key=303E8E7C12216D62FD8F522602CE141C&format=vdf
-                // new File(SteamUtils.getSteam(), "userdata/" + "[UserID]" + "/760/remote/440/screenshots/image.jpg").listFiles();
-                // Can pull username from root/config/SteamAppData.vdf
+                // http://forums.alliedmods.net/showthread.php?t=60899
+                // http://forums.alliedmods.net/showthread.php?p=750532
+                // regex = STEAM_[0-9]:[0-9]:[0-9]{4,}  
+                // String username = VDF.load(new File(SteamUtils.getSteam()), "config/SteamAppData.vdf").get("SteamAppData").get("AutoLoginUser");
+                // int 
                 // Can check username in root/userdata/UserID/config/localconfig.vdf
+                // new File(SteamUtils.getSteam(), "userdata/" + "[UserID]" + "/760/remote/440/screenshots/image.jpg").listFiles();
+                
                 i = new ImageIcon(getClass().getResource("/com/timepath/hl2/hudeditor/resources/Badlands1.png")).getImage();
                 return i;
             }
