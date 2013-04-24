@@ -1,6 +1,7 @@
 package com.timepath.hl2.hudeditor;
 
 import apple.OSXAdapter;
+import com.timepath.DateUtils;
 import com.timepath.Utils;
 import com.timepath.backports.javax.swing.SwingWorker;
 import com.timepath.hl2.gameinfo.ExternalConsole;
@@ -28,6 +29,7 @@ import com.timepath.plaf.mac.Application.QuitResponse;
 import com.timepath.plaf.x.filechooser.BaseFileChooser;
 import com.timepath.plaf.x.filechooser.NativeFileChooser;
 import com.timepath.steam.SteamUtils;
+import com.timepath.steam.SteamUtils.SteamID;
 import com.timepath.steam.io.GCF;
 import com.timepath.steam.io.GCF.GCFDirectoryEntry;
 import com.timepath.steam.io.RES;
@@ -109,7 +111,6 @@ import javax.swing.JProgressBar;
 import javax.swing.JScrollPane;
 import javax.swing.JSpinner;
 import javax.swing.KeyStroke;
-import javax.swing.SwingUtilities;
 import javax.swing.Timer;
 import javax.swing.UIManager;
 import javax.swing.UnsupportedLookAndFeelException;
@@ -486,9 +487,7 @@ public class HUDEditor extends javax.swing.JFrame {
         aboutText += "<p>Logging to <a href=\"" + Main.logFile.toURI() + "\">" + Main.logFile + "</a></p>";
         if(Main.myVer != 0) {
             long time = Main.myVer;
-            DateFormat df = new SimpleDateFormat("EEE, dd MMM yyyy HH:mm:ss z");
-            df.setTimeZone(TimeZone.getTimeZone("UTC"));
-            aboutText += "<p>Build date: " + df.format(new Date(time * 1000)) + " (" + time + ")</p>";
+            aboutText += "<p>Build date: " + DateUtils.parse(time) + " (" + time + ")</p>";
         }
         aboutText += "</html>";
         JEditorPane pane = new JEditorPane("text/html", aboutText);
@@ -875,6 +874,7 @@ public class HUDEditor extends javax.swing.JFrame {
                         DefaultMutableTreeNode g = get();
                         if(g != null) {
                             archiveRoot.add(g);
+                            ((DefaultTreeModel) fileTree.getModel()).reload(archiveRoot);
                             LOG.log(Level.INFO, "Mounted {0}", f);
                         }
                     } catch(InterruptedException ex) {
@@ -1304,39 +1304,25 @@ public class HUDEditor extends javax.swing.JFrame {
                 }
             }
         };
-        SwingWorker<Image, Void> worker = new SwingWorker<Image, Void>() {
-            Image i;
+        final SteamID user = SteamUtils.getUser();
+        System.out.println(user);
 
+        SwingWorker<Image, Void> worker = new SwingWorker<Image, Void>() {
             @Override
             public Image doInBackground() {
-                // vanity: timepath
-
-                //       76561197900000000
-                // id64: 76561198030141031
-                // ID: STEAM_#:1:34937651
-                // UID: U:1:69875303 // double + 1
-
-                // ID: STEAM_#:0:34937651
-                // UID: U:1:69875302 // double + 0
-
-                // https://developer.valvesoftware.com/wiki/SteamID
-                // http://api.steampowered.com/ISteamWebAPIUtil/GetSupportedAPIList/v0001/?key=303E8E7C12216D62FD8F522602CE141C&format=vdf
-                // http://forums.alliedmods.net/showthread.php?t=60899
-                // http://forums.alliedmods.net/showthread.php?p=750532
-                // regex = STEAM_[0-9]:[0-9]:[0-9]{4,}  
-                // String username = VDF.load(new File(SteamUtils.getSteam()), "config/SteamAppData.vdf").get("SteamAppData").get("AutoLoginUser");
-                // int 
-                // Can check username in root/userdata/UserID/config/localconfig.vdf
-                // new File(SteamUtils.getSteam(), "userdata/" + "[UserID]" + "/760/remote/440/screenshots/image.jpg").listFiles();
-
-                i = new ImageIcon(getClass().getResource("/com/timepath/hl2/hudeditor/resources/Badlands1.png")).getImage();
-                return i;
+                File[] files = new File(SteamUtils.getSteam(), "userdata/" + user.uid + "/760/remote/440/screenshots/").listFiles(new FilenameFilter() {
+                    public boolean accept(File dir, String name) {
+                        return name.toLowerCase().endsWith(".jpg");
+                    }
+                });
+                System.out.println(Arrays.toString(files));
+                return new ImageIcon(getClass().getResource("/com/timepath/hl2/hudeditor/resources/Badlands1.png")).getImage();
             }
 
             @Override
             public void done() {
                 try {
-                    canvas.setBackgroundImage(this.get());
+                    canvas.setBackgroundImage(get());
                 } catch(InterruptedException ex) {
                     Logger.getLogger(HUDEditor.class.getName()).log(Level.SEVERE, null, ex);
                 } catch(ExecutionException ex) {
