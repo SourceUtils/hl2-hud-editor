@@ -3,21 +3,13 @@
     <type>org.netbeans.modules.java.j2seproject</type>
     <configuration>
         <data xmlns="http://www.netbeans.org/ns/j2se-project/3">
-            <name>HL2 HUD EDITOR</name>
+            <name>timepath-hl2-hudeditor</name>
             <source-roots>
                 <root id="src.dir"/>
             </source-roots>
             <test-roots/>
         </data>
         <references xmlns="http://www.netbeans.org/ns/ant-project-references/1">
-            <reference>
-                <foreign-project>HL2_Toolkit</foreign-project>
-                <artifact-type>jar</artifact-type>
-                <script>build.xml</script>
-                <target>jar</target>
-                <clean-target>clean</clean-target>
-                <id>jar</id>
-            </reference>
             <reference>
                 <foreign-project>TimePath_Commons</foreign-project>
                 <artifact-type>jar</artifact-type>
@@ -27,7 +19,23 @@
                 <id>jar</id>
             </reference>
             <reference>
-                <foreign-project>TimePath_Commons-1</foreign-project>
+                <foreign-project>timepath-commons</foreign-project>
+                <artifact-type>jar</artifact-type>
+                <script>build.xml</script>
+                <target>jar</target>
+                <clean-target>clean</clean-target>
+                <id>jar</id>
+            </reference>
+            <reference>
+                <foreign-project>timepath-hl2-toolkit</foreign-project>
+                <artifact-type>jar</artifact-type>
+                <script>build.xml</script>
+                <target>jar</target>
+                <clean-target>clean</clean-target>
+                <id>jar</id>
+            </reference>
+            <reference>
+                <foreign-project>timepath-steam-toolkit</foreign-project>
                 <artifact-type>jar</artifact-type>
                 <script>build.xml</script>
                 <target>jar</target>

@@ -4,16 +4,16 @@ import apple.OSXAdapter;
 import com.timepath.DateUtils;
 import com.timepath.Utils;
 import com.timepath.backports.javax.swing.SwingWorker;
-import com.timepath.hl2.gameinfo.ExternalConsole;
-import com.timepath.hl2.gameinfo.ExternalScoreboard;
+import com.timepath.hl2.io.RES;
 import com.timepath.hl2.io.VTF;
 import com.timepath.hl2.io.swing.VGUICanvas;
 import com.timepath.hl2.io.test.CVarTest;
+import com.timepath.hl2.io.test.DataTest;
 import com.timepath.hl2.io.test.VBFTest;
 import com.timepath.hl2.io.test.VCCDTest;
 import com.timepath.hl2.io.test.VTFTest;
 import com.timepath.hl2.io.util.Element;
-import com.timepath.hl2.io.util.Property;
+import com.timepath.steam.io.util.Property;
 import com.timepath.plaf.IconList;
 import com.timepath.plaf.OS;
 import com.timepath.plaf.linux.Ayatana;
@@ -32,10 +32,8 @@ import com.timepath.steam.SteamUtils;
 import com.timepath.steam.SteamUtils.SteamID;
 import com.timepath.steam.io.GCF;
 import com.timepath.steam.io.GCF.GCFDirectoryEntry;
-import com.timepath.steam.io.RES;
 import com.timepath.steam.io.VDF;
 import com.timepath.steam.io.test.ArchiveTest;
-import com.timepath.steam.io.test.DataTest;
 import com.timepath.steam.io.util.VDFNode;
 import java.awt.Color;
 import java.awt.Container;
@@ -76,16 +74,12 @@ import java.io.InputStreamReader;
 import java.net.URI;
 import java.net.URL;
 import java.net.URLConnection;
-import java.text.DateFormat;
 import java.text.MessageFormat;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
 import java.util.StringTokenizer;
-import java.util.TimeZone;
 import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -1843,29 +1837,13 @@ public class HUDEditor extends javax.swing.JFrame {
 
             extrasMenu.addSeparator();
 
-            JMenuItem i1 = new JMenuItem(new CustomAction("External Console", null, KeyEvent.VK_X, null) {
-                @Override
-                public void actionPerformed(ActionEvent ae) {
-                    ExternalConsole.main("");
-                }
-            });
-            extrasMenu.add(i1);
-
-            JMenuItem i2 = new JMenuItem(new CustomAction("External Scoreboard", null, KeyEvent.VK_S, null) {
-                @Override
-                public void actionPerformed(ActionEvent ae) {
-                    ExternalScoreboard.main("");
-                }
-            });
-            extrasMenu.add(i2);
-
-            JMenuItem i3 = new JMenuItem(new CustomAction("CVar test", null, KeyEvent.VK_M, null) {
+            JMenuItem cvarTest = new JMenuItem(new CustomAction("CVar test", null, KeyEvent.VK_M, null) {
                 @Override
                 public void actionPerformed(ActionEvent ae) {
                     CVarTest.main("");
                 }
             });
-            extrasMenu.add(i3);
+            extrasMenu.add(cvarTest);
         }
         //</editor-fold>
     }

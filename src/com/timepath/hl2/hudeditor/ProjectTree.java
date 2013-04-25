@@ -1,7 +1,7 @@
 package com.timepath.hl2.hudeditor;
 
 import com.timepath.backports.javax.swing.SwingWorker;
-import com.timepath.hl2.io.util.ViewableData;
+import com.timepath.io.ViewableData;
 import com.timepath.plaf.x.filechooser.BaseFileChooser;
 import com.timepath.plaf.x.filechooser.NativeFileChooser;
 import com.timepath.steam.io.GCF;
