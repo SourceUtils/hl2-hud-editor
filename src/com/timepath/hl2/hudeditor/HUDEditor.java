@@ -7,7 +7,6 @@ import com.timepath.backports.javax.swing.SwingWorker;
 import com.timepath.hl2.io.RES;
 import com.timepath.hl2.io.VTF;
 import com.timepath.hl2.io.swing.VGUICanvas;
-import com.timepath.hl2.io.test.CVarTest;
 import com.timepath.hl2.io.test.DataTest;
 import com.timepath.hl2.io.test.VBFTest;
 import com.timepath.hl2.io.test.VCCDTest;
@@ -1834,16 +1833,6 @@ public class HUDEditor extends javax.swing.JFrame {
                 }
             });
             extrasMenu.add(bitmapItem);
-
-            extrasMenu.addSeparator();
-
-            JMenuItem cvarTest = new JMenuItem(new CustomAction("CVar test", null, KeyEvent.VK_M, null) {
-                @Override
-                public void actionPerformed(ActionEvent ae) {
-                    CVarTest.main("");
-                }
-            });
-            extrasMenu.add(cvarTest);
         }
         //</editor-fold>
     }
