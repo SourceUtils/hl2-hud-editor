@@ -70,6 +70,7 @@ import java.io.FilenameFilter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URL;
 import java.net.URLConnection;
@@ -1298,18 +1299,26 @@ public class HUDEditor extends javax.swing.JFrame {
             }
         };
         final SteamID user = SteamUtils.getUser();
-        System.out.println(user);
+        LOG.log(Level.INFO, "Current user: {0}", user);
 
         SwingWorker<Image, Void> worker = new SwingWorker<Image, Void>() {
             @Override
             public Image doInBackground() {
-                File[] files = new File(SteamUtils.getSteam(), "userdata/" + user.uid + "/760/remote/440/screenshots/").listFiles(new FilenameFilter() {
+                File screenshotDir = new File(SteamUtils.getSteam(), "userdata/" + user.uid.split(":")[2] + "/760/remote/440/screenshots/");
+                File[] files = screenshotDir.listFiles(new FilenameFilter() {
                     public boolean accept(File dir, String name) {
                         return name.toLowerCase().endsWith(".jpg");
                     }
                 });
-                System.out.println(Arrays.toString(files));
-                return new ImageIcon(getClass().getResource("/com/timepath/hl2/hudeditor/resources/Badlands1.png")).getImage();
+                if(files != null) {
+                    try {
+                        return new ImageIcon(files[(int)(Math.random() * (files.length - 1))].toURI().toURL()).getImage();
+                    } catch(MalformedURLException ex) {
+                        Logger.getLogger(HUDEditor.class.getName()).log(Level.SEVERE, null, ex);
+                    }
+                }
+                LOG.log(Level.INFO, "No screenshots in {0}", screenshotDir);
+                return null;
             }
 
             @Override
