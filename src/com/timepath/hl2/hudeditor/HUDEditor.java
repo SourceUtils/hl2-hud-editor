@@ -5,6 +5,7 @@ import com.timepath.DateUtils;
 import com.timepath.Utils;
 import com.timepath.backports.javax.swing.SwingWorker;
 import com.timepath.hl2.io.RES;
+import com.timepath.hl2.io.VMT;
 import com.timepath.hl2.io.VTF;
 import com.timepath.hl2.io.swing.VGUICanvas;
 import com.timepath.hl2.io.test.DataTest;
@@ -27,13 +28,14 @@ import com.timepath.plaf.mac.Application.QuitHandler;
 import com.timepath.plaf.mac.Application.QuitResponse;
 import com.timepath.plaf.x.filechooser.BaseFileChooser;
 import com.timepath.plaf.x.filechooser.NativeFileChooser;
+import com.timepath.steam.SteamID;
 import com.timepath.steam.SteamUtils;
-import com.timepath.steam.SteamUtils.SteamID;
-import com.timepath.steam.io.GCF;
-import com.timepath.steam.io.GCF.GCFDirectoryEntry;
+import com.timepath.steam.io.ArchiveExplorer;
+import com.timepath.steam.io.storage.GCF;
+import com.timepath.steam.io.storage.GCF.GCFDirectoryEntry;
 import com.timepath.steam.io.VDF;
-import com.timepath.steam.io.test.ArchiveTest;
 import com.timepath.steam.io.util.VDFNode;
+import com.timepath.swing.TreeUtils;
 import java.awt.Color;
 import java.awt.Container;
 import java.awt.Cursor;
@@ -65,6 +67,7 @@ import java.awt.event.WindowEvent;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.FilenameFilter;
 import java.io.IOException;
@@ -737,7 +740,7 @@ public class HUDEditor extends javax.swing.JFrame {
                         quit();
                     }
                 });
-                URL url = getClass().getResource("/com/timepath/hl2/hudeditor/resources/Icon.png");
+                URL url = getClass().getResource("/com/timepath/hl2/hudeditor/res/Icon.png");
                 Image icon = Toolkit.getDefaultToolkit().getImage(url);
                 app.setDockIconImage(icon);
                 //</editor-fold>
@@ -935,11 +938,29 @@ public class HUDEditor extends javax.swing.JFrame {
                            || f.getName().endsWith(".layout")
                            || f.getName().endsWith(".menu")
                            || f.getName().endsWith(".styles")) {
-                            VDF.analyze(f, child);
+                            VDF v = new VDF();
+                            try {
+                                v.readExternal(new FileInputStream(f));
+                            } catch(FileNotFoundException ex) {
+                                Logger.getLogger(HUDEditor.class.getName()).log(Level.SEVERE, null, ex);
+                            }
+                            TreeUtils.moveChildren(v.getRoot(), child);
                         } else if(f.getName().endsWith(".res")) {
-                            RES.analyze(f, child);
+                            RES v = new RES();
+                            try {
+                                v.readExternal(new FileInputStream(f));
+                            } catch(FileNotFoundException ex) {
+                                Logger.getLogger(HUDEditor.class.getName()).log(Level.SEVERE, null, ex);
+                            }
+                            TreeUtils.moveChildren(v.getRoot(), child);
                         } else if(f.getName().endsWith(".vmt")) {
-//                            VDF.analyze(f, child);
+                            VMT v = new VMT();
+                            try {
+                                v.readExternal(new FileInputStream(f));
+                            } catch(FileNotFoundException ex) {
+                                Logger.getLogger(HUDEditor.class.getName()).log(Level.SEVERE, null, ex);
+                            }
+                            TreeUtils.moveChildren(v.getRoot(), child);
                         } else if(f.getName().endsWith(".vtf")) {
                             VTF v = null;
                             try {
@@ -1004,7 +1025,7 @@ public class HUDEditor extends javax.swing.JFrame {
             }
         });
 
-        HUDEditor.this.setIconImages(new IconList("/com/timepath/hl2/hudeditor/resources/Icon", "png", new int[]{16, 22, 24, 32, 40, 48, 64, 128, 512, 1024}).getIcons());
+        HUDEditor.this.setIconImages(new IconList("/com/timepath/hl2/hudeditor/res/Icon", "png", new int[]{16, 22, 24, 32, 40, 48, 64, 128, 512, 1024}).getIcons());
 
         this.setTitle(Main.getString("Title"));
 
@@ -1304,7 +1325,7 @@ public class HUDEditor extends javax.swing.JFrame {
         SwingWorker<Image, Void> worker = new SwingWorker<Image, Void>() {
             @Override
             public Image doInBackground() {
-                File screenshotDir = new File(SteamUtils.getSteam(), "userdata/" + user.uid.split(":")[2] + "/760/remote/440/screenshots/");
+                File screenshotDir = new File(SteamUtils.getSteam(), "userdata/" + user.getUID().split(":")[2] + "/760/remote/440/screenshots/");
                 File[] files = screenshotDir.listFiles(new FilenameFilter() {
                     public boolean accept(File dir, String name) {
                         return name.toLowerCase().endsWith(".jpg");
@@ -1512,8 +1533,6 @@ public class HUDEditor extends javax.swing.JFrame {
         private JMenuItem resolutionItem, previewItem;
 
         private JMenuItem updateItem, aboutItem;
-
-        private JMenuItem vtfItem, captionItem, vdfItem, gcfItem, bitmapItem;
 
         private int modifier = Toolkit.getDefaultToolkit().getMenuShortcutKeyMask();
 
@@ -1803,7 +1822,7 @@ public class HUDEditor extends javax.swing.JFrame {
             extrasMenu.setMnemonic(KeyEvent.VK_X);
             this.add(extrasMenu);
 
-            vtfItem = new JMenuItem(new CustomAction("VTF Viewer", null, KeyEvent.VK_T, null) {
+            JMenuItem vtfItem = new JMenuItem(new CustomAction("VTF Viewer", null, KeyEvent.VK_T, null) {
                 @Override
                 public void actionPerformed(ActionEvent ae) {
                     VTFTest.main("");
@@ -1811,7 +1830,7 @@ public class HUDEditor extends javax.swing.JFrame {
             });
             extrasMenu.add(vtfItem);
 
-            captionItem = new JMenuItem(new CustomAction("Caption Editor", null, KeyEvent.VK_C, null) {
+            JMenuItem captionItem = new JMenuItem(new CustomAction("Caption Editor", null, KeyEvent.VK_C, null) {
                 @Override
                 public void actionPerformed(ActionEvent ae) {
                     VCCDTest.main("");
@@ -1819,7 +1838,7 @@ public class HUDEditor extends javax.swing.JFrame {
             });
             extrasMenu.add(captionItem);
 
-            vdfItem = new JMenuItem(new CustomAction("VDF Viewer", null, KeyEvent.VK_D, null) {
+            JMenuItem vdfItem = new JMenuItem(new CustomAction("VDF Viewer", null, KeyEvent.VK_D, null) {
                 @Override
                 public void actionPerformed(ActionEvent ae) {
                     DataTest.main("");
@@ -1827,15 +1846,15 @@ public class HUDEditor extends javax.swing.JFrame {
             });
             extrasMenu.add(vdfItem);
 
-            gcfItem = new JMenuItem(new CustomAction("Archive Explorer", null, KeyEvent.VK_E, null) {
+            JMenuItem gcfItem = new JMenuItem(new CustomAction("Archive Explorer", null, KeyEvent.VK_E, null) {
                 @Override
                 public void actionPerformed(ActionEvent ae) {
-                    ArchiveTest.main("");
+                    ArchiveExplorer.main("");
                 }
             });
             extrasMenu.add(gcfItem);
 
-            bitmapItem = new JMenuItem(new CustomAction("Bitmap Font Glyph Editor", null, KeyEvent.VK_G, null) {
+            JMenuItem bitmapItem = new JMenuItem(new CustomAction("Bitmap Font Glyph Editor", null, KeyEvent.VK_G, null) {
                 @Override
                 public void actionPerformed(ActionEvent ae) {
                     VBFTest.main("");

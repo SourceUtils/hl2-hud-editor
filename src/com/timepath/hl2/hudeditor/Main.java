@@ -36,7 +36,7 @@ import javax.swing.SwingUtilities;
  */
 public class Main {
 
-    public static final ResourceBundle strings = ResourceBundle.getBundle("com/timepath/hl2/hudeditor/resources/lang");
+    public static final ResourceBundle strings = ResourceBundle.getBundle("com/timepath/hl2/hudeditor/res/lang");
 
     public static final String appName = "TF2 HUD Editor";
 
@@ -175,6 +175,7 @@ public class Main {
                             source.close();
                         }
                         if(destination != null) {
+                            destination.force(true);
                             destination.close();
                         }
                     }
