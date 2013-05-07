@@ -885,14 +885,26 @@ public class HUDEditor extends javax.swing.JFrame {
     }
 
     private void recurseDirectoryToNode(File root, final DefaultMutableTreeNode parent) {
-        final String[] blacklist = {".mp3", ".exe", ".sh", ".dll", ".dylib", ".so",
-                                    ".ttf", ".bik", ".mov", ".cfg", ".cache", ".manifest",
-                                    ".frag", ".vert", ".tga", ".png", ".html", ".wav",
-                                    ".ico", ".uifont", ".xml", ".css", ".dic", ".conf",
-                                    ".pak", ".py", ".flt", ".mix", ".asi", ".checksum",
-                                    ".xz", ".log", ".doc", ".webm", ".jpg", ".psd", ".avi",
-                                    ".zip", ".bin"};
-        final File[] fileList = root.listFiles();
+
+        FilenameFilter ff = new FilenameFilter() {
+            final String[] blacklist = {".mp3", ".exe", ".sh", ".dll", ".dylib", ".so",
+                                        ".ttf", ".bik", ".mov", ".cfg", ".cache", ".manifest",
+                                        ".frag", ".vert", ".tga", ".png", ".html", ".wav",
+                                        ".ico", ".uifont", ".xml", ".css", ".dic", ".conf",
+                                        ".pak", ".py", ".flt", ".mix", ".asi", ".checksum",
+                                        ".xz", ".log", ".doc", ".webm", ".jpg", ".psd", ".avi",
+                                        ".zip", ".bin", ".vpk", ".bsp", ".txt", ".inf", ".bmp", ".icns"};
+
+            public boolean accept(File dir, String name) {
+                for(int j = 0; j < blacklist.length; j++) {
+                    if(name.endsWith(blacklist[j])) {
+                        return false;
+                    }
+                }
+                return true;
+            }
+        };
+        final File[] fileList = root.listFiles(ff);
         final Thread[] threads = new Thread[fileList.length];
         if(fileList.length == 0) {
             return;
@@ -903,37 +915,24 @@ public class HUDEditor extends javax.swing.JFrame {
             final DefaultMutableTreeNode child = new DefaultMutableTreeNode();
             child.setUserObject(f); // Unknown = File
             if(f.isDirectory()) {
-                //<editor-fold defaultstate="collapsed" desc="Validate">
                 if(f.getName().toLowerCase().equals("common")
                    || f.getName().toLowerCase().equals("downloading")
                    || f.getName().toLowerCase().equals("temp")
                    || f.getName().toLowerCase().equals("sourcemods")) {
                     continue;
                 }
-                if(f.listFiles().length == 0) {
-                    continue;
-                }
-                //</editor-fold>
-                parent.add(child);
                 recurseDirectoryToNode(f, child);
+                if(child.getChildCount() > 0) {
+                    parent.add(child);
+                }
             } else {
-                //<editor-fold defaultstate="collapsed" desc="Validate">
-                boolean flag = false;
-                for(int j = 0; j < blacklist.length; j++) {
-                    if(f.getName().endsWith(blacklist[j])) {
-                        flag = true;
-                        break;
-                    }
-                }
-                if(flag) {
-                    continue;
-                }
-                //</editor-fold>
                 parent.add(child);
                 threads[i] = new Thread(new Runnable() {
                     public void run() {
-                        if(f.getName().endsWith(".txt")
-                           || f.getName().endsWith(".vdf")
+                        LOG.log(Level.FINE, "Loading {0}...", f);
+//                        if(f.getName().endsWith(".txt")
+                        if(f.getName().endsWith(".vdf")
+                           //                           || f.getName().endsWith(".vdf")
                            || f.getName().endsWith(".pop")
                            || f.getName().endsWith(".layout")
                            || f.getName().endsWith(".menu")
@@ -1333,7 +1332,7 @@ public class HUDEditor extends javax.swing.JFrame {
                 });
                 if(files != null) {
                     try {
-                        return new ImageIcon(files[(int)(Math.random() * (files.length - 1))].toURI().toURL()).getImage();
+                        return new ImageIcon(files[(int) (Math.random() * (files.length - 1))].toURI().toURL()).getImage();
                     } catch(MalformedURLException ex) {
                         Logger.getLogger(HUDEditor.class.getName()).log(Level.SEVERE, null, ex);
                     }
