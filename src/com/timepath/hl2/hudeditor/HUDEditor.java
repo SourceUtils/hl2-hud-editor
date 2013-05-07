@@ -1319,40 +1319,44 @@ public class HUDEditor extends javax.swing.JFrame {
             }
         };
         final SteamID user = SteamUtils.getUser();
-        LOG.log(Level.INFO, "Current user: {0}", user);
+        if(user != null) {
+            LOG.log(Level.INFO, "Current user: {0}", user);
 
-        SwingWorker<Image, Void> worker = new SwingWorker<Image, Void>() {
-            @Override
-            public Image doInBackground() {
-                File screenshotDir = new File(SteamUtils.getSteam(), "userdata/" + user.getUID().split(":")[2] + "/760/remote/440/screenshots/");
-                File[] files = screenshotDir.listFiles(new FilenameFilter() {
-                    public boolean accept(File dir, String name) {
-                        return name.toLowerCase().endsWith(".jpg");
+            SwingWorker<Image, Void> worker = new SwingWorker<Image, Void>() {
+                @Override
+                public Image doInBackground() {
+                    File screenshotDir = new File(SteamUtils.getSteam(), "userdata/" + user.getUID().split(":")[2] + "/760/remote/440/screenshots/");
+                    File[] files = screenshotDir.listFiles(new FilenameFilter() {
+                        public boolean accept(File dir, String name) {
+                            return name.toLowerCase().endsWith(".jpg");
+                        }
+                    });
+                    if(files != null) {
+                        try {
+                            return new ImageIcon(files[(int) (Math.random() * (files.length - 1))].toURI().toURL()).getImage();
+                        } catch(MalformedURLException ex) {
+                            Logger.getLogger(HUDEditor.class.getName()).log(Level.SEVERE, null, ex);
+                        }
                     }
-                });
-                if(files != null) {
+                    LOG.log(Level.INFO, "No screenshots in {0}", screenshotDir);
+                    return null;
+                }
+
+                @Override
+                public void done() {
                     try {
-                        return new ImageIcon(files[(int) (Math.random() * (files.length - 1))].toURI().toURL()).getImage();
-                    } catch(MalformedURLException ex) {
+                        canvas.setBackgroundImage(get());
+                    } catch(InterruptedException ex) {
+                        Logger.getLogger(HUDEditor.class.getName()).log(Level.SEVERE, null, ex);
+                    } catch(ExecutionException ex) {
                         Logger.getLogger(HUDEditor.class.getName()).log(Level.SEVERE, null, ex);
                     }
                 }
-                LOG.log(Level.INFO, "No screenshots in {0}", screenshotDir);
-                return null;
-            }
-
-            @Override
-            public void done() {
-                try {
-                    canvas.setBackgroundImage(get());
-                } catch(InterruptedException ex) {
-                    Logger.getLogger(HUDEditor.class.getName()).log(Level.SEVERE, null, ex);
-                } catch(ExecutionException ex) {
-                    Logger.getLogger(HUDEditor.class.getName()).log(Level.SEVERE, null, ex);
-                }
-            }
-        };
-        worker.execute();
+            };
+            worker.execute();
+        } else {
+            LOG.log(Level.WARNING, "Steam not found");
+        }
 
         JScrollPane canvasPane = new JScrollPane(canvas);
 //        canvasPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
