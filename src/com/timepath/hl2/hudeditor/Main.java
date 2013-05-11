@@ -5,6 +5,7 @@ import com.timepath.plaf.OS;
 import com.timepath.plaf.linux.WindowToolkit;
 import com.timepath.plaf.mac.OSXProps;
 import com.timepath.plaf.x.filechooser.XFileDialogFileChooser;
+import java.awt.Desktop;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
@@ -16,6 +17,11 @@ import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.SocketException;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.net.URL;
+import java.net.URLStreamHandler;
+import java.net.URLStreamHandlerFactory;
 import java.nio.channels.FileChannel;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
@@ -198,7 +204,7 @@ public class Main {
             }
         }
         //</editor-fold>
-
+        
         boolean daemon = false;
         if(daemon) {
             int port = prefs.getInt("port", -1);

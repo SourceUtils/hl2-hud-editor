@@ -80,9 +80,11 @@ import java.net.URLConnection;
 import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Calendar;
 import java.util.Iterator;
 import java.util.List;
 import java.util.StringTokenizer;
+import java.util.TimeZone;
 import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -328,7 +330,7 @@ public class HUDEditor extends javax.swing.JFrame {
                     new Timer(1000, new ActionListener() {
                         @Override
                         public void actionPerformed(ActionEvent e) {
-                            lastUpdated.setText("Last updated " + Utils.timePeriod((System.currentTimeMillis() / 1000) - lastUpdate) + " ago");
+                            lastUpdated.setText("Last updated " + DateUtils.timePeriod((System.currentTimeMillis() / 1000) - lastUpdate) + " ago");
                         }
                     }).start();
                 } catch(InterruptedException ex) {
@@ -474,25 +476,41 @@ public class HUDEditor extends javax.swing.JFrame {
     }
 
     public void about() {
-        String latestThread = "http://www.reddit.com/r/truetf2/comments/186krr/wysiwyg_hud_editor_not_dead/";
-        String aboutText = "<html><h2>This is a What You See Is What You Get HUD Editor for TF2.</h2>";
-        aboutText += "<p>You can graphically edit TF2 HUDs with it!<br>";
-        aboutText += "<p>It was written by <a href=\"http://www.reddit.com/user/TimePath/\">TimePath</a></p>";
-        aboutText += "<p>Source available on <a href=\"http://code.google.com/p/tf2-hud-editor/\">Google code</a></p>";
-        aboutText += "<p>I have an <a href=\"http://code.google.com/feeds/p/tf2-hud-editor/hgchanges/basic\">Atom feed</a> set up listing source commits</p>";
-        aboutText += "<p>Please leave feedback or suggestions on <a href=\"" + latestThread + "\">the latest update thread</a></p>";
-        aboutText += "<p>Logging to <a href=\"" + Main.logFile.toURI() + "\">" + Main.logFile + "</a></p>";
-        if(Main.myVer != 0) {
-            long time = Main.myVer;
-            aboutText += "<p>Build date: " + DateUtils.parse(time) + " (" + time + ")</p>";
-        }
-        aboutText += "</html>";
-        JEditorPane pane = new JEditorPane("text/html", aboutText);
+        final String latestThread = "http://steamcommunity.com/groups/hudeditor/discussions";
+        final JEditorPane pane = new JEditorPane("text/html", "");
         pane.setEditable(false);
         pane.setOpaque(false);
         pane.setBackground(new Color(0, 0, 0, 0));
         pane.addHyperlinkListener(HUDEditor.this.linkListener);
+        String aboutText = "<html><h2>This is to be a What You See Is What You Get HUD Editor for TF2,</h2>";
+        aboutText += "for graphically editing TF2 HUDs!";
+        aboutText += "<p>Author: TimePath (<a href=\"http://www.reddit.com/user/TimePath/\">reddit</a>|<a href=\"http://steamcommunity.com/id/TimePath/\">steam</a>)<br>";
+        String local = "</p>";
+        String aboutText2 = "<p>Source available on <a href=\"https://github.com/TimePath/hl2-hud-editor\">GitHub</a>";
+        aboutText2 += "<br><a href=\"https://github.com/TimePath/hl2-hud-editor/commits/master.atom\">Atom feed</a> available for source commits</p>";
+        aboutText2 += "<p>Please leave feedback or suggestions on <a href=\"" + latestThread + "\">the steam group forum</a>";
+        aboutText2 += "<br>You might be able to catch me <a href=\"steam://friends/joinchat/103582791433759131\">here</a> (<a href=\"http://steamcommunity.com/groups/hudeditor\">web link</a>)</p>"; // TODO: http://steamredirect.heroku.com or Runtime.exec() on older versions of java
+        aboutText2 += "<p>Logging to <a href=\"" + Main.logFile.toURI() + "\">" + Main.logFile + "</a></p>";
+        if(Main.myVer != 0) {
+            long time = Main.myVer;
+            aboutText2 += "<p>Build date: " + DateUtils.parse(time) + " (" + time + ")</p>";
+        }
+        aboutText2 += "<br></html>";
+        final String p1 = aboutText;
+        final String p2 = aboutText2;
+        pane.setText(p1 + local + p2);
+        Timer t = new Timer(1000, new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                Calendar devCal = Calendar.getInstance(TimeZone.getTimeZone("Australia/Sydney"));
+                String local = "My (presumed) local time: " + DateUtils.parse(devCal.getTimeInMillis() / 1000) + "</p>";
+                pane.setText(p1 + local + p2);
+            }
+        });
+        t.setInitialDelay(0);
+        t.start();
         info(pane, "About");
+
     }
 
     private void locateUserDirectory() {
