@@ -5,7 +5,6 @@ import com.timepath.plaf.OS;
 import com.timepath.plaf.linux.WindowToolkit;
 import com.timepath.plaf.mac.OSXProps;
 import com.timepath.plaf.x.filechooser.XFileDialogFileChooser;
-import java.awt.Desktop;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
@@ -17,18 +16,15 @@ import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.SocketException;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.net.URL;
-import java.net.URLStreamHandler;
-import java.net.URLStreamHandlerFactory;
 import java.nio.channels.FileChannel;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.ResourceBundle;
+import java.util.logging.ConsoleHandler;
 import java.util.logging.FileHandler;
+import java.util.logging.Handler;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.logging.SimpleFormatter;
@@ -87,6 +83,10 @@ public class Main {
         return getString(key, key);
     }
 
+    public static Level consoleLevel = Level.INFO;
+
+    public static Level logfileLevel = Level.INFO;
+
     static {
         //<editor-fold defaultstate="collapsed" desc="Debugging">
         Thread.setDefaultUncaughtExceptionHandler(new Thread.UncaughtExceptionHandler() {
@@ -97,21 +97,53 @@ public class Main {
         //</editor-fold>
 
         //<editor-fold defaultstate="collapsed" desc="Logging">
-        Logger.getLogger("com.timepath").setLevel(Level.ALL);
-
-        logFile = new File(Utils.workingDirectory(Main.class), "logs/" + System.currentTimeMillis() / 1000 + "_log.txt");
         try {
-            logFile.getParentFile().mkdirs();
-            FileHandler fh = new FileHandler(logFile.getPath(), 0, 1, false);
-            fh.setLevel(Level.ALL);
-            SimpleFormatter formatter = new SimpleFormatter();
-            fh.setFormatter(formatter);
-            Logger.getLogger("").addHandler(fh);
-            LOG.log(Level.INFO, "Logging to {0}", logFile.getPath());
-        } catch(IOException ex) {
-            LOG.log(Level.SEVERE, null, ex);
-        } catch(SecurityException ex) {
-            LOG.log(Level.SEVERE, null, ex);
+            consoleLevel = Level.parse(prefs.get("consoleLevel", "FINE"));
+        } catch(IllegalArgumentException ex) {
+        }
+        LOG.info("Console level: " + consoleLevel);
+        try {
+            logfileLevel = Level.parse(prefs.get("logfileLevel", "FINE"));
+        } catch(IllegalArgumentException ex) {
+        }
+        LOG.info("Logfile level: " + logfileLevel);
+        Level packageLevel = consoleLevel;
+        if(consoleLevel != Level.OFF && logfileLevel != Level.OFF) {
+            if(logfileLevel.intValue() > consoleLevel.intValue()) {
+                packageLevel = logfileLevel;
+            }
+        }
+        Logger.getLogger("com.timepath").setLevel(packageLevel);
+
+        SimpleFormatter consoleFormatter = new SimpleFormatter();
+        SimpleFormatter fileFormatter = new SimpleFormatter();
+
+        if(consoleLevel != Level.OFF) {
+            Handler[] hs = Logger.getLogger("").getHandlers();
+            for(Handler h : hs) {
+                if(h instanceof ConsoleHandler) {
+                    h.setLevel(consoleLevel);
+                    h.setFormatter(consoleFormatter);
+                }
+            }
+        }
+
+        if(logfileLevel != Level.OFF) {
+            logFile = new File(Utils.workingDirectory(Main.class), "logs/" + System.currentTimeMillis() / 1000 + "_log.txt");
+            try {
+                logFile.getParentFile().mkdirs();
+                FileHandler fh = new FileHandler(logFile.getPath(), 0, 1, false);
+                fh.setLevel(logfileLevel);
+                fh.setFormatter(fileFormatter);
+                Logger.getLogger("").addHandler(fh);
+                LOG.log(Level.INFO, "Logging to {0}", logFile.getPath());
+            } catch(IOException ex) {
+                LOG.log(Level.SEVERE, null, ex);
+            } catch(SecurityException ex) {
+                LOG.log(Level.SEVERE, null, ex);
+            }
+        } else {
+            logFile = null;
         }
         //</editor-fold>
 
@@ -204,7 +236,7 @@ public class Main {
             }
         }
         //</editor-fold>
-        
+
         boolean daemon = false;
         if(daemon) {
             int port = prefs.getInt("port", -1);
