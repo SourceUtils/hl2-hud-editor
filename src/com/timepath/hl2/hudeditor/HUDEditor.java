@@ -2,7 +2,6 @@ package com.timepath.hl2.hudeditor;
 
 import apple.OSXAdapter;
 import com.timepath.DateUtils;
-import com.timepath.StringUtils;
 import com.timepath.Utils;
 import com.timepath.backports.javax.swing.SwingWorker;
 import com.timepath.hl2.io.RES;
