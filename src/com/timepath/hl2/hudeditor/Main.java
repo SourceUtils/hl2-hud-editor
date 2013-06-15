@@ -168,6 +168,7 @@ public class Main {
 
     public static void main(String... args) {
         //<editor-fold defaultstate="collapsed" desc="Initialize">
+        LOG.log(Level.INFO, "Current version = {0}", myVer);
         LOG.log(Level.INFO, "Args = {0}", Arrays.toString(args));
         String cwd = Utils.workingDirectory(Main.class);
         LOG.log(Level.INFO, "Working directory = {0}", cwd);

@@ -860,11 +860,17 @@ public class HUDEditor extends javax.swing.JFrame {
 
     private void mount() {
         File r = SteamUtils.getSteamApps();
+        if(r == null) {
+            return;
+        }
         File[] gcf = r.listFiles(new java.io.FilenameFilter() {
             public boolean accept(File dir, String name) {
                 return name.toLowerCase().endsWith(".gcf");
             }
         });
+        if(gcf == null) {
+            return;
+        }
         for(final File f : gcf) {
             LOG.log(Level.INFO, "Mounting {0}", f);
             new SwingWorker<DefaultMutableTreeNode, Void>() {
