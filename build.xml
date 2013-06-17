@@ -2,7 +2,9 @@
 <project name="TF2_HUD_EDITOR" basedir="." default="jar">
     <description>Builds, tests, and runs the project.</description>
     <import file="nbproject/build-impl.xml"/>
-    
+	
+    <!--<taskdef name="JarOpt" classname="org.cmc.jaroptimizer.JarOptTask" classpath="jaropt.jar"/>-->
+	
     <!--TODO: read from javac.classpath -->
 <!--    <target name="-pre-jar">
         <echo message="Unpacking all direct libraries into build directory"/>
@@ -24,9 +26,10 @@
     <script language="javascript">
         <![CDATA[property = project.setProperty("now", Math.floor((new Date()).getTime() / 1000));]]>
     </script>
-    <!--<taskdef name="JarOpt" classname="org.cmc.jaroptimizer.JarOptTask" classpath="jaropt.jar"/>-->
-    <target name="-post-jar">        
-        <echo message="Packaging ${application.title} into a single JAR at ${store.jar}"/>
+	
+    <!--<target name="-post-jar">--> 
+	<target name="dist">       
+        <echo message="Publishing ${application.title}: ${store.jar}"/>
         <mkdir dir="dist/lib"/>
         <mkdir dir="${store.dir}"/>
         <jar destfile="${store.jar}" level="9">
