@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project name="TF2_HUD_EDITOR" basedir="." default="jar">
+<project name="TF2_HUD_EDITOR" basedir="." default="dist">
     <description>Builds, tests, and runs the project.</description>
     <import file="nbproject/build-impl.xml"/>
 	
@@ -29,7 +29,7 @@
 	
     <!--<target name="-post-jar">--> 
 	<target name="dist">       
-        <echo message="Publishing ${application.title}: ${store.jar}"/>
+        <echo message="Publishing ${store.jar}"/>
         <mkdir dir="dist/lib"/>
         <mkdir dir="${store.dir}"/>
         <jar destfile="${store.jar}" level="9">
