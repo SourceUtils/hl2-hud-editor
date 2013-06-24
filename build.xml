@@ -26,10 +26,11 @@
     <script language="javascript">
         <![CDATA[property = project.setProperty("now", Math.floor((new Date()).getTime() / 1000));]]>
     </script>
+    <property name="main.class" value="com.timepath.hl2.hudeditor.Wrapper"/>
 	
     <!--<target name="-post-jar">--> 
 	<target name="dist">       
-        <echo message="Publishing ${store.jar}"/>
+        <echo message="Publishing ${store.jar}:${main.class}"/>
         <mkdir dir="dist/lib"/>
         <mkdir dir="${store.dir}"/>
         <jar destfile="${store.jar}" level="9">

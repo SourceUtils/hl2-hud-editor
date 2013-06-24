@@ -1349,7 +1349,7 @@ public class HUDEditor extends javax.swing.JFrame {
             SwingWorker<Image, Void> worker = new SwingWorker<Image, Void>() {
                 @Override
                 public Image doInBackground() {
-                    File screenshotDir = new File(SteamUtils.getSteam(), "userdata/" + user.getUID().split(":")[2] + "/760/remote/440/screenshots/");
+                    File screenshotDir = new File(SteamUtils.getUserData(), "760/remote/440/screenshots/");
                     File[] files = screenshotDir.listFiles(new FilenameFilter() {
                         public boolean accept(File dir, String name) {
                             return name.toLowerCase().endsWith(".jpg");
