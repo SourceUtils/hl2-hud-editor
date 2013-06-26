@@ -78,7 +78,9 @@ public class ProjectTree extends javax.swing.JTree implements ActionListener, Mo
          * is set based on on leaf and expanded.
          */
         @Override
-        public Component getTreeCellRendererComponent(JTree tree, Object value, boolean sel, boolean expanded, boolean leaf, int row, boolean hasFocus) {
+        public Component getTreeCellRendererComponent(JTree tree, Object value, boolean sel,
+                                                      boolean expanded, boolean leaf, int row,
+                                                      boolean hasFocus) {
             String valueText = value.toString();
 
             Color tColor = null;
@@ -105,11 +107,14 @@ public class ProjectTree extends javax.swing.JTree implements ActionListener, Mo
                     setIcons(tree, null);
                 }
             }
-            String stringValue = tree.convertValueToText(valueText, sel, expanded, leaf, row, hasFocus);
+            String stringValue = tree.convertValueToText(valueText, sel, expanded, leaf, row,
+                                                         hasFocus);
             this.hasFocus = hasFocus;
             this.setText(stringValue);
             if(tColor != null) {
-                this.setForeground(sel ? (tColor != newColor ? new Color(-tColor.getRed() + 255, -tColor.getGreen() + 255, -tColor.getBlue() + 255) : tColor.brighter()) : tColor);
+                this.setForeground(sel ? (tColor != newColor ? new Color(-tColor.getRed() + 255,
+                                                                         -tColor.getGreen() + 255,
+                                                                         -tColor.getBlue() + 255) : tColor.brighter()) : tColor);
             } else {
                 this.setForeground(sel ? getTextSelectionColor() : getTextNonSelectionColor());
             }
@@ -118,6 +123,7 @@ public class ProjectTree extends javax.swing.JTree implements ActionListener, Mo
             this.selected = sel;
             return this;
         }
+
     }
 
     /**
@@ -232,7 +238,9 @@ public class ProjectTree extends javax.swing.JTree implements ActionListener, Mo
             LOG.log(Level.INFO, "DirectoryEntry: {0}", directoryEntryContext);
         }
         try {
-            final File[] fs = new NativeFileChooser().setTitle("Extract").setDialogType(BaseFileChooser.DialogType.SAVE_DIALOG).setFileMode(BaseFileChooser.FileMode.DIRECTORIES_ONLY).choose();
+            final File[] fs = new NativeFileChooser().setTitle("Extract").setDialogType(
+                    BaseFileChooser.DialogType.SAVE_DIALOG).setFileMode(
+                    BaseFileChooser.FileMode.DIRECTORIES_ONLY).choose();
             if(fs == null) {
                 return;
             }
@@ -254,7 +262,7 @@ public class ProjectTree extends javax.swing.JTree implements ActionListener, Mo
                 @Override
                 protected void done() {
                     try {
-                        LOG.log(Level.INFO, "Extracted {0}", new Object[]{get()});
+                        LOG.log(Level.INFO, "Extracted {0}", new Object[] {get()});
                     } catch(InterruptedException ex) {
                         Logger.getLogger(ProjectTree.class.getName()).log(Level.SEVERE, null, ex);
                     } catch(ExecutionException ex) {

@@ -64,7 +64,9 @@ public class PropertyTable extends JTable {
     public class CustomTableCellRenderer extends DefaultTableCellRenderer {
 
         @Override
-        public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
+        public Component getTableCellRendererComponent(JTable table, Object value,
+                                                       boolean isSelected, boolean hasFocus, int row,
+                                                       int column) {
             super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
             Icon icon = null;
             if(value instanceof ImageIcon) {
@@ -76,10 +78,12 @@ public class PropertyTable extends JTable {
             } else {
                 this.setText("");
                 this.setIcon(icon);
-                PropertyTable.this.setRowHeight(row, Math.max(icon.getIconHeight(), PropertyTable.this.rowHeight));
+                PropertyTable.this.setRowHeight(row, Math.max(icon.getIconHeight(),
+                                                              PropertyTable.this.rowHeight));
             }
             return this;
         }
+
     }
 
     /**

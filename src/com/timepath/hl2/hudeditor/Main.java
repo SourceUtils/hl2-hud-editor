@@ -38,7 +38,8 @@ import javax.swing.SwingUtilities;
  */
 public class Main {
 
-    public static final ResourceBundle strings = ResourceBundle.getBundle("com/timepath/hl2/hudeditor/res/lang");
+    public static final ResourceBundle strings = ResourceBundle.getBundle(
+            "com/timepath/hl2/hudeditor/res/lang");
 
     public static final String appName = "TF2 HUD Editor";
 
@@ -129,7 +130,8 @@ public class Main {
         }
 
         if(logfileLevel != Level.OFF) {
-            logFile = new File(Utils.workingDirectory(Main.class), "logs/" + System.currentTimeMillis() / 1000 + "_log.txt");
+            logFile = new File(Utils.workingDirectory(Main.class),
+                               "logs/" + System.currentTimeMillis() / 1000 + "_log.txt");
             try {
                 logFile.getParentFile().mkdirs();
                 FileHandler fh = new FileHandler(logFile.getPath(), 0, 1, false);
@@ -317,11 +319,12 @@ public class Main {
             while(!sock.isClosed()) {
                 try {
                     Socket client = sock.accept();
-                    BufferedReader in = new BufferedReader(new InputStreamReader(client.getInputStream()));
+                    BufferedReader in = new BufferedReader(new InputStreamReader(
+                            client.getInputStream()));
                     PrintWriter out = new PrintWriter(client.getOutputStream(), true);
 
                     long cVer = Long.parseLong(in.readLine());
-                    LOG.log(Level.INFO, "client {0} vs host {1}", new Object[]{cVer, myVer});
+                    LOG.log(Level.INFO, "client {0} vs host {1}", new Object[] {cVer, myVer});
                     String request = "-noupdate " + in.readLine();
                     LOG.log(Level.INFO, "Request: {0}", request);
                     out.println(myVer);
@@ -341,6 +344,7 @@ public class Main {
             LOG.info("Exiting...");
             System.exit(0);
         }
+
     }
 
     /**
@@ -423,4 +427,5 @@ public class Main {
             }
         });
     }
+
 }
