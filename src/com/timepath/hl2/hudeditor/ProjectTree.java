@@ -4,8 +4,8 @@ import com.timepath.backports.javax.swing.SwingWorker;
 import com.timepath.io.utils.ViewableData;
 import com.timepath.plaf.x.filechooser.BaseFileChooser;
 import com.timepath.plaf.x.filechooser.NativeFileChooser;
-import com.timepath.steam.io.storage.GCF;
-import com.timepath.steam.io.storage.GCF.GCFDirectoryEntry;
+import com.timepath.steam.io.storage.util.Archive;
+import com.timepath.steam.io.storage.util.DirectoryEntry;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.event.ActionEvent;
@@ -42,9 +42,9 @@ public class ProjectTree extends javax.swing.JTree implements ActionListener, Mo
         this.setCellRenderer(new CustomTreeCellRenderer());
     }
 
-    private GCFDirectoryEntry directoryEntryContext;
+    private DirectoryEntry directoryEntryContext;
 
-    private GCF gcfContext;
+    private Archive archiveContext;
 
     private DefaultMutableTreeNode projectContext;
 
@@ -198,14 +198,14 @@ public class ProjectTree extends javax.swing.JTree implements ActionListener, Mo
                 if(clicked instanceof DefaultMutableTreeNode) {
                     DefaultMutableTreeNode node = ((DefaultMutableTreeNode) clicked);
                     Object obj = node.getUserObject();
-                    if(obj instanceof GCF) {
-                        gcfContext = (GCF) obj;
+                    if(obj instanceof Archive) {
+                        archiveContext = (Archive) obj;
                         directoryEntryContext = null;
                         fileMenu.show(evt.getComponent(), evt.getX(), evt.getY());
                         return;
-                    } else if(obj instanceof GCFDirectoryEntry) {
-                        directoryEntryContext = (GCFDirectoryEntry) obj;
-                        gcfContext = directoryEntryContext.getArchive();
+                    } else if(obj instanceof DirectoryEntry) {
+                        directoryEntryContext = (DirectoryEntry) obj;
+                        archiveContext = directoryEntryContext.getArchive();
                         fileMenu.show(evt.getComponent(), evt.getX(), evt.getY());
                         return;
                     } else if(obj instanceof String) {
@@ -225,18 +225,12 @@ public class ProjectTree extends javax.swing.JTree implements ActionListener, Mo
     }//GEN-LAST:event_formMouseClicked
 
     private void extractActionActionPerformed(ActionEvent evt) {//GEN-FIRST:event_extractActionActionPerformed
-        if(gcfContext == null) {
+        if(archiveContext == null) {
             return;
         }
-        final GCF context = gcfContext;
+        final Archive context = archiveContext;
         LOG.log(Level.INFO, "GCF: {0}", context);
         final int index;
-        if(directoryEntryContext == null) {
-            index = 0;
-        } else {
-            index = directoryEntryContext.index;
-            LOG.log(Level.INFO, "DirectoryEntry: {0}", directoryEntryContext);
-        }
         try {
             final File[] fs = new NativeFileChooser().setTitle("Extract").setDialogType(
                     BaseFileChooser.DialogType.SAVE_DIALOG).setFileMode(
@@ -249,9 +243,9 @@ public class ProjectTree extends javax.swing.JTree implements ActionListener, Mo
                 @Override
                 protected File doInBackground() throws Exception {
                     File ret = null;
-
                     try {
-                        ret = context.extract(index, fs[0]);
+                        directoryEntryContext.extract(fs[0]);
+                        ret = new File(fs[0], directoryEntryContext.getName());
                     } catch(IOException ex) {
                         Logger.getLogger(ProjectTree.class.getName()).log(Level.SEVERE, null, ex);
                     }
