@@ -8,10 +8,6 @@ import com.timepath.hl2.io.RES;
 import com.timepath.hl2.io.VMT;
 import com.timepath.hl2.io.VTF;
 import com.timepath.hl2.io.swing.VGUICanvas;
-import com.timepath.hl2.io.test.DataTest;
-import com.timepath.hl2.io.test.VBFTest;
-import com.timepath.hl2.io.test.VCCDTest;
-import com.timepath.hl2.io.test.VTFTest;
 import com.timepath.hl2.io.util.Element;
 import com.timepath.steam.io.util.Property;
 import com.timepath.plaf.IconList;
@@ -30,15 +26,12 @@ import com.timepath.plaf.x.filechooser.BaseFileChooser;
 import com.timepath.plaf.x.filechooser.NativeFileChooser;
 import com.timepath.steam.SteamID;
 import com.timepath.steam.SteamUtils;
-import com.timepath.steam.io.ArchiveExplorer;
 import com.timepath.steam.io.VDF;
-import com.timepath.steam.io.storage.VPK;
+import com.timepath.steam.io.storage.ACF;
 import com.timepath.steam.io.storage.util.Archive;
-import com.timepath.steam.io.storage.util.DirectoryEntry;
 import com.timepath.steam.io.util.VDFNode;
 import com.timepath.swing.TreeUtils;
 import java.awt.Color;
-import java.awt.Container;
 import java.awt.Cursor;
 import java.awt.Dimension;
 import java.awt.DisplayMode;
@@ -65,19 +58,14 @@ import java.awt.event.ComponentEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
-import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
 import java.io.FilenameFilter;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URL;
-import java.net.URLConnection;
 import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -93,21 +81,16 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 import javax.swing.AbstractAction;
 import javax.swing.Action;
-import javax.swing.BoxLayout;
 import javax.swing.Icon;
 import javax.swing.ImageIcon;
-import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JDialog;
 import javax.swing.JEditorPane;
 import javax.swing.JFrame;
-import javax.swing.JLabel;
 import javax.swing.JMenu;
 import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
-import javax.swing.JPanel;
-import javax.swing.JProgressBar;
 import javax.swing.JScrollPane;
 import javax.swing.JSpinner;
 import javax.swing.KeyStroke;
@@ -148,309 +131,6 @@ public class HUDEditor extends javax.swing.JFrame {
     private JSpinner spinnerHeight;
 
     private HyperlinkListener linkListener = Utils.getLinkListener();
-
-    //<editor-fold defaultstate="collapsed" desc="Updates">
-    private BufferedReader getPage(String s) throws IOException {
-        URL u = new URL(s);
-        URLConnection c = u.openConnection();
-//        HttpURLConnection c = (HttpURLConnection) u.openConnection();
-        LOG.log(Level.INFO, "{0} size: {1}", new Object[] {s, c.getContentLength()});
-        InputStream is = c.getInputStream();
-        return new BufferedReader(new InputStreamReader(is));
-    }
-
-    private String currentVersion() throws IOException {
-        BufferedReader r = getPage(
-                "https://dl.dropbox.com/u/42745598/tf/HUD%20Editor/TF2%20HUD%20Editor.jar.current");
-        String l = r.readLine();
-        r.close();
-        return l;
-    }
-
-    private String checksum() throws IOException {
-        BufferedReader r = getPage(
-                "https://dl.dropbox.com/u/42745598/tf/HUD%20Editor/TF2%20HUD%20Editor.jar.MD5");
-        String l = r.readLine();
-        r.close();
-        return l;
-    }
-
-    private static boolean checked;
-
-    private long lastUpdate;
-
-    private void checkForUpdates(final boolean force) {
-        final JEditorPane pane = new JEditorPane("text/html", "");
-        Dimension s = Toolkit.getDefaultToolkit().getScreenSize();
-        pane.setPreferredSize(new Dimension(s.width / 4, s.height / 2));
-        pane.setEditable(false);
-        pane.setOpaque(false);
-        pane.setBackground(new Color(0, 0, 0, 0));
-        pane.addHyperlinkListener(HUDEditor.this.linkListener);
-        final JScrollPane scroll = new JScrollPane(pane);
-        scroll.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
-
-        final JLabel lastUpdated = new JLabel("\n");
-
-        final Object[] components = {scroll, lastUpdated};
-        final JButton[] options = {new JButton("Close"), new JButton("Update")};
-        options[1].setEnabled(true);
-
-        final JOptionPane optionPane = new JOptionPane(components,
-                                                       JOptionPane.INFORMATION_MESSAGE,
-                                                       JOptionPane.YES_NO_OPTION,
-                                                       null,
-                                                       options,
-                                                       options[0]);
-
-        final JDialog d = new JDialog(HUDEditor.this, "Updates", false);
-        d.setContentPane(optionPane);
-        d.setDefaultCloseOperation(JDialog.DO_NOTHING_ON_CLOSE);
-
-        this.addWindowListener(new WindowAdapter() {
-            @Override
-            public void windowClosing(WindowEvent e) {
-                d.setVisible(!options[0].isEnabled());
-            }
-        });
-
-        options[0].addActionListener(new ActionListener() {
-            public void actionPerformed(ActionEvent ae) {
-                d.setVisible(false);
-            }
-        });
-
-        if(force) {
-            d.pack();
-            d.setVisible(true);
-        }
-
-        new SwingWorker<Boolean, Void>() {
-            private int retries = 3;
-
-            private boolean checkUpdates() {
-                boolean updateAvailable = false;
-                try {
-                    String current = currentVersion();
-                    lastUpdate = Long.parseLong(current);
-                    updateAvailable = lastUpdate > Main.myVer;
-                    String sign = "==";
-                    if(Main.myVer > lastUpdate) {
-                        sign = ">";
-                    } else if(Main.myVer < lastUpdate) {
-                        sign = "<";
-                    }
-                    LOG.log(Level.INFO, "{0} {2} {1}", new Object[] {Main.myVer, lastUpdate, sign});
-                } catch(IOException ex) {
-                    retries--;
-                    if(retries > 0) {
-                        updateAvailable = checkUpdates();
-                    } else {
-                        LOG.log(Level.SEVERE, null, ex);
-                    }
-                }
-                return updateAvailable;
-            }
-
-            @Override
-            protected Boolean doInBackground() throws Exception {
-                return checkUpdates();
-            }
-
-            @Override
-            protected void done() {
-                try {
-                    boolean updateAvailable = get();
-                    if(updateAvailable) {
-                        options[1].setEnabled(true);
-                        if(!force) {
-                            d.pack();
-                            d.setVisible(true);
-                        }
-                    }
-                } catch(InterruptedException ex) {
-                    Logger.getLogger(HUDEditor.class.getName()).log(Level.SEVERE, null, ex);
-                } catch(ExecutionException ex) {
-                    Logger.getLogger(HUDEditor.class.getName()).log(Level.SEVERE, null, ex);
-                }
-            }
-        }.execute();
-
-        final JProgressBar changelogBar = new JProgressBar(0, 100);
-        changelogBar.setPreferredSize(new Dimension(175, 20));
-        changelogBar.setMinimumSize(new Dimension(175, 20));
-        changelogBar.setStringPainted(true);
-        changelogBar.setString("Fetching changelog");
-        changelogBar.setIndeterminate(true);
-        scroll.getParent().add(changelogBar);
-
-        new SwingWorker<String, Void>() {
-            private int retries = 3;
-
-            private String fetchChangelog() {
-                String changelog = "Unable to fetch changelog";
-                try {
-                    BufferedReader r = getPage(
-                            "https://dl.dropbox.com/u/42745598/tf/HUD%20Editor/TF2%20HUD%20Editor.jar.changes");
-                    String text = "";
-                    String grep = null;
-                    if(Main.myVer != 0) {
-                        grep = "" + Main.myVer;
-                    }
-                    String line;
-                    while((line = r.readLine()) != null) {
-                        if(grep != null && line.contains(grep)) {
-                            text += line.replace(grep, "<b><u>" + grep + "</u></b>");
-                        } else {
-                            text += line;
-                        }
-                    }
-                    r.close();
-                    changelog = text;
-                } catch(IOException ex) {
-                    retries--;
-                    if(retries > 0) {
-                        changelog = fetchChangelog();
-                    } else {
-                        LOG.log(Level.SEVERE, null, ex);
-                    }
-                }
-                return changelog;
-            }
-
-            @Override
-            protected String doInBackground() throws Exception {
-                return fetchChangelog();
-            }
-
-            @Override
-            protected void done() {
-                try {
-                    Container c = changelogBar.getParent();
-                    c.remove(changelogBar);
-                    c.repaint();
-                    pane.setText(get());
-                    pane.setCaretPosition(0);
-                    new Timer(1000, new ActionListener() {
-                        @Override
-                        public void actionPerformed(ActionEvent e) {
-                            lastUpdated.setText("Last updated " + DateUtils.timePeriod(
-                                    (System.currentTimeMillis() / 1000) - lastUpdate) + " ago");
-                        }
-                    }).start();
-                } catch(InterruptedException ex) {
-                    Logger.getLogger(HUDEditor.class.getName()).log(Level.SEVERE, null, ex);
-                } catch(ExecutionException ex) {
-                    Logger.getLogger(HUDEditor.class.getName()).log(Level.SEVERE, null, ex);
-                }
-            }
-        }.execute();
-
-        final JProgressBar updateBar = new JProgressBar();
-        options[1].addActionListener(new ActionListener() {
-            public void actionPerformed(ActionEvent ae) {
-                //<editor-fold defaultstate="collapsed" desc="Update">
-                options[1].setEnabled(false);
-                updateBar.setPreferredSize(new Dimension(175, 20));
-                updateBar.setMinimumSize(new Dimension(175, 20));
-                updateBar.setStringPainted(true);
-                updateBar.setIndeterminate(true);
-                updateBar.setValue(0);
-                scroll.getParent().add(updateBar);
-                scroll.getParent().repaint();
-                new SwingWorker<Boolean, Void>() {
-                    @Override
-                    protected Boolean doInBackground() throws Exception {
-                        String md5 = checksum();
-                        final File md5File = new File(Utils.workingDirectory(HUDEditor.class),
-                                                      "update.tmp.MD5");
-                        if(md5File.exists()) {
-                            md5File.delete();
-                        }
-                        md5File.createNewFile();
-                        FileOutputStream md5Writer = new FileOutputStream(md5File);
-                        md5Writer.write(md5.getBytes());
-                        final File downloaded = new File(Utils.workingDirectory(HUDEditor.class),
-                                                         "update.tmp");
-                        int retries = 3;
-                        for(int attempt = 1; attempt < retries; attempt++) {
-                            LOG.log(Level.INFO, "Checking for {0}", downloaded);
-                            if(!downloaded.exists()) {
-                                long startTime = System.currentTimeMillis();
-
-                                LOG.info("Connecting to Dropbox...");
-
-                                URL latest = new URL(
-                                        "https://dl.dropbox.com/u/42745598/tf/HUD%20Editor/TF2%20HUD%20Editor.jar");
-                                URLConnection editor = latest.openConnection();
-                                updateBar.setMaximum(editor.getContentLength());
-                                updateBar.setIndeterminate(false);
-
-                                InputStream in = latest.openStream();
-
-                                LOG.info("Downloading JAR file in 150KB blocks at a time.\n");
-                                FileOutputStream writer = new FileOutputStream(downloaded);
-                                byte[] buffer = new byte[153600]; // 150KB
-                                int totalBytesRead = 0;
-                                int bytesRead;
-                                while((bytesRead = in.read(buffer)) > 0) {
-                                    writer.write(buffer, 0, bytesRead);
-                                    buffer = new byte[153600];
-                                    totalBytesRead += bytesRead;
-                                    updateBar.setValue(totalBytesRead);
-                                }
-
-                                long endTime = System.currentTimeMillis();
-
-                                LOG.log(Level.INFO,
-                                        "Done. {0} kilobytes downloaded ({1} seconds).\n",
-                                        new Object[] {new Integer(totalBytesRead / 1000).toString(),
-                                                      new Long((endTime - startTime) / 1000).toString()});
-                                writer.close();
-                                in.close();
-                                status.remove(updateBar);
-                            } else {
-                                LOG.info("Exists");
-                            }
-
-                            LOG.info("Checking MD5...");
-                            if(!Utils.takeMD5(Utils.loadFile(downloaded)).equalsIgnoreCase(md5)) {
-                                LOG.warning("Corrupt or old download");
-                                continue;
-                            }
-                            LOG.info("MD5 matches");
-
-                            info("Restart to apply update to " + Utils.currentFile(Main.class));
-                            return true;
-                        }
-                        LOG.warning("Update failed");
-                        return false;
-                    }
-
-                    @Override
-                    protected void done() {
-                        try {
-                            boolean success = get();
-                            if(!success) {
-                                updateBar.setString("Update failed");
-                                updateBar.setIndeterminate(false);
-                                updateBar.setValue(0);
-                                options[1].setEnabled(true);
-                            } else {
-                                updateBar.setString("Downloaded successfully");
-                            }
-                        } catch(InterruptedException ex) {
-                            Logger.getLogger(HUDEditor.class.getName()).log(Level.SEVERE, null, ex);
-                        } catch(ExecutionException ex) {
-                            Logger.getLogger(HUDEditor.class.getName()).log(Level.SEVERE, null, ex);
-                        }
-                    }
-                }.execute();
-                //</editor-fold>
-            }
-        });
-    }
-    //</editor-fold>
 
     //<editor-fold defaultstate="collapsed" desc="Messages">
     private void error(Object msg) {
@@ -495,12 +175,12 @@ public class HUDEditor extends javax.swing.JFrame {
         pane.addHyperlinkListener(HUDEditor.this.linkListener);
         String aboutText = "<html><h2>This is to be a What You See Is What You Get HUD Editor for TF2,</h2>";
         aboutText += "for graphically editing TF2 HUDs!";
-        aboutText += "<p>Author: TimePath (<a href=\"http://www.reddit.com/user/TimePath/\">reddit</a>|<a href=\"http://steamcommunity.com/id/TimePath/\">steam</a>)<br>";
+        aboutText += "<p>Author: TimePath (<a href=\"http://steamcommunity.com/id/TimePath/\">steam</a>|<a href=\"http://www.reddit.com/user/TimePath/\">reddit</a>)<br>";
         String local = "</p>";
         String aboutText2 = "<p>Source available on <a href=\"https://github.com/TimePath/hl2-hud-editor\">GitHub</a>";
         aboutText2 += "<br><a href=\"https://github.com/TimePath/hl2-hud-editor/commits/master.atom\">Atom feed</a> available for source commits</p>";
-        aboutText2 += "<p>Please leave feedback or suggestions on <a href=\"" + latestThread + "\">the steam group forum</a>";
-        aboutText2 += "<br>You might be able to catch me <a href=\"steam://friends/joinchat/103582791433759131\">here</a> (<a href=\"http://steamcommunity.com/groups/hudeditor\">web link</a>)</p>"; // TODO: http://steamredirect.heroku.com or Runtime.exec() on older versions of java
+        aboutText2 += "<p>Please leave feedback or suggestions on <a href=\"" + latestThread + "\">the steam group</a>";
+        aboutText2 += "<br>You might be able to catch me live <a href=\"steam://friends/joinchat/103582791433759131\">in chat</a></p>"; // TODO: http://steamredirect.heroku.com or Runtime.exec() on older versions of java
         aboutText2 += "<p>Logging to <a href=\"" + Main.logFile.toURI() + "\">" + Main.logFile + "</a></p>";
         if(Main.myVer != 0) {
             long time = Main.myVer;
@@ -522,53 +202,6 @@ public class HUDEditor extends javax.swing.JFrame {
         t.setInitialDelay(0);
         t.start();
         info(pane, "About");
-
-    }
-
-    private void locateUserDirectory() {
-        FilenameFilter dirFilter = new FilenameFilter() {
-            public boolean accept(File dir, String name) {
-                return new File(dir, name).isDirectory();
-            }
-        };
-
-        JComboBox dropDown = new JComboBox(); // <String>
-        File steamappsFolder = SteamUtils.getSteamApps();
-        File[] userFolders = steamappsFolder.listFiles(dirFilter);
-        if(userFolders == null) {
-            error("SteamApps is empty!", "Empty SteamApps directory");
-            return;
-        }
-        for(int i = 0; i < userFolders.length; i++) {
-            if(userFolders[i].getName().equalsIgnoreCase("common") || userFolders[i].getName().equalsIgnoreCase(
-                    "sourcemods")) {
-                continue;
-            }
-            File[] gameFolders = userFolders[i].listFiles(dirFilter);
-            for(int j = 0; j < gameFolders.length; j++) {
-                if(gameFolders[j].getName().equalsIgnoreCase("Team Fortress 2")) {
-                    dropDown.addItem(userFolders[i].getName());
-                    break;
-                }
-            }
-        }
-        if(dropDown.getItemCount() == 0) {
-            error("No users have TF2 installed!", "TF2 not found");
-            return;
-        }
-        if(dropDown.getItemCount() > 1) {
-            JPanel dialogPanel = new JPanel();
-            dialogPanel.setLayout(new BoxLayout(dialogPanel, BoxLayout.Y_AXIS));
-            dialogPanel.add(new JLabel("Please choose for which user you want to install the HUD"));
-            dialogPanel.add(dropDown);
-            JOptionPane.showMessageDialog(this, dialogPanel, "Select user",
-                                          JOptionPane.QUESTION_MESSAGE);
-        }
-        File installDir = new File(steamappsFolder,
-                                   dropDown.getSelectedItem() + "/Team Fortress 2/tf");
-        if(installDir.isDirectory() && installDir.exists()) {
-            info("Install path: " + installDir, "Install path");
-        }
     }
 
     /**
@@ -801,9 +434,6 @@ public class HUDEditor extends javax.swing.JFrame {
         super.setVisible(b);
         this.createBufferStrategy(2);
         track("ProgramLoad");
-        if(Main.myVer != 0 && Main.prefs.getBoolean("autoupdate", true) && !checked) {
-            this.checkForUpdates(false);
-        }
     }
     //</editor-fold>
 
@@ -883,49 +513,34 @@ public class HUDEditor extends javax.swing.JFrame {
         return null;
     }
 
-    private void mount() {
-        File r = SteamUtils.getSteamApps();
-        if(r == null) {
-            return;
-        }
-        File[] gcf = r.listFiles(new java.io.FilenameFilter() {
-            public boolean accept(File dir, String name) {
-                return name.toLowerCase().endsWith(".gcf");
+    private void mount(final int appID) {
+        new SwingWorker<DefaultMutableTreeNode, Void>() {
+            @Override
+            protected DefaultMutableTreeNode doInBackground() throws Exception {
+                LOG.log(Level.INFO, "Mounting {0}", appID);
+                Archive a = ACF.fromManifest(appID);
+                DefaultMutableTreeNode child = new DefaultMutableTreeNode();
+                a.analyze(child, true);
+                child.setUserObject(a);
+                return child;
             }
-        });
-        if(gcf == null) {
-            return;
-        }
-        for(final File f : gcf) {
-            LOG.log(Level.INFO, "Mounting {0}", f);
-            new SwingWorker<DefaultMutableTreeNode, Void>() {
-                @Override
-                protected DefaultMutableTreeNode doInBackground() throws Exception {
-                    DefaultMutableTreeNode child = null;
-                    Archive g = new VPK(f);
-                    child = new DefaultMutableTreeNode();
-                    g.analyze(child, true);
-                    child.setUserObject(g);
-                    return child;
-                }
 
-                @Override
-                protected void done() {
-                    try {
-                        DefaultMutableTreeNode g = get();
-                        if(g != null) {
-                            archiveRoot.add(g);
-                            ((DefaultTreeModel) fileTree.getModel()).reload(archiveRoot);
-                            LOG.log(Level.INFO, "Mounted {0}", f);
-                        }
-                    } catch(InterruptedException ex) {
-                        Logger.getLogger(HUDEditor.class.getName()).log(Level.SEVERE, null, ex);
-                    } catch(ExecutionException ex) {
-                        Logger.getLogger(HUDEditor.class.getName()).log(Level.SEVERE, null, ex);
+            @Override
+            protected void done() {
+                try {
+                    DefaultMutableTreeNode g = get();
+                    if(g != null) {
+                        archiveRoot.add(g);
+                        ((DefaultTreeModel) fileTree.getModel()).reload(archiveRoot);
+                        LOG.log(Level.INFO, "Mounted {0}", appID);
                     }
+                } catch(InterruptedException ex) {
+                    Logger.getLogger(HUDEditor.class.getName()).log(Level.SEVERE, null, ex);
+                } catch(ExecutionException ex) {
+                    Logger.getLogger(HUDEditor.class.getName()).log(Level.SEVERE, null, ex);
                 }
-            }.execute();
-        }
+            }
+        }.execute();
     }
 
     private void recurseDirectoryToNode(File root, final DefaultMutableTreeNode parent) {
@@ -1037,7 +652,6 @@ public class HUDEditor extends javax.swing.JFrame {
     }
 
     public void quit() {
-//        if(!updating) {
         LOG.info("Closing...");
         this.dispose();
 //        if(OS.isMac()) {
@@ -1048,7 +662,6 @@ public class HUDEditor extends javax.swing.JFrame {
 //                f.setVisible(true);
 //        } else {
         System.exit(0);
-//        }
 //        }
     }
 
@@ -1373,7 +986,7 @@ public class HUDEditor extends javax.swing.JFrame {
         canvas.requestFocusInWindow();
         //</editor-fold>
 
-        mount();
+        mount(440);
 
     }
 
@@ -1538,11 +1151,11 @@ public class HUDEditor extends javax.swing.JFrame {
 
         private JMenuItem newItem, openItem, openZippedItem, saveItem, saveAsItem, reloadItem, closeItem, exitItem;
 
-        private JMenuItem undoItem, redoItem, cutItem, copyItem, pasteItem, deleteItem, selectAllItem, preferencesItem, locateUserItem;
+        private JMenuItem undoItem, redoItem, cutItem, copyItem, pasteItem, deleteItem, selectAllItem, preferencesItem;
 
         private JMenuItem resolutionItem, previewItem;
 
-        private JMenuItem updateItem, aboutItem;
+        private JMenuItem aboutItem;
 
         private int modifier = Toolkit.getDefaultToolkit().getMenuShortcutKeyMask();
 
@@ -1734,15 +1347,6 @@ public class HUDEditor extends javax.swing.JFrame {
                 });
                 editMenu.add(preferencesItem);
             }
-
-            locateUserItem = new JMenuItem(new CustomAction("Select user folder", null,
-                                                            KeyEvent.VK_S, null) {
-                @Override
-                public void actionPerformed(ActionEvent ae) {
-                    locateUserDirectory();
-                }
-            });
-            editMenu.add(locateUserItem);
             //</editor-fold>
 
             JMenu viewMenu = new JMenu("View");
@@ -1807,25 +1411,13 @@ public class HUDEditor extends javax.swing.JFrame {
             viewMenu.add(viewItem4);
             //</editor-fold>
 
-            extras();
-
-            JMenu helpMenu = new JMenu("Help");
-
-            helpMenu.setMnemonic(KeyEvent.VK_H);
-
-            this.add(helpMenu);
-
-            updateItem = new JMenuItem(new CustomAction("Updates", null, KeyEvent.VK_U, null) {
-                @Override
-                public void actionPerformed(ActionEvent ae) {
-                    HUDEditor.this.checkForUpdates(true);
-                }
-            });
-            updateItem.setEnabled(Main.myVer != 0); // XXX
-            updateItem.setEnabled(true);
-            helpMenu.add(updateItem);
-
             if(!OS.isMac()) {
+                JMenu helpMenu = new JMenu("Help");
+
+                helpMenu.setMnemonic(KeyEvent.VK_H);
+
+                this.add(helpMenu);
+
                 aboutItem = new JMenuItem(new CustomAction("About", null, KeyEvent.VK_A, null) {
                     @Override
                     public void actionPerformed(ActionEvent ae) {
@@ -1836,62 +1428,9 @@ public class HUDEditor extends javax.swing.JFrame {
             }
         }
 
-        //<editor-fold defaultstate="collapsed" desc="Extras">
-        private void extras() {
-            JMenu extrasMenu = new JMenu("Extras");
-            extrasMenu.setMnemonic(KeyEvent.VK_X);
-            this.add(extrasMenu);
-
-            JMenuItem vtfItem = new JMenuItem(new CustomAction("VTF Viewer", null, KeyEvent.VK_T,
-                                                               null) {
-                @Override
-                public void actionPerformed(ActionEvent ae) {
-                    VTFTest.main("");
-                }
-            });
-            extrasMenu.add(vtfItem);
-
-            JMenuItem captionItem = new JMenuItem(new CustomAction("Caption Editor", null,
-                                                                   KeyEvent.VK_C, null) {
-                @Override
-                public void actionPerformed(ActionEvent ae) {
-                    VCCDTest.main("");
-                }
-            });
-            extrasMenu.add(captionItem);
-
-            JMenuItem vdfItem = new JMenuItem(new CustomAction("VDF Viewer", null, KeyEvent.VK_D,
-                                                               null) {
-                @Override
-                public void actionPerformed(ActionEvent ae) {
-                    DataTest.main("");
-                }
-            });
-            extrasMenu.add(vdfItem);
-
-            JMenuItem gcfItem = new JMenuItem(new CustomAction("Archive Explorer", null,
-                                                               KeyEvent.VK_E, null) {
-                @Override
-                public void actionPerformed(ActionEvent ae) {
-                    ArchiveExplorer.main("");
-                }
-            });
-            extrasMenu.add(gcfItem);
-
-            JMenuItem bitmapItem = new JMenuItem(new CustomAction("Bitmap Font Glyph Editor", null,
-                                                                  KeyEvent.VK_G, null) {
-                @Override
-                public void actionPerformed(ActionEvent ae) {
-                    VBFTest.main("");
-                }
-            });
-            extrasMenu.add(bitmapItem);
-        }
-        //</editor-fold>
-
     }
 
-    private class CustomAction extends AbstractAction {
+    private abstract class CustomAction extends AbstractAction {
 
         private CustomAction(String string, Icon icon, int mnemonic, KeyStroke shortcut) {
             super(Main.getString(string), icon);
@@ -1899,12 +1438,11 @@ public class HUDEditor extends javax.swing.JFrame {
             this.putValue(Action.ACCELERATOR_KEY, shortcut);
         }
 
-        public void actionPerformed(ActionEvent ae) {
-        }
+        public abstract void actionPerformed(ActionEvent ae);
 
     }
     //</editor-fold>
-//<editor-fold defaultstate="collapsed" desc="Generated Code">
+    //<editor-fold defaultstate="collapsed" desc="Generated Code">
 
     /**
      * This method is called from within the constructor to initialize the form.

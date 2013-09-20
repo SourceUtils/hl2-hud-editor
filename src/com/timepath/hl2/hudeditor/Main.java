@@ -10,15 +10,11 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
-import java.io.RandomAccessFile;
 import java.net.BindException;
 import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.SocketException;
-import java.nio.channels.FileChannel;
-import java.security.NoSuchAlgorithmException;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.ResourceBundle;
@@ -169,76 +165,12 @@ public class Main {
     }
 
     public static void main(String... args) {
-        //<editor-fold defaultstate="collapsed" desc="Initialize">
         LOG.log(Level.INFO, "Current version = {0}", myVer);
         LOG.log(Level.INFO, "Args = {0}", Arrays.toString(args));
         String cwd = Utils.workingDirectory(Main.class);
         LOG.log(Level.INFO, "Working directory = {0}", cwd);
-        File current = Utils.currentFile(Main.class);
-        LOG.log(Level.INFO, "Current file = {0}", current);
-        File update = new File(cwd, "update.tmp");
-        if(update.exists()) {
-            LOG.log(Level.INFO, "Update file = {0}", update);
-        }
         LOG.log(Level.CONFIG, "Env = {0}", System.getenv().toString());
         LOG.log(Level.CONFIG, "Properties = {0}", System.getProperties().toString());
-        for(int i = 0; i < args.length; i++) {
-            if(args[i].equalsIgnoreCase("updated")) {
-                update.delete();
-            }
-        }
-        if(!current.equals(update)) {
-            startTheOther(update);
-        }
-
-        for(int i = 0; i < args.length; i++) {
-            if(args[i].equalsIgnoreCase("-u")) {
-                try {
-                    File destFile = new File(args[i + 1]);
-                    LOG.log(Level.INFO, "Updating {0}", destFile);
-                    File sourceFile = Utils.currentFile(Main.class);
-                    if(!destFile.exists()) {
-                        destFile.createNewFile();
-                    }
-
-                    FileChannel source = null;
-                    FileChannel destination = null;
-                    try {
-                        source = new RandomAccessFile(sourceFile, "rw").getChannel();
-                        destination = new RandomAccessFile(destFile, "rw").getChannel();
-
-                        long position = 0;
-                        long count = source.size();
-
-                        source.transferTo(position, count, destination);
-                    } finally {
-                        if(source != null) {
-                            source.close();
-                        }
-                        if(destination != null) {
-                            destination.force(true);
-                            destination.close();
-                        }
-                    }
-                    final String javaBin = System.getProperty("java.home") + File.separator + "bin" + File.separator + "java";
-                    final ArrayList<String> cmd = new ArrayList<String>();
-                    cmd.add(javaBin);
-                    cmd.add("-jar");
-                    cmd.add(destFile.getPath());
-                    cmd.add("updated");
-                    // TODO: carry other args
-                    String[] exec = new String[cmd.size()];
-                    cmd.toArray(exec);
-                    final ProcessBuilder process = new ProcessBuilder(exec);
-                    process.start();
-                    sourceFile.deleteOnExit();
-                    System.exit(0);
-                } catch(IOException ex) {
-                    Logger.getLogger(Main.class.getName()).log(Level.SEVERE, null, ex);
-                }
-            }
-        }
-        //</editor-fold>
 
         boolean daemon = false;
         if(daemon) {
@@ -325,7 +257,7 @@ public class Main {
 
                     long cVer = Long.parseLong(in.readLine());
                     LOG.log(Level.INFO, "client {0} vs host {1}", new Object[] {cVer, myVer});
-                    String request = "-noupdate " + in.readLine();
+                    String request = in.readLine();
                     LOG.log(Level.INFO, "Request: {0}", request);
                     out.println(myVer);
 
@@ -376,48 +308,6 @@ public class Main {
             LOG.log(Level.SEVERE, null, ex);
         }
         return false;
-    }
-
-    private static void startTheOther(File update) {
-        if(!update.exists()) {
-            return;
-        }
-        try {
-            String md5 = Utils.takeMD5(Utils.loadFile(update));
-            File updateChecksum = new File(update.getPath() + ".MD5");
-            String expectedMd5 = new String(Utils.loadFile(updateChecksum));
-            if(!md5.equals(expectedMd5)) {
-                LOG.log(Level.WARNING, "Corrupt update file");
-                updateChecksum.delete();
-                update.delete();
-                return;
-            }
-        } catch(IOException ex) {
-            Logger.getLogger(Main.class.getName()).log(Level.SEVERE, null, ex);
-            return;
-        } catch(NoSuchAlgorithmException ex) {
-            Logger.getLogger(Main.class.getName()).log(Level.SEVERE, null, ex);
-            return;
-        }
-        LOG.log(Level.INFO, "Updating from {0}", update);
-        try {
-            final String javaBin = System.getProperty("java.home") + File.separator + "bin" + File.separator + "java";
-
-            final ArrayList<String> cmd = new ArrayList<String>();
-            cmd.add(javaBin);
-            cmd.add("-jar");
-            cmd.add(update.getPath());
-            cmd.add("-u");
-            cmd.add(Utils.currentFile(Main.class).getPath());
-            String[] exec = new String[cmd.size()];
-            cmd.toArray(exec);
-            LOG.log(Level.INFO, "Invoking other: {0}", Arrays.toString(exec));
-            final ProcessBuilder process = new ProcessBuilder(exec);
-            process.start();
-            System.exit(0);
-        } catch(IOException ex) {
-            LOG.log(Level.SEVERE, null, ex);
-        }
     }
 
     private static void start(String... args) {
