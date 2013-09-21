@@ -163,7 +163,7 @@ public class HUDEditor extends javax.swing.JFrame {
 
     //<editor-fold defaultstate="collapsed" desc="Dialogs">
     public void preferences() {
-        jDialog1.setVisible(true);
+        info("No app-specific preferences yet", "Preferences");
     }
 
     public void about() {
@@ -181,7 +181,6 @@ public class HUDEditor extends javax.swing.JFrame {
         aboutText2 += "<br><a href=\"https://github.com/TimePath/hl2-hud-editor/commits/master.atom\">Atom feed</a> available for source commits</p>";
         aboutText2 += "<p>Please leave feedback or suggestions on <a href=\"" + latestThread + "\">the steam group</a>";
         aboutText2 += "<br>You might be able to catch me live <a href=\"steam://friends/joinchat/103582791433759131\">in chat</a></p>"; // TODO: http://steamredirect.heroku.com or Runtime.exec() on older versions of java
-        aboutText2 += "<p>Logging to <a href=\"" + Main.logFile.toURI() + "\">" + Main.logFile + "</a></p>";
         if(Main.myVer != 0) {
             long time = Main.myVer;
             aboutText2 += "<p>Build date: " + DateUtils.parse(time) + " (" + time + ")</p>";
@@ -660,8 +659,6 @@ public class HUDEditor extends javax.swing.JFrame {
 //                f.setJMenuBar(this.getJMenuBar());
 //                f.setLocation(-Integer.MAX_VALUE, -Integer.MAX_VALUE); // Hacky - should just use the OSX Application calls...
 //                f.setVisible(true);
-//        } else {
-        System.exit(0);
 //        }
     }
 
@@ -833,8 +830,6 @@ public class HUDEditor extends javax.swing.JFrame {
 
         //<editor-fold defaultstate="collapsed" desc="Base">
         initComponents();
-
-        jCheckBox1.setSelected(Main.prefs.getBoolean("autoupdate", true));
 
         tools.setWindow(this);
         tools.putClientProperty("Quaqua.ToolBar.style", "title");
@@ -1454,101 +1449,11 @@ public class HUDEditor extends javax.swing.JFrame {
     private void initComponents() {
         java.awt.GridBagConstraints gridBagConstraints;
 
-        jDialog1 = new javax.swing.JDialog(this);
-        jLabel1 = new javax.swing.JLabel();
-        themeSelector1 = new com.timepath.swing.ThemeSelector();
-        jLabel2 = new javax.swing.JLabel();
-        jCheckBox1 = new javax.swing.JCheckBox();
-        jLabel3 = new javax.swing.JLabel();
-        jLabel4 = new javax.swing.JLabel();
-        jComboBox1 = new javax.swing.JComboBox();
-        jComboBox2 = new javax.swing.JComboBox();
         tools = new com.timepath.swing.BlendedToolBar();
         rootSplit = new javax.swing.JSplitPane();
         sideSplit = new javax.swing.JSplitPane();
         tabbedContent = new javax.swing.JTabbedPane();
         status = new com.timepath.swing.StatusBar();
-
-        jDialog1.setTitle("Preferences");
-        jDialog1.setMinimumSize(new java.awt.Dimension(400, 300));
-        jDialog1.setModalityType(java.awt.Dialog.ModalityType.DOCUMENT_MODAL);
-        jDialog1.getContentPane().setLayout(new java.awt.GridBagLayout());
-
-        jLabel1.setText("Theme:");
-        gridBagConstraints = new java.awt.GridBagConstraints();
-        gridBagConstraints.gridx = 0;
-        gridBagConstraints.gridy = 0;
-        gridBagConstraints.anchor = java.awt.GridBagConstraints.LINE_END;
-        jDialog1.getContentPane().add(jLabel1, gridBagConstraints);
-
-        themeSelector1.addPropertyChangeListener(new java.beans.PropertyChangeListener() {
-            public void propertyChange(java.beans.PropertyChangeEvent evt) {
-                themeSelector1PropertyChange(evt);
-            }
-        });
-        gridBagConstraints = new java.awt.GridBagConstraints();
-        gridBagConstraints.gridx = 1;
-        gridBagConstraints.gridy = 0;
-        gridBagConstraints.anchor = java.awt.GridBagConstraints.LINE_START;
-        jDialog1.getContentPane().add(themeSelector1, gridBagConstraints);
-
-        jLabel2.setText("Auto update:");
-        gridBagConstraints = new java.awt.GridBagConstraints();
-        gridBagConstraints.gridx = 0;
-        gridBagConstraints.gridy = 1;
-        gridBagConstraints.anchor = java.awt.GridBagConstraints.LINE_END;
-        jDialog1.getContentPane().add(jLabel2, gridBagConstraints);
-
-        jCheckBox1.addPropertyChangeListener(new java.beans.PropertyChangeListener() {
-            public void propertyChange(java.beans.PropertyChangeEvent evt) {
-                jCheckBox1PropertyChange(evt);
-            }
-        });
-        gridBagConstraints = new java.awt.GridBagConstraints();
-        gridBagConstraints.gridx = 1;
-        gridBagConstraints.gridy = 1;
-        gridBagConstraints.anchor = java.awt.GridBagConstraints.LINE_START;
-        jDialog1.getContentPane().add(jCheckBox1, gridBagConstraints);
-
-        jLabel3.setText("Console Detail:");
-        gridBagConstraints = new java.awt.GridBagConstraints();
-        gridBagConstraints.gridx = 0;
-        gridBagConstraints.gridy = 2;
-        gridBagConstraints.anchor = java.awt.GridBagConstraints.LINE_END;
-        jDialog1.getContentPane().add(jLabel3, gridBagConstraints);
-
-        jLabel4.setText("Logfile Detail:");
-        gridBagConstraints = new java.awt.GridBagConstraints();
-        gridBagConstraints.gridx = 0;
-        gridBagConstraints.gridy = 3;
-        gridBagConstraints.anchor = java.awt.GridBagConstraints.LINE_END;
-        jDialog1.getContentPane().add(jLabel4, gridBagConstraints);
-
-        jComboBox1.setModel(new javax.swing.DefaultComboBoxModel(new Object[] {Level.OFF, Level.SEVERE, Level.WARNING, Level.INFO, Level.CONFIG, Level.FINE, Level.FINER, Level.FINEST, Level.ALL}));
-        jComboBox1.setSelectedItem(Main.consoleLevel);
-        jComboBox1.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                jComboBox1ActionPerformed(evt);
-            }
-        });
-        gridBagConstraints = new java.awt.GridBagConstraints();
-        gridBagConstraints.gridx = 1;
-        gridBagConstraints.gridy = 2;
-        gridBagConstraints.anchor = java.awt.GridBagConstraints.LINE_START;
-        jDialog1.getContentPane().add(jComboBox1, gridBagConstraints);
-
-        jComboBox2.setModel(new javax.swing.DefaultComboBoxModel(new Object[] {Level.OFF, Level.SEVERE, Level.WARNING, Level.INFO, Level.CONFIG, Level.FINE, Level.FINER, Level.FINEST, Level.ALL}));
-        jComboBox2.setSelectedItem(Main.logfileLevel);
-        jComboBox2.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                jComboBox2ActionPerformed(evt);
-            }
-        });
-        gridBagConstraints = new java.awt.GridBagConstraints();
-        gridBagConstraints.gridx = 1;
-        gridBagConstraints.gridy = 3;
-        gridBagConstraints.anchor = java.awt.GridBagConstraints.LINE_START;
-        jDialog1.getContentPane().add(jComboBox2, gridBagConstraints);
 
         getContentPane().add(tools, java.awt.BorderLayout.PAGE_START);
 
@@ -1570,36 +1475,11 @@ public class HUDEditor extends javax.swing.JFrame {
         pack();
     }// </editor-fold>//GEN-END:initComponents
 
-    private void jCheckBox1PropertyChange(java.beans.PropertyChangeEvent evt) {//GEN-FIRST:event_jCheckBox1PropertyChange
-        Main.prefs.putBoolean("autoupdate", jCheckBox1.isSelected());
-    }//GEN-LAST:event_jCheckBox1PropertyChange
-
-    private void themeSelector1PropertyChange(java.beans.PropertyChangeEvent evt) {//GEN-FIRST:event_themeSelector1PropertyChange
-        Main.prefs.put("theme", UIManager.getLookAndFeel().getClass().getName());
-    }//GEN-LAST:event_themeSelector1PropertyChange
-
-    private void jComboBox1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jComboBox1ActionPerformed
-        Main.prefs.put("consoleLevel", jComboBox1.getSelectedItem().toString().toUpperCase());
-    }//GEN-LAST:event_jComboBox1ActionPerformed
-
-    private void jComboBox2ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jComboBox2ActionPerformed
-        Main.prefs.put("logfileLevel", jComboBox2.getSelectedItem().toString().toUpperCase());
-    }//GEN-LAST:event_jComboBox2ActionPerformed
-
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JCheckBox jCheckBox1;
-    private javax.swing.JComboBox jComboBox1;
-    private javax.swing.JComboBox jComboBox2;
-    private javax.swing.JDialog jDialog1;
-    private javax.swing.JLabel jLabel1;
-    private javax.swing.JLabel jLabel2;
-    private javax.swing.JLabel jLabel3;
-    private javax.swing.JLabel jLabel4;
     private javax.swing.JSplitPane rootSplit;
     private javax.swing.JSplitPane sideSplit;
     private com.timepath.swing.StatusBar status;
     private javax.swing.JTabbedPane tabbedContent;
-    private com.timepath.swing.ThemeSelector themeSelector1;
     private com.timepath.swing.BlendedToolBar tools;
     // End of variables declaration//GEN-END:variables
     //</editor-fold>

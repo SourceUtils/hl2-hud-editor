@@ -6,7 +6,6 @@ import com.timepath.plaf.linux.WindowToolkit;
 import com.timepath.plaf.mac.OSXProps;
 import com.timepath.plaf.x.filechooser.XFileDialogFileChooser;
 import java.io.BufferedReader;
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
@@ -18,12 +17,8 @@ import java.net.SocketException;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.ResourceBundle;
-import java.util.logging.ConsoleHandler;
-import java.util.logging.FileHandler;
-import java.util.logging.Handler;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import java.util.logging.SimpleFormatter;
 import java.util.prefs.BackingStoreException;
 import java.util.prefs.Preferences;
 import javax.swing.SwingUtilities;
@@ -58,8 +53,6 @@ public class Main {
         return Long.parseLong(impl);
     }
 
-    public static final File logFile;
-
     private static final Logger LOG = Logger.getLogger(Main.class.getName());
 
     /**
@@ -80,72 +73,8 @@ public class Main {
         return getString(key, key);
     }
 
-    public static Level consoleLevel = Level.INFO;
-
-    public static Level logfileLevel = Level.INFO;
-
+    //<editor-fold defaultstate="collapsed" desc="OS tweaks">
     static {
-        //<editor-fold defaultstate="collapsed" desc="Debugging">
-        Thread.setDefaultUncaughtExceptionHandler(new Thread.UncaughtExceptionHandler() {
-            public void uncaughtException(Thread thread, Throwable thrwbl) {
-                Logger.getLogger(thread.getName()).log(Level.SEVERE, "Uncaught Exception", thrwbl);
-            }
-        });
-        //</editor-fold>
-
-        //<editor-fold defaultstate="collapsed" desc="Logging">
-        try {
-            consoleLevel = Level.parse(prefs.get("consoleLevel", "FINE"));
-        } catch(IllegalArgumentException ex) {
-        }
-        LOG.info("Console level: " + consoleLevel);
-        try {
-            logfileLevel = Level.parse(prefs.get("logfileLevel", "FINE"));
-        } catch(IllegalArgumentException ex) {
-        }
-        LOG.info("Logfile level: " + logfileLevel);
-        Level packageLevel = consoleLevel;
-        if(consoleLevel != Level.OFF && logfileLevel != Level.OFF) {
-            if(logfileLevel.intValue() > consoleLevel.intValue()) {
-                packageLevel = logfileLevel;
-            }
-        }
-        Logger.getLogger("com.timepath").setLevel(packageLevel);
-
-        SimpleFormatter consoleFormatter = new SimpleFormatter();
-        SimpleFormatter fileFormatter = new SimpleFormatter();
-
-        if(consoleLevel != Level.OFF) {
-            Handler[] hs = Logger.getLogger("").getHandlers();
-            for(Handler h : hs) {
-                if(h instanceof ConsoleHandler) {
-                    h.setLevel(consoleLevel);
-                    h.setFormatter(consoleFormatter);
-                }
-            }
-        }
-
-        if(logfileLevel != Level.OFF) {
-            logFile = new File(Utils.workingDirectory(Main.class),
-                               "logs/" + System.currentTimeMillis() / 1000 + "_log.txt");
-            try {
-                logFile.getParentFile().mkdirs();
-                FileHandler fh = new FileHandler(logFile.getPath(), 0, 1, false);
-                fh.setLevel(logfileLevel);
-                fh.setFormatter(fileFormatter);
-                Logger.getLogger("").addHandler(fh);
-                LOG.log(Level.INFO, "Logging to {0}", logFile.getPath());
-            } catch(IOException ex) {
-                LOG.log(Level.SEVERE, null, ex);
-            } catch(SecurityException ex) {
-                LOG.log(Level.SEVERE, null, ex);
-            }
-        } else {
-            logFile = null;
-        }
-        //</editor-fold>
-
-        //<editor-fold defaultstate="collapsed" desc="OS tweaks">
         if(OS.isWindows()) {
             XFileDialogFileChooser.setTraceLevel(0);
         } else if(OS.isLinux()) {
@@ -161,8 +90,8 @@ public class Main {
             OSXProps.growBoxIntrudes(false);
             OSXProps.liveResize(true);
         }
-        //</editor-fold>
     }
+    //</editor-fold>
 
     public static void main(String... args) {
         LOG.log(Level.INFO, "Current version = {0}", myVer);
@@ -274,7 +203,6 @@ public class Main {
             }
 
             LOG.info("Exiting...");
-            System.exit(0);
         }
 
     }
