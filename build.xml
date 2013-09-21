@@ -1,55 +1,45 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project name="TF2_HUD_EDITOR" basedir="." default="dist">
+<project name="TF2_HUD_EDITOR" default="default" basedir=".">
     <description>Builds, tests, and runs the project.</description>
     <import file="nbproject/build-impl.xml"/>
-	
-    <!--<taskdef name="JarOpt" classname="org.cmc.jaroptimizer.JarOptTask" classpath="jaropt.jar"/>-->
-	
-    <!--TODO: read from javac.classpath -->
-    <!--    <target name="-pre-jar">
-        <echo message="Unpacking all direct libraries into build directory"/>
-        <unjar dest="${build.classes.dir}">
-            <fileset dir="lib">
-                <include name="**/*.jar"/>
-            </fileset>
-            <patternset>
-                <exclude name="META-INF/**"/>
-                <exclude name="/*"/>
-            </patternset>
-        </unjar>
-    </target>-->
     
     <property name="store.jar.name" value="TF2 HUD Editor"/>
     <property name="store.dir" value="${user.home}/Dropbox/Public/tf/HUD Editor"/>
     
     <property name="store.jar" value="${store.dir}/${store.jar.name}.jar"/>
+    
+    <!--<taskdef name="JarOpt" classname="org.cmc.jaroptimizer.JarOptTask" classpath="jaropt.jar"/>-->
+    
     <script language="javascript">
         <![CDATA[property = project.setProperty("now", Math.floor((new Date()).getTime() / 1000));]]>
     </script>
-    <property name="main.class" value="com.timepath.hl2.hudeditor.Wrapper"/>
+    
+    <target name="-pre-jar">
+        <manifest file="manifest.mf" mode="replace">
+            <attribute name="Implementation-Version" value="${now}"/>
+        </manifest>
+    </target>
 	
-    <!--<target name="-post-jar">--> 
-    <target name="dist">       
-        <echo message="Publishing ${store.jar}:${main.class}"/>
+    <target name="-post-jar"> 
+        <echo message="Packing ${store.jar}"/>
         <mkdir dir="dist/lib"/>
         <mkdir dir="${store.dir}"/>
-        <jar destfile="${store.jar}" level="9">
-            <zipgroupfileset dir="dist" includes="*.jar"/>
+        <jar destfile="${store.jar}" filesetmanifest="merge" duplicate="preserve" index="true" indexMetaInf="true" level="9">
             <zipgroupfileset dir="dist/lib" includes="*.jar"/>
+            <zipgroupfileset dir="dist" includes="*.jar"/>
             <manifest>
-                <attribute name="Main-Class" value="${main.class}"/>
-                <attribute name="Implementation-Version" value="${now}"/>
+                <attribute name="Class-Path" value=""/>
             </manifest>
         </jar>
         
         <!--        <JarOpt src="${store.jar}" dst="${store.jar}.smaller" stripnonclassfiles="true">
             <includePattern>ch.randelshofer.quaqua.*</includePattern>
-            <includePattern>com.timepath.tf2.hudeditor.Wrapper</includePattern>
+            <includePattern>com.timepath.hl2.hudeditor.Wrapper</includePattern>
         </JarOpt>-->
         
+        <chmod file="${store.jar}" perm="755"/>
         <checksum file="${store.jar}" forceOverwrite="yes"/>
         <echo file="${store.jar}.current" message="${now}" append="false"/>
-        <chmod file="${store.jar}" perm="755"/>
     </target>
     
 </project>
