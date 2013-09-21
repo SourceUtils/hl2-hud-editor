@@ -1,45 +1,47 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project name="TF2_HUD_EDITOR" default="default" basedir=".">
+<project name="hl2_hudeditor" default="default" basedir=".">
     <description>Builds, tests, and runs the project.</description>
     <import file="nbproject/build-impl.xml"/>
     
-    <property name="store.jar.name" value="TF2 HUD Editor"/>
-    <property name="store.dir" value="${user.home}/Dropbox/Public/tf/HUD Editor"/>
+    <property name="store.dir" value="${user.home}/Dropbox/Public/bin"/>
+    <property name="compression" value="9"/>
+    <!--Set to enable packing-->
+    <!--<property name="pack" value="true"/>-->
     
-    <property name="store.jar" value="${store.dir}/${store.jar.name}.jar"/>
-    
-    <!--<taskdef name="JarOpt" classname="org.cmc.jaroptimizer.JarOptTask" classpath="jaropt.jar"/>-->
+    <property name="store.jar" value="${store.dir}/${ant.project.name}.jar"/>
     
     <script language="javascript">
         <![CDATA[property = project.setProperty("now", Math.floor((new Date()).getTime() / 1000));]]>
     </script>
-    
-    <target name="-pre-jar">
-        <manifest file="manifest.mf" mode="replace">
-            <attribute name="Implementation-Version" value="${now}"/>
-        </manifest>
-    </target>
 	
     <target name="-post-jar"> 
-        <echo message="Packing ${store.jar}"/>
-        <mkdir dir="dist/lib"/>
+        <!--Ensure exists-->
         <mkdir dir="${store.dir}"/>
-        <jar destfile="${store.jar}" filesetmanifest="merge" duplicate="preserve" index="true" indexMetaInf="true" level="9">
-            <zipgroupfileset dir="dist/lib" includes="*.jar"/>
-            <zipgroupfileset dir="dist" includes="*.jar"/>
+        
+        <echo message="Packing ${store.jar} with ${basedir}${file.separator}${dist.jar}"/>
+        <jar destfile="${store.jar}" level="${compression}" filesetmanifest="merge" update="false">
+            <zipfileset src="${dist.jar}"/>
             <manifest>
+                <attribute name="Implementation-Version" value="${now}"/>
+                <attribute name="Main-Class" value="${main.class}"/>
                 <attribute name="Class-Path" value=""/>
             </manifest>
         </jar>
         
-        <!--        <JarOpt src="${store.jar}" dst="${store.jar}.smaller" stripnonclassfiles="true">
-            <includePattern>ch.randelshofer.quaqua.*</includePattern>
-            <includePattern>com.timepath.hl2.hudeditor.Wrapper</includePattern>
-        </JarOpt>-->
+        <antcall target="mergelibs"/>
         
         <chmod file="${store.jar}" perm="755"/>
         <checksum file="${store.jar}" forceOverwrite="yes"/>
         <echo file="${store.jar}.current" message="${now}" append="false"/>
+    </target>
+    
+    <target name="mergelibs" if="pack">
+        <echo message="Merging libs..."/>
+        <!--Ensure exists-->
+        <mkdir dir="dist/lib"/>
+        <jar destfile="${store.jar}" level="${compression}" filesetmanifest="skip" update="true">
+            <zipgroupfileset dir="dist/lib" includes="*.jar"/>
+        </jar>
     </target>
     
 </project>
