@@ -7,7 +7,7 @@ import com.timepath.backports.javax.swing.SwingWorker;
 import com.timepath.hl2.io.RES;
 import com.timepath.hl2.io.VMT;
 import com.timepath.hl2.io.VTF;
-import com.timepath.hl2.io.swing.VGUICanvas;
+import com.timepath.hl2.swing.VGUICanvas;
 import com.timepath.hl2.io.util.Element;
 import com.timepath.steam.io.util.Property;
 import com.timepath.plaf.IconList;
