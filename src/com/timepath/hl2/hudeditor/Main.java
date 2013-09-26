@@ -1,6 +1,5 @@
 package com.timepath.hl2.hudeditor;
 
-import com.timepath.Utils;
 import com.timepath.plaf.OS;
 import com.timepath.plaf.linux.WindowToolkit;
 import com.timepath.plaf.mac.OSXProps;
@@ -14,7 +13,6 @@ import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.SocketException;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.ResourceBundle;
 import java.util.logging.Level;
@@ -93,16 +91,10 @@ public class Main {
     }
     //</editor-fold>
 
-    public static void main(String... args) {
-        LOG.log(Level.INFO, "Current version = {0}", myVer);
-        LOG.log(Level.INFO, "Args = {0}", Arrays.toString(args));
-        String cwd = Utils.workingDirectory(Main.class);
-        LOG.log(Level.INFO, "Working directory = {0}", cwd);
-        LOG.log(Level.CONFIG, "Env = {0}", System.getenv().toString());
-        LOG.log(Level.CONFIG, "Properties = {0}", System.getProperties().toString());
-
+    public static void main(String[] args) {
         boolean daemon = false;
         if(daemon) {
+            LOG.log(Level.INFO, "Current version = {0}", myVer);
             int port = prefs.getInt("port", -1);
             if(port == -1) { // Was removed on shutdown
                 port = 0;

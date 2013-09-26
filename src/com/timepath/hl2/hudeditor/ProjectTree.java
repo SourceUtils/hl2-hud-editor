@@ -34,6 +34,8 @@ import javax.swing.tree.TreeSelectionModel;
  */
 @SuppressWarnings("serial")
 public class ProjectTree extends javax.swing.JTree implements ActionListener, MouseListener {
+    
+    private static final Logger LOG = Logger.getLogger(ProjectTree.class.getName());
 
     public ProjectTree() {
         initComponents();
@@ -229,7 +231,7 @@ public class ProjectTree extends javax.swing.JTree implements ActionListener, Mo
             return;
         }
         final Archive context = archiveContext;
-        LOG.log(Level.INFO, "GCF: {0}", context);
+        LOG.log(Level.INFO, "Archive: {0}", context);
         final int index;
         try {
             final File[] fs = new NativeFileChooser().setTitle("Extract").setDialogType(
@@ -247,7 +249,7 @@ public class ProjectTree extends javax.swing.JTree implements ActionListener, Mo
                         directoryEntryContext.extract(fs[0]);
                         ret = new File(fs[0], directoryEntryContext.getName());
                     } catch(IOException ex) {
-                        Logger.getLogger(ProjectTree.class.getName()).log(Level.SEVERE, null, ex);
+                        LOG.log(Level.SEVERE, null, ex);
                     }
 
                     return ret;
@@ -266,7 +268,7 @@ public class ProjectTree extends javax.swing.JTree implements ActionListener, Mo
             }.execute();
 
         } catch(IOException ex) {
-            Logger.getLogger(ProjectTree.class.getName()).log(Level.SEVERE, null, ex);
+            LOG.log(Level.SEVERE, null, ex);
         }
     }//GEN-LAST:event_extractActionActionPerformed
 
@@ -282,7 +284,5 @@ public class ProjectTree extends javax.swing.JTree implements ActionListener, Mo
     private JMenuItem nullAction;
     private JPopupMenu projectMenu;
     // End of variables declaration//GEN-END:variables
-
-    private static final Logger LOG = Logger.getLogger(ProjectTree.class.getName());
 
 }

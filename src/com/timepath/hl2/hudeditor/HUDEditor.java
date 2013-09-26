@@ -13,7 +13,6 @@ import com.timepath.steam.io.util.Property;
 import com.timepath.plaf.IconList;
 import com.timepath.plaf.OS;
 import com.timepath.plaf.linux.Ayatana;
-import com.timepath.plaf.linux.GtkFixer;
 import com.timepath.plaf.mac.Application;
 import com.timepath.plaf.mac.Application.AboutEvent;
 import com.timepath.plaf.mac.Application.AboutHandler;
@@ -28,7 +27,10 @@ import com.timepath.steam.SteamID;
 import com.timepath.steam.SteamUtils;
 import com.timepath.steam.io.VDF;
 import com.timepath.steam.io.storage.ACF;
+import com.timepath.steam.io.storage.Files;
+import com.timepath.steam.io.storage.VPK;
 import com.timepath.steam.io.storage.util.Archive;
+import com.timepath.steam.io.storage.util.DirectoryEntry;
 import com.timepath.steam.io.util.VDFNode;
 import com.timepath.swing.TreeUtils;
 import java.awt.Color;
@@ -58,23 +60,21 @@ import java.awt.event.ComponentEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.FilenameFilter;
-import java.io.IOException;
+import java.io.*;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URL;
 import java.text.MessageFormat;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Iterator;
 import java.util.List;
 import java.util.StringTokenizer;
 import java.util.TimeZone;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.zip.ZipEntry;
@@ -95,8 +95,6 @@ import javax.swing.JScrollPane;
 import javax.swing.JSpinner;
 import javax.swing.KeyStroke;
 import javax.swing.Timer;
-import javax.swing.UIManager;
-import javax.swing.UnsupportedLookAndFeelException;
 import javax.swing.event.HyperlinkListener;
 import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
@@ -107,10 +105,10 @@ import javax.swing.tree.TreePath;
 
 /**
  *
- * @author timepath
+ * @author TimePath
  */
 @SuppressWarnings("serial")
-public class HUDEditor extends javax.swing.JFrame {
+public class HUDEditor extends JFrame {
 
     private static final Logger LOG = Logger.getLogger(HUDEditor.class.getName());
 
@@ -220,13 +218,29 @@ public class HUDEditor extends javax.swing.JFrame {
             }
             load(selection[0]);
         } catch(IOException ex) {
-            Logger.getLogger(HUDEditor.class.getName()).log(Level.SEVERE, null, ex);
+            LOG.log(Level.SEVERE, null, ex);
+        }
+    }
+
+    private void locateZippedHud() {
+        try {
+            final File[] selection = new NativeFileChooser().setParent(HUDEditor.this).setTitle(
+                    Main.getString("OpenArchive")).setFile(lastLoaded).setFileMode(
+                    BaseFileChooser.FileMode.FILES_ONLY).choose();
+            if(selection == null) {
+                return;
+            }
+            load(selection[0]);
+        } catch(IOException ex) {
+            LOG.log(Level.SEVERE, null, ex);
         }
     }
 
     private void load(final File f) {
         HUDEditor.this.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
         new SwingWorker<DefaultMutableTreeNode, Void>() {
+            long start = System.currentTimeMillis();
+
             @Override
             public DefaultMutableTreeNode doInBackground() {
                 return doLoad(f);
@@ -238,22 +252,18 @@ public class HUDEditor extends javax.swing.JFrame {
                     DefaultMutableTreeNode project = get();
                     HUDEditor.this.setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
                     if(project != null) {
+                        LOG.log(Level.INFO, "Loaded hud - took {0}ms",
+                                (System.currentTimeMillis() - start));
                         fileSystemRoot.add(project);
                         fileTree.expandPath(new TreePath(project.getPath()));
                         fileTree.setSelectionRow(fileSystemRoot.getIndex(project));
                         fileTree.requestFocusInWindow();
                     }
-                } catch(InterruptedException ex) {
-                    Logger.getLogger(HUDEditor.class.getName()).log(Level.SEVERE, null, ex);
-                } catch(ExecutionException ex) {
-                    Logger.getLogger(HUDEditor.class.getName()).log(Level.SEVERE, null, ex);
+                } catch(Throwable t) {
+                    LOG.log(Level.SEVERE, null, t);
                 }
             }
         }.execute();
-
-    }
-
-    private void locateZippedHud() {
     }
 
     private void changeResolution() {
@@ -432,22 +442,9 @@ public class HUDEditor extends javax.swing.JFrame {
     public void setVisible(boolean b) {
         super.setVisible(b);
         this.createBufferStrategy(2);
-        track("ProgramLoad");
     }
     //</editor-fold>
 
-    //<editor-fold defaultstate="collapsed" desc="Actions">
-//    private void close() {
-//        canvas.removeAllElements();
-//
-//        fileSystemRoot.removeAllChildren();
-//        fileSystemRoot.setUserObject(null);
-//        DefaultTreeModel model1 = (DefaultTreeModel) fileTree.getModel();
-//        model1.reload();
-//        fileTree.setSelectionRow(0);
-//
-//        propTable.clear();
-//    }
     private DefaultMutableTreeNode doLoad(final File root) {
         if(root == null) {
             return null;
@@ -458,20 +455,7 @@ public class HUDEditor extends javax.swing.JFrame {
         setLastLoaded(root);
         LOG.log(Level.INFO, "You have selected: {0}", root.getAbsolutePath());
 
-        if(root.getName().endsWith(".zip")) {
-            try {
-                ZipInputStream zin = new ZipInputStream(new FileInputStream(root));
-                ZipEntry entry;
-                while((entry = zin.getNextEntry()) != null) {
-                    LOG.log(Level.INFO, "{0}", entry.getName());
-                    zin.closeEntry();
-                }
-                zin.close();
-            } catch(IOException e) {
-            }
-            return null;
-        }
-
+        //<editor-fold defaultstate="collapsed" desc="files">
         if(root.isDirectory()) {
             File[] folders = root.listFiles();
             boolean valid = true; // TODO: find resource and scripts if there is a parent directory
@@ -487,28 +471,31 @@ public class HUDEditor extends javax.swing.JFrame {
                 locateHudDirectory();
                 return null;
             }
-
-//            new SwingWorker<DefaultMutableTreeNode, Void>() {
-
-            long start = System.currentTimeMillis();
-
-//                @Override
-//                protected DefaultMutableTreeNode doInBackground() throws Exception {
-            final DefaultMutableTreeNode project = new DefaultMutableTreeNode();
-            project.setUserObject(root.getName());
-            recurseDirectoryToNode(root, project);
-//                    return project;
-//                }
-
-//                @Override
-//                protected void done() {
-            LOG.log(Level.INFO, "Loaded hud - took {0}ms", (System.currentTimeMillis() - start));
-//                }
-
-//            }.execute();
-
+            DefaultMutableTreeNode project = new DefaultMutableTreeNode(root.getName());
+            recurseDirectoryToNode(new Files(root), project);
+            return project;
+            //</editor-fold>
+            //<editor-fold defaultstate="collapsed" desc="zip">
+        } else if(root.getName().endsWith(".zip")) {
+            try {
+                ZipInputStream zin = new ZipInputStream(new FileInputStream(root));
+                ZipEntry entry;
+                while((entry = zin.getNextEntry()) != null) {
+                    LOG.log(Level.INFO, "{0}", entry.getName());
+                    zin.closeEntry();
+                }
+                zin.close();
+            } catch(IOException e) {
+            }
+            return null;
+            //</editor-fold>
+            //<editor-fold defaultstate="collapsed" desc="vpk">
+        } else if(root.getName().endsWith("_dir.vpk")) {
+            DefaultMutableTreeNode project = new DefaultMutableTreeNode(root.getName());
+            recurseDirectoryToNode(VPK.loadArchive(root), project);
             return project;
         }
+        //</editor-fold>
         return null;
     }
 
@@ -518,9 +505,8 @@ public class HUDEditor extends javax.swing.JFrame {
             protected DefaultMutableTreeNode doInBackground() throws Exception {
                 LOG.log(Level.INFO, "Mounting {0}", appID);
                 Archive a = ACF.fromManifest(appID);
-                DefaultMutableTreeNode child = new DefaultMutableTreeNode();
+                DefaultMutableTreeNode child = new DefaultMutableTreeNode(a);
                 a.analyze(child, true);
-                child.setUserObject(a);
                 return child;
             }
 
@@ -534,132 +520,17 @@ public class HUDEditor extends javax.swing.JFrame {
                         LOG.log(Level.INFO, "Mounted {0}", appID);
                     }
                 } catch(InterruptedException ex) {
-                    Logger.getLogger(HUDEditor.class.getName()).log(Level.SEVERE, null, ex);
+                    LOG.log(Level.SEVERE, null, ex);
                 } catch(ExecutionException ex) {
-                    Logger.getLogger(HUDEditor.class.getName()).log(Level.SEVERE, null, ex);
+                    LOG.log(Level.SEVERE, null, ex);
                 }
             }
         }.execute();
     }
 
-    private void recurseDirectoryToNode(File root, final DefaultMutableTreeNode parent) {
-
-        FilenameFilter ff = new FilenameFilter() {
-            final String[] blacklist = {".mp3", ".exe", ".sh", ".dll", ".dylib", ".so",
-                                        ".ttf", ".bik", ".mov", ".cfg", ".cache", ".manifest",
-                                        ".frag", ".vert", ".tga", ".png", ".html", ".wav",
-                                        ".ico", ".uifont", ".xml", ".css", ".dic", ".conf",
-                                        ".pak", ".py", ".flt", ".mix", ".asi", ".checksum",
-                                        ".xz", ".log", ".doc", ".webm", ".jpg", ".psd", ".avi",
-                                        ".zip", ".bin", ".vpk", ".bsp", ".txt", ".inf", ".bmp",
-                                        ".icns"};
-
-            public boolean accept(File dir, String name) {
-                for(int j = 0; j < blacklist.length; j++) {
-                    if(name.endsWith(blacklist[j])) {
-                        return false;
-                    }
-                }
-                return true;
-            }
-        };
-        final File[] fileList = root.listFiles(ff);
-        final Thread[] threads = new Thread[fileList.length];
-        if(fileList.length == 0) {
-            return;
-        }
-        Arrays.sort(fileList, Utils.ALPHA_COMPARATOR);
-        for(int i = 0; i < fileList.length; i++) {
-            final File f = fileList[i];
-            final DefaultMutableTreeNode child = new DefaultMutableTreeNode();
-            child.setUserObject(f); // Unknown = File
-            if(f.isDirectory()) {
-                if(f.getName().toLowerCase().equals("common")
-                   || f.getName().toLowerCase().equals("downloading")
-                   || f.getName().toLowerCase().equals("temp")
-                   || f.getName().toLowerCase().equals("sourcemods")) {
-                    continue;
-                }
-                recurseDirectoryToNode(f, child);
-                if(child.getChildCount() > 0) {
-                    parent.add(child);
-                }
-            } else {
-                parent.add(child);
-                threads[i] = new Thread(new Runnable() {
-                    public void run() {
-                        LOG.log(Level.FINE, "Loading {0}...", f);
-//                        if(f.getName().endsWith(".txt")
-                        if(f.getName().endsWith(".vdf")
-                           //                           || f.getName().endsWith(".vdf")
-                           || f.getName().endsWith(".pop")
-                           || f.getName().endsWith(".layout")
-                           || f.getName().endsWith(".menu")
-                           || f.getName().endsWith(".styles")) {
-                            VDF v = new VDF();
-                            try {
-                                v.readExternal(new FileInputStream(f));
-                            } catch(FileNotFoundException ex) {
-                                Logger.getLogger(HUDEditor.class.getName()).log(Level.SEVERE, null,
-                                                                                ex);
-                            }
-                            TreeUtils.moveChildren(v.getRoot(), child);
-                        } else if(f.getName().endsWith(".res")) {
-                            RES v = new RES();
-                            try {
-                                v.readExternal(new FileInputStream(f));
-                            } catch(FileNotFoundException ex) {
-                                Logger.getLogger(HUDEditor.class.getName()).log(Level.SEVERE, null,
-                                                                                ex);
-                            }
-                            TreeUtils.moveChildren(v.getRoot(), child);
-                        } else if(f.getName().endsWith(".vmt")) {
-                            VMT v = new VMT();
-                            try {
-                                v.readExternal(new FileInputStream(f));
-                            } catch(FileNotFoundException ex) {
-                                Logger.getLogger(HUDEditor.class.getName()).log(Level.SEVERE, null,
-                                                                                ex);
-                            }
-                            TreeUtils.moveChildren(v.getRoot(), child);
-                        } else if(f.getName().endsWith(".vtf")) {
-                            VTF v = null;
-                            try {
-                                v = VTF.load(new FileInputStream(f));
-                            } catch(IOException ex) {
-                                Logger.getLogger(HUDEditor.class.getName()).log(Level.SEVERE, null,
-                                                                                ex);
-                            }
-                            if(v != null) {
-                                child.setUserObject(v);
-                            }
-                        }
-                    }
-                });
-                threads[i].start();
-            }
-        }
-        for(int i = 0; i < threads.length; i++) {
-            try {
-                if(threads[i] != null) {
-                    threads[i].join();
-                }
-            } catch(InterruptedException ex) {
-                Logger.getLogger(SteamUtils.class.getName()).log(Level.SEVERE, null, ex);
-            }
-        }
-    }
-
     public void quit() {
         LOG.info("Closing...");
         this.dispose();
-//        if(OS.isMac()) {
-//                JFrame f = new JFrame();
-//                f.setUndecorated(true);
-//                f.setJMenuBar(this.getJMenuBar());
-//                f.setLocation(-Integer.MAX_VALUE, -Integer.MAX_VALUE); // Hacky - should just use the OSX Application calls...
-//                f.setVisible(true);
-//        }
     }
 
     private void setLastLoaded(File root) {
@@ -674,8 +545,7 @@ public class HUDEditor extends javax.swing.JFrame {
     //</editor-fold>
     //<editor-fold defaultstate="collapsed" desc="Interface">
     public HUDEditor() {
-        HUDEditor.lookAndFeel();
-        this.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
+        this.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         this.addWindowListener(new WindowAdapter() {
             @Override
             public void windowClosing(WindowEvent e) {
@@ -683,9 +553,9 @@ public class HUDEditor extends javax.swing.JFrame {
             }
         });
 
-        HUDEditor.this.setIconImages(new IconList("/com/timepath/hl2/hudeditor/res/Icon", "png",
-                                                  new int[] {16, 22, 24, 32, 40, 48, 64, 128, 512,
-                                                             1024}).getIcons());
+        this.setIconImages(new IconList("/com/timepath/hl2/hudeditor/res/Icon", "png",
+                                        new int[] {16, 22, 24, 32, 40, 48, 64, 128, 512,
+                                                   1024}).getIcons());
 
         this.setTitle(Main.getString("Title"));
 
@@ -877,7 +747,7 @@ public class HUDEditor extends javax.swing.JFrame {
                             model.insertRow(model.getRowCount(),
                                             new Object[] {"mip[" + i + "]", img, ""});
                         } catch(IOException ex) {
-                            Logger.getLogger(HUDEditor.class.getName()).log(Level.SEVERE, null, ex);
+                            LOG.log(Level.SEVERE, null, ex);
                         }
                     }
                     model.insertRow(model.getRowCount(), new Object[] {"version", v.version, ""});
@@ -947,7 +817,7 @@ public class HUDEditor extends javax.swing.JFrame {
                             return new ImageIcon(
                                     files[(int) (Math.random() * (files.length - 1))].toURI().toURL()).getImage();
                         } catch(MalformedURLException ex) {
-                            Logger.getLogger(HUDEditor.class.getName()).log(Level.SEVERE, null, ex);
+                            LOG.log(Level.SEVERE, null, ex);
                         }
                     }
                     LOG.log(Level.INFO, "No screenshots in {0}", screenshotDir);
@@ -959,9 +829,9 @@ public class HUDEditor extends javax.swing.JFrame {
                     try {
                         canvas.setBackgroundImage(get());
                     } catch(InterruptedException ex) {
-                        Logger.getLogger(HUDEditor.class.getName()).log(Level.SEVERE, null, ex);
+                        LOG.log(Level.SEVERE, null, ex);
                     } catch(ExecutionException ex) {
-                        Logger.getLogger(HUDEditor.class.getName()).log(Level.SEVERE, null, ex);
+                        LOG.log(Level.SEVERE, null, ex);
                     }
                 }
             };
@@ -1002,145 +872,67 @@ public class HUDEditor extends javax.swing.JFrame {
         }
     }
 
-    /**
-     * Sets the look and feel
-     */
-    private static void lookAndFeel() {
-        LOG.log(Level.INFO, "L&F: {0} | {1}", new Object[] {System.getProperty("swing.defaultlaf"),
-                                                            Main.prefs.get("theme", null)});
-        switch(OS.get()) {
-            case OSX:
-                UIManager.installLookAndFeel("Quaqua", "ch.randelshofer.quaqua.QuaquaLookAndFeel");
-                break;
-            case Linux:
-                UIManager.installLookAndFeel("GTK extended",
-                                             "org.gtk.laf.extended.GTKLookAndFeelExtended");
-                break;
-        }
-
-        if(System.getProperty("swing.defaultlaf") == null && Main.prefs.get("theme", null) == null) { // Do not override user specified theme
-            boolean nimbus = false;
-            //<editor-fold defaultstate="collapsed" desc="Attempt to apply nimbus">
-            if(nimbus) {
-                try {
-                    for(UIManager.LookAndFeelInfo info : UIManager.getInstalledLookAndFeels()) {
-                        if("Nimbus".equals(info.getName())) {
-                            UIManager.setLookAndFeel(info.getClassName());
-                            return;
-                        }
-                    }
-                } catch(Exception ex) {
-                    LOG.log(Level.WARNING, null, ex);
-                }
-            }
-            //</editor-fold>
-
-            boolean metal = false;
-            //<editor-fold defaultstate="collapsed" desc="Fall back to metal">
-            if(metal) {
-                try {
-                    UIManager.setLookAndFeel(UIManager.getCrossPlatformLookAndFeelClassName());
-                    return;
-                } catch(ClassNotFoundException ex) {
-                    Logger.getLogger(HUDEditor.class.getName()).log(Level.SEVERE, null, ex);
-                } catch(InstantiationException ex) {
-                    Logger.getLogger(HUDEditor.class.getName()).log(Level.SEVERE, null, ex);
-                } catch(IllegalAccessException ex) {
-                    Logger.getLogger(HUDEditor.class.getName()).log(Level.SEVERE, null, ex);
-                } catch(UnsupportedLookAndFeelException ex) {
-                    Logger.getLogger(HUDEditor.class.getName()).log(Level.SEVERE, null, ex);
-                }
-            }
-            //</editor-fold>
-
-            //<editor-fold defaultstate="collapsed" desc="Fall back to native">
-            try {
-                UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
-            } catch(ClassNotFoundException ex) {
-                Logger.getLogger(HUDEditor.class.getName()).log(Level.SEVERE, null, ex);
-            } catch(InstantiationException ex) {
-                Logger.getLogger(HUDEditor.class.getName()).log(Level.SEVERE, null, ex);
-            } catch(IllegalAccessException ex) {
-                Logger.getLogger(HUDEditor.class.getName()).log(Level.SEVERE, null, ex);
-            } catch(UnsupportedLookAndFeelException ex) {
-                Logger.getLogger(HUDEditor.class.getName()).log(Level.SEVERE, null, ex);
-            }
-            //</editor-fold>
-        } else {
-            String theme = System.getProperty("swing.defaultlaf");
-            if(theme == null) {
-                theme = Main.prefs.get("theme", null);
-            }
-            try {
-                UIManager.setLookAndFeel(theme);
-            } catch(InstantiationException ex) {
-                Logger.getLogger(HUDEditor.class.getName()).log(Level.SEVERE, null, ex);
-            } catch(IllegalAccessException ex) {
-                Logger.getLogger(HUDEditor.class.getName()).log(Level.SEVERE, null, ex);
-            } catch(UnsupportedLookAndFeelException ex) {
-                Logger.getLogger(HUDEditor.class.getName()).log(Level.SEVERE, null, ex);
-            } catch(ClassNotFoundException ex) {
-//                    Logger.getLogger(HUDEditor.class.getName()).log(Level.SEVERE, null, ex);
-                LOG.warning("Unable to load user L&F");
-            }
-        }
-
-        //<editor-fold defaultstate="collapsed" desc="Improve native LaF">
-        if(UIManager.getLookAndFeel()
-                .isNativeLookAndFeel()) {
-            try {
-                LOG.log(Level.INFO, "Adding swing enhancements for {0}", new Object[] {OS.get()});
-                if(OS.isMac()) {
-                    UIManager.setLookAndFeel("ch.randelshofer.quaqua.QuaquaLookAndFeel"); // Apply quaqua if available
-                } else if(OS.isLinux()) {
-                    if(UIManager.getLookAndFeel().getClass().getName().equals(
-                            "com.sun.java.swing.plaf.gtk.GTKLookAndFeel")) {
-                        GtkFixer.installGtkPopupBugWorkaround(); // Apply clearlooks java menu fix if applicable
-                        UIManager.setLookAndFeel("org.gtk.laf.extended.GTKLookAndFeelExtended"); // Apply extended gtk theme is available. http://danjared.wordpress.com/2012/05/21/mejorando-la-integracion-de-javaswing-con-gtk/
-                    }
-                }
-                LOG.info("All swing enhancements installed");
-            } catch(InstantiationException ex) {
-                Logger.getLogger(HUDEditor.class.getName()).log(Level.SEVERE, null, ex);
-            } catch(IllegalAccessException ex) {
-                Logger.getLogger(HUDEditor.class.getName()).log(Level.SEVERE, null, ex);
-            } catch(UnsupportedLookAndFeelException ex) {
-                Logger.getLogger(HUDEditor.class.getName()).log(Level.SEVERE, null, ex);
-            } catch(ClassNotFoundException ex) {
-//                Logger.getLogger(EditorFrame.class.getName()).log(Level.INFO, null, ex);
-                LOG.warning("Unable to load enhanced L&F");
-            }
-        }
-        //</editor-fold>
-    }
-
-    /**
-     * Google analytics tracking code
-     * https://developers.google.com/analytics/resources/concepts/gaConceptsTrackingOverview
-     *
-     * @param state
-     */
-    private void track(String state) {
-//        LOG.log(Level.INFO, "Tracking {0}", state);
-//        if(Main.myVer == null) {
-//            return;
-//        }
-//
-//        String appID = "UA-35189411-2";
-//        String title = "TF2 HUD Editor";
-//        
-//        com.boxysystems.jgoogleanalytics.JGoogleAnalyticsTracker track = new com.boxysystems.jgoogleanalytics.JGoogleAnalyticsTracker(title, "1", appID);
-//        com.boxysystems.jgoogleanalytics.FocusPoint focusPoint = new com.boxysystems.jgoogleanalytics.FocusPoint(state);
-//        track.trackAsynchronously(focusPoint);
-//
-//        com.dmurph.tracking.AnalyticsConfigData config = new com.dmurph.tracking.AnalyticsConfigData(appID);
-//        com.dmurph.tracking.JGoogleAnalyticsTracker tracker = new com.dmurph.tracking.JGoogleAnalyticsTracker(config, com.dmurph.tracking.JGoogleAnalyticsTracker.GoogleAnalyticsVersion.V_4_7_2);
-//        tracker.setEnabled(true);
-//        tracker.trackPageView(state, title, "");
-//        
-//        EasyTracker.getInstance().activityStart(this);
-    }
     //<editor-fold defaultstate="collapsed" desc="Menu Bar">
+    private void recurseDirectoryToNode(Archive ar, DefaultMutableTreeNode project) {
+        project.setUserObject(ar.getRoot());
+        analyze(project, true);
+    }
+
+    public void analyze(final DefaultMutableTreeNode top, final boolean leaves) {
+        if(!(top.getUserObject() instanceof DirectoryEntry)) {
+            return;
+        }
+        ExecutorService es = Executors.newCachedThreadPool();
+        DirectoryEntry e = (DirectoryEntry) top.getUserObject();
+        for(final DirectoryEntry n : e.children()) {
+            Runnable r = new Runnable() {
+                public void run() {
+                    DefaultMutableTreeNode child = new DefaultMutableTreeNode(n);
+                    if(n.isDirectory()) {
+                        analyze(child, leaves);
+                        top.add(child);
+                    } else if(leaves) {
+                        InputStream is = n.asStream();
+                        LOG.info(n.getName());
+                        if(n.getName().endsWith(".vdf")
+                           || n.getName().endsWith(".pop")
+                           || n.getName().endsWith(".layout")
+                           || n.getName().endsWith(".menu")
+                           || n.getName().endsWith(".styles")) {
+                            VDF v = new VDF();
+                            v.readExternal(n.asStream());
+                            child.add(v.getRoot());
+                        } else if(n.getName().endsWith(".res")) {
+                            RES v = new RES();
+                            v.readExternal(is);
+                            child.add(v.getRoot());
+                        } else if(n.getName().endsWith(".vmt")) {
+                            VMT v = new VMT();
+                            v.readExternal(is);
+                        } else if(n.getName().endsWith(".vtf")) {
+                            VTF v = null;
+                            try {
+                                v = VTF.load(is);
+                            } catch(IOException ex) {
+                                LOG.log(Level.SEVERE, null, ex);
+                            }
+                            if(v != null) {
+                                child.setUserObject(v);
+                            }
+                        }
+                        top.add(child);
+                    }
+                }
+            };
+            es.submit(r);
+        }
+        es.shutdown();
+        try {
+            es.awaitTermination(Long.MAX_VALUE, TimeUnit.DAYS);
+        } catch(InterruptedException ex) {
+            LOG.log(Level.SEVERE, null, ex);
+        }
+    }
 
     private class EditorMenuBar extends JMenuBar {
 
@@ -1189,7 +981,6 @@ public class HUDEditor extends javax.swing.JFrame {
                     locateZippedHud();
                 }
             });
-            openZippedItem.setEnabled(false);
             fileMenu.add(openZippedItem);
 
             fileMenu.addSeparator();
