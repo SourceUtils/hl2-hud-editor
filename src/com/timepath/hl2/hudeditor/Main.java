@@ -1,6 +1,7 @@
 package com.timepath.hl2.hudeditor;
 
 import com.timepath.plaf.OS;
+import com.timepath.plaf.linux.DesktopLauncher;
 import com.timepath.plaf.linux.WindowToolkit;
 import com.timepath.plaf.mac.OSXProps;
 import com.timepath.plaf.x.filechooser.XFileDialogFileChooser;
@@ -76,7 +77,10 @@ public class Main {
         if(OS.isWindows()) {
             XFileDialogFileChooser.setTraceLevel(0);
         } else if(OS.isLinux()) {
-            WindowToolkit.setWindowClass(projectName); // Wrapper.class.getName().replaceAll("\\.", "-");
+            WindowToolkit.setWindowClass(projectName); // Main.class.getName().replace(".", "-");
+            DesktopLauncher.create(projectName, "/com/timepath/hl2/hudeditor/res/",
+                               new String[] {"Icon.png", "Icon.svg"},
+                               new String[] {projectName, projectName});
         } else if(OS.isMac()) {
             OSXProps.metal(false);
             OSXProps.quartz(true);
