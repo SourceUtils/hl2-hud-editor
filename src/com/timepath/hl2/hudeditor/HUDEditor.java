@@ -211,7 +211,7 @@ public class HUDEditor extends JFrame {
         try {
             final File[] selection = new NativeFileChooser().setParent(HUDEditor.this).setTitle(
                     Main.getString("LoadHudDir")).setFile(lastLoaded).setFileMode(
-                    BaseFileChooser.FileMode.DIRECTORIES_ONLY).choose();
+                            BaseFileChooser.FileMode.DIRECTORIES_ONLY).choose();
             if(selection == null) {
                 return;
             }
@@ -225,7 +225,7 @@ public class HUDEditor extends JFrame {
         try {
             final File[] selection = new NativeFileChooser().setParent(HUDEditor.this).setTitle(
                     Main.getString("OpenArchive")).setFile(lastLoaded).setFileMode(
-                    BaseFileChooser.FileMode.FILES_ONLY).choose();
+                            BaseFileChooser.FileMode.FILES_ONLY).choose();
             if(selection == null) {
                 return;
             }
@@ -299,7 +299,6 @@ public class HUDEditor extends JFrame {
         //        }
         //    }
         //</editor-fold>
-
         //            spinnerWidth = new JSpinner(new SpinnerNumberModel(canvas.screen.width, 640, 7680, 1)); // WHUXGA
         spinnerWidth.setEnabled(false);
         //            NumberEditor jsWidth = (NumberEditor) spinnerWidth.getEditor();
@@ -383,7 +382,7 @@ public class HUDEditor extends JFrame {
             if(value == JOptionPane.YES_OPTION) {
                 canvas.setPreferredSize(new Dimension(Integer.parseInt(
                         spinnerWidth.getValue().toString()), Integer.parseInt(
-                        spinnerHeight.getValue().toString())));
+                                spinnerHeight.getValue().toString())));
             }
         }
     }
@@ -935,15 +934,15 @@ public class HUDEditor extends JFrame {
 
     private class EditorMenuBar extends JMenuBar {
 
-        private JMenuItem newItem, openItem, openZippedItem, saveItem, saveAsItem, reloadItem, closeItem, exitItem;
+        private final JMenuItem newItem, openItem, openZippedItem, saveItem, saveAsItem, reloadItem, closeItem, exitItem;
 
-        private JMenuItem undoItem, redoItem, cutItem, copyItem, pasteItem, deleteItem, selectAllItem, preferencesItem;
+        private final JMenuItem undoItem, redoItem, cutItem, copyItem, pasteItem, deleteItem, selectAllItem, preferencesItem;
 
-        private JMenuItem resolutionItem, previewItem;
+        private final JMenuItem resolutionItem, previewItem;
 
         private JMenuItem aboutItem;
 
-        private int modifier = Toolkit.getDefaultToolkit().getMenuShortcutKeyMask();
+        private final int modifier = Toolkit.getDefaultToolkit().getMenuShortcutKeyMask();
 
         EditorMenuBar() {
             super();
@@ -1029,18 +1028,18 @@ public class HUDEditor extends JFrame {
             reloadItem.setEnabled(false);
             fileMenu.add(reloadItem);
 
+            exitItem = new JMenuItem(new CustomAction("Exit", null, KeyEvent.VK_X,
+                                                      KeyStroke.getKeyStroke(KeyEvent.VK_Q,
+                                                                             modifier)) {
+                @Override
+                public void actionPerformed(ActionEvent ae) {
+                    quit();
+                }
+            });
+
             if(!OS.isMac()) {
                 fileMenu.addSeparator();
                 fileMenu.add(closeItem);
-
-                exitItem = new JMenuItem(new CustomAction("Exit", null, KeyEvent.VK_X,
-                                                          KeyStroke.getKeyStroke(KeyEvent.VK_Q,
-                                                                                 modifier)) {
-                    @Override
-                    public void actionPerformed(ActionEvent ae) {
-                        quit();
-                    }
-                });
                 fileMenu.add(exitItem);
             }
             //</editor-fold>
@@ -1122,14 +1121,14 @@ public class HUDEditor extends JFrame {
 
             editMenu.addSeparator();
 
+            preferencesItem = new JMenuItem(new CustomAction("Preferences", null, KeyEvent.VK_E,
+                                                             null) {
+                @Override
+                public void actionPerformed(ActionEvent ae) {
+                    preferences();
+                }
+            });
             if(!OS.isMac()) {
-                preferencesItem = new JMenuItem(new CustomAction("Preferences", null, KeyEvent.VK_E,
-                                                                 null) {
-                    @Override
-                    public void actionPerformed(ActionEvent ae) {
-                        preferences();
-                    }
-                });
                 editMenu.add(preferencesItem);
             }
             //</editor-fold>
@@ -1274,4 +1273,5 @@ public class HUDEditor extends JFrame {
     // End of variables declaration//GEN-END:variables
     //</editor-fold>
     //</editor-fold>
+
 }

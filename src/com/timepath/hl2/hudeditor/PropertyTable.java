@@ -13,7 +13,7 @@ import javax.swing.table.TableCellRenderer;
 
 /**
  *
- * @author timepath
+ * @author TimePath
  */
 @SuppressWarnings("serial")
 public class PropertyTable extends JTable {
@@ -58,9 +58,6 @@ public class PropertyTable extends JTable {
         return renderer;
     }
 
-    /**
-     *
-     */
     public class CustomTableCellRenderer extends DefaultTableCellRenderer {
 
         @Override
@@ -70,7 +67,7 @@ public class PropertyTable extends JTable {
             super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
             Icon icon = null;
             if(value instanceof ImageIcon) {
-                icon = (ImageIcon) value;
+                icon = (Icon) value;
             }
             if(icon == null) {
                 this.setText((value == null) ? "" : value.toString());

@@ -9,11 +9,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
-import java.net.BindException;
-import java.net.InetAddress;
-import java.net.ServerSocket;
-import java.net.Socket;
-import java.net.SocketException;
+import java.net.*;
 import java.util.Collections;
 import java.util.ResourceBundle;
 import java.util.logging.Level;
@@ -24,7 +20,7 @@ import javax.swing.SwingUtilities;
 
 /**
  *
- * @author timepath
+ * @author TimePath
  */
 public class Main {
 
@@ -44,15 +40,29 @@ public class Main {
 
     public static final long myVer = getVer();
 
-    private static long getVer() {
-        String impl = Main.class.getPackage().getImplementationVersion();
-        if(impl == null) {
-            return 0;
-        }
-        return Long.parseLong(impl);
-    }
-
     private static final Logger LOG = Logger.getLogger(Main.class.getName());
+    //<editor-fold defaultstate="collapsed" desc="OS tweaks">
+    static {
+        if(OS.isWindows()) {
+            XFileDialogFileChooser.setTraceLevel(0);
+        } else if(OS.isLinux()) {
+            WindowToolkit.setWindowClass(projectName); // Main.class.getName().replace(".", "-");
+            DesktopLauncher.create(projectName, "/com/timepath/hl2/hudeditor/res/",
+                                                new String[] {"Icon.png", "Icon.svg"},
+                                                new String[] {projectName, projectName});
+        } else if(OS.isMac()) {
+            OSXProps.metal(false);
+            OSXProps.quartz(true);
+            OSXProps.growBox(true);
+            OSXProps.globalMenu(true);
+            OSXProps.smallTabs(true);
+            OSXProps.fileDialogPackages(true);
+            OSXProps.name(appName);
+            OSXProps.growBoxIntrudes(false);
+            OSXProps.liveResize(true);
+        }
+    }
+    //</editor-fold>
 
     /**
      *
@@ -71,29 +81,6 @@ public class Main {
     public static String getString(String key) {
         return getString(key, key);
     }
-
-    //<editor-fold defaultstate="collapsed" desc="OS tweaks">
-    static {
-        if(OS.isWindows()) {
-            XFileDialogFileChooser.setTraceLevel(0);
-        } else if(OS.isLinux()) {
-            WindowToolkit.setWindowClass(projectName); // Main.class.getName().replace(".", "-");
-            DesktopLauncher.create(projectName, "/com/timepath/hl2/hudeditor/res/",
-                               new String[] {"Icon.png", "Icon.svg"},
-                               new String[] {projectName, projectName});
-        } else if(OS.isMac()) {
-            OSXProps.metal(false);
-            OSXProps.quartz(true);
-            OSXProps.growBox(true);
-            OSXProps.globalMenu(true);
-            OSXProps.smallTabs(true);
-            OSXProps.fileDialogPackages(true);
-            OSXProps.name(appName);
-            OSXProps.growBoxIntrudes(false);
-            OSXProps.liveResize(true);
-        }
-    }
-    //</editor-fold>
 
     public static void main(String[] args) {
         boolean daemon = false;
@@ -119,6 +106,14 @@ public class Main {
         } else {
             start(args);
         }
+    }
+
+    private static long getVer() {
+        String impl = Main.class.getPackage().getImplementationVersion();
+        if(impl == null) {
+            return 0;
+        }
+        return Long.parseLong(impl);
     }
 
     /**
@@ -164,9 +159,44 @@ public class Main {
         return true;
     }
 
+    /**
+     *
+     * @param port
+     * @param args
+     *
+     * @return true if connected
+     */
+    private static boolean startClient(int port, String... args) {
+        try {
+            Socket client = new Socket(InetAddress.getByName(null), port);
+            BufferedReader in = new BufferedReader(new InputStreamReader(client.getInputStream()));
+            PrintWriter out = new PrintWriter(client.getOutputStream(), true);
+            out.println(myVer);
+            StringBuilder sb = new StringBuilder();
+            for(String arg : args) {
+                sb.append(arg).append(" ");
+            }
+            out.println(sb.toString());
+            long sVer = Long.parseLong(in.readLine());
+            return myVer <= sVer && myVer != 0;
+        }catch(SocketException ex) {
+        }catch(IOException ex) {
+            LOG.log(Level.SEVERE, null, ex);
+        }
+        return false;
+    }
+
+    private static void start(String... args) {
+        SwingUtilities.invokeLater(new Runnable() {
+            public void run() {
+                new HUDEditor().setVisible(true);
+            }
+        });
+    }
+
     private static class ServerRunnable implements Runnable {
 
-        private ServerSocket sock;
+        private final ServerSocket sock;
 
         ServerRunnable(ServerSocket sock) {
             this.sock = sock;
@@ -201,45 +231,6 @@ public class Main {
             LOG.info("Exiting...");
         }
 
-    }
-
-    /**
-     *
-     * @param port
-     * @param args
-     *
-     * @return true if connected
-     */
-    private static boolean startClient(int port, String... args) {
-        try {
-            Socket client = new Socket(InetAddress.getByName(null), port);
-            BufferedReader in = new BufferedReader(new InputStreamReader(client.getInputStream()));
-            PrintWriter out = new PrintWriter(client.getOutputStream(), true);
-            out.println(myVer);
-            StringBuilder sb = new StringBuilder();
-            for(int i = 0; i < args.length; i++) {
-                sb.append(args[i]).append(" ");
-            }
-            out.println(sb.toString());
-            long sVer = Long.parseLong(in.readLine());
-            if(myVer > sVer || myVer == 0) {
-                return false;
-            } else {
-                return true;
-            }
-        } catch(SocketException ex) {
-        } catch(IOException ex) {
-            LOG.log(Level.SEVERE, null, ex);
-        }
-        return false;
-    }
-
-    private static void start(String... args) {
-        SwingUtilities.invokeLater(new Runnable() {
-            public void run() {
-                new HUDEditor().setVisible(true);
-            }
-        });
     }
 
 }

@@ -1,6 +1,5 @@
 package com.timepath.hl2.hudeditor;
 
-import javax.swing.SwingWorker;
 import com.timepath.io.utils.ViewableData;
 import com.timepath.plaf.x.filechooser.BaseFileChooser;
 import com.timepath.plaf.x.filechooser.NativeFileChooser;
@@ -17,12 +16,7 @@ import java.io.IOException;
 import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import javax.swing.Icon;
-import javax.swing.JMenuItem;
-import javax.swing.JPopupMenu;
-import javax.swing.JTree;
-import javax.swing.SwingUtilities;
-import javax.swing.UIManager;
+import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeCellRenderer;
 import javax.swing.tree.DefaultTreeModel;
@@ -30,7 +24,7 @@ import javax.swing.tree.TreeSelectionModel;
 
 /**
  *
- * @author timepath
+ * @author TimePath
  */
 @SuppressWarnings("serial")
 public class ProjectTree extends javax.swing.JTree implements ActionListener, MouseListener {
@@ -52,23 +46,15 @@ public class ProjectTree extends javax.swing.JTree implements ActionListener, Mo
 
     private class CustomTreeCellRenderer extends DefaultTreeCellRenderer {
 
-        CustomTreeCellRenderer() {
-            super();
-        }
-
-        private void setIcons(JTree tree, Icon ico) {
-            if(tree.isEnabled()) {
-                this.setIcon(ico);
-            } else {
-                this.setDisabledIcon(ico);
-            }
-        }
-
         Color sameColor = Color.BLACK;
 
         Color diffColor = Color.BLUE;
 
         Color newColor = Color.GREEN.darker();
+
+        CustomTreeCellRenderer() {
+            super();
+        }
 
         /**
          * Configures the renderer based on the passed in components.
@@ -124,6 +110,14 @@ public class ProjectTree extends javax.swing.JTree implements ActionListener, Mo
             this.setComponentOrientation(tree.getComponentOrientation());
             this.selected = sel;
             return this;
+        }
+
+        private void setIcons(JTree tree, Icon ico) {
+            if(tree.isEnabled()) {
+                this.setIcon(ico);
+            } else {
+                this.setDisabledIcon(ico);
+            }
         }
 
     }
