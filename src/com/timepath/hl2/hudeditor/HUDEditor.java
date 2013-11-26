@@ -25,13 +25,13 @@ import com.timepath.plaf.x.filechooser.BaseFileChooser;
 import com.timepath.plaf.x.filechooser.NativeFileChooser;
 import com.timepath.steam.SteamID;
 import com.timepath.steam.SteamUtils;
-import com.timepath.steam.io.VDF;
+import com.timepath.steam.io.VDF1;
 import com.timepath.steam.io.storage.ACF;
 import com.timepath.steam.io.storage.Files;
 import com.timepath.steam.io.storage.VPK;
 import com.timepath.steam.io.storage.util.Archive;
 import com.timepath.steam.io.storage.util.DirectoryEntry;
-import com.timepath.steam.io.util.VDFNode;
+import com.timepath.steam.io.util.VDFNode1;
 import java.awt.Color;
 import java.awt.Cursor;
 import java.awt.Dimension;
@@ -729,8 +729,8 @@ public class HUDEditor extends JFrame {
                 DefaultTableModel model = (DefaultTableModel) propTable.getModel();
                 Object nodeInfo = node.getUserObject();
                 // TODO: introspection
-                if(node instanceof VDFNode) {
-                    Element element = Element.importVdf((VDFNode) node);
+                if(nodeInfo instanceof VDFNode1) {
+                    Element element = Element.importVdf((VDFNode1) nodeInfo);
                     loadProps(element);
                     try {
                         canvas.load(element);
@@ -897,13 +897,13 @@ public class HUDEditor extends JFrame {
                            || n.getName().endsWith(".layout")
                            || n.getName().endsWith(".menu")
                            || n.getName().endsWith(".styles")) {
-                            VDF v = new VDF();
+                            VDF1 v = new VDF1();
                             v.readExternal(n.asStream());
-                            child.add(v.getRoot());
+                            child.add(new DefaultMutableTreeNode(v.getRoot()));
                         } else if(n.getName().endsWith(".res")) {
                             RES v = new RES();
                             v.readExternal(is);
-                            child.add(v.getRoot());
+                            child.add(new DefaultMutableTreeNode(v.getRoot()));
                         } else if(n.getName().endsWith(".vmt")) {
                             VMT v = new VMT();
                             v.readExternal(is);
