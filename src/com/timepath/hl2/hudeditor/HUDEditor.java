@@ -29,9 +29,9 @@ import com.timepath.steam.io.VDF1;
 import com.timepath.steam.io.storage.ACF;
 import com.timepath.steam.io.storage.Files;
 import com.timepath.steam.io.storage.VPK;
-import com.timepath.steam.io.storage.util.Archive;
-import com.timepath.steam.io.storage.util.DirectoryEntry;
+import com.timepath.steam.io.storage.util.ExtendedVFile;
 import com.timepath.steam.io.util.VDFNode1;
+import com.timepath.vfs.SimpleVFile;
 import java.awt.Color;
 import java.awt.Cursor;
 import java.awt.Dimension;
@@ -502,7 +502,7 @@ public class HUDEditor extends JFrame {
             @Override
             protected DefaultMutableTreeNode doInBackground() throws Exception {
                 LOG.log(Level.INFO, "Mounting {0}", appID);
-                Archive a = ACF.fromManifest(appID);
+                ExtendedVFile a = ACF.fromManifest(appID);
                 DefaultMutableTreeNode child = new DefaultMutableTreeNode(a);
                 a.analyze(child, true);
                 return child;
@@ -871,18 +871,18 @@ public class HUDEditor extends JFrame {
     }
 
     //<editor-fold defaultstate="collapsed" desc="Menu Bar">
-    private void recurseDirectoryToNode(Archive ar, DefaultMutableTreeNode project) {
-        project.setUserObject(ar.getRoot());
+    private void recurseDirectoryToNode(ExtendedVFile ar, DefaultMutableTreeNode project) {
+        project.setUserObject(ar);
         analyze(project, true);
     }
 
     public void analyze(final DefaultMutableTreeNode top, final boolean leaves) {
-        if(!(top.getUserObject() instanceof DirectoryEntry)) {
+        if(!(top.getUserObject() instanceof ExtendedVFile)) {
             return;
         }
         ExecutorService es = Executors.newCachedThreadPool();
-        DirectoryEntry e = (DirectoryEntry) top.getUserObject();
-        for(final DirectoryEntry n : e.children()) {
+        ExtendedVFile e = (ExtendedVFile) top.getUserObject();
+        for(final SimpleVFile n : e.children()) {
             Runnable r = new Runnable() {
                 public void run() {
                     DefaultMutableTreeNode child = new DefaultMutableTreeNode(n);
@@ -890,7 +890,7 @@ public class HUDEditor extends JFrame {
                         analyze(child, leaves);
                         top.add(child);
                     } else if(leaves) {
-                        InputStream is = n.asStream();
+                        InputStream is = n.stream();
                         LOG.info(n.getName());
                         if(n.getName().endsWith(".vdf")
                            || n.getName().endsWith(".pop")
@@ -898,7 +898,7 @@ public class HUDEditor extends JFrame {
                            || n.getName().endsWith(".menu")
                            || n.getName().endsWith(".styles")) {
                             VDF1 v = new VDF1();
-                            v.readExternal(n.asStream());
+                            v.readExternal(n.stream());
                             child.add(new DefaultMutableTreeNode(v.getRoot()));
                         } else if(n.getName().endsWith(".res")) {
                             RES v = new RES();

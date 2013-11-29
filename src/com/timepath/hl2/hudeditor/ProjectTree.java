@@ -3,8 +3,7 @@ package com.timepath.hl2.hudeditor;
 import com.timepath.io.utils.ViewableData;
 import com.timepath.plaf.x.filechooser.BaseFileChooser;
 import com.timepath.plaf.x.filechooser.NativeFileChooser;
-import com.timepath.steam.io.storage.util.Archive;
-import com.timepath.steam.io.storage.util.DirectoryEntry;
+import com.timepath.steam.io.storage.util.ExtendedVFile;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.event.ActionEvent;
@@ -38,9 +37,9 @@ public class ProjectTree extends javax.swing.JTree implements ActionListener, Mo
         this.setCellRenderer(new CustomTreeCellRenderer());
     }
 
-    private DirectoryEntry directoryEntryContext;
+    private ExtendedVFile directoryEntryContext;
 
-    private Archive archiveContext;
+    private ExtendedVFile archiveContext;
 
     private DefaultMutableTreeNode projectContext;
 
@@ -194,14 +193,9 @@ public class ProjectTree extends javax.swing.JTree implements ActionListener, Mo
                 if(clicked instanceof DefaultMutableTreeNode) {
                     DefaultMutableTreeNode node = ((DefaultMutableTreeNode) clicked);
                     Object obj = node.getUserObject();
-                    if(obj instanceof Archive) {
-                        archiveContext = (Archive) obj;
-                        directoryEntryContext = null;
-                        fileMenu.show(evt.getComponent(), evt.getX(), evt.getY());
-                        return;
-                    } else if(obj instanceof DirectoryEntry) {
-                        directoryEntryContext = (DirectoryEntry) obj;
-                        archiveContext = directoryEntryContext.getArchive();
+                    if(obj instanceof ExtendedVFile) {
+                        directoryEntryContext = (ExtendedVFile) obj;
+                        archiveContext = directoryEntryContext.getRoot();
                         fileMenu.show(evt.getComponent(), evt.getX(), evt.getY());
                         return;
                     } else if(obj instanceof String) {
@@ -224,9 +218,8 @@ public class ProjectTree extends javax.swing.JTree implements ActionListener, Mo
         if(archiveContext == null) {
             return;
         }
-        final Archive context = archiveContext;
+        final ExtendedVFile context = archiveContext;
         LOG.log(Level.INFO, "Archive: {0}", context);
-        final int index;
         try {
             final File[] fs = new NativeFileChooser().setTitle("Extract").setDialogType(
                     BaseFileChooser.DialogType.SAVE_DIALOG).setFileMode(
