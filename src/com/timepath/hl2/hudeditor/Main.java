@@ -4,7 +4,6 @@ import com.timepath.plaf.OS;
 import com.timepath.plaf.linux.DesktopLauncher;
 import com.timepath.plaf.linux.WindowToolkit;
 import com.timepath.plaf.mac.OSXProps;
-import com.timepath.plaf.x.filechooser.XFileDialogFileChooser;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -25,7 +24,7 @@ import javax.swing.SwingUtilities;
 public class Main {
 
     public static final ResourceBundle strings = ResourceBundle.getBundle(
-            "com/timepath/hl2/hudeditor/res/lang");
+        "com/timepath/hl2/hudeditor/res/lang");
 
     public static final String appName = "TF2 HUD Editor";
 
@@ -41,15 +40,16 @@ public class Main {
     public static final long myVer = getVer();
 
     private static final Logger LOG = Logger.getLogger(Main.class.getName());
+
     //<editor-fold defaultstate="collapsed" desc="OS tweaks">
     static {
         if(OS.isWindows()) {
-            XFileDialogFileChooser.setTraceLevel(0);
+
         } else if(OS.isLinux()) {
             WindowToolkit.setWindowClass(projectName); // Main.class.getName().replace(".", "-");
             DesktopLauncher.create(projectName, "/com/timepath/hl2/hudeditor/res/",
-                                                new String[] {"Icon.png", "Icon.svg"},
-                                                new String[] {projectName, projectName});
+                                   new String[] {"Icon.png", "Icon.svg"},
+                                   new String[] {projectName, projectName});
         } else if(OS.isMac()) {
             OSXProps.metal(false);
             OSXProps.quartz(true);
@@ -75,7 +75,8 @@ public class Main {
      * @return
      */
     public static String getString(String key, String fallback) {
-        return Collections.list(Main.strings.getKeys()).contains(key) ? Main.strings.getString(key) : fallback;
+        return Collections.list(Main.strings.getKeys()).contains(key) ? Main.strings.getString(key)
+               : fallback;
     }
 
     public static String getString(String key) {
@@ -179,8 +180,8 @@ public class Main {
             out.println(sb.toString());
             long sVer = Long.parseLong(in.readLine());
             return myVer <= sVer && myVer != 0;
-        }catch(SocketException ex) {
-        }catch(IOException ex) {
+        } catch(SocketException ex) {
+        } catch(IOException ex) {
             LOG.log(Level.SEVERE, null, ex);
         }
         return false;
@@ -207,7 +208,7 @@ public class Main {
                 try {
                     Socket client = sock.accept();
                     BufferedReader in = new BufferedReader(new InputStreamReader(
-                            client.getInputStream()));
+                        client.getInputStream()));
                     PrintWriter out = new PrintWriter(client.getOutputStream(), true);
 
                     long cVer = Long.parseLong(in.readLine());
