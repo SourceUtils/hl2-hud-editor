@@ -3,13 +3,11 @@ package com.timepath.hl2.hudeditor;
 import apple.OSXAdapter;
 import com.timepath.DateUtils;
 import com.timepath.Utils;
-import javax.swing.SwingWorker;
 import com.timepath.hl2.io.RES;
 import com.timepath.hl2.io.VMT;
 import com.timepath.hl2.io.VTF;
-import com.timepath.hl2.swing.VGUICanvas;
 import com.timepath.hl2.io.util.Element;
-import com.timepath.steam.io.util.Property;
+import com.timepath.hl2.swing.VGUICanvas;
 import com.timepath.plaf.IconList;
 import com.timepath.plaf.OS;
 import com.timepath.plaf.linux.Ayatana;
@@ -30,46 +28,22 @@ import com.timepath.steam.io.storage.ACF;
 import com.timepath.steam.io.storage.Files;
 import com.timepath.steam.io.storage.VPK;
 import com.timepath.steam.io.storage.util.ExtendedVFile;
+import com.timepath.steam.io.util.Property;
 import com.timepath.steam.io.util.VDFNode1;
 import com.timepath.vfs.SimpleVFile;
-import java.awt.Color;
-import java.awt.Cursor;
-import java.awt.Dimension;
-import java.awt.DisplayMode;
-import java.awt.GraphicsConfiguration;
-import java.awt.GraphicsDevice;
-import java.awt.GraphicsEnvironment;
-import java.awt.Image;
-import java.awt.Insets;
-import java.awt.Point;
-import java.awt.Rectangle;
-import java.awt.Toolkit;
+import java.awt.*;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.Transferable;
 import java.awt.datatransfer.UnsupportedFlavorException;
-import java.awt.dnd.DnDConstants;
-import java.awt.dnd.DropTarget;
-import java.awt.dnd.DropTargetContext;
-import java.awt.dnd.DropTargetDropEvent;
-import java.awt.dnd.InvalidDnDOperationException;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.awt.event.ComponentAdapter;
-import java.awt.event.ComponentEvent;
-import java.awt.event.KeyEvent;
-import java.awt.event.WindowAdapter;
-import java.awt.event.WindowEvent;
+import java.awt.dnd.*;
+import java.awt.event.*;
 import java.io.*;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URL;
 import java.text.MessageFormat;
-import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.Iterator;
 import java.util.List;
-import java.util.StringTokenizer;
-import java.util.TimeZone;
+import java.util.*;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -78,21 +52,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
-import javax.swing.AbstractAction;
-import javax.swing.Action;
-import javax.swing.Icon;
-import javax.swing.ImageIcon;
-import javax.swing.JComboBox;
-import javax.swing.JDialog;
-import javax.swing.JEditorPane;
-import javax.swing.JFrame;
-import javax.swing.JMenu;
-import javax.swing.JMenuBar;
-import javax.swing.JMenuItem;
-import javax.swing.JOptionPane;
-import javax.swing.JScrollPane;
-import javax.swing.JSpinner;
-import javax.swing.KeyStroke;
+import javax.swing.*;
 import javax.swing.Timer;
 import javax.swing.event.HyperlinkListener;
 import javax.swing.event.TreeSelectionEvent;
@@ -739,7 +699,7 @@ public class HUDEditor extends JFrame {
                     }
                 } else if(nodeInfo instanceof VTF) {
                     VTF v = (VTF) nodeInfo;
-                    for(int i = Math.max(v.mipCount - 8, 0); i < Math.max(v.mipCount - 5, v.mipCount); i++) {
+                    for(int i = Math.max(v.getMipCount() - 8, 0); i < Math.max(v.getMipCount() - 5, v.getMipCount()); i++) {
                         try {
                             ImageIcon img = new ImageIcon(v.getImage(i));
                             model.insertRow(model.getRowCount(),
@@ -748,26 +708,26 @@ public class HUDEditor extends JFrame {
                             LOG.log(Level.SEVERE, null, ex);
                         }
                     }
-                    model.insertRow(model.getRowCount(), new Object[] {"version", v.version, ""});
-                    model.insertRow(model.getRowCount(), new Object[] {"headerSize", v.headerSize,
+                    model.insertRow(model.getRowCount(), new Object[] {"version", v.getVersion(), ""});
+                    model.insertRow(model.getRowCount(), new Object[] {"headerSize", v.getHeaderSize(),
                                                                        ""});
-                    model.insertRow(model.getRowCount(), new Object[] {"width", v.width, ""});
-                    model.insertRow(model.getRowCount(), new Object[] {"height", v.height, ""});
-                    model.insertRow(model.getRowCount(), new Object[] {"flags", v.flags, ""});
-                    model.insertRow(model.getRowCount(), new Object[] {"frameFirst", v.frameFirst,
+                    model.insertRow(model.getRowCount(), new Object[] {"width", v.getWidth(), ""});
+                    model.insertRow(model.getRowCount(), new Object[] {"height", v.getHeight(), ""});
+                    model.insertRow(model.getRowCount(), new Object[] {"flags", v.getFlags(), ""});
+                    model.insertRow(model.getRowCount(), new Object[] {"frameFirst", v.getFrameFirst(),
                                                                        ""});
                     model.insertRow(model.getRowCount(), new Object[] {"reflectivity",
-                                                                       v.reflectivity, ""});
-                    model.insertRow(model.getRowCount(), new Object[] {"bumpScale", v.bumpScale, ""});
-                    model.insertRow(model.getRowCount(), new Object[] {"format", v.format, ""});
-                    model.insertRow(model.getRowCount(), new Object[] {"mipCount", v.mipCount, ""});
-                    model.insertRow(model.getRowCount(), new Object[] {"thumbFormat", v.thumbFormat,
+                                                                       v.getReflectivity(), ""});
+                    model.insertRow(model.getRowCount(), new Object[] {"bumpScale", v.getBumpScale(), ""});
+                    model.insertRow(model.getRowCount(), new Object[] {"format", v.getFormat(), ""});
+                    model.insertRow(model.getRowCount(), new Object[] {"mipCount", v.getMipCount(), ""});
+                    model.insertRow(model.getRowCount(), new Object[] {"thumbFormat", v.getThumbFormat(),
                                                                        ""});
-                    model.insertRow(model.getRowCount(), new Object[] {"thumbWidth", v.thumbWidth,
+                    model.insertRow(model.getRowCount(), new Object[] {"thumbWidth", v.getThumbWidth(),
                                                                        ""});
-                    model.insertRow(model.getRowCount(), new Object[] {"thumbHeight", v.thumbHeight,
+                    model.insertRow(model.getRowCount(), new Object[] {"thumbHeight", v.getThumbHeight(),
                                                                        ""});
-                    model.insertRow(model.getRowCount(), new Object[] {"depth", v.depth, ""});
+                    model.insertRow(model.getRowCount(), new Object[] {"depth", v.getDepth(), ""});
 
                 }
             }
