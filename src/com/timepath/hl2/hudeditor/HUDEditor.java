@@ -42,8 +42,8 @@ import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URL;
 import java.text.MessageFormat;
-import java.util.List;
 import java.util.*;
+import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -79,7 +79,7 @@ public class HUDEditor extends JFrame {
 
     private final PropertyTable propTable;
 
-    private static VGUICanvas canvas;
+    private VGUICanvas canvas;
 
     private File lastLoaded;
 
@@ -298,12 +298,10 @@ public class HUDEditor extends JFrame {
         final JComboBox dropDown = new JComboBox(); // <String>
 
         GraphicsEnvironment env = GraphicsEnvironment.getLocalGraphicsEnvironment();
-        GraphicsDevice[] devices = env.getScreenDevices();
-        ArrayList<String> listItems = new ArrayList<String>();
-        for(int i = 0; i < devices.length; i++) {
-            DisplayMode[] resolutions = devices[i].getDisplayModes(); // TF2 has different resolutions
-            for(int j = 0; j < resolutions.length; j++) {
-                String item = resolutions[j].getWidth() + "x" + resolutions[j].getHeight(); // TODO: Work out aspect ratios
+        List<String> listItems = new LinkedList<String>();
+        for(GraphicsDevice device : env.getScreenDevices()) {
+            for(DisplayMode resolution : device.getDisplayModes()) { // TF2 has different resolutions
+                String item = resolution.getWidth() + "x" + resolution.getHeight(); // TODO: Work out aspect ratios
                 if(!listItems.contains(item)) {
                     listItems.add(item);
                 }
@@ -338,7 +336,7 @@ public class HUDEditor extends JFrame {
         dialog.pack();
         dialog.setVisible(true);
         if(optionPane.getValue() != null) {
-            int value = ((Integer) optionPane.getValue()).intValue();
+            int value = ((Number) optionPane.getValue()).intValue();
             if(value == JOptionPane.YES_OPTION) {
                 canvas.setPreferredSize(new Dimension(Integer.parseInt(
                         spinnerWidth.getValue().toString()), Integer.parseInt(
@@ -389,7 +387,7 @@ public class HUDEditor extends JFrame {
                 LOG.severe(e.toString());
             }
         } else if(OS.isLinux()) {
-            if(!Ayatana.installMenu((JFrame) this, menubar)) {
+            if(!Ayatana.installMenu(this, menubar)) {
                 LOG.log(Level.WARNING, "AyatanaDesktop failed to load for {0}", System.getenv(
                         "XDG_CURRENT_DESKTOP"));
             }
@@ -579,7 +577,6 @@ public class HUDEditor extends JFrame {
             @Override
             public void drop(DropTargetDropEvent e) {
                 try {
-                    DropTargetContext context = e.getDropTargetContext();
                     e.acceptDrop(DnDConstants.ACTION_COPY_OR_MOVE);
                     Transferable t = e.getTransferable();
                     File file = null;
@@ -600,9 +597,8 @@ public class HUDEditor extends JFrame {
                         }
                     } else {
                         Object data = t.getTransferData(DataFlavor.javaFileListFlavor);
-                        if(data instanceof List) {
-                            for(Iterator<?> it = ((List<?>) data).iterator(); it.hasNext();) {
-                                Object o = it.next();
+                        if(data instanceof Iterable) {
+                            for(Object o : ((Iterable<? extends Object>) data)) {
                                 if(o instanceof File) {
                                     file = (File) o;
                                 }
@@ -635,14 +631,12 @@ public class HUDEditor extends JFrame {
         Dimension workspace = new Dimension(
                 screenBounds.width - screenInsets.left - screenInsets.right,
                 screenBounds.height - screenInsets.top - screenInsets.bottom);
-        DisplayMode d = GraphicsEnvironment.getLocalGraphicsEnvironment().getDefaultScreenDevice().getDisplayMode();
 
         this.setMinimumSize(new Dimension(Math.max(workspace.width / 2, 640), Math.max(
                 3 * workspace.height / 4, 480)));
         this.setPreferredSize(new Dimension((int) (workspace.getWidth() / 1.5),
                                             (int) (workspace.getHeight() / 1.5)));
 
-//        this.setLocation((d.getWidth() / 2) - (this.getSize().width / 2), (d.getHeight() / 2) - (this.getSize().height / 2));
         this.setLocationRelativeTo(null);
         //</editor-fold>
 
