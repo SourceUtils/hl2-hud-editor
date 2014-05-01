@@ -5,7 +5,7 @@ import com.timepath.DateUtils;
 import com.timepath.Utils;
 import com.timepath.hl2.io.RES;
 import com.timepath.hl2.io.VMT;
-import com.timepath.hl2.io.VTF;
+import com.timepath.hl2.io.image.VTF;
 import com.timepath.hl2.io.util.Element;
 import com.timepath.hl2.swing.VGUICanvas;
 import com.timepath.plaf.IconList;
