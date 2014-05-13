@@ -35,7 +35,6 @@ class Main {
     public static final  Preferences    prefs       = Preferences.userRoot().node(projectName);
     private static final Logger         LOG         = Logger.getLogger(Main.class.getName());
 
-    //<editor-fold defaultstate="collapsed" desc="OS tweaks">
     static {
         if(OS.isWindows()) {
         } else if(OS.isLinux()) {
@@ -46,12 +45,19 @@ class Main {
                                    projectName,
                                    projectName);
         } else if(OS.isMac()) {
-            OSXProps.setMetal(false); OSXProps.setQuartz(true); OSXProps.setShowGrowBox(true); OSXProps.useGlobalMenu(true);
-            OSXProps.setSmallTabs(true); OSXProps.useFileDialogPackages(true); OSXProps.setName(appName);
-            OSXProps.setGrowBoxIntrudes(false); OSXProps.setLiveResize(true);
+            OSXProps.setMetal(false);
+            OSXProps.setQuartz(true);
+            OSXProps.setShowGrowBox(true);
+            OSXProps.useGlobalMenu(true);
+            OSXProps.setSmallTabs(true);
+            OSXProps.useFileDialogPackages(true);
+            OSXProps.setName(appName);
+            OSXProps.setGrowBoxIntrudes(false);
+            OSXProps.setLiveResize(true);
         }
     }
-    //</editor-fold>
+
+    private Main() {}
 
     public static String getString(String key) {
         return getString(key, key);
@@ -71,18 +77,22 @@ class Main {
     }
 
     public static void main(String... args) {
-        boolean daemon = false; if(daemon) {
-            LOG.log(Level.INFO, "Current version = {0}", myVer); int port = prefs.getInt("port", -1);
+        boolean daemon = false;
+        if(daemon) {
+            LOG.log(Level.INFO, "Current version = {0}", myVer);
+            int port = prefs.getInt("port", -1);
             if(port == -1) { // Was removed on shutdown
                 port = 0;
             } else {
                 LOG.info("Communicating with daemon...");
-            } for(; ; ) {
-                if(startClient(port, args)) {
+            }
+            while(!startClient(port, args)) {
+                LOG.info("Daemon not running, starting...");
+                if(startServer(port)) {
+                    start(args);
                     break;
-                } LOG.info("Daemon not running, starting..."); if(startServer(port)) {
-                    start(args); break;
-                } LOG.info("Daemon already running, conecting...");
+                }
+                LOG.info("Daemon already running, conecting...");
             }
         } else {
             start(args);
@@ -102,17 +112,23 @@ class Main {
             ServerSocket sock = new ServerSocket(port, 0, InetAddress.getByName(null)); // cannot use java7 InetAddress
             // .getLoopbackAddress(). On windows, this prevents firewall warnings. It's
             // also good for security in general
-            int truePort = sock.getLocalPort(); prefs.putInt("port", truePort); prefs.flush();
-            LOG.log(Level.INFO, "Daemon listening on port {0}", truePort); Runtime.getRuntime().addShutdownHook(new Thread() {
+            int truePort = sock.getLocalPort();
+            prefs.putInt("port", truePort);
+            prefs.flush();
+            LOG.log(Level.INFO, "Daemon listening on port {0}", truePort);
+            Runtime.getRuntime().addShutdownHook(new Thread() {
                 @Override
                 public void run() {
-                    LOG.info("Daemon shutting down..."); prefs.remove("port"); try {
+                    LOG.info("Daemon shutting down...");
+                    prefs.remove("port");
+                    try {
                         prefs.flush();
                     } catch(BackingStoreException ex) {
                         Logger.getLogger(Main.class.getName()).log(Level.WARNING, null, ex);
                     }
                 }
-            }); Thread server = new Thread(new ServerRunnable(sock), "Process Listener");
+            });
+            Thread server = new Thread(new ServerRunnable(sock), "Process Listener");
             //            server.setDaemon(!OS.isMac()); // non-daemon threads work in the background. Stick around if on a mac
             // until manually terminated
             //            server.setDaemon(false); // hang around
@@ -121,8 +137,10 @@ class Main {
         } catch(BindException ex) {
             return false;
         } catch(Exception ex) {
-            LOG.log(Level.SEVERE, null, ex); return false;
-        } return true;
+            LOG.log(Level.SEVERE, null, ex);
+            return false;
+        }
+        return true;
     }
 
     /**
@@ -135,18 +153,25 @@ class Main {
         try {
             Socket client = new Socket(InetAddress.getByName(null), port);
             BufferedReader in = new BufferedReader(new InputStreamReader(client.getInputStream()));
-            PrintWriter out = new PrintWriter(client.getOutputStream(), true); out.println(myVer);
-            StringBuilder sb = new StringBuilder(); for(String arg : args) {
+            PrintWriter out = new PrintWriter(client.getOutputStream(), true);
+            out.println(myVer);
+            StringBuilder sb = new StringBuilder();
+            for(String arg : args) {
                 sb.append(arg).append(' ');
-            } out.println(sb); long sVer = Long.parseLong(in.readLine()); return ( myVer <= sVer ) && ( myVer != 0 );
-        } catch(SocketException ex) {
+            }
+            out.println(sb);
+            long sVer = Long.parseLong(in.readLine());
+            return ( myVer <= sVer ) && ( myVer != 0 );
+        } catch(SocketException ignored) {
         } catch(IOException ex) {
             LOG.log(Level.SEVERE, null, ex);
-        } return false;
+        }
+        return false;
     }
 
     private static void start(String... args) {
         SwingUtilities.invokeLater(new Runnable() {
+            @Override
             public void run() {
                 new HUDEditor().setVisible(true);
             }
@@ -154,9 +179,11 @@ class Main {
     }
 
     private static long getVer() {
-        String impl = Main.class.getPackage().getImplementationVersion(); if(impl == null) {
+        String impl = Main.class.getPackage().getImplementationVersion();
+        if(impl == null) {
             return 0;
-        } return Long.parseLong(impl);
+        }
+        return Long.parseLong(impl);
     }
 
     private static class ServerRunnable implements Runnable {
@@ -167,22 +194,30 @@ class Main {
             this.sock = sock;
         }
 
+        @Override
         public void run() {
             while(!sock.isClosed()) {
                 try {
                     Socket client = sock.accept();
                     BufferedReader in = new BufferedReader(new InputStreamReader(client.getInputStream()));
-                    PrintWriter out = new PrintWriter(client.getOutputStream(), true); long cVer = Long.parseLong(in.readLine());
-                    LOG.log(Level.INFO, "client {0} vs host {1}", new Object[] { cVer, myVer }); String request = in.readLine();
-                    LOG.log(Level.INFO, "Request: {0}", request); out.println(myVer); if(( cVer > myVer ) || ( cVer == 0 )) {
-                        LOG.info("Daemon surrendering control to other process"); out.flush(); sock.close();
+                    PrintWriter out = new PrintWriter(client.getOutputStream(), true);
+                    long cVer = Long.parseLong(in.readLine());
+                    LOG.log(Level.INFO, "client {0} vs host {1}", new Object[] { cVer, myVer });
+                    String request = in.readLine();
+                    LOG.log(Level.INFO, "Request: {0}", request);
+                    out.println(myVer);
+                    if(( cVer > myVer ) || ( cVer == 0 )) {
+                        LOG.info("Daemon surrendering control to other process");
+                        out.flush();
+                        sock.close();
                     } else {
                         start(request.split(" "));
                     }
                 } catch(Exception ex) {
                     LOG.log(Level.SEVERE, null, ex);
                 }
-            } LOG.info("Exiting...");
+            }
+            LOG.info("Exiting...");
         }
     }
 }

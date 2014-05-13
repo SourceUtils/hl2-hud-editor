@@ -35,21 +35,34 @@ public class ProjectTree extends JTree implements ActionListener, MouseListener 
     private JPopupMenu             defaultMenu;
     private JMenuItem              extractAction;
     private JPopupMenu             fileMenu;
-    private JMenuItem              nullAction;
     private JPopupMenu             projectMenu;
 
     public ProjectTree() {
-        initComponents(); setRootVisible(false); getSelectionModel().setSelectionMode(TreeSelectionModel.SINGLE_TREE_SELECTION);
+        initComponents();
+        setRootVisible(false);
+        getSelectionModel().setSelectionMode(TreeSelectionModel.SINGLE_TREE_SELECTION);
         setCellRenderer(new CustomTreeCellRenderer());
     }
 
     private void initComponents() {
-        defaultMenu = new JPopupMenu(); nullAction = new JMenuItem(); fileMenu = new JPopupMenu();
-        extractAction = new JMenuItem(); projectMenu = new JPopupMenu(); closeAction = new JMenuItem();
-        nullAction.setText("No action"); nullAction.setEnabled(false); defaultMenu.add(nullAction);
-        extractAction.setText("Extract"); extractAction.addActionListener(this); fileMenu.add(extractAction);
-        closeAction.setText("Close"); closeAction.addActionListener(this); projectMenu.add(closeAction); setBorder(null);
-        DefaultMutableTreeNode treeNode1 = new DefaultMutableTreeNode("root"); setModel(new DefaultTreeModel(treeNode1));
+        defaultMenu = new JPopupMenu();
+        JMenuItem nullAction = new JMenuItem();
+        fileMenu = new JPopupMenu();
+        extractAction = new JMenuItem();
+        projectMenu = new JPopupMenu();
+        closeAction = new JMenuItem();
+        nullAction.setText("No action");
+        nullAction.setEnabled(false);
+        defaultMenu.add(nullAction);
+        extractAction.setText("Extract");
+        extractAction.addActionListener(this);
+        fileMenu.add(extractAction);
+        closeAction.setText("Close");
+        closeAction.addActionListener(this);
+        projectMenu.add(closeAction);
+        setBorder(null);
+        DefaultMutableTreeNode treeNode1 = new DefaultMutableTreeNode("root");
+        setModel(new DefaultTreeModel(treeNode1));
         addMouseListener(this);
     }
 
@@ -65,20 +78,29 @@ public class ProjectTree extends JTree implements ActionListener, MouseListener 
     private void extractActionActionPerformed(ActionEvent evt) {
         if(archiveContext == null) {
             return;
-        } ExtendedVFile context = archiveContext; LOG.log(Level.INFO, "Archive: {0}", context); try {
+        }
+        ExtendedVFile context = archiveContext;
+        LOG.log(Level.INFO, "Archive: {0}", context);
+        try {
             final File[] fs = new NativeFileChooser().setTitle("Extract")
                                                      .setDialogType(BaseFileChooser.DialogType.SAVE_DIALOG)
                                                      .setFileMode(BaseFileChooser.FileMode.DIRECTORIES_ONLY)
-                                                     .choose(); if(fs == null) {
+                                                     .choose();
+            if(fs == null) {
                 return;
-            } LOG.log(Level.INFO, "Extracting to {0}", fs[0]); new SwingWorker<File, Integer>() {
+            }
+            LOG.log(Level.INFO, "Extracting to {0}", fs[0]);
+            new SwingWorker<File, Integer>() {
                 @Override
                 protected File doInBackground() throws Exception {
-                    File ret = null; try {
-                        directoryEntryContext.extract(fs[0]); ret = new File(fs[0], directoryEntryContext.getName());
+                    File ret = null;
+                    try {
+                        directoryEntryContext.extract(fs[0]);
+                        ret = new File(fs[0], directoryEntryContext.getName());
                     } catch(IOException ex) {
                         LOG.log(Level.SEVERE, null, ex);
-                    } return ret;
+                    }
+                    return ret;
                 }
 
                 @Override
@@ -124,15 +146,22 @@ public class ProjectTree extends JTree implements ActionListener, MouseListener 
 
     private void formMouseClicked(MouseEvent evt) {
         if(SwingUtilities.isRightMouseButton(evt)) {
-            int row = getClosestRowForLocation(evt.getX(), evt.getY()); if(row != -1) {
-                Object clicked = getPathForRow(row).getLastPathComponent(); setSelectionRow(row);
+            int row = getClosestRowForLocation(evt.getX(), evt.getY());
+            if(row != -1) {
+                Object clicked = getPathForRow(row).getLastPathComponent();
+                setSelectionRow(row);
                 if(clicked instanceof DefaultMutableTreeNode) {
-                    DefaultMutableTreeNode node = (DefaultMutableTreeNode) clicked; Object obj = node.getUserObject();
+                    DefaultMutableTreeNode node = (DefaultMutableTreeNode) clicked;
+                    Object obj = node.getUserObject();
                     if(obj instanceof ExtendedVFile) {
-                        directoryEntryContext = (ExtendedVFile) obj; archiveContext = directoryEntryContext.getRoot();
-                        fileMenu.show(evt.getComponent(), evt.getX(), evt.getY()); return;
+                        directoryEntryContext = (ExtendedVFile) obj;
+                        archiveContext = directoryEntryContext.getRoot();
+                        fileMenu.show(evt.getComponent(), evt.getX(), evt.getY());
+                        return;
                     } else if(obj instanceof String) {
-                        projectContext = node; projectMenu.show(evt.getComponent(), evt.getX(), evt.getY()); return;
+                        projectContext = node;
+                        projectMenu.show(evt.getComponent(), evt.getX(), evt.getY());
+                        return;
                     } else if(obj instanceof File) {
                     } else {
                         LOG.log(Level.WARNING, "Unknown user object {0}", obj.getClass());
@@ -140,11 +169,12 @@ public class ProjectTree extends JTree implements ActionListener, MouseListener 
                 } else {
                     LOG.log(Level.WARNING, "Unknown tree node {0}", clicked.getClass());
                 }
-            } defaultMenu.show(evt.getComponent(), evt.getX(), evt.getY());
+            }
+            defaultMenu.show(evt.getComponent(), evt.getX(), evt.getY());
         }
     }
 
-    private class CustomTreeCellRenderer extends DefaultTreeCellRenderer {
+    private static class CustomTreeCellRenderer extends DefaultTreeCellRenderer {
 
         Color sameColor = Color.BLACK;
         Color diffColor = Color.BLUE;
@@ -171,30 +201,44 @@ public class ProjectTree extends JTree implements ActionListener, MouseListener 
                                                       int row,
                                                       boolean hasFocus)
         {
-            String valueText = value.toString(); Color tColor = null; if(value instanceof DefaultMutableTreeNode) {
-            Object nodeValue = ( (DefaultMutableTreeNode) value ).getUserObject(); if(nodeValue instanceof String) {
-                setIcons(tree, UIManager.getIcon("FileView.computerIcon"));
-            } else if(nodeValue instanceof File) {
-                File f = (File) nodeValue; valueText = f.getName(); if(f.isDirectory()) {
-                    setIcons(tree, UIManager.getIcon("FileView.directoryIcon"));
+            String valueText = value.toString();
+            if(value instanceof DefaultMutableTreeNode) {
+                Object nodeValue = ( (DefaultMutableTreeNode) value ).getUserObject();
+                if(nodeValue instanceof String) {
+                    setIcons(tree, UIManager.getIcon("FileView.computerIcon"));
+                } else if(nodeValue instanceof File) {
+                    File f = (File) nodeValue;
+                    valueText = f.getName();
+                    if(f.isDirectory()) {
+                        setIcons(tree, UIManager.getIcon("FileView.directoryIcon"));
+                    } else {
+                        setIcons(tree, UIManager.getIcon("FileView.fileIcon"));
+                    }
+                } else if(nodeValue instanceof ViewableData) {
+                    ViewableData v = (ViewableData) nodeValue;
+                    setIcons(tree, v.getIcon());
                 } else {
-                    setIcons(tree, UIManager.getIcon("FileView.fileIcon"));
+                    if(nodeValue != null) {
+                        LOG.log(Level.FINE, "Node class: {0}", nodeValue.getClass());
+                    }
+                    setIcons(tree, null);
                 }
-            } else if(nodeValue instanceof ViewableData) {
-                ViewableData v = (ViewableData) nodeValue; setIcons(tree, v.getIcon());
-            } else {
-                if(nodeValue != null) {
-                    LOG.log(Level.FINE, "Node class: {0}", nodeValue.getClass());
-                } setIcons(tree, null);
             }
-        } String stringValue = tree.convertValueToText(valueText, sel, expanded, leaf, row, hasFocus); this.hasFocus = hasFocus;
-            setText(stringValue); if(tColor != null) {
-            setForeground(sel ? ( ( tColor != newColor ) ? new Color(-tColor.getRed() + 255,
-                                                                     -tColor.getGreen() + 255,
-                                                                     -tColor.getBlue() + 255) : tColor.brighter() ) : tColor);
-        } else {
-            setForeground(sel ? getTextSelectionColor() : getTextNonSelectionColor());
-        } setEnabled(tree.isEnabled()); setComponentOrientation(tree.getComponentOrientation()); selected = sel; return this;
+            String stringValue = tree.convertValueToText(valueText, sel, expanded, leaf, row, hasFocus);
+            this.hasFocus = hasFocus;
+            setText(stringValue);
+            Color tColor = null;
+            if(tColor != null) {
+                setForeground(sel ? ( ( tColor != newColor ) ? new Color(-tColor.getRed() + 255,
+                                                                         -tColor.getGreen() + 255,
+                                                                         -tColor.getBlue() + 255) : tColor.brighter() ) : tColor);
+            } else {
+                setForeground(sel ? getTextSelectionColor() : getTextNonSelectionColor());
+            }
+            setEnabled(tree.isEnabled());
+            setComponentOrientation(tree.getComponentOrientation());
+            selected = sel;
+            return this;
         }
 
         private void setIcons(JTree tree, Icon ico) {

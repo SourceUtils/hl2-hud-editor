@@ -21,8 +21,12 @@ public class PropertyTable extends JTable {
      * Creates new form PropertyTable
      */
     public PropertyTable() {
-        initComponents(); DefaultTableModel model = new DefaultTableModel(); model.addColumn(Main.getString("Key"));
-        model.addColumn(Main.getString("Value")); model.addColumn(Main.getString("Info")); setModel(model);
+        initComponents();
+        DefaultTableModel model = new DefaultTableModel();
+        model.addColumn(Main.getString("Key"));
+        model.addColumn(Main.getString("Value"));
+        model.addColumn(Main.getString("Info"));
+        setModel(model);
         renderer = new CustomTableCellRenderer();
     }
 
@@ -31,9 +35,11 @@ public class PropertyTable extends JTable {
     }
 
     public void clear() {
-        DefaultTableModel model = (DefaultTableModel) getModel(); for(int i = model.getRowCount() - 1; i >= 0; i--) {
+        DefaultTableModel model = (DefaultTableModel) getModel();
+        for(int i = model.getRowCount() - 1; i >= 0; i--) {
             model.removeRow(i);
-        } scrollRectToVisible(new Rectangle(0, 0, 0, 0));
+        }
+        scrollRectToVisible(new Rectangle(0, 0, 0, 0));
     }
 
     @Override
@@ -63,14 +69,20 @@ public class PropertyTable extends JTable {
                                                        int row,
                                                        int column)
         {
-            super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column); Icon icon = null;
+            super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+            Icon icon = null;
             if(value instanceof ImageIcon) {
                 icon = (Icon) value;
-            } if(icon == null) {
-            setText(( value == null ) ? "" : value.toString()); setIcon(null);
-        } else {
-            setText(""); setIcon(icon); setRowHeight(row, Math.max(icon.getIconHeight(), rowHeight));
-        } return this;
+            }
+            if(icon == null) {
+                setText(( value == null ) ? "" : value.toString());
+                setIcon(null);
+            } else {
+                setText("");
+                setIcon(icon);
+                setRowHeight(row, Math.max(icon.getIconHeight(), rowHeight));
+            }
+            return this;
         }
     }
 }
