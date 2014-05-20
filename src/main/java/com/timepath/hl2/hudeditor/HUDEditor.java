@@ -20,7 +20,7 @@ import com.timepath.steam.io.VDF1;
 import com.timepath.steam.io.storage.ACF;
 import com.timepath.steam.io.storage.Files;
 import com.timepath.steam.io.storage.VPK;
-import com.timepath.steam.io.storage.util.ExtendedVFile;
+import com.timepath.steam.io.util.ExtendedVFile;
 import com.timepath.steam.io.util.Property;
 import com.timepath.steam.io.util.VDFNode1;
 import com.timepath.swing.BlendedToolBar;

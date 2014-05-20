@@ -3,7 +3,7 @@ package com.timepath.hl2.hudeditor;
 import com.timepath.io.utils.ViewableData;
 import com.timepath.plaf.x.filechooser.BaseFileChooser;
 import com.timepath.plaf.x.filechooser.NativeFileChooser;
-import com.timepath.steam.io.storage.util.ExtendedVFile;
+import com.timepath.steam.io.util.ExtendedVFile;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
