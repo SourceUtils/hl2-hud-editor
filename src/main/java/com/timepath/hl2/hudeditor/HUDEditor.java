@@ -346,7 +346,7 @@ public class HUDEditor extends JFrame {
         }
         ExecutorService es = Executors.newCachedThreadPool();
         ExtendedVFile e = (ExtendedVFile) top.getUserObject();
-        for(final SimpleVFile n : e.children()) {
+        for(final SimpleVFile n : e.list()) {
             Runnable r = new Runnable() {
                 @Override
                 public void run() {
@@ -355,12 +355,12 @@ public class HUDEditor extends JFrame {
                         analyze(child, leaves);
                         top.add(child);
                     } else if(leaves) {
-                        InputStream is = n.stream();
+                        InputStream is = n.openStream();
                         LOG.info(n.getName());
                         if(n.getName().endsWith(".vdf") || n.getName().endsWith(".pop") || n.getName().endsWith(".layout") ||
                            n.getName().endsWith(".menu") || n.getName().endsWith(".styles")) {
                             VDF1 v = new VDF1();
-                            v.readExternal(n.stream());
+                            v.readExternal(n.openStream());
                             child.add(new DefaultMutableTreeNode(v.getRoot()));
                         } else if(n.getName().endsWith(".res")) {
                             RES v = new RES();
