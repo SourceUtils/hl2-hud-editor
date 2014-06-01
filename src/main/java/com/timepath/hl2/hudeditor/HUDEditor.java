@@ -9,20 +9,17 @@ import com.timepath.hl2.io.util.Element;
 import com.timepath.hl2.swing.VGUICanvas;
 import com.timepath.plaf.IconList;
 import com.timepath.plaf.OS;
-import com.timepath.plaf.linux.Ayatana;
 import com.timepath.plaf.mac.Application;
 import com.timepath.plaf.mac.Application.*;
 import com.timepath.plaf.x.filechooser.BaseFileChooser;
 import com.timepath.plaf.x.filechooser.NativeFileChooser;
-import com.timepath.steam.SteamID;
-import com.timepath.steam.SteamUtils;
-import com.timepath.steam.io.VDF1;
+import com.timepath.steam.io.VDF;
+import com.timepath.steam.io.VDFNode;
+import com.timepath.steam.io.VDFNode.VDFProperty;
 import com.timepath.steam.io.storage.ACF;
 import com.timepath.steam.io.storage.Files;
 import com.timepath.steam.io.storage.VPK;
 import com.timepath.steam.io.util.ExtendedVFile;
-import com.timepath.steam.io.util.Property;
-import com.timepath.steam.io.util.VDFNode1;
 import com.timepath.swing.BlendedToolBar;
 import com.timepath.swing.StatusBar;
 import com.timepath.vfs.SimpleVFile;
@@ -43,23 +40,28 @@ import java.awt.dnd.DnDConstants;
 import java.awt.dnd.DropTarget;
 import java.awt.dnd.DropTargetDropEvent;
 import java.awt.dnd.InvalidDnDOperationException;
-import java.awt.event.*;
-import java.io.*;
-import java.net.MalformedURLException;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
 import java.net.URI;
 import java.net.URL;
 import java.text.MessageFormat;
 import java.util.Collection;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.StringTokenizer;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.Future;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipInputStream;
+import java.util.regex.Pattern;
+//import java.awt.*;
 
 /**
  * @author TimePath
@@ -67,20 +69,24 @@ import java.util.zip.ZipInputStream;
 @SuppressWarnings("serial")
 public class HUDEditor extends JFrame {
 
-    private static final Logger LOG = Logger.getLogger(HUDEditor.class.getName());
-    private final EditorMenuBar          jmb;
-    private final DefaultMutableTreeNode fileSystemRoot, archiveRoot;
-    private final ProjectTree   fileTree;
-    private final PropertyTable propTable;
-    private       VGUICanvas    canvas;
-    private       File          lastLoaded;
-    private       JSpinner      spinnerWidth;
-    private       JSpinner      spinnerHeight;
-    private HyperlinkListener linkListener = Utils.getLinkListener();
-    private JSplitPane     sideSplit;
-    private StatusBar      status;
-    private JTabbedPane    tabbedContent;
-    private BlendedToolBar tools;
+    static final         Pattern         VDF_PATTERN = Pattern.compile("^\\.(vdf|pop|layout|menu|styles)");
+    static final         ExecutorService es          = Executors.newFixedThreadPool(1);
+    // Runtime.getRuntime().availableProcessors() * 5
+    private static final Logger          LOG         = Logger.getLogger(HUDEditor.class.getName());
+    EditorMenuBar          jmb;
+    DefaultMutableTreeNode fileSystemRoot, archiveRoot;
+    ProjectTree   fileTree;
+    PropertyTable propTable;
+    VGUICanvas    canvas;
+    File          lastLoaded;
+    JSpinner      spinnerWidth;
+    JSpinner      spinnerHeight;
+    HyperlinkListener linkListener = Utils.getLinkListener();
+    JSplitPane     sideSplit;
+    StatusBar      status;
+    JTabbedPane    tabbedContent;
+    BlendedToolBar tools;
+    private DefaultTreeModel fileModel;
 
     public HUDEditor() {
         setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
@@ -90,60 +96,12 @@ public class HUDEditor extends JFrame {
                 quit();
             }
         });
-        setIconImages(new IconList("/com/timepath/hl2/hudeditor/res/Icon", "png", new int[] {
-                16, 22, 24, 32, 40, 48, 64, 128, 512, 1024
-        }
-        ).getIcons());
+        setIconImages(new IconList("/com/timepath/hl2/hudeditor/res/Icon",
+                                   "png",
+                                   new int[] { 16, 22, 24, 32, 40, 48, 64, 128, 512, 1024 }).getIcons());
         setTitle(Main.getString("Title"));
         getRootPane().putClientProperty("apple.awt.brushMetalLook", Boolean.TRUE); // Mac tweak
-        boolean buggyWM = true;
-        if(OS.isLinux() && buggyWM) {
-            addComponentListener(new ComponentAdapter() {
-                private boolean moved;
-                private Point real = new Point();
-                private boolean updateReal = true;
-
-                /**
-                 * When maximizing windows on linux under gnome-shell and possibly others, the
-                 * JMenuBar
-                 * menus appear not to work. This is because the position of the
-                 * window never updates. This is an attempt to make them usable again.
-                 */
-                @Override
-                public void componentResized(ComponentEvent e) {
-                    Rectangle b = getBounds();
-                    Rectangle s = getGraphicsConfiguration().getBounds();
-                    if(moved) {
-                        moved = false;
-                        return;
-                    }
-                    if(updateReal) {
-                        real.x = b.x;
-                        real.y = b.y;
-                    }
-                    updateReal = true;
-                    b.x = real.x;
-                    b.y = real.y;
-                    if(( b.x + b.width ) > s.width) {
-                        b.x -= ( b.x + b.width ) - s.width;
-                        updateReal = false;
-                    }
-                    if(( b.y + b.height ) > s.height) {
-                        b.y = 0;
-                        updateReal = false;
-                    }
-                    setBounds(b);
-                }
-
-                @Override
-                public void componentMoved(ComponentEvent e) {
-                    Rectangle b = getBounds();
-                    moved = true;
-                    real.x = b.x;
-                    real.y = b.y;
-                }
-            });
-        }
+        WindowMoveFix.install(this);
         setDropTarget(new DropTarget() {
             @Override
             public synchronized void drop(DropTargetDropEvent dtde) {
@@ -176,7 +134,7 @@ public class HUDEditor extends JFrame {
                         }
                     }
                     if(file != null) {
-                        load(file);
+                        loadAsync(file);
                     }
                 } catch(ClassNotFoundException | InvalidDnDOperationException | UnsupportedFlavorException | IOException ex) {
                     LOG.log(Level.SEVERE, null, ex);
@@ -193,205 +151,82 @@ public class HUDEditor extends JFrame {
                                             screenBounds.height - screenInsets.top - screenInsets.bottom);
         setMinimumSize(new Dimension(Math.max(workspace.width / 2, 640), Math.max(( 3 * workspace.height ) / 4, 480)));
         setPreferredSize(new Dimension((int) ( workspace.getWidth() / 1.5 ), (int) ( workspace.getHeight() / 1.5 )));
-        setLocationRelativeTo(null);
-        jmb = new EditorMenuBar();
-        setJMenuBar(jmb);
+        setJMenuBar(jmb = new EditorMenuBar(this));
         String str = Main.prefs.get("lastLoaded", null);
         if(str != null) {
             setLastLoaded(new File(str));
         }
         initComponents();
-        tools.setWindow(this);
-        tools.putClientProperty("Quaqua.ToolBar.style", "title");
-        status.putClientProperty("Quaqua.ToolBar.style", "bottom");
-        archiveRoot = new DefaultMutableTreeNode("Archives");
-        fileSystemRoot = new DefaultMutableTreeNode("Projects");
-        fileTree = new ProjectTree();
-        DefaultMutableTreeNode root = new DefaultMutableTreeNode();
-        ( (DefaultTreeModel) fileTree.getModel() ).setRoot(root);
-        root.add(archiveRoot);
-        root.add(fileSystemRoot);
-        ( (DefaultTreeModel) fileTree.getModel() ).reload();
-        JScrollPane fileTreePane = new JScrollPane(fileTree);
-        fileTreePane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
-        sideSplit.setTopComponent(fileTreePane);
-        fileTree.addTreeSelectionListener(new TreeSelectionListener() {
+        new SwingWorker<Image, Void>() {
             @Override
-            public void valueChanged(TreeSelectionEvent e) {
-                DefaultMutableTreeNode node = (DefaultMutableTreeNode) fileTree.getLastSelectedPathComponent();
-                if(node == null) {
-                    return;
-                }
-                propTable.clear();
-                DefaultTableModel model = (DefaultTableModel) propTable.getModel();
-                Object nodeInfo = node.getUserObject();
-                // TODO: introspection
-                if(nodeInfo instanceof VDFNode1) {
-                    Element element = Element.importVdf((VDFNode1) nodeInfo);
-                    loadProps(element);
-                    try {
-                        canvas.load(element);
-                    } catch(NullPointerException ex) {
-                        LOG.log(Level.SEVERE, null, ex);
-                    }
-                } else if(nodeInfo instanceof VTF) {
-                    VTF v = (VTF) nodeInfo;
-                    for(int i = Math.max(v.getMipCount() - 8, 0); i < Math.max(v.getMipCount() - 5, v.getMipCount()); i++) {
-                        try {
-                            ImageIcon img = new ImageIcon(v.getImage(i));
-                            model.insertRow(model.getRowCount(), new Object[] { "mip[" + i + ']', img, "" });
-                        } catch(IOException ex) {
-                            LOG.log(Level.SEVERE, null, ex);
-                        }
-                    }
-                    model.insertRow(model.getRowCount(), new Object[] { "version", v.getVersion(), "" });
-                    model.insertRow(model.getRowCount(), new Object[] {
-                            "headerSize", v.getHeaderSize(), ""
-                    });
-                    model.insertRow(model.getRowCount(), new Object[] { "width", v.getWidth(), "" });
-                    model.insertRow(model.getRowCount(), new Object[] { "height", v.getHeight(), "" });
-                    model.insertRow(model.getRowCount(), new Object[] { "flags", v.getFlags(), "" });
-                    model.insertRow(model.getRowCount(), new Object[] {
-                            "frameFirst", v.getFrameFirst(), ""
-                    });
-                    model.insertRow(model.getRowCount(), new Object[] {
-                            "reflectivity", v.getReflectivity(), ""
-                    });
-                    model.insertRow(model.getRowCount(), new Object[] { "bumpScale", v.getBumpScale(), "" });
-                    model.insertRow(model.getRowCount(), new Object[] { "format", v.getFormat(), "" });
-                    model.insertRow(model.getRowCount(), new Object[] { "mipCount", v.getMipCount(), "" });
-                    model.insertRow(model.getRowCount(), new Object[] {
-                            "thumbFormat", v.getThumbFormat(), ""
-                    });
-                    model.insertRow(model.getRowCount(), new Object[] {
-                            "thumbWidth", v.getThumbWidth(), ""
-                    });
-                    model.insertRow(model.getRowCount(), new Object[] {
-                            "thumbHeight", v.getThumbHeight(), ""
-                    });
-                    model.insertRow(model.getRowCount(), new Object[] { "depth", v.getDepth(), "" });
-                }
+            public Image doInBackground() {
+                return BackgroundLoader.fetch();
             }
-        });
-        propTable = new PropertyTable();
-        JScrollPane propTablePane = new JScrollPane(propTable);
-        sideSplit.setBottomComponent(propTablePane);
-        canvas = new VGUICanvas() {
-            @Override
-            public void placed() {
-                DefaultMutableTreeNode node = (DefaultMutableTreeNode) fileTree.getLastSelectedPathComponent();
-                if(node == null) {
-                    return;
-                }
-                Object nodeInfo = node.getUserObject();
-                if(nodeInfo instanceof Element) {
-                    Element element = (Element) nodeInfo;
-                    loadProps(element);
-                }
-            }
-        };
-        SteamID user = SteamUtils.getUser();
-        if(user != null) {
-            LOG.log(Level.INFO, "Current user: {0}", user);
-            SwingWorker<Image, Void> worker = new SwingWorker<Image, Void>() {
-                @Override
-                public Image doInBackground() {
-                    File screenshotDir = new File(SteamUtils.getUserData(), "760/remote/440/screenshots/");
-                    File[] files = screenshotDir.listFiles(new FilenameFilter() {
-                        @Override
-                        public boolean accept(File dir, String name) {
-                            return name.toLowerCase().endsWith(".jpg");
-                        }
-                    });
-                    if(files != null) {
-                        try {
-                            return new ImageIcon(files[(int) ( Math.random() * ( files.length - 1 ) )].toURI()
-                                                                                                      .toURL()).getImage();
-                        } catch(MalformedURLException ex) {
-                            LOG.log(Level.SEVERE, null, ex);
-                        }
-                    }
-                    LOG.log(Level.INFO, "No screenshots in {0}", screenshotDir);
-                    return null;
-                }
 
-                @Override
-                public void done() {
-                    try {
-                        canvas.setBackgroundImage(get());
-                    } catch(InterruptedException | ExecutionException ex) {
-                        LOG.log(Level.SEVERE, null, ex);
-                    }
+            @Override
+            public void done() {
+                try {
+                    canvas.setBackgroundImage(get());
+                } catch(InterruptedException | ExecutionException ex) {
+                    LOG.log(Level.SEVERE, null, ex);
                 }
-            };
-            worker.execute();
-        } else {
-            LOG.log(Level.WARNING, "Steam not found");
-        }
-        JScrollPane canvasPane = new JScrollPane(canvas);
-        //        canvasPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
-        canvasPane.getVerticalScrollBar().setBlockIncrement(30);
-        canvasPane.getVerticalScrollBar().setUnitIncrement(20);
-        //        canvasPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_ALWAYS);
-        canvasPane.getHorizontalScrollBar().setBlockIncrement(30);
-        canvasPane.getHorizontalScrollBar().setUnitIncrement(20);
-        tabbedContent.add(Main.getString("Canvas"), canvasPane);
+            }
+        }.execute();
         canvas.requestFocusInWindow();
         mount(440);
+        pack();
+        setLocationRelativeTo(null);
     }
 
     public static void analyze(final DefaultMutableTreeNode top, final boolean leaves) {
         if(!( top.getUserObject() instanceof ExtendedVFile )) {
             return;
         }
-        ExecutorService es = Executors.newCachedThreadPool();
-        ExtendedVFile e = (ExtendedVFile) top.getUserObject();
-        for(final SimpleVFile n : e.list()) {
-            Runnable r = new Runnable() {
-                @Override
-                public void run() {
-                    DefaultMutableTreeNode child = new DefaultMutableTreeNode(n);
-                    if(n.isDirectory()) {
-                        analyze(child, leaves);
-                        top.add(child);
-                    } else if(leaves) {
-                        InputStream is = n.openStream();
-                        LOG.info(n.getName());
-                        if(n.getName().endsWith(".vdf") || n.getName().endsWith(".pop") || n.getName().endsWith(".layout") ||
-                           n.getName().endsWith(".menu") || n.getName().endsWith(".styles")) {
-                            VDF1 v = new VDF1();
-                            v.readExternal(n.openStream());
-                            child.add(new DefaultMutableTreeNode(v.getRoot()));
-                        } else if(n.getName().endsWith(".res")) {
-                            RES v = new RES();
-                            v.readExternal(is);
-                            child.add(new DefaultMutableTreeNode(v.getRoot()));
-                        } else if(n.getName().endsWith(".vmt")) {
-                            VMT v = new VMT();
-                            v.readExternal(is);
-                        } else if(n.getName().endsWith(".vtf")) {
-                            VTF v = null;
-                            try {
-                                v = VTF.load(is);
-                            } catch(IOException ex) {
-                                LOG.log(Level.SEVERE, null, ex);
-                            }
-                            if(v != null) {
-                                child.setUserObject(v);
-                            }
+        ExtendedVFile root = (ExtendedVFile) top.getUserObject();
+        List<Future<?>> tasks = new LinkedList<>();
+        for(final SimpleVFile n : root.list()) {
+            LOG.log(Level.FINE, "Loading {0}", n.getName());
+            //            tasks.add(es.submit(new Runnable() {
+            //                @Override
+            //                public void run() {
+            DefaultMutableTreeNode child = new DefaultMutableTreeNode(n);
+            if(n.isDirectory()) {
+                analyze(child, leaves);
+                top.add(child);
+            } else if(leaves) {
+                try(InputStream is = n.openStream()) {
+                    if(VDF_PATTERN.matcher(n.getName()).matches()) {
+                        child.add(VDF.load(is).toTreeNode());
+                    } else if(n.getName().endsWith(".res")) {
+                        child.add(RES.load(is).toTreeNode());
+                    } else if(n.getName().endsWith(".vmt")) {
+                        child.add(VMT.load(is).toTreeNode());
+                    } else if(n.getName().endsWith(".vtf")) {
+                        VTF v = null;
+                        try {
+                            v = VTF.load(is);
+                        } catch(IOException ex) {
+                            LOG.log(Level.SEVERE, null, ex);
                         }
-                        top.add(child);
+                        if(v != null) {
+                            child.setUserObject(v);
+                        }
                     }
+                } catch(IOException e) {
+                    LOG.log(Level.SEVERE, null, e);
                 }
-            };
-            es.submit(r);
+                top.add(child);
+            }
+            //                }
+            //            }));
         }
-        es.shutdown();
-        try {
-            es.awaitTermination(Long.MAX_VALUE, TimeUnit.DAYS);
-        } catch(InterruptedException ex) {
-            LOG.log(Level.SEVERE, null, ex);
-        }
+        //        for (Future<?> f : tasks) {
+        //            try {
+        //                f.get();
+        //            } catch (InterruptedException | ExecutionException e) {
+        //                LOG.log(Level.SEVERE, null, e);
+        //            }
+        //        }
     }
 
     private static void recurseDirectoryToNode(ExtendedVFile ar, DefaultMutableTreeNode project) {
@@ -403,21 +238,12 @@ public class HUDEditor extends JFrame {
         error(msg, Main.getString("Error"));
     }
 
-    private void warn(Object msg) {
-        error(msg, Main.getString("Warning"));
-    }
-
     private void error(Object msg, String title) {
         LOG.log(Level.SEVERE, "{0}:{1}", new Object[] { title, msg });
         JOptionPane.showMessageDialog(this, msg, title, JOptionPane.ERROR_MESSAGE);
     }
 
-    private void warn(Object msg, String title) {
-        LOG.log(Level.WARNING, "{0}:{1}", new Object[] { title, msg });
-        JOptionPane.showMessageDialog(this, msg, title, JOptionPane.WARNING_MESSAGE);
-    }
-
-    private void info(Object msg) {
+    void info(Object msg) {
         info(msg, Main.getString("Info"));
     }
 
@@ -438,60 +264,33 @@ public class HUDEditor extends JFrame {
         pane.addHyperlinkListener(linkListener);
         String aboutText = "<html><h2>This is to be a What You See Is What You Get HUD Editor for TF2,</h2>";
         aboutText += "for graphically editing TF2 HUDs!";
-        aboutText += "<p>Author: TimePath (<a href=\"http://steamcommunity.com/id/TimePath/\">steam</a>|<a href=\"http://www" +
-                     ".reddit.com/user/TimePath/\">reddit</a>)<br>";
         String p1 = aboutText;
         pane.setText(p1);
         info(pane, "About");
     }
 
-    /**
-     * Start in the home directory
-     * System.getProperty("user.home")
-     * linux = ~
-     * windows = %userprofile%
-     * mac = ?
-     */
-    private void locateHudDirectory() {
+    void locateHudDirectory() {
         try {
             File[] selection = new NativeFileChooser().setParent(this)
                                                       .setTitle(Main.getString("LoadHudDir"))
-                                                      .setFile(lastLoaded)
+                                                      .setDirectory(lastLoaded)
                                                       .setFileMode(BaseFileChooser.FileMode.DIRECTORIES_ONLY)
                                                       .choose();
-            if(selection == null) {
-                return;
+            if(selection != null) {
+                loadAsync(selection[0]);
             }
-            load(selection[0]);
         } catch(IOException ex) {
             LOG.log(Level.SEVERE, null, ex);
         }
     }
 
-    private void locateZippedHud() {
-        try {
-            File[] selection = new NativeFileChooser().setParent(this)
-                                                      .setTitle(Main.getString("OpenArchive"))
-                                                      .setFile(lastLoaded)
-                                                      .setFileMode(BaseFileChooser.FileMode.FILES_ONLY)
-                                                      .choose();
-            if(selection == null) {
-                return;
-            }
-            load(selection[0]);
-        } catch(IOException ex) {
-            LOG.log(Level.SEVERE, null, ex);
-        }
-    }
-
-    private void load(final File f) {
+    void loadAsync(final File f) {
         setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
+        final long start = System.currentTimeMillis();
         new SwingWorker<DefaultMutableTreeNode, Void>() {
-            long start = System.currentTimeMillis();
-
             @Override
             public DefaultMutableTreeNode doInBackground() {
-                return doLoad(f);
+                return load(f);
             }
 
             @Override
@@ -513,7 +312,43 @@ public class HUDEditor extends JFrame {
         }.execute();
     }
 
-    private void changeResolution() {
+    DefaultMutableTreeNode load(File root) {
+        if(root == null) {
+            return null;
+        }
+        if(!root.exists()) {
+            error(new MessageFormat(Main.getString("FileAccessError")).format(new Object[] { root }));
+        }
+        setLastLoaded(root);
+        LOG.log(Level.INFO, "You have selected: {0}", root.getAbsolutePath());
+        if(root.isDirectory()) {
+            File[] folders = root.listFiles();
+            boolean valid = true; // TODO: find resource and scripts if there is a parent directory
+            for(File folder : folders) {
+                if(folder.isDirectory() &&
+                   ( "resource".equalsIgnoreCase(folder.getName()) || "scripts".equalsIgnoreCase(folder.getName()) )) {
+                    valid = true;
+                    break;
+                }
+            }
+            if(!valid) {
+                error("Selection not valid. Please choose a folder containing \'resources\' or \'scripts\'.");
+                locateHudDirectory();
+                return null;
+            }
+            DefaultMutableTreeNode project = new DefaultMutableTreeNode(root.getName());
+            recurseDirectoryToNode(new Files(root), project);
+            return project;
+        }
+        if(root.getName().endsWith("_dir.vpk")) {
+            DefaultMutableTreeNode project = new DefaultMutableTreeNode(root.getName());
+            recurseDirectoryToNode(VPK.loadArchive(root), project);
+            return project;
+        }
+        return null;
+    }
+
+    void changeResolution() {
         spinnerWidth.setEnabled(false);
         spinnerHeight.setEnabled(false);
         final JComboBox dropDown = new JComboBox(); // <String>
@@ -597,66 +432,7 @@ public class HUDEditor extends JFrame {
             } catch(Exception e) {
                 LOG.severe(e.toString());
             }
-        } else if(OS.isLinux()) {
-            if(!Ayatana.tryInstallMenu(this, menubar)) {
-                LOG.log(Level.WARNING, "AyatanaDesktop failed to load for {0}", System.getenv("XDG_CURRENT_DESKTOP"));
-            }
         }
-    }
-
-    @Override
-    public void setVisible(boolean b) {
-        super.setVisible(b);
-        createBufferStrategy(2);
-    }
-
-    private DefaultMutableTreeNode doLoad(File root) {
-        if(root == null) {
-            return null;
-        }
-        if(!root.exists()) {
-            error(new MessageFormat(Main.getString("FileAccessError")).format(new Object[] { root }));
-        }
-        setLastLoaded(root);
-        LOG.log(Level.INFO, "You have selected: {0}", root.getAbsolutePath());
-        if(root.isDirectory()) {
-            File[] folders = root.listFiles();
-            boolean valid = true; // TODO: find resource and scripts if there is a parent directory
-            for(File folder : folders) {
-                if(folder.isDirectory() &&
-                   ( "resource".equalsIgnoreCase(folder.getName()) || "scripts".equalsIgnoreCase(folder.getName()) )) {
-                    valid = true;
-                    break;
-                }
-            }
-            if(!valid) {
-                error("Selection not valid. Please choose a folder containing \'resources\' or \'scripts\'.");
-                locateHudDirectory();
-                return null;
-            }
-            DefaultMutableTreeNode project = new DefaultMutableTreeNode(root.getName());
-            recurseDirectoryToNode(new Files(root), project);
-            return project;
-        }
-        if(root.getName().endsWith(".zip")) {
-            try {
-                ZipInputStream zin = new ZipInputStream(new FileInputStream(root));
-                ZipEntry entry;
-                while(( entry = zin.getNextEntry() ) != null) {
-                    LOG.log(Level.INFO, "{0}", entry.getName());
-                    zin.closeEntry();
-                }
-                zin.close();
-            } catch(IOException ignored) {
-            }
-            return null;
-        }
-        if(root.getName().endsWith("_dir.vpk")) {
-            DefaultMutableTreeNode project = new DefaultMutableTreeNode(root.getName());
-            recurseDirectoryToNode(VPK.loadArchive(root), project);
-            return project;
-        }
-        return null;
     }
 
     private void mount(final int appID) {
@@ -676,7 +452,7 @@ public class HUDEditor extends JFrame {
                     DefaultMutableTreeNode g = get();
                     if(g != null) {
                         archiveRoot.add(g);
-                        ( (DefaultTreeModel) fileTree.getModel() ).reload(archiveRoot);
+                        fileModel.reload(archiveRoot);
                         LOG.log(Level.INFO, "Mounted {0}", appID);
                     }
                 } catch(InterruptedException | ExecutionException ex) {
@@ -706,7 +482,7 @@ public class HUDEditor extends JFrame {
         if(!element.getProps().isEmpty()) {
             element.validateDisplay();
             for(int i = 0; i < element.getProps().size(); i++) {
-                Property entry = element.getProps().get(i);
+                VDFProperty entry = element.getProps().get(i);
                 if("\\n".equals(entry.getKey())) {
                     continue;
                 }
@@ -718,306 +494,116 @@ public class HUDEditor extends JFrame {
     }
 
     private void initComponents() {
-        GridBagConstraints gridBagConstraints;
-        tools = new BlendedToolBar();
+        getContentPane().add(tools = new BlendedToolBar(), BorderLayout.PAGE_START);
         JSplitPane rootSplit = new JSplitPane();
-        sideSplit = new JSplitPane();
-        tabbedContent = new JTabbedPane();
-        status = new StatusBar();
-        getContentPane().add(tools, BorderLayout.PAGE_START);
         rootSplit.setDividerLocation(180);
         rootSplit.setContinuousLayout(true);
         rootSplit.setOneTouchExpandable(true);
-        sideSplit.setBorder(null);
-        sideSplit.setOrientation(JSplitPane.VERTICAL_SPLIT);
-        sideSplit.setResizeWeight(0.5);
-        sideSplit.setContinuousLayout(true);
-        sideSplit.setOneTouchExpandable(true);
-        rootSplit.setLeftComponent(sideSplit);
-        rootSplit.setRightComponent(tabbedContent);
+        rootSplit.setLeftComponent(sideSplit = new JSplitPane() {{
+            setBorder(null);
+            setOrientation(JSplitPane.VERTICAL_SPLIT);
+            setResizeWeight(0.5);
+            setContinuousLayout(true);
+            setOneTouchExpandable(true);
+        }});
+        rootSplit.setRightComponent(tabbedContent = new JTabbedPane());
         getContentPane().add(rootSplit, BorderLayout.CENTER);
-        getContentPane().add(status, BorderLayout.PAGE_END);
-        pack();
-    }
-
-    private abstract static class CustomAction extends AbstractAction {
-
-        private CustomAction(String s, Icon icon, int mnemonic, KeyStroke shortcut) {
-            super(Main.getString(s), icon);
-            putValue(Action.MNEMONIC_KEY, mnemonic);
-            putValue(Action.ACCELERATOR_KEY, shortcut);
-        }
-    }
-
-    private class EditorMenuBar extends JMenuBar {
-
-        private final JMenuItem newItem, openItem, openZippedItem, saveItem, saveAsItem, reloadItem, closeItem, exitItem;
-        private final JMenuItem undoItem, redoItem, cutItem, copyItem, pasteItem, deleteItem, selectAllItem, preferencesItem;
-        private final JMenuItem resolutionItem, previewItem;
-        private final int modifier = Toolkit.getDefaultToolkit().getMenuShortcutKeyMask();
-        private JMenuItem aboutItem;
-
-        EditorMenuBar() {
-            JMenu fileMenu = new JMenu(Main.getString("File"));
-            fileMenu.setMnemonic(KeyEvent.VK_F);
-            add(fileMenu);
-            newItem = new JMenuItem(new CustomAction(Main.getString("New"),
-                                                     null,
-                                                     KeyEvent.VK_N,
-                                                     KeyStroke.getKeyStroke(KeyEvent.VK_N, modifier))
-            {
-                @Override
-                public void actionPerformed(ActionEvent e) {
-                    throw new UnsupportedOperationException("Not supported yet.");
+        getContentPane().add(status = new StatusBar(), BorderLayout.PAGE_END);
+        tools.setWindow(this);
+        tools.putClientProperty("Quaqua.ToolBar.style", "title");
+        status.putClientProperty("Quaqua.ToolBar.style", "bottom");
+        archiveRoot = new DefaultMutableTreeNode("Archives");
+        fileSystemRoot = new DefaultMutableTreeNode("Projects");
+        fileTree = new ProjectTree();
+        DefaultMutableTreeNode root = new DefaultMutableTreeNode();
+        root.add(archiveRoot);
+        root.add(fileSystemRoot);
+        fileModel = ( (DefaultTreeModel) fileTree.getModel() );
+        fileModel.setRoot(root);
+        fileModel.reload();
+        sideSplit.setTopComponent(new JScrollPane(fileTree) {{
+            setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
+        }});
+        fileTree.addTreeSelectionListener(new TreeSelectionListener() {
+            @Override
+            public void valueChanged(TreeSelectionEvent e) {
+                DefaultMutableTreeNode node = (DefaultMutableTreeNode) fileTree.getLastSelectedPathComponent();
+                if(node == null) {
+                    return;
                 }
-            });
-            newItem.setEnabled(false);
-            fileMenu.add(newItem);
-            openItem = new JMenuItem(new CustomAction("Open",
-                                                      null,
-                                                      KeyEvent.VK_O,
-                                                      KeyStroke.getKeyStroke(KeyEvent.VK_O, modifier))
-            {
-                @Override
-                public void actionPerformed(ActionEvent e) {
-                    locateHudDirectory();
-                }
-            });
-            fileMenu.add(openItem);
-            openZippedItem = new JMenuItem(new CustomAction("OpenArchive",
-                                                            null,
-                                                            KeyEvent.VK_Z,
-                                                            KeyStroke.getKeyStroke(KeyEvent.VK_O,
-                                                                                   modifier + ActionEvent.SHIFT_MASK)
-            )
-            {
-                @Override
-                public void actionPerformed(ActionEvent e) {
-                    locateZippedHud();
-                }
-            });
-            fileMenu.add(openZippedItem);
-            fileMenu.addSeparator();
-            closeItem = new JMenuItem(new CustomAction("Close",
-                                                       null,
-                                                       KeyEvent.VK_C,
-                                                       KeyStroke.getKeyStroke(KeyEvent.VK_W, modifier))
-            {
-                @Override
-                public void actionPerformed(ActionEvent e) {
-                    //                    close();
-                }
-            });
-            if(OS.isMac()) {
-                fileMenu.add(closeItem);
-            }
-            saveItem = new JMenuItem(new CustomAction("Save",
-                                                      null,
-                                                      KeyEvent.VK_S,
-                                                      KeyStroke.getKeyStroke(KeyEvent.VK_S, modifier))
-            {
-                @Override
-                public void actionPerformed(ActionEvent e) {
-                    if(!canvas.getElements().isEmpty()) {
-                        info(canvas.getElements().get(canvas.getElements().size() - 1).save());
+                propTable.clear();
+                DefaultTableModel model = (DefaultTableModel) propTable.getModel();
+                Object nodeInfo = node.getUserObject();
+                // TODO: introspection
+                if(nodeInfo instanceof VDFNode) {
+                    Element element = Element.importVdf((VDFNode) nodeInfo);
+                    loadProps(element);
+                    try {
+                        canvas.load(element);
+                    } catch(NullPointerException ex) {
+                        LOG.log(Level.SEVERE, null, ex);
                     }
-                }
-            });
-            saveItem.setEnabled(false);
-            fileMenu.add(saveItem);
-            saveAsItem = new JMenuItem(new CustomAction("Save As...",
-                                                        null,
-                                                        KeyEvent.VK_A,
-                                                        KeyStroke.getKeyStroke(KeyEvent.VK_S, modifier + ActionEvent.SHIFT_MASK))
-            {
-                @Override
-                public void actionPerformed(ActionEvent e) {
-                }
-            });
-            saveAsItem.setEnabled(false);
-            fileMenu.add(saveAsItem);
-            reloadItem = new JMenuItem(new CustomAction("Revert",
-                                                        null,
-                                                        KeyEvent.VK_R,
-                                                        KeyStroke.getKeyStroke(KeyEvent.VK_F5, 0))
-            {
-                @Override
-                public void actionPerformed(ActionEvent e) {
-                    load(lastLoaded);
-                }
-            });
-            reloadItem.setEnabled(false);
-            fileMenu.add(reloadItem);
-            exitItem = new JMenuItem(new CustomAction("Exit",
-                                                      null,
-                                                      KeyEvent.VK_X,
-                                                      KeyStroke.getKeyStroke(KeyEvent.VK_Q, modifier))
-            {
-                @Override
-                public void actionPerformed(ActionEvent e) {
-                    quit();
-                }
-            });
-            if(!OS.isMac()) {
-                fileMenu.addSeparator();
-                fileMenu.add(closeItem);
-                fileMenu.add(exitItem);
-            }
-            JMenu editMenu = new JMenu("Edit");
-            editMenu.setMnemonic(KeyEvent.VK_E);
-            add(editMenu);
-            undoItem = new JMenuItem(new CustomAction("Undo",
-                                                      null,
-                                                      KeyEvent.VK_U,
-                                                      KeyStroke.getKeyStroke(KeyEvent.VK_Z, modifier))
-            {
-                @Override
-                public void actionPerformed(ActionEvent e) {
-                }
-            });
-            undoItem.setEnabled(false);
-            editMenu.add(undoItem);
-            redoItem = new JMenuItem(new CustomAction("Redo",
-                                                      null,
-                                                      KeyEvent.VK_R,
-                                                      KeyStroke.getKeyStroke(KeyEvent.VK_Y, modifier))
-            { // TODO: ctrl + shift + z
-                @Override
-                public void actionPerformed(ActionEvent e) {
-                }
-            });
-            redoItem.setEnabled(false);
-            editMenu.add(redoItem);
-            editMenu.addSeparator();
-            cutItem = new JMenuItem(new CustomAction("Cut",
-                                                     null,
-                                                     KeyEvent.VK_T,
-                                                     KeyStroke.getKeyStroke(KeyEvent.VK_X, modifier))
-            {
-                @Override
-                public void actionPerformed(ActionEvent e) {
-                }
-            });
-            cutItem.setEnabled(false);
-            editMenu.add(cutItem);
-            copyItem = new JMenuItem(new CustomAction("Copy",
-                                                      null,
-                                                      KeyEvent.VK_C,
-                                                      KeyStroke.getKeyStroke(KeyEvent.VK_C, modifier))
-            {
-                @Override
-                public void actionPerformed(ActionEvent e) {
-                }
-            });
-            copyItem.setEnabled(false);
-            editMenu.add(copyItem);
-            pasteItem = new JMenuItem(new CustomAction("Paste",
-                                                       null,
-                                                       KeyEvent.VK_P,
-                                                       KeyStroke.getKeyStroke(KeyEvent.VK_V, modifier))
-            {
-                @Override
-                public void actionPerformed(ActionEvent e) {
-                }
-            });
-            pasteItem.setEnabled(false);
-            editMenu.add(pasteItem);
-            deleteItem = new JMenuItem(new CustomAction("Delete",
-                                                        null,
-                                                        KeyEvent.VK_D,
-                                                        KeyStroke.getKeyStroke(KeyEvent.VK_DELETE, 0))
-            {
-                @Override
-                public void actionPerformed(ActionEvent e) {
-                    canvas.removeElements(canvas.getSelected());
-                }
-            });
-            editMenu.add(deleteItem);
-            editMenu.addSeparator();
-            selectAllItem = new JMenuItem(new CustomAction("Select All",
-                                                           null,
-                                                           KeyEvent.VK_A,
-                                                           KeyStroke.getKeyStroke(KeyEvent.VK_A, modifier))
-            {
-                @Override
-                public void actionPerformed(ActionEvent e) {
-                    for(int i = 0; i < canvas.getElements().size(); i++) {
-                        canvas.select(canvas.getElements().get(i));
+                } else if(nodeInfo instanceof VTF) {
+                    VTF v = (VTF) nodeInfo;
+                    for(int i = Math.max(v.getMipCount() - 8, 0); i < Math.max(v.getMipCount() - 5, v.getMipCount()); i++) {
+                        try {
+                            ImageIcon img = new ImageIcon(v.getImage(i));
+                            model.insertRow(model.getRowCount(), new Object[] { "mip[" + i + ']', img, "" });
+                        } catch(IOException ex) {
+                            LOG.log(Level.SEVERE, null, ex);
+                        }
                     }
+                    model.insertRow(model.getRowCount(), new Object[] { "version", v.getVersion(), "" });
+                    model.insertRow(model.getRowCount(), new Object[] {
+                            "headerSize", v.getHeaderSize(), ""
+                    });
+                    model.insertRow(model.getRowCount(), new Object[] { "width", v.getWidth(), "" });
+                    model.insertRow(model.getRowCount(), new Object[] { "height", v.getHeight(), "" });
+                    model.insertRow(model.getRowCount(), new Object[] { "flags", v.getFlags(), "" });
+                    model.insertRow(model.getRowCount(), new Object[] {
+                            "frameFirst", v.getFrameFirst(), ""
+                    });
+                    model.insertRow(model.getRowCount(), new Object[] {
+                            "reflectivity", v.getReflectivity(), ""
+                    });
+                    model.insertRow(model.getRowCount(), new Object[] { "bumpScale", v.getBumpScale(), "" });
+                    model.insertRow(model.getRowCount(), new Object[] { "format", v.getFormat(), "" });
+                    model.insertRow(model.getRowCount(), new Object[] { "mipCount", v.getMipCount(), "" });
+                    model.insertRow(model.getRowCount(), new Object[] {
+                            "thumbFormat", v.getThumbFormat(), ""
+                    });
+                    model.insertRow(model.getRowCount(), new Object[] {
+                            "thumbWidth", v.getThumbWidth(), ""
+                    });
+                    model.insertRow(model.getRowCount(), new Object[] {
+                            "thumbHeight", v.getThumbHeight(), ""
+                    });
+                    model.insertRow(model.getRowCount(), new Object[] { "depth", v.getDepth(), "" });
                 }
-            });
-            editMenu.add(selectAllItem);
-            editMenu.addSeparator();
-            preferencesItem = new JMenuItem(new CustomAction("Preferences", null, KeyEvent.VK_E, null) {
-                @Override
-                public void actionPerformed(ActionEvent e) {
-                    preferences();
-                }
-            });
-            if(!OS.isMac()) {
-                editMenu.add(preferencesItem);
             }
-            JMenu viewMenu = new JMenu("View");
-            viewMenu.setMnemonic(KeyEvent.VK_V);
-            add(viewMenu);
-            resolutionItem = new JMenuItem(new CustomAction("Change Resolution",
-                                                            null,
-                                                            KeyEvent.VK_R,
-                                                            KeyStroke.getKeyStroke(KeyEvent.VK_R, modifier))
-            {
-                @Override
-                public void actionPerformed(ActionEvent e) {
-                    changeResolution();
+        });
+        sideSplit.setBottomComponent(new JScrollPane(propTable = new PropertyTable()));
+        canvas = new VGUICanvas() {
+            @Override
+            public void placed() {
+                DefaultMutableTreeNode node = (DefaultMutableTreeNode) fileTree.getLastSelectedPathComponent();
+                if(node == null) {
+                    return;
+                }
+                Object nodeInfo = node.getUserObject();
+                if(nodeInfo instanceof Element) {
+                    Element element = (Element) nodeInfo;
+                    loadProps(element);
                 }
             }
-            );
-            resolutionItem.setEnabled(false);
-            viewMenu.add(resolutionItem);
-            previewItem = new JMenuItem(new CustomAction("Full Screen Preview",
-                                                         null,
-                                                         KeyEvent.VK_F,
-                                                         KeyStroke.getKeyStroke(KeyEvent.VK_F11, 0))
-            {
-                private boolean fullscreen;
-
-                @Override
-                public void actionPerformed(ActionEvent e) {
-                    dispose();
-                    setUndecorated(!fullscreen);
-                    setExtendedState(fullscreen ? Frame.NORMAL : Frame.MAXIMIZED_BOTH);
-                    HUDEditor.this.setVisible(true);
-                    setJMenuBar(jmb);
-                    pack();
-                    toFront();
-                    fullscreen = !fullscreen;
-                }
-            });
-            viewMenu.add(previewItem);
-            viewMenu.addSeparator();
-            JMenuItem viewItem1 = new JMenuItem("Main Menu");
-            viewItem1.setEnabled(false);
-            viewMenu.add(viewItem1);
-            JMenuItem viewItem2 = new JMenuItem("In-game (Health and ammo)");
-            viewItem2.setEnabled(false);
-            viewMenu.add(viewItem2);
-            JMenuItem viewItem3 = new JMenuItem("Scoreboard");
-            viewItem3.setEnabled(false);
-            viewMenu.add(viewItem3);
-            JMenuItem viewItem4 = new JMenuItem("CTF HUD");
-            viewItem4.setEnabled(false);
-            viewMenu.add(viewItem4);
-            if(!OS.isMac()) {
-                JMenu helpMenu = new JMenu("Help");
-                helpMenu.setMnemonic(KeyEvent.VK_H);
-                add(helpMenu);
-                aboutItem = new JMenuItem(new CustomAction("About", null, KeyEvent.VK_A, null) {
-                    @Override
-                    public void actionPerformed(ActionEvent e) {
-                        about();
-                    }
-                });
-                helpMenu.add(aboutItem);
-            }
-        }
+        };
+        tabbedContent.add(Main.getString("Canvas"), new JScrollPane(canvas) {{
+            //        setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
+            getVerticalScrollBar().setBlockIncrement(30);
+            getVerticalScrollBar().setUnitIncrement(20);
+            //        setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_ALWAYS);
+            getHorizontalScrollBar().setBlockIncrement(30);
+            getHorizontalScrollBar().setUnitIncrement(20);
+        }});
     }
 }

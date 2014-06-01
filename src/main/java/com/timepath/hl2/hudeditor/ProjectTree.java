@@ -40,6 +40,7 @@ public class ProjectTree extends JTree implements ActionListener, MouseListener 
     public ProjectTree() {
         initComponents();
         setRootVisible(false);
+        setShowsRootHandles(true);
         getSelectionModel().setSelectionMode(TreeSelectionModel.SINGLE_TREE_SELECTION);
         setCellRenderer(new CustomTreeCellRenderer());
     }

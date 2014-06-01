@@ -3,7 +3,6 @@ package com.timepath.hl2.hudeditor;
 import javax.swing.*;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
-import javax.swing.table.TableCellEditor;
 import javax.swing.table.TableCellRenderer;
 import java.awt.*;
 import java.util.logging.Logger;
@@ -50,11 +49,6 @@ public class PropertyTable extends JTable {
     @Override
     public TableCellRenderer getCellRenderer(int row, int column) {
         return renderer;
-    }
-
-    @Override
-    public TableCellEditor getCellEditor(int row, int column) {
-        return super.getCellEditor(row, column);
     }
 
     private class CustomTableCellRenderer extends DefaultTableCellRenderer {
