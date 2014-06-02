@@ -1,3 +1,10 @@
+hl2-hud-editor
+==============
+
+[![Build Status](https://travis-ci.org/TimePath/hl2-hud-editor.svg?branch=master)](https://travis-ci.org/TimePath/hl2-hud-editor)
+
+## DESCRIPTION
+
 To-do:
 * Have toggles for situations like: Low heath, uber charge %, Dropped Intel timeout
 * Modify fonts and font sizes
