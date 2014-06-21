@@ -9,6 +9,7 @@ import com.timepath.hl2.io.util.Element;
 import com.timepath.hl2.swing.VGUICanvas;
 import com.timepath.plaf.IconList;
 import com.timepath.plaf.OS;
+import com.timepath.plaf.linux.WindowMoveFix;
 import com.timepath.plaf.mac.Application;
 import com.timepath.plaf.mac.Application.*;
 import com.timepath.plaf.x.filechooser.BaseFileChooser;
