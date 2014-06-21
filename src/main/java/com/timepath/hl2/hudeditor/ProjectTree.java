@@ -230,9 +230,11 @@ public class ProjectTree extends JTree implements ActionListener, MouseListener 
             setText(stringValue);
             Color tColor = null;
             if(tColor != null) {
-                setForeground(sel ? ( ( tColor != newColor ) ? new Color(-tColor.getRed() + 255,
-                                                                         -tColor.getGreen() + 255,
-                                                                         -tColor.getBlue() + 255) : tColor.brighter() ) : tColor);
+                setForeground(sel
+                              ? ( ( tColor != newColor ) ? new Color(-tColor.getRed() + 255,
+                                                                     -tColor.getGreen() + 255,
+                                                                     -tColor.getBlue() + 255) : tColor.brighter() )
+                              : tColor);
             } else {
                 setForeground(sel ? getTextSelectionColor() : getTextNonSelectionColor());
             }

@@ -53,16 +53,11 @@ import java.net.URL;
 import java.text.MessageFormat;
 import java.util.Collection;
 import java.util.LinkedList;
-import java.util.List;
 import java.util.StringTokenizer;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.regex.Pattern;
-//import java.awt.*;
 
 /**
  * @author TimePath
@@ -70,10 +65,8 @@ import java.util.regex.Pattern;
 @SuppressWarnings("serial")
 public class HUDEditor extends JFrame {
 
-    static final         Pattern         VDF_PATTERN = Pattern.compile("^\\.(vdf|pop|layout|menu|styles)");
-    static final         ExecutorService es          = Executors.newFixedThreadPool(1);
-    // Runtime.getRuntime().availableProcessors() * 5
-    private static final Logger          LOG         = Logger.getLogger(HUDEditor.class.getName());
+    static final         Pattern VDF_PATTERN = Pattern.compile("^\\.(vdf|pop|layout|menu|styles)");
+    private static final Logger  LOG         = Logger.getLogger(HUDEditor.class.getName());
     EditorMenuBar          jmb;
     DefaultMutableTreeNode fileSystemRoot, archiveRoot;
     ProjectTree   fileTree;
@@ -127,7 +120,7 @@ public class HUDEditor extends JFrame {
                     } else {
                         Object data = t.getTransferData(DataFlavor.javaFileListFlavor);
                         if(data instanceof Iterable) {
-                            for(Object o : (Iterable<? extends Object>) data) {
+                            for(Object o : (Iterable<?>) data) {
                                 if(o instanceof File) {
                                     file = (File) o;
                                 }
@@ -137,7 +130,8 @@ public class HUDEditor extends JFrame {
                     if(file != null) {
                         loadAsync(file);
                     }
-                } catch(ClassNotFoundException | InvalidDnDOperationException | UnsupportedFlavorException | IOException ex) {
+                } catch(ClassNotFoundException | InvalidDnDOperationException | UnsupportedFlavorException |
+                        IOException ex) {
                     LOG.log(Level.SEVERE, null, ex);
                 } finally {
                     dtde.dropComplete(true);
@@ -184,12 +178,8 @@ public class HUDEditor extends JFrame {
             return;
         }
         ExtendedVFile root = (ExtendedVFile) top.getUserObject();
-        List<Future<?>> tasks = new LinkedList<>();
         for(final SimpleVFile n : root.list()) {
             LOG.log(Level.FINE, "Loading {0}", n.getName());
-            //            tasks.add(es.submit(new Runnable() {
-            //                @Override
-            //                public void run() {
             DefaultMutableTreeNode child = new DefaultMutableTreeNode(n);
             if(n.isDirectory()) {
                 analyze(child, leaves);
@@ -218,16 +208,7 @@ public class HUDEditor extends JFrame {
                 }
                 top.add(child);
             }
-            //                }
-            //            }));
         }
-        //        for (Future<?> f : tasks) {
-        //            try {
-        //                f.get();
-        //            } catch (InterruptedException | ExecutionException e) {
-        //                LOG.log(Level.SEVERE, null, e);
-        //            }
-        //        }
     }
 
     private static void recurseDirectoryToNode(ExtendedVFile ar, DefaultMutableTreeNode project) {
@@ -325,7 +306,7 @@ public class HUDEditor extends JFrame {
         if(root.isDirectory()) {
             File[] folders = root.listFiles();
             boolean valid = true; // TODO: find resource and scripts if there is a parent directory
-            for(File folder : folders) {
+            for(File folder : folders != null ? folders : new File[0]) {
                 if(folder.isDirectory() &&
                    ( "resource".equalsIgnoreCase(folder.getName()) || "scripts".equalsIgnoreCase(folder.getName()) )) {
                     valid = true;
@@ -352,7 +333,7 @@ public class HUDEditor extends JFrame {
     void changeResolution() {
         spinnerWidth.setEnabled(false);
         spinnerHeight.setEnabled(false);
-        final JComboBox dropDown = new JComboBox(); // <String>
+        final JComboBox<String> dropDown = new JComboBox<>();
         GraphicsEnvironment env = GraphicsEnvironment.getLocalGraphicsEnvironment();
         Collection<String> listItems = new LinkedList<>();
         for(GraphicsDevice device : env.getScreenDevices()) {
@@ -385,7 +366,11 @@ public class HUDEditor extends JFrame {
         Object[] message = {
                 "Presets: ", dropDown, "Width: ", spinnerWidth, "Height: ", spinnerHeight
         };
-        JOptionPane optionPane = new JOptionPane(message, JOptionPane.PLAIN_MESSAGE, JOptionPane.OK_CANCEL_OPTION, null, null);
+        JOptionPane optionPane = new JOptionPane(message,
+                                                 JOptionPane.PLAIN_MESSAGE,
+                                                 JOptionPane.OK_CANCEL_OPTION,
+                                                 null,
+                                                 null);
         JDialog dialog = optionPane.createDialog(this, "Change resolution...");
         dialog.setContentPane(optionPane);
         dialog.pack();
@@ -544,42 +529,6 @@ public class HUDEditor extends JFrame {
                     } catch(NullPointerException ex) {
                         LOG.log(Level.SEVERE, null, ex);
                     }
-                } else if(nodeInfo instanceof VTF) {
-                    VTF v = (VTF) nodeInfo;
-                    for(int i = Math.max(v.getMipCount() - 8, 0); i < Math.max(v.getMipCount() - 5, v.getMipCount()); i++) {
-                        try {
-                            ImageIcon img = new ImageIcon(v.getImage(i));
-                            model.insertRow(model.getRowCount(), new Object[] { "mip[" + i + ']', img, "" });
-                        } catch(IOException ex) {
-                            LOG.log(Level.SEVERE, null, ex);
-                        }
-                    }
-                    model.insertRow(model.getRowCount(), new Object[] { "version", v.getVersion(), "" });
-                    model.insertRow(model.getRowCount(), new Object[] {
-                            "headerSize", v.getHeaderSize(), ""
-                    });
-                    model.insertRow(model.getRowCount(), new Object[] { "width", v.getWidth(), "" });
-                    model.insertRow(model.getRowCount(), new Object[] { "height", v.getHeight(), "" });
-                    model.insertRow(model.getRowCount(), new Object[] { "flags", v.getFlags(), "" });
-                    model.insertRow(model.getRowCount(), new Object[] {
-                            "frameFirst", v.getFrameFirst(), ""
-                    });
-                    model.insertRow(model.getRowCount(), new Object[] {
-                            "reflectivity", v.getReflectivity(), ""
-                    });
-                    model.insertRow(model.getRowCount(), new Object[] { "bumpScale", v.getBumpScale(), "" });
-                    model.insertRow(model.getRowCount(), new Object[] { "format", v.getFormat(), "" });
-                    model.insertRow(model.getRowCount(), new Object[] { "mipCount", v.getMipCount(), "" });
-                    model.insertRow(model.getRowCount(), new Object[] {
-                            "thumbFormat", v.getThumbFormat(), ""
-                    });
-                    model.insertRow(model.getRowCount(), new Object[] {
-                            "thumbWidth", v.getThumbWidth(), ""
-                    });
-                    model.insertRow(model.getRowCount(), new Object[] {
-                            "thumbHeight", v.getThumbHeight(), ""
-                    });
-                    model.insertRow(model.getRowCount(), new Object[] { "depth", v.getDepth(), "" });
                 }
             }
         });

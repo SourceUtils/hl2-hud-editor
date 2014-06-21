@@ -22,7 +22,8 @@ class Main {
      * The window class on Linux systems
      * The app name on Mac systems
      */
-    private static final String         projectName = "tf2-hud-editor"; // in xfce, window grouping show this, unfortunately
+    private static final String         projectName = "tf2-hud-editor";
+            // in xfce, window grouping show this, unfortunately
     public static final  Preferences    prefs       = Preferences.userRoot().node(projectName);
 
     static {

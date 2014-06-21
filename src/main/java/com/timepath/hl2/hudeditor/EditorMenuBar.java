@@ -8,8 +8,8 @@ import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
 
 /**
-* @author TimePath
-*/
+ * @author TimePath
+ */
 class EditorMenuBar extends JMenuBar {
 
     HUDEditor hudEditor;
@@ -69,7 +69,9 @@ class EditorMenuBar extends JMenuBar {
             @Override
             public void actionPerformed(ActionEvent e) {
                 if(!hudEditor.canvas.getElements().isEmpty()) {
-                    hudEditor.info(hudEditor.canvas.getElements().get(hudEditor.canvas.getElements().size() - 1).save());
+                    hudEditor.info(hudEditor.canvas.getElements()
+                                                   .get(hudEditor.canvas.getElements().size() - 1)
+                                                   .save());
                 }
             }
         });
@@ -78,7 +80,8 @@ class EditorMenuBar extends JMenuBar {
         saveAsItem = new JMenuItem(new CustomAction("Save As...",
                                                     null,
                                                     KeyEvent.VK_A,
-                                                    KeyStroke.getKeyStroke(KeyEvent.VK_S, modifier + ActionEvent.SHIFT_MASK))
+                                                    KeyStroke.getKeyStroke(KeyEvent.VK_S,
+                                                                           modifier + ActionEvent.SHIFT_MASK))
         {
             @Override
             public void actionPerformed(ActionEvent e) {
@@ -219,8 +222,7 @@ class EditorMenuBar extends JMenuBar {
             public void actionPerformed(ActionEvent e) {
                 hudEditor.changeResolution();
             }
-        }
-        );
+        });
         resolutionItem.setEnabled(false);
         viewMenu.add(resolutionItem);
         previewItem = new JMenuItem(new CustomAction("Full Screen Preview",
