@@ -2,3 +2,12 @@ description = ''
 dependencies {
   compile project(':hl2-toolkit')
 }
+
+if (!hasProperty('mainClass')) {
+    ext.mainClass = 'com.timepath.hl2.hudeditor.Main'
+}
+
+task run(dependsOn: ['build'], type: JavaExec) {
+    main mainClass
+    classpath += sourceSets.main.runtimeClasspath
+}
