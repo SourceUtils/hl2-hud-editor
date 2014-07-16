@@ -5,8 +5,6 @@ import com.timepath.Utils;
 import com.timepath.hl2.io.RES;
 import com.timepath.hl2.io.VMT;
 import com.timepath.hl2.io.image.VTF;
-import com.timepath.hl2.io.util.Element;
-import com.timepath.hl2.swing.VGUICanvas;
 import com.timepath.plaf.IconList;
 import com.timepath.plaf.OS;
 import com.timepath.plaf.linux.WindowMoveFix;
@@ -24,6 +22,8 @@ import com.timepath.steam.io.util.ExtendedVFile;
 import com.timepath.swing.BlendedToolBar;
 import com.timepath.swing.StatusBar;
 import com.timepath.vfs.SimpleVFile;
+import com.timepath.vgui.Element;
+import com.timepath.vgui.swing.VGUICanvas;
 
 import javax.swing.*;
 import javax.swing.event.HyperlinkListener;
