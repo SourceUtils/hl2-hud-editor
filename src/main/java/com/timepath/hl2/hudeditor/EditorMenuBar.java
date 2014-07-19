@@ -1,6 +1,7 @@
 package com.timepath.hl2.hudeditor;
 
 import com.timepath.plaf.OS;
+import com.timepath.vgui.Element;
 
 import javax.swing.*;
 import java.awt.*;
@@ -69,9 +70,7 @@ class EditorMenuBar extends JMenuBar {
             @Override
             public void actionPerformed(ActionEvent e) {
                 if(!hudEditor.canvas.getElements().isEmpty()) {
-                    hudEditor.info(hudEditor.canvas.getElements()
-                                                   .get(hudEditor.canvas.getElements().size() - 1)
-                                                   .save());
+                    hudEditor.info(hudEditor.canvas.getElements().getLast().save());
                 }
             }
         });
@@ -194,8 +193,8 @@ class EditorMenuBar extends JMenuBar {
         {
             @Override
             public void actionPerformed(ActionEvent e) {
-                for(int i = 0; i < hudEditor.canvas.getElements().size(); i++) {
-                    hudEditor.canvas.select(hudEditor.canvas.getElements().get(i));
+                for(Element elem : hudEditor.canvas.getElements()) {
+                    hudEditor.canvas.select(elem);
                 }
             }
         });
