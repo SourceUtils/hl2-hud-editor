@@ -16,6 +16,7 @@ import com.timepath.steam.io.storage.VPK;
 import com.timepath.steam.io.util.ExtendedVFile;
 import com.timepath.vfs.SimpleVFile;
 import com.timepath.vgui.Element;
+import com.timepath.vgui.VGUIRenderer.ResourceLocator;
 import com.timepath.vgui.swing.VGUICanvas;
 
 import javax.swing.*;
@@ -104,12 +105,9 @@ public class HUDEditor extends Application {
                 // TODO: introspection
                 if(nodeInfo instanceof VDFNode) {
                     Element element = Element.importVdf((VDFNode) nodeInfo);
+                    element.setFile(node.getParent().toString()); // TODO
                     loadProps(element);
-                    try {
-                        canvas.load(element);
-                    } catch(NullPointerException ex) {
-                        LOG.log(Level.SEVERE, null, ex);
-                    }
+                    canvas.load(element);
                 }
             }
         });
@@ -168,24 +166,21 @@ public class HUDEditor extends Application {
             LOG.log(Level.FINE, "Loading {0}", n.getName());
             DefaultMutableTreeNode child = new DefaultMutableTreeNode(n);
             if(n.isDirectory()) {
-                analyze(child, leaves);
-                top.add(child);
+                if(n.list().size() > 0) {
+                    top.add(child);
+                    analyze(child, leaves);
+                }
             } else if(leaves) {
                 try(InputStream is = n.openStream()) {
                     if(VDF_PATTERN.matcher(n.getName()).matches()) {
                         child.add(VDF.load(is).toTreeNode());
                     } else if(n.getName().endsWith(".res")) {
                         child.add(RES.load(is).toTreeNode());
-                    } else if(n.getName().endsWith(".vmt")) {
-                        child.add(VMT.load(is).toTreeNode());
-                    } else if(n.getName().endsWith(".vtf")) {
-                        VTF v = VTF.load(is);
-                        if(v != null) child.setUserObject(v);
-                    }
+                    } else { continue; }
+                    top.add(child);
                 } catch(IOException e) {
                     LOG.log(Level.SEVERE, null, e);
                 }
-                top.add(child);
             }
         }
     }
@@ -326,9 +321,50 @@ public class HUDEditor extends Application {
             @Override
             protected DefaultMutableTreeNode doInBackground() throws Exception {
                 LOG.log(Level.INFO, "Mounting {0}", appID);
-                ExtendedVFile a = ACF.fromManifest(appID);
+                final ExtendedVFile a = ACF.fromManifest(appID);
+                canvas.getR().registerLocator(new ResourceLocator() {
+                    @Override
+                    public InputStream locate(String path) {
+                        path = path.replace('\\', '/').toLowerCase();
+                        if(path.startsWith("..")) path = "vgui/" + path;
+                        System.out.println("Looking for " + path);
+                        SimpleVFile file = a.query("tf/materials/" + path);
+                        if(file == null) return null;
+                        return file.openStream();
+                    }
+
+                    @Override
+                    public Image locateImage(String name) {
+                        String vtfName = name;
+                        if(!name.endsWith(".vtf")) { // It could be a vmt
+                            vtfName += ".vtf";
+                            InputStream vmtStream = locate(name + ".vmt");
+                            if(vmtStream != null) {
+                                try {
+                                    VMT.VMTNode vmt = VMT.load(vmtStream);
+                                    String next = (String) vmt.root.getValue("$baseTexture");
+                                    if(!next.equals(name)) return locateImage(next); // Stop recursion
+                                } catch(IOException e) {
+                                    LOG.log(Level.SEVERE, null, e);
+                                }
+                            }
+                        }
+                        // It's a vtf
+                        InputStream vtfStream = locate(vtfName);
+                        if(vtfStream != null) {
+                            try {
+                                VTF vtf = VTF.load(vtfStream);
+                                if(vtf == null) return null;
+                                return vtf.getImage(0);
+                            } catch(IOException e) {
+                                LOG.log(Level.SEVERE, null, e);
+                            }
+                        }
+                        return null;
+                    }
+                });
                 DefaultMutableTreeNode child = new DefaultMutableTreeNode(a);
-                a.analyze(child, true);
+                recurseDirectoryToNode(a, child);
                 return child;
             }
 
