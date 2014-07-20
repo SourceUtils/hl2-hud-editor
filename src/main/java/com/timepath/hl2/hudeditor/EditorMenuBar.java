@@ -17,257 +17,171 @@ class EditorMenuBar extends JMenuBar {
     JMenuItem newItem, openItem, saveItem, saveAsItem, reloadItem, closeItem, exitItem;
     JMenuItem undoItem, redoItem, cutItem, copyItem, pasteItem, deleteItem, selectAllItem, preferencesItem;
     JMenuItem resolutionItem, previewItem;
-    int modifier = Toolkit.getDefaultToolkit().getMenuShortcutKeyMask();
+    int mod = Toolkit.getDefaultToolkit().getMenuShortcutKeyMask();
     JMenuItem aboutItem;
+
+    KeyStroke ks(int keyCode, int modifiers) {
+        return KeyStroke.getKeyStroke(keyCode, modifiers);
+    }
+
+    KeyStroke ks(int keyCode) {
+        return ks(keyCode, 0);
+    }
 
     EditorMenuBar(final HUDEditor hudEditor) {
         this.hudEditor = hudEditor;
-        JMenu fileMenu = new JMenu(Main.getString("File"));
-        fileMenu.setMnemonic(KeyEvent.VK_F);
-        add(fileMenu);
-        newItem = new JMenuItem(new CustomAction(Main.getString("New"),
-                                                 null,
-                                                 KeyEvent.VK_N,
-                                                 KeyStroke.getKeyStroke(KeyEvent.VK_N, modifier))
-        {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                throw new UnsupportedOperationException("Not supported yet.");
-            }
-        });
-        newItem.setEnabled(false);
-        fileMenu.add(newItem);
-        openItem = new JMenuItem(new CustomAction("Open",
-                                                  null,
-                                                  KeyEvent.VK_O,
-                                                  KeyStroke.getKeyStroke(KeyEvent.VK_O, modifier))
-        {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                hudEditor.locateHudDirectory();
-            }
-        });
-        fileMenu.add(openItem);
-        fileMenu.addSeparator();
-        closeItem = new JMenuItem(new CustomAction("Close",
-                                                   null,
-                                                   KeyEvent.VK_C,
-                                                   KeyStroke.getKeyStroke(KeyEvent.VK_W, modifier))
-        {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                //                    close();
-            }
-        });
-        if(OS.isMac()) {
-            fileMenu.add(closeItem);
-        }
-        saveItem = new JMenuItem(new CustomAction("Save",
-                                                  null,
-                                                  KeyEvent.VK_S,
-                                                  KeyStroke.getKeyStroke(KeyEvent.VK_S, modifier))
-        {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                if(!hudEditor.canvas.getElements().isEmpty()) {
-                    hudEditor.info(hudEditor.canvas.getElements().getLast().save());
-                }
-            }
-        });
-        saveItem.setEnabled(false);
-        fileMenu.add(saveItem);
-        saveAsItem = new JMenuItem(new CustomAction("Save As...",
-                                                    null,
-                                                    KeyEvent.VK_A,
-                                                    KeyStroke.getKeyStroke(KeyEvent.VK_S,
-                                                                           modifier + ActionEvent.SHIFT_MASK))
-        {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-            }
-        });
-        saveAsItem.setEnabled(false);
-        fileMenu.add(saveAsItem);
-        reloadItem = new JMenuItem(new CustomAction("Revert",
-                                                    null,
-                                                    KeyEvent.VK_R,
-                                                    KeyStroke.getKeyStroke(KeyEvent.VK_F5, 0))
-        {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                hudEditor.loadAsync(hudEditor.lastLoaded);
-            }
-        });
-        reloadItem.setEnabled(false);
-        fileMenu.add(reloadItem);
-        exitItem = new JMenuItem(new CustomAction("Exit",
-                                                  null,
-                                                  KeyEvent.VK_X,
-                                                  KeyStroke.getKeyStroke(KeyEvent.VK_Q, modifier))
-        {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                hudEditor.quit();
-            }
-        });
-        if(!OS.isMac()) {
-            fileMenu.addSeparator();
-            fileMenu.add(closeItem);
-            fileMenu.add(exitItem);
-        }
-        JMenu editMenu = new JMenu("Edit");
-        editMenu.setMnemonic(KeyEvent.VK_E);
-        add(editMenu);
-        undoItem = new JMenuItem(new CustomAction("Undo",
-                                                  null,
-                                                  KeyEvent.VK_U,
-                                                  KeyStroke.getKeyStroke(KeyEvent.VK_Z, modifier))
-        {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-            }
-        });
-        undoItem.setEnabled(false);
-        editMenu.add(undoItem);
-        redoItem = new JMenuItem(new CustomAction("Redo",
-                                                  null,
-                                                  KeyEvent.VK_R,
-                                                  KeyStroke.getKeyStroke(KeyEvent.VK_Y, modifier))
-        { // TODO: ctrl + shift + z
-            @Override
-            public void actionPerformed(ActionEvent e) {
-            }
-        });
-        redoItem.setEnabled(false);
-        editMenu.add(redoItem);
-        editMenu.addSeparator();
-        cutItem = new JMenuItem(new CustomAction("Cut",
-                                                 null,
-                                                 KeyEvent.VK_T,
-                                                 KeyStroke.getKeyStroke(KeyEvent.VK_X, modifier))
-        {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-            }
-        });
-        cutItem.setEnabled(false);
-        editMenu.add(cutItem);
-        copyItem = new JMenuItem(new CustomAction("Copy",
-                                                  null,
-                                                  KeyEvent.VK_C,
-                                                  KeyStroke.getKeyStroke(KeyEvent.VK_C, modifier))
-        {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-            }
-        });
-        copyItem.setEnabled(false);
-        editMenu.add(copyItem);
-        pasteItem = new JMenuItem(new CustomAction("Paste",
-                                                   null,
-                                                   KeyEvent.VK_P,
-                                                   KeyStroke.getKeyStroke(KeyEvent.VK_V, modifier))
-        {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-            }
-        });
-        pasteItem.setEnabled(false);
-        editMenu.add(pasteItem);
-        deleteItem = new JMenuItem(new CustomAction("Delete",
-                                                    null,
-                                                    KeyEvent.VK_D,
-                                                    KeyStroke.getKeyStroke(KeyEvent.VK_DELETE, 0))
-        {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                hudEditor.canvas.removeElements(hudEditor.canvas.getSelected());
-            }
-        });
-        editMenu.add(deleteItem);
-        editMenu.addSeparator();
-        selectAllItem = new JMenuItem(new CustomAction("Select All",
-                                                       null,
-                                                       KeyEvent.VK_A,
-                                                       KeyStroke.getKeyStroke(KeyEvent.VK_A, modifier))
-        {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                for(Element elem : hudEditor.canvas.getElements()) {
-                    hudEditor.canvas.select(elem);
-                }
-            }
-        });
-        editMenu.add(selectAllItem);
-        editMenu.addSeparator();
-        preferencesItem = new JMenuItem(new CustomAction("Preferences", null, KeyEvent.VK_E, null) {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                hudEditor.preferences();
-            }
-        });
-        if(!OS.isMac()) {
-            editMenu.add(preferencesItem);
-        }
-        JMenu viewMenu = new JMenu("View");
-        viewMenu.setMnemonic(KeyEvent.VK_V);
-        add(viewMenu);
-        resolutionItem = new JMenuItem(new CustomAction("Change Resolution",
-                                                        null,
-                                                        KeyEvent.VK_R,
-                                                        KeyStroke.getKeyStroke(KeyEvent.VK_R, modifier))
-        {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                hudEditor.changeResolution();
-            }
-        });
-        resolutionItem.setEnabled(false);
-        viewMenu.add(resolutionItem);
-        previewItem = new JMenuItem(new CustomAction("Full Screen Preview",
-                                                     null,
-                                                     KeyEvent.VK_F,
-                                                     KeyStroke.getKeyStroke(KeyEvent.VK_F11, 0))
-        {
-            private boolean fullscreen;
-
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                hudEditor.dispose();
-                hudEditor.setUndecorated(!fullscreen);
-                hudEditor.setExtendedState(fullscreen ? Frame.NORMAL : Frame.MAXIMIZED_BOTH);
-                hudEditor.setVisible(true);
-                hudEditor.setJMenuBar(hudEditor.jmb);
-                hudEditor.pack();
-                hudEditor.toFront();
-                fullscreen = !fullscreen;
-            }
-        });
-        viewMenu.add(previewItem);
-        viewMenu.addSeparator();
-        JMenuItem viewItem1 = new JMenuItem("Main Menu");
-        viewItem1.setEnabled(false);
-        viewMenu.add(viewItem1);
-        JMenuItem viewItem2 = new JMenuItem("In-game (Health and ammo)");
-        viewItem2.setEnabled(false);
-        viewMenu.add(viewItem2);
-        JMenuItem viewItem3 = new JMenuItem("Scoreboard");
-        viewItem3.setEnabled(false);
-        viewMenu.add(viewItem3);
-        JMenuItem viewItem4 = new JMenuItem("CTF HUD");
-        viewItem4.setEnabled(false);
-        viewMenu.add(viewItem4);
-        if(!OS.isMac()) {
-            JMenu helpMenu = new JMenu("Help");
-            helpMenu.setMnemonic(KeyEvent.VK_H);
-            add(helpMenu);
-            aboutItem = new JMenuItem(new CustomAction("About", null, KeyEvent.VK_A, null) {
+        add(new JMenu(Main.getString("File")) {{
+            setMnemonic(KeyEvent.VK_F);
+            add(newItem = new JMenuItem(new CustomAction(Main.getString("New"), KeyEvent.VK_N, ks(KeyEvent.VK_N, mod)) {
                 @Override
-                public void actionPerformed(ActionEvent e) {
-                    hudEditor.about();
+                void action(ActionEvent e) {
+                    throw new UnsupportedOperationException("Not supported yet.");
+                }
+            }));
+            newItem.setEnabled(false);
+            add(openItem = new JMenuItem(new CustomAction("Open", KeyEvent.VK_O, ks(KeyEvent.VK_O, mod)) {
+                @Override
+                void action(ActionEvent e) { hudEditor.locateHudDirectory(); }
+            }));
+            addSeparator();
+            closeItem = new JMenuItem(new CustomAction("Close", KeyEvent.VK_C, ks(KeyEvent.VK_W, mod)) {
+                @Override
+                void action(ActionEvent e) {
+                    //                    close();
                 }
             });
-            helpMenu.add(aboutItem);
+            if(OS.isMac()) add(closeItem);
+            add(saveItem = new JMenuItem(new CustomAction("Save", KeyEvent.VK_S, ks(KeyEvent.VK_S, mod)) {
+                @Override
+                void action(ActionEvent e) {
+                    if(hudEditor.canvas.getElements().isEmpty()) return;
+                    hudEditor.info(hudEditor.canvas.getElements().getLast().save());
+                }
+            }));
+            saveItem.setEnabled(false);
+            add(saveAsItem = new JMenuItem(new CustomAction("Save As...",
+                                                            KeyEvent.VK_A,
+                                                            ks(KeyEvent.VK_S, mod | ActionEvent.SHIFT_MASK))
+            {
+                @Override
+                void action(ActionEvent e) { }
+            }));
+            saveAsItem.setEnabled(false);
+            add(reloadItem = new JMenuItem(new CustomAction("Revert", KeyEvent.VK_R, ks(KeyEvent.VK_F5)) {
+                @Override
+                void action(ActionEvent e) { hudEditor.loadAsync(hudEditor.lastLoaded); }
+            }));
+            reloadItem.setEnabled(false);
+            exitItem = new JMenuItem(new CustomAction("Exit", KeyEvent.VK_X, ks(KeyEvent.VK_Q, mod)) {
+                @Override
+                void action(ActionEvent e) { hudEditor.quit(); }
+            });
+            if(!OS.isMac()) {
+                addSeparator();
+                add(closeItem);
+                add(exitItem);
+            }
+        }});
+        add(new JMenu("Edit") {{
+            setMnemonic(KeyEvent.VK_E);
+            add(undoItem = new JMenuItem(new CustomAction("Undo", KeyEvent.VK_U, ks(KeyEvent.VK_Z, mod)) {
+                @Override
+                void action(ActionEvent e) { }
+            }));
+            undoItem.setEnabled(false);
+            // TODO: ctrl + shift + z
+            add(redoItem = new JMenuItem(new CustomAction("Redo", KeyEvent.VK_R, ks(KeyEvent.VK_Y, mod)) {
+                @Override
+                void action(ActionEvent e) { }
+            }));
+            redoItem.setEnabled(false);
+            addSeparator();
+            add(cutItem = new JMenuItem(new CustomAction("Cut", KeyEvent.VK_T, ks(KeyEvent.VK_X, mod)) {
+                @Override
+                void action(ActionEvent e) { }
+            }));
+            cutItem.setEnabled(false);
+            add(copyItem = new JMenuItem(new CustomAction("Copy", KeyEvent.VK_C, ks(KeyEvent.VK_C, mod)) {
+                @Override
+                void action(ActionEvent e) { }
+            }));
+            copyItem.setEnabled(false);
+            add(pasteItem = new JMenuItem(new CustomAction("Paste", KeyEvent.VK_P, ks(KeyEvent.VK_V, mod)) {
+                @Override
+                void action(ActionEvent e) { }
+            }));
+            pasteItem.setEnabled(false);
+            add(deleteItem = new JMenuItem(new CustomAction("Delete", KeyEvent.VK_D, ks(KeyEvent.VK_DELETE)) {
+                @Override
+                void action(ActionEvent e) { hudEditor.canvas.removeElements(hudEditor.canvas.getSelected()); }
+            }));
+            addSeparator();
+            add(selectAllItem = new JMenuItem(new CustomAction("Select All", KeyEvent.VK_A, ks(KeyEvent.VK_A, mod)) {
+                @Override
+                void action(ActionEvent e) {
+                    for(Element elem : hudEditor.canvas.getElements()) {
+                        hudEditor.canvas.select(elem);
+                    }
+                }
+            }));
+            addSeparator();
+            if(!OS.isMac()) {
+                add(preferencesItem = new JMenuItem(new CustomAction("Preferences", KeyEvent.VK_E) {
+                    @Override
+                    void action(ActionEvent e) { hudEditor.preferences(); }
+                }));
+            }
+        }});
+        add(new JMenu("View") {{
+            setMnemonic(KeyEvent.VK_V);
+            add(resolutionItem = new JMenuItem(new CustomAction("Change Resolution",
+                                                                KeyEvent.VK_R,
+                                                                ks(KeyEvent.VK_R, mod))
+            {
+                @Override
+                void action(ActionEvent e) { hudEditor.changeResolution(); }
+            }));
+            resolutionItem.setEnabled(false);
+            add(previewItem = new JMenuItem(new CustomAction("Full Screen Preview",
+                                                             KeyEvent.VK_F,
+                                                             ks(KeyEvent.VK_F11))
+            {
+                boolean fullscreen;
+
+                @Override
+                void action(ActionEvent e) {
+                    hudEditor.dispose();
+                    hudEditor.setUndecorated(!fullscreen);
+                    hudEditor.setExtendedState(fullscreen ? Frame.NORMAL : Frame.MAXIMIZED_BOTH);
+                    hudEditor.setVisible(true);
+                    hudEditor.setJMenuBar(hudEditor.editorMenuBar);
+                    hudEditor.pack();
+                    hudEditor.toFront();
+                    fullscreen = !fullscreen;
+                }
+            }));
+            addSeparator();
+            JMenuItem viewItem1 = new JMenuItem("Main Menu");
+            viewItem1.setEnabled(false);
+            add(viewItem1);
+            JMenuItem viewItem2 = new JMenuItem("In-game (Health and ammo)");
+            viewItem2.setEnabled(false);
+            add(viewItem2);
+            JMenuItem viewItem3 = new JMenuItem("Scoreboard");
+            viewItem3.setEnabled(false);
+            add(viewItem3);
+            JMenuItem viewItem4 = new JMenuItem("CTF HUD");
+            viewItem4.setEnabled(false);
+            add(viewItem4);
+        }});
+        if(!OS.isMac()) {
+            add(new JMenu("Help") {{
+                setMnemonic(KeyEvent.VK_H);
+                add(aboutItem = new JMenuItem(new CustomAction("About", KeyEvent.VK_A) {
+                    @Override
+                    void action(ActionEvent e) { hudEditor.about(); }
+                }));
+            }});
         }
     }
 }

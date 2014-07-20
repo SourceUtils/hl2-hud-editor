@@ -6,10 +6,7 @@ import com.timepath.plaf.x.filechooser.NativeFileChooser;
 import com.timepath.steam.io.util.ExtendedVFile;
 
 import javax.swing.*;
-import javax.swing.tree.DefaultMutableTreeNode;
-import javax.swing.tree.DefaultTreeCellRenderer;
-import javax.swing.tree.DefaultTreeModel;
-import javax.swing.tree.TreeSelectionModel;
+import javax.swing.tree.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -48,38 +45,38 @@ public class ProjectTree extends JTree implements ActionListener, MouseListener 
     private void initComponents() {
         defaultMenu = new JPopupMenu();
         JMenuItem nullAction = new JMenuItem();
-        fileMenu = new JPopupMenu();
-        extractAction = new JMenuItem();
-        projectMenu = new JPopupMenu();
-        closeAction = new JMenuItem();
         nullAction.setText("No action");
         nullAction.setEnabled(false);
         defaultMenu.add(nullAction);
+
+        fileMenu = new JPopupMenu();
+        extractAction = new JMenuItem();
         extractAction.setText("Extract");
         extractAction.addActionListener(this);
         fileMenu.add(extractAction);
+
+        projectMenu = new JPopupMenu();
+        closeAction = new JMenuItem();
         closeAction.setText("Close");
         closeAction.addActionListener(this);
         projectMenu.add(closeAction);
+
         setBorder(null);
-        DefaultMutableTreeNode treeNode1 = new DefaultMutableTreeNode("root");
-        setModel(new DefaultTreeModel(treeNode1));
+        setModel(new DefaultTreeModel(new DefaultMutableTreeNode("root")));
         addMouseListener(this);
     }
 
     @Override
-    public void actionPerformed(ActionEvent evt) {
-        if(evt.getSource() == extractAction) {
-            extractActionActionPerformed(evt);
-        } else if(evt.getSource() == closeAction) {
-            closeActionActionPerformed(evt);
+    public void actionPerformed(ActionEvent e) {
+        if(e.getSource() == extractAction) {
+            extractActionActionPerformed(e);
+        } else if(e.getSource() == closeAction) {
+            closeActionActionPerformed(e);
         }
     }
 
-    private void extractActionActionPerformed(ActionEvent evt) {
-        if(archiveContext == null) {
-            return;
-        }
+    private void extractActionActionPerformed(ActionEvent e) {
+        if(archiveContext == null) return;
         ExtendedVFile context = archiveContext;
         LOG.log(Level.INFO, "Archive: {0}", context);
         try {
@@ -87,9 +84,7 @@ public class ProjectTree extends JTree implements ActionListener, MouseListener 
                                                      .setDialogType(BaseFileChooser.DialogType.SAVE_DIALOG)
                                                      .setFileMode(BaseFileChooser.FileMode.DIRECTORIES_ONLY)
                                                      .choose();
-            if(fs == null) {
-                return;
-            }
+            if(fs == null) return;
             LOG.log(Level.INFO, "Extracting to {0}", fs[0]);
             new SwingWorker<File, Integer>() {
                 @Override
@@ -98,8 +93,8 @@ public class ProjectTree extends JTree implements ActionListener, MouseListener 
                     try {
                         directoryEntryContext.extract(fs[0]);
                         ret = new File(fs[0], directoryEntryContext.getName());
-                    } catch(IOException ex) {
-                        LOG.log(Level.SEVERE, null, ex);
+                    } catch(IOException e) {
+                        LOG.log(Level.SEVERE, null, e);
                     }
                     return ret;
                 }
@@ -108,8 +103,8 @@ public class ProjectTree extends JTree implements ActionListener, MouseListener 
                 protected void done() {
                     try {
                         LOG.log(Level.INFO, "Extracted {0}", new Object[] { get() });
-                    } catch(InterruptedException | ExecutionException ex) {
-                        Logger.getLogger(ProjectTree.class.getName()).log(Level.SEVERE, null, ex);
+                    } catch(InterruptedException | ExecutionException e) {
+                        LOG.log(Level.SEVERE, null, e);
                     }
                 }
             }.execute();
@@ -118,61 +113,67 @@ public class ProjectTree extends JTree implements ActionListener, MouseListener 
         }
     }
 
-    private void closeActionActionPerformed(ActionEvent evt) {
-        ( (DefaultTreeModel) treeModel ).removeNodeFromParent(projectContext);
+    private void closeActionActionPerformed(ActionEvent e) {
+        getModel().removeNodeFromParent(projectContext);
     }
 
     @Override
-    public void mouseClicked(MouseEvent evt) {
-        if(evt.getSource() == this) {
-            formMouseClicked(evt);
-        }
+    public void mouseClicked(MouseEvent e) {
+        if(e.getSource() == this) formMouseClicked(e);
     }
 
     @Override
-    public void mousePressed(MouseEvent evt) {
+    public void mousePressed(MouseEvent e) {
     }
 
     @Override
-    public void mouseReleased(MouseEvent evt) {
+    public void mouseReleased(MouseEvent e) {
     }
 
     @Override
-    public void mouseEntered(MouseEvent evt) {
+    public void mouseEntered(MouseEvent e) {
     }
 
     @Override
-    public void mouseExited(MouseEvent evt) {
+    public void mouseExited(MouseEvent e) {
     }
 
-    private void formMouseClicked(MouseEvent evt) {
-        if(SwingUtilities.isRightMouseButton(evt)) {
-            int row = getClosestRowForLocation(evt.getX(), evt.getY());
-            if(row != -1) {
-                Object clicked = getPathForRow(row).getLastPathComponent();
-                setSelectionRow(row);
-                if(clicked instanceof DefaultMutableTreeNode) {
-                    DefaultMutableTreeNode node = (DefaultMutableTreeNode) clicked;
-                    Object obj = node.getUserObject();
-                    if(obj instanceof ExtendedVFile) {
-                        directoryEntryContext = (ExtendedVFile) obj;
-                        archiveContext = directoryEntryContext.getRoot();
-                        fileMenu.show(evt.getComponent(), evt.getX(), evt.getY());
-                        return;
-                    } else if(obj instanceof String) {
-                        projectContext = node;
-                        projectMenu.show(evt.getComponent(), evt.getX(), evt.getY());
-                        return;
-                    } else if(obj instanceof File) {
-                    } else {
-                        LOG.log(Level.WARNING, "Unknown user object {0}", obj.getClass());
-                    }
+    @Override
+    public DefaultTreeModel getModel() {
+        return (DefaultTreeModel) super.getModel();
+    }
+
+    @Override
+    public DefaultMutableTreeNode getLastSelectedPathComponent() {
+        return (DefaultMutableTreeNode) super.getLastSelectedPathComponent();
+    }
+
+    private void formMouseClicked(MouseEvent e) {
+        if(!SwingUtilities.isRightMouseButton(e)) return;
+        int row = getClosestRowForLocation(e.getX(), e.getY());
+        if(row != -1) {
+            Object clicked = getPathForRow(row).getLastPathComponent();
+            setSelectionRow(row);
+            if(clicked instanceof DefaultMutableTreeNode) {
+                DefaultMutableTreeNode node = (DefaultMutableTreeNode) clicked;
+                Object obj = node.getUserObject();
+                if(obj instanceof ExtendedVFile) {
+                    directoryEntryContext = (ExtendedVFile) obj;
+                    archiveContext = directoryEntryContext.getRoot();
+                    fileMenu.show(e.getComponent(), e.getX(), e.getY());
+                    return;
+                } else if(obj instanceof String) {
+                    projectContext = node;
+                    projectMenu.show(e.getComponent(), e.getX(), e.getY());
+                    return;
                 } else {
-                    LOG.log(Level.WARNING, "Unknown tree node {0}", clicked.getClass());
+                    LOG.log(Level.WARNING, "Unknown user object {0}", obj.getClass());
                 }
+            } else {
+                LOG.log(Level.WARNING, "Unknown tree node {0}", clicked.getClass());
             }
-            defaultMenu.show(evt.getComponent(), evt.getX(), evt.getY());
         }
+        defaultMenu.show(e.getComponent(), e.getX(), e.getY());
     }
 
     private static class CustomTreeCellRenderer extends DefaultTreeCellRenderer {
@@ -206,23 +207,19 @@ public class ProjectTree extends JTree implements ActionListener, MouseListener 
             if(value instanceof DefaultMutableTreeNode) {
                 Object nodeValue = ( (DefaultMutableTreeNode) value ).getUserObject();
                 if(nodeValue instanceof String) {
-                    setIcons(tree, UIManager.getIcon("FileView.computerIcon"));
+                    setIcon(tree, UIManager.getIcon("FileView.computerIcon"));
                 } else if(nodeValue instanceof File) {
                     File f = (File) nodeValue;
                     valueText = f.getName();
-                    if(f.isDirectory()) {
-                        setIcons(tree, UIManager.getIcon("FileView.directoryIcon"));
-                    } else {
-                        setIcons(tree, UIManager.getIcon("FileView.fileIcon"));
-                    }
+                    setIcon(tree, UIManager.getIcon("FileView." + ( f.isDirectory() ? "directoryIcon" : "fileIcon" )));
                 } else if(nodeValue instanceof ViewableData) {
                     ViewableData v = (ViewableData) nodeValue;
-                    setIcons(tree, v.getIcon());
+                    setIcon(tree, v.getIcon());
                 } else {
                     if(nodeValue != null) {
                         LOG.log(Level.FINE, "Node class: {0}", nodeValue.getClass());
                     }
-                    setIcons(tree, null);
+                    setIcon(tree, null);
                 }
             }
             String stringValue = tree.convertValueToText(valueText, sel, expanded, leaf, row, hasFocus);
@@ -244,11 +241,11 @@ public class ProjectTree extends JTree implements ActionListener, MouseListener 
             return this;
         }
 
-        private void setIcons(JTree tree, Icon ico) {
+        private void setIcon(JTree tree, Icon icon) {
             if(tree.isEnabled()) {
-                setIcon(ico);
+                setIcon(icon);
             } else {
-                setDisabledIcon(ico);
+                setDisabledIcon(icon);
             }
         }
     }

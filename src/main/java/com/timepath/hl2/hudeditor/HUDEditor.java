@@ -1,15 +1,10 @@
 package com.timepath.hl2.hudeditor;
 
-import com.apple.OSXAdapter;
 import com.timepath.Utils;
 import com.timepath.hl2.io.RES;
 import com.timepath.hl2.io.VMT;
 import com.timepath.hl2.io.image.VTF;
 import com.timepath.plaf.IconList;
-import com.timepath.plaf.OS;
-import com.timepath.plaf.linux.WindowMoveFix;
-import com.timepath.plaf.mac.Application;
-import com.timepath.plaf.mac.Application.*;
 import com.timepath.plaf.x.filechooser.BaseFileChooser;
 import com.timepath.plaf.x.filechooser.NativeFileChooser;
 import com.timepath.steam.io.VDF;
@@ -19,8 +14,6 @@ import com.timepath.steam.io.storage.ACF;
 import com.timepath.steam.io.storage.Files;
 import com.timepath.steam.io.storage.VPK;
 import com.timepath.steam.io.util.ExtendedVFile;
-import com.timepath.swing.BlendedToolBar;
-import com.timepath.swing.StatusBar;
 import com.timepath.vfs.SimpleVFile;
 import com.timepath.vgui.Element;
 import com.timepath.vgui.swing.VGUICanvas;
@@ -31,29 +24,17 @@ import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.tree.DefaultMutableTreeNode;
-import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreePath;
 import java.awt.*;
-import java.awt.datatransfer.DataFlavor;
-import java.awt.datatransfer.Transferable;
-import java.awt.datatransfer.UnsupportedFlavorException;
-import java.awt.dnd.DnDConstants;
-import java.awt.dnd.DropTarget;
-import java.awt.dnd.DropTargetDropEvent;
-import java.awt.dnd.InvalidDnDOperationException;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.event.WindowAdapter;
-import java.awt.event.WindowEvent;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.URI;
 import java.net.URL;
 import java.text.MessageFormat;
 import java.util.Collection;
 import java.util.LinkedList;
-import java.util.StringTokenizer;
 import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -63,95 +44,25 @@ import java.util.regex.Pattern;
  * @author TimePath
  */
 @SuppressWarnings("serial")
-public class HUDEditor extends JFrame {
+public class HUDEditor extends Application {
 
-    static final         Pattern VDF_PATTERN = Pattern.compile("^\\.(vdf|pop|layout|menu|styles)");
     private static final Logger  LOG         = Logger.getLogger(HUDEditor.class.getName());
-    EditorMenuBar          jmb;
-    DefaultMutableTreeNode fileSystemRoot, archiveRoot;
-    ProjectTree   fileTree;
-    PropertyTable propTable;
-    VGUICanvas    canvas;
-    File          lastLoaded;
-    JSpinner      spinnerWidth;
-    JSpinner      spinnerHeight;
-    HyperlinkListener linkListener = Utils.getLinkListener();
-    JSplitPane     sideSplit;
-    StatusBar      status;
-    JTabbedPane    tabbedContent;
-    BlendedToolBar tools;
-    private DefaultTreeModel fileModel;
+    private static final Pattern VDF_PATTERN = Pattern.compile("^\\.(vdf|pop|layout|menu|styles)");
+    protected EditorMenuBar editorMenuBar;
+    protected VGUICanvas    canvas;
+    protected File          lastLoaded;
+    protected JSpinner      spinnerWidth, spinnerHeight;
+    protected HyperlinkListener linkListener = Utils.getLinkListener();
 
     public HUDEditor() {
-        setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
-        addWindowListener(new WindowAdapter() {
-            @Override
-            public void windowClosing(WindowEvent e) {
-                quit();
-            }
-        });
+        super();
         setIconImages(new IconList("/com/timepath/hl2/hudeditor/res/Icon",
                                    "png",
                                    new int[] { 16, 22, 24, 32, 40, 48, 64, 128, 512, 1024 }).getIcons());
         setTitle(Main.getString("Title"));
-        getRootPane().putClientProperty("apple.awt.brushMetalLook", Boolean.TRUE); // Mac tweak
-        WindowMoveFix.install(this);
-        setDropTarget(new DropTarget() {
-            @Override
-            public synchronized void drop(DropTargetDropEvent dtde) {
-                try {
-                    dtde.acceptDrop(DnDConstants.ACTION_COPY_OR_MOVE);
-                    Transferable t = dtde.getTransferable();
-                    File file = null;
-                    if(OS.isLinux()) {
-                        DataFlavor nixFileDataFlavor = new DataFlavor("text/uri-list;class=java.lang.String");
-                        String data = (String) t.getTransferData(nixFileDataFlavor);
-                        for(StringTokenizer st = new StringTokenizer(data, "\r\n"); st.hasMoreTokens(); ) {
-                            String token = st.nextToken().trim();
-                            if(token.startsWith("#") || token.isEmpty()) {
-                                // comment line, by RFC 2483
-                                continue;
-                            }
-                            try {
-                                file = new File(new URI(token));
-                            } catch(Exception ignored) {
-                            }
-                        }
-                    } else {
-                        Object data = t.getTransferData(DataFlavor.javaFileListFlavor);
-                        if(data instanceof Iterable) {
-                            for(Object o : (Iterable<?>) data) {
-                                if(o instanceof File) {
-                                    file = (File) o;
-                                }
-                            }
-                        }
-                    }
-                    if(file != null) {
-                        loadAsync(file);
-                    }
-                } catch(ClassNotFoundException | InvalidDnDOperationException | UnsupportedFlavorException |
-                        IOException ex) {
-                    LOG.log(Level.SEVERE, null, ex);
-                } finally {
-                    dtde.dropComplete(true);
-                    repaint();
-                }
-            }
-        });
-        GraphicsConfiguration gc = getGraphicsConfiguration();
-        Rectangle screenBounds = gc.getBounds();
-        Insets screenInsets = getToolkit().getScreenInsets(gc);
-        Dimension workspace = new Dimension(screenBounds.width - screenInsets.left - screenInsets.right,
-                                            screenBounds.height - screenInsets.top - screenInsets.bottom);
-        setMinimumSize(new Dimension(Math.max(workspace.width / 2, 640), Math.max(( 3 * workspace.height ) / 4, 480)));
-        setPreferredSize(new Dimension((int) ( workspace.getWidth() / 1.5 ), (int) ( workspace.getHeight() / 1.5 )));
-        setJMenuBar(jmb = new EditorMenuBar(this));
+        setJMenuBar(editorMenuBar = new EditorMenuBar(this));
         String str = Main.prefs.get("lastLoaded", null);
-        if(str != null) {
-            setLastLoaded(new File(str));
-        }
-        initComponents();
+        if(str != null) setLastLoaded(new File(str));
         new SwingWorker<Image, Void>() {
             @Override
             public Image doInBackground() {
@@ -162,23 +73,98 @@ public class HUDEditor extends JFrame {
             public void done() {
                 try {
                     canvas.setBackgroundImage(get());
-                } catch(InterruptedException | ExecutionException ex) {
-                    LOG.log(Level.SEVERE, null, ex);
+                } catch(InterruptedException | ExecutionException e) {
+                    LOG.log(Level.SEVERE, null, e);
                 }
             }
         }.execute();
-        canvas.requestFocusInWindow();
         mount(440);
+        GraphicsConfiguration gc = getGraphicsConfiguration();
+        Rectangle screenBounds = gc.getBounds();
+        Insets screenInsets = getToolkit().getScreenInsets(gc);
+        Dimension workspace = new Dimension(screenBounds.width - screenInsets.left - screenInsets.right,
+                                            screenBounds.height - screenInsets.top - screenInsets.bottom);
+        setMinimumSize(new Dimension(Math.max(workspace.width / 2, 640), Math.max(( 3 * workspace.height ) / 4, 480)));
+        setPreferredSize(new Dimension((int) ( workspace.getWidth() / 1.5 ), (int) ( workspace.getHeight() / 1.5 )));
         pack();
         setLocationRelativeTo(null);
     }
 
-    public static void analyze(final DefaultMutableTreeNode top, final boolean leaves) {
-        if(!( top.getUserObject() instanceof ExtendedVFile )) {
-            return;
-        }
+    @Override
+    protected void initComponents() {
+        super.initComponents();
+        fileTree.addTreeSelectionListener(new TreeSelectionListener() {
+            @Override
+            public void valueChanged(TreeSelectionEvent e) {
+                DefaultMutableTreeNode node = fileTree.getLastSelectedPathComponent();
+                if(node == null) return;
+                propTable.clear();
+                DefaultTableModel model = propTable.getModel();
+                Object nodeInfo = node.getUserObject();
+                // TODO: introspection
+                if(nodeInfo instanceof VDFNode) {
+                    Element element = Element.importVdf((VDFNode) nodeInfo);
+                    loadProps(element);
+                    try {
+                        canvas.load(element);
+                    } catch(NullPointerException ex) {
+                        LOG.log(Level.SEVERE, null, ex);
+                    }
+                }
+            }
+        });
+        canvas = new VGUICanvas() {
+            @Override
+            public void placed() {
+                DefaultMutableTreeNode node = fileTree.getLastSelectedPathComponent();
+                if(node == null) return;
+                Object nodeInfo = node.getUserObject();
+                if(nodeInfo instanceof Element) {
+                    Element element = (Element) nodeInfo;
+                    loadProps(element);
+                }
+            }
+        };
+        tabbedContent.add(Main.getString("Canvas"), new JScrollPane(canvas) {{
+            //        setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
+            getVerticalScrollBar().setBlockIncrement(30);
+            getVerticalScrollBar().setUnitIncrement(20);
+            //        setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_ALWAYS);
+            getHorizontalScrollBar().setBlockIncrement(30);
+            getHorizontalScrollBar().setUnitIncrement(20);
+        }});
+    }
+
+    @Override
+    public void preferences() { info("No app-specific preferences yet", "Preferences"); }
+
+    @Override
+    public void about() {
+        JEditorPane pane = new JEditorPane("text/html", "");
+        pane.setEditable(false);
+        pane.setOpaque(false);
+        pane.setBackground(new Color(0, 0, 0, 0));
+        pane.addHyperlinkListener(linkListener);
+        String aboutText = "<html><h2>This is to be a What You See Is What You Get HUD Editor for TF2,</h2>";
+        aboutText += "for graphically editing TF2 HUDs!";
+        String p1 = aboutText;
+        pane.setText(p1);
+        info(pane, "About");
+    }
+
+    @Override
+    public void fileDropped(File f) { loadAsync(f); }
+
+    @Override
+    public Image getDockIconImage() {
+        URL url = getClass().getResource("/com/timepath/hl2/hudeditor/res/Icon.png");
+        return Toolkit.getDefaultToolkit().getImage(url);
+    }
+
+    static void analyze(DefaultMutableTreeNode top, boolean leaves) {
+        if(!( top.getUserObject() instanceof ExtendedVFile )) return;
         ExtendedVFile root = (ExtendedVFile) top.getUserObject();
-        for(final SimpleVFile n : root.list()) {
+        for(SimpleVFile n : root.list()) {
             LOG.log(Level.FINE, "Loading {0}", n.getName());
             DefaultMutableTreeNode child = new DefaultMutableTreeNode(n);
             if(n.isDirectory()) {
@@ -193,15 +179,8 @@ public class HUDEditor extends JFrame {
                     } else if(n.getName().endsWith(".vmt")) {
                         child.add(VMT.load(is).toTreeNode());
                     } else if(n.getName().endsWith(".vtf")) {
-                        VTF v = null;
-                        try {
-                            v = VTF.load(is);
-                        } catch(IOException ex) {
-                            LOG.log(Level.SEVERE, null, ex);
-                        }
-                        if(v != null) {
-                            child.setUserObject(v);
-                        }
+                        VTF v = VTF.load(is);
+                        if(v != null) child.setUserObject(v);
                     }
                 } catch(IOException e) {
                     LOG.log(Level.SEVERE, null, e);
@@ -211,44 +190,9 @@ public class HUDEditor extends JFrame {
         }
     }
 
-    private static void recurseDirectoryToNode(ExtendedVFile ar, DefaultMutableTreeNode project) {
+    static void recurseDirectoryToNode(ExtendedVFile ar, DefaultMutableTreeNode project) {
         project.setUserObject(ar);
         analyze(project, true);
-    }
-
-    private void error(Object msg) {
-        error(msg, Main.getString("Error"));
-    }
-
-    private void error(Object msg, String title) {
-        LOG.log(Level.SEVERE, "{0}:{1}", new Object[] { title, msg });
-        JOptionPane.showMessageDialog(this, msg, title, JOptionPane.ERROR_MESSAGE);
-    }
-
-    void info(Object msg) {
-        info(msg, Main.getString("Info"));
-    }
-
-    private void info(Object msg, String title) {
-        LOG.log(Level.INFO, "{0}:{1}", new Object[] { title, msg });
-        JOptionPane.showMessageDialog(this, msg, title, JOptionPane.INFORMATION_MESSAGE);
-    }
-
-    public void preferences() {
-        info("No app-specific preferences yet", "Preferences");
-    }
-
-    public void about() {
-        JEditorPane pane = new JEditorPane("text/html", "");
-        pane.setEditable(false);
-        pane.setOpaque(false);
-        pane.setBackground(new Color(0, 0, 0, 0));
-        pane.addHyperlinkListener(linkListener);
-        String aboutText = "<html><h2>This is to be a What You See Is What You Get HUD Editor for TF2,</h2>";
-        aboutText += "for graphically editing TF2 HUDs!";
-        String p1 = aboutText;
-        pane.setText(p1);
-        info(pane, "About");
     }
 
     void locateHudDirectory() {
@@ -258,9 +202,7 @@ public class HUDEditor extends JFrame {
                                                       .setDirectory(lastLoaded)
                                                       .setFileMode(BaseFileChooser.FileMode.DIRECTORIES_ONLY)
                                                       .choose();
-            if(selection != null) {
-                loadAsync(selection[0]);
-            }
+            if(selection != null) loadAsync(selection[0]);
         } catch(IOException ex) {
             LOG.log(Level.SEVERE, null, ex);
         }
@@ -271,22 +213,19 @@ public class HUDEditor extends JFrame {
         final long start = System.currentTimeMillis();
         new SwingWorker<DefaultMutableTreeNode, Void>() {
             @Override
-            public DefaultMutableTreeNode doInBackground() {
-                return load(f);
-            }
+            public DefaultMutableTreeNode doInBackground() { return load(f); }
 
             @Override
             protected void done() {
                 try {
                     DefaultMutableTreeNode project = get();
                     setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
-                    if(project != null) {
-                        LOG.log(Level.INFO, "Loaded hud - took {0}ms", System.currentTimeMillis() - start);
-                        fileSystemRoot.add(project);
-                        fileTree.expandPath(new TreePath(project.getPath()));
-                        fileTree.setSelectionRow(fileSystemRoot.getIndex(project));
-                        fileTree.requestFocusInWindow();
-                    }
+                    if(project == null) return;
+                    LOG.log(Level.INFO, "Loaded hud - took {0}ms", System.currentTimeMillis() - start);
+                    fileSystemRoot.add(project);
+                    fileTree.expandPath(new TreePath(project.getPath()));
+                    fileTree.setSelectionRow(fileSystemRoot.getIndex(project));
+                    fileTree.requestFocusInWindow();
                 } catch(Throwable t) {
                     LOG.log(Level.SEVERE, null, t);
                 }
@@ -295,9 +234,7 @@ public class HUDEditor extends JFrame {
     }
 
     DefaultMutableTreeNode load(File root) {
-        if(root == null) {
-            return null;
-        }
+        if(root == null) return null;
         if(!root.exists()) {
             error(new MessageFormat(Main.getString("FileAccessError")).format(new Object[] { root }));
         }
@@ -384,44 +321,7 @@ public class HUDEditor extends JFrame {
         }
     }
 
-    @Override
-    public void setJMenuBar(JMenuBar menubar) {
-        LOG.log(Level.INFO, "Setting menubar for {0}", OS.get());
-        super.setJMenuBar(menubar);
-        if(OS.isMac()) {
-            try {
-                OSXAdapter.setQuitHandler(this, getClass().getDeclaredMethod("quit", (Class[]) null));
-                OSXAdapter.setAboutHandler(this, getClass().getDeclaredMethod("about", (Class[]) null));
-                OSXAdapter.setPreferencesHandler(this, getClass().getDeclaredMethod("preferences", (Class[]) null));
-                Application app = Application.getApplication();
-                app.setAboutHandler(new AboutHandler() {
-                    @Override
-                    public void handleAbout(AboutEvent e) {
-                        about();
-                    }
-                });
-                app.setPreferencesHandler(new PreferencesHandler() {
-                    @Override
-                    public void handlePreferences(PreferencesEvent e) {
-                        preferences();
-                    }
-                });
-                app.setQuitHandler(new QuitHandler() {
-                    @Override
-                    public void handleQuitRequestWith(QuitEvent qe, QuitResponse qr) {
-                        quit();
-                    }
-                });
-                URL url = getClass().getResource("/com/timepath/hl2/hudeditor/res/Icon.png");
-                Image icon = Toolkit.getDefaultToolkit().getImage(url);
-                app.setDockIconImage(icon);
-            } catch(Exception e) {
-                LOG.severe(e.toString());
-            }
-        }
-    }
-
-    private void mount(final int appID) {
+    void mount(final int appID) {
         new SwingWorker<DefaultMutableTreeNode, Void>() {
             @Override
             protected DefaultMutableTreeNode doInBackground() throws Exception {
@@ -448,112 +348,25 @@ public class HUDEditor extends JFrame {
         }.execute();
     }
 
-    public void quit() {
-        LOG.info("Closing...");
-        dispose();
-    }
-
-    private void setLastLoaded(File root) {
-        jmb.reloadItem.setEnabled(root != null);
-        if(( root == null ) || !root.exists()) {
-            return;
-        }
+    void setLastLoaded(File root) {
+        editorMenuBar.reloadItem.setEnabled(root != null);
+        if(( root == null ) || !root.exists()) return;
         lastLoaded = root;
         Main.prefs.put("lastLoaded", root.getPath());
     }
 
-    private void loadProps(Element element) {
+    void loadProps(Element element) {
         propTable.clear();
-        DefaultTableModel model = (DefaultTableModel) propTable.getModel();
+        DefaultTableModel model = propTable.getModel();
         if(!element.getProps().isEmpty()) {
             element.validateDisplay();
             for(int i = 0; i < element.getProps().size(); i++) {
                 VDFProperty entry = element.getProps().get(i);
-                if("\\n".equals(entry.getKey())) {
-                    continue;
-                }
+                if("\\n".equals(entry.getKey())) continue;
                 model.addRow(new Object[] { entry.getKey(), entry.getValue(), entry.getInfo() });
             }
             model.fireTableDataChanged();
             propTable.repaint();
         }
-    }
-
-    private void initComponents() {
-        getContentPane().add(tools = new BlendedToolBar(), BorderLayout.PAGE_START);
-        JSplitPane rootSplit = new JSplitPane();
-        rootSplit.setDividerLocation(180);
-        rootSplit.setContinuousLayout(true);
-        rootSplit.setOneTouchExpandable(true);
-        rootSplit.setLeftComponent(sideSplit = new JSplitPane() {{
-            setBorder(null);
-            setOrientation(JSplitPane.VERTICAL_SPLIT);
-            setResizeWeight(0.5);
-            setContinuousLayout(true);
-            setOneTouchExpandable(true);
-        }});
-        rootSplit.setRightComponent(tabbedContent = new JTabbedPane());
-        getContentPane().add(rootSplit, BorderLayout.CENTER);
-        getContentPane().add(status = new StatusBar(), BorderLayout.PAGE_END);
-        tools.setWindow(this);
-        tools.putClientProperty("Quaqua.ToolBar.style", "title");
-        status.putClientProperty("Quaqua.ToolBar.style", "bottom");
-        archiveRoot = new DefaultMutableTreeNode("Archives");
-        fileSystemRoot = new DefaultMutableTreeNode("Projects");
-        fileTree = new ProjectTree();
-        DefaultMutableTreeNode root = new DefaultMutableTreeNode();
-        root.add(archiveRoot);
-        root.add(fileSystemRoot);
-        fileModel = ( (DefaultTreeModel) fileTree.getModel() );
-        fileModel.setRoot(root);
-        fileModel.reload();
-        sideSplit.setTopComponent(new JScrollPane(fileTree) {{
-            setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
-        }});
-        fileTree.addTreeSelectionListener(new TreeSelectionListener() {
-            @Override
-            public void valueChanged(TreeSelectionEvent e) {
-                DefaultMutableTreeNode node = (DefaultMutableTreeNode) fileTree.getLastSelectedPathComponent();
-                if(node == null) {
-                    return;
-                }
-                propTable.clear();
-                DefaultTableModel model = (DefaultTableModel) propTable.getModel();
-                Object nodeInfo = node.getUserObject();
-                // TODO: introspection
-                if(nodeInfo instanceof VDFNode) {
-                    Element element = Element.importVdf((VDFNode) nodeInfo);
-                    loadProps(element);
-                    try {
-                        canvas.load(element);
-                    } catch(NullPointerException ex) {
-                        LOG.log(Level.SEVERE, null, ex);
-                    }
-                }
-            }
-        });
-        sideSplit.setBottomComponent(new JScrollPane(propTable = new PropertyTable()));
-        canvas = new VGUICanvas() {
-            @Override
-            public void placed() {
-                DefaultMutableTreeNode node = (DefaultMutableTreeNode) fileTree.getLastSelectedPathComponent();
-                if(node == null) {
-                    return;
-                }
-                Object nodeInfo = node.getUserObject();
-                if(nodeInfo instanceof Element) {
-                    Element element = (Element) nodeInfo;
-                    loadProps(element);
-                }
-            }
-        };
-        tabbedContent.add(Main.getString("Canvas"), new JScrollPane(canvas) {{
-            //        setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
-            getVerticalScrollBar().setBlockIncrement(30);
-            getVerticalScrollBar().setUnitIncrement(20);
-            //        setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_ALWAYS);
-            getHorizontalScrollBar().setBlockIncrement(30);
-            getHorizontalScrollBar().setUnitIncrement(20);
-        }});
     }
 }
