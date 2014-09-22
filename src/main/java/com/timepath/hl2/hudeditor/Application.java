@@ -35,12 +35,12 @@ public abstract class Application extends JFrame {
 
     private static final Logger LOG = Logger.getLogger(Application.class.getName());
     protected DefaultMutableTreeNode fileSystemRoot, archiveRoot;
-    protected ProjectTree      fileTree;
-    protected PropertyTable    propTable;
-    protected JSplitPane       sideSplit;
-    protected StatusBar        status;
-    protected JTabbedPane      tabbedContent;
-    protected BlendedToolBar   tools;
+    protected ProjectTree fileTree;
+    protected PropertyTable propTable;
+    protected JSplitPane sideSplit;
+    protected StatusBar status;
+    protected JTabbedPane tabbedContent;
+    protected BlendedToolBar tools;
     protected DefaultTreeModel fileModel;
 
     public Application() {
@@ -59,26 +59,28 @@ public abstract class Application extends JFrame {
                     dtde.acceptDrop(DnDConstants.ACTION_COPY_OR_MOVE);
                     Transferable t = dtde.getTransferable();
                     File file = null;
-                    if(OS.isLinux()) {
+                    if (OS.isLinux()) {
                         DataFlavor nixFileDataFlavor = new DataFlavor("text/uri-list;class=java.lang.String");
                         String data = (String) t.getTransferData(nixFileDataFlavor);
-                        for(StringTokenizer st = new StringTokenizer(data, "\r\n"); st.hasMoreTokens(); ) {
+                        for (StringTokenizer st = new StringTokenizer(data, "\r\n"); st.hasMoreTokens(); ) {
                             String token = st.nextToken().trim();
-                            if(token.startsWith("#") || token.isEmpty()) continue; // comment line, by RFC 2483
+                            if (token.startsWith("#") || token.isEmpty()) continue; // comment line, by RFC 2483
                             try {
                                 file = new File(new URI(token));
-                            } catch(URISyntaxException e) { return; }
+                            } catch (URISyntaxException e) {
+                                return;
+                            }
                         }
                     } else {
                         Object data = t.getTransferData(DataFlavor.javaFileListFlavor);
-                        if(data instanceof Iterable) {
-                            for(Object o : (Iterable<?>) data) {
-                                if(o instanceof File) file = (File) o;
+                        if (data instanceof Iterable) {
+                            for (Object o : (Iterable<?>) data) {
+                                if (o instanceof File) file = (File) o;
                             }
                         }
                     }
-                    if(file != null) fileDropped(file);
-                } catch(ClassNotFoundException | InvalidDnDOperationException | UnsupportedFlavorException |
+                    if (file != null) fileDropped(file);
+                } catch (ClassNotFoundException | InvalidDnDOperationException | UnsupportedFlavorException |
                         IOException e) {
                     LOG.log(Level.SEVERE, null, e);
                 } finally {
@@ -102,7 +104,7 @@ public abstract class Application extends JFrame {
     public void setJMenuBar(JMenuBar menubar) {
         LOG.log(Level.INFO, "Setting menubar for {0}", OS.get());
         super.setJMenuBar(menubar);
-        if(OS.isMac()) {
+        if (OS.isMac()) {
             try {
                 OSXAdapter.setQuitHandler(this, getClass().getDeclaredMethod("quit", (Class[]) null));
                 OSXAdapter.setAboutHandler(this, getClass().getDeclaredMethod("about", (Class[]) null));
@@ -127,7 +129,7 @@ public abstract class Application extends JFrame {
                     }
                 });
                 app.setDockIconImage(getDockIconImage());
-            } catch(Exception e) {
+            } catch (Exception e) {
                 LOG.severe(e.toString());
             }
         }
@@ -172,17 +174,21 @@ public abstract class Application extends JFrame {
         sideSplit.setBottomComponent(new JScrollPane(propTable = new PropertyTable()));
     }
 
-    public void error(Object msg) { error(msg, Main.getString("Error")); }
+    public void error(Object msg) {
+        error(msg, Main.getString("Error"));
+    }
 
     public void error(Object msg, String title) {
-        LOG.log(Level.SEVERE, "{0}:{1}", new Object[] { title, msg });
+        LOG.log(Level.SEVERE, "{0}:{1}", new Object[]{title, msg});
         JOptionPane.showMessageDialog(this, msg, title, JOptionPane.ERROR_MESSAGE);
     }
 
-    public void info(Object msg) { info(msg, Main.getString("Info")); }
+    public void info(Object msg) {
+        info(msg, Main.getString("Info"));
+    }
 
     public void info(Object msg, String title) {
-        LOG.log(Level.INFO, "{0}:{1}", new Object[] { title, msg });
+        LOG.log(Level.INFO, "{0}:{1}", new Object[]{title, msg});
         JOptionPane.showMessageDialog(this, msg, title, JOptionPane.INFORMATION_MESSAGE);
     }
 

@@ -1,6 +1,6 @@
 description = ''
 dependencies {
-  compile project(':hl2-toolkit')
+    compile project(':hl2-toolkit')
 }
 
 if (!hasProperty('mainClass')) {

@@ -19,7 +19,7 @@ public abstract class CustomAction extends AbstractAction {
     }
 
     CustomAction(String s, int mnemonic) {
-        this(s, mnemonic,  null);
+        this(s, mnemonic, null);
     }
 
     @Override

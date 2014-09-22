@@ -14,26 +14,28 @@ import java.util.prefs.Preferences;
  */
 class Main {
 
-    private static final ResourceBundle strings     = ResourceBundle.getBundle("com/timepath/hl2/hudeditor/res/lang");
-    private static final String         appName     = "TF2 HUD Editor";
+    private static final ResourceBundle strings = ResourceBundle.getBundle("com/timepath/hl2/hudeditor/res/lang");
+    private static final String appName = "TF2 HUD Editor";
     /**
      * Used for storing preferences, do not localize.
      * The window class on Linux systems
      * The app name on Mac systems
      */
-    private static final String         projectName = "tf2-hud-editor";
-    /** in xfce, window grouping show this, unfortunately */
-    public static final  Preferences    prefs       = Preferences.userRoot().node(projectName);
+    private static final String projectName = "tf2-hud-editor";
+    /**
+     * in xfce, window grouping show this, unfortunately
+     */
+    public static final Preferences prefs = Preferences.userRoot().node(projectName);
 
     static {
-        if(OS.isLinux()) {
+        if (OS.isLinux()) {
             WindowToolkit.setWindowClass(projectName);
             DesktopLauncher.create(projectName,
-                                   "/com/timepath/hl2/hudeditor/res/",
-                                   new String[] { "Icon.png", "Icon.svg" },
-                                   projectName,
-                                   projectName);
-        } else if(OS.isMac()) {
+                    "/com/timepath/hl2/hudeditor/res/",
+                    new String[]{"Icon.png", "Icon.svg"},
+                    projectName,
+                    projectName);
+        } else if (OS.isMac()) {
             OSXProps.setMetal(false);
             OSXProps.setQuartz(true);
             OSXProps.setShowGrowBox(true);

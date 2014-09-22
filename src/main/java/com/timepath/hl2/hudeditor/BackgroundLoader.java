@@ -21,7 +21,7 @@ public abstract class BackgroundLoader {
     public static Image fetch() {
         SteamID user = SteamUtils.getUser();
         LOG.log(Level.INFO, "Current user: {0}", user);
-        if(user == null) {
+        if (user == null) {
             LOG.log(Level.WARNING, "Steam not found");
             return null;
         }
@@ -32,10 +32,10 @@ public abstract class BackgroundLoader {
                 return name.toLowerCase().endsWith(".jpg");
             }
         });
-        if(files != null) {
+        if (files != null) {
             try {
-                return new ImageIcon(files[(int) ( Math.random() * ( files.length - 1 ) )].toURI().toURL()).getImage();
-            } catch(MalformedURLException ex) {
+                return new ImageIcon(files[(int) (Math.random() * (files.length - 1))].toURI().toURL()).getImage();
+            } catch (MalformedURLException ex) {
                 LOG.log(Level.SEVERE, null, ex);
             }
         }
