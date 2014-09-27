@@ -29,6 +29,7 @@ public class PropertyTable extends JTable {
         renderer = new CustomTableCellRenderer();
     }
 
+    @Override
     @NotNull
     public DefaultTableModel getModel() {
         return model;
