@@ -4,6 +4,7 @@ import com.timepath.plaf.OS;
 import com.timepath.plaf.linux.DesktopLauncher;
 import com.timepath.plaf.linux.WindowToolkit;
 import com.timepath.plaf.mac.OSXProps;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.util.ResourceBundle;
@@ -48,11 +49,11 @@ class Main {
         }
     }
 
-    public static String getString(String key) {
+    public static String getString(@NotNull String key) {
         return getString(key, key);
     }
 
-    public static String getString(String key, String fallback) {
+    public static String getString(@NotNull String key, String fallback) {
         return strings.containsKey(key) ? strings.getString(key) : fallback;
     }
 

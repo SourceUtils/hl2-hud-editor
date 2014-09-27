@@ -5,6 +5,8 @@ import com.timepath.plaf.OS;
 import com.timepath.plaf.mac.Application.*;
 import com.timepath.swing.BlendedToolBar;
 import com.timepath.swing.StatusBar;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
@@ -54,16 +56,16 @@ public abstract class Application extends JFrame {
         getRootPane().putClientProperty("apple.awt.brushMetalLook", Boolean.TRUE); // Mac tweak
         setDropTarget(new DropTarget() {
             @Override
-            public synchronized void drop(DropTargetDropEvent dtde) {
+            public synchronized void drop(@NotNull DropTargetDropEvent dtde) {
                 try {
                     dtde.acceptDrop(DnDConstants.ACTION_COPY_OR_MOVE);
                     Transferable t = dtde.getTransferable();
-                    File file = null;
+                    @Nullable File file = null;
                     if (OS.isLinux()) {
-                        DataFlavor nixFileDataFlavor = new DataFlavor("text/uri-list;class=java.lang.String");
-                        String data = (String) t.getTransferData(nixFileDataFlavor);
-                        for (StringTokenizer st = new StringTokenizer(data, "\r\n"); st.hasMoreTokens(); ) {
-                            String token = st.nextToken().trim();
+                        @NotNull DataFlavor nixFileDataFlavor = new DataFlavor("text/uri-list;class=java.lang.String");
+                        @NotNull String data = (String) t.getTransferData(nixFileDataFlavor);
+                        for (@NotNull StringTokenizer st = new StringTokenizer(data, "\r\n"); st.hasMoreTokens(); ) {
+                            @NotNull String token = st.nextToken().trim();
                             if (token.startsWith("#") || token.isEmpty()) continue; // comment line, by RFC 2483
                             try {
                                 file = new File(new URI(token));
@@ -80,7 +82,7 @@ public abstract class Application extends JFrame {
                         }
                     }
                     if (file != null) fileDropped(file);
-                } catch (ClassNotFoundException | InvalidDnDOperationException | UnsupportedFlavorException |
+                } catch (@NotNull ClassNotFoundException | InvalidDnDOperationException | UnsupportedFlavorException |
                         IOException e) {
                     LOG.log(Level.SEVERE, null, e);
                 } finally {
@@ -109,7 +111,7 @@ public abstract class Application extends JFrame {
                 OSXAdapter.setQuitHandler(this, getClass().getDeclaredMethod("quit", (Class[]) null));
                 OSXAdapter.setAboutHandler(this, getClass().getDeclaredMethod("about", (Class[]) null));
                 OSXAdapter.setPreferencesHandler(this, getClass().getDeclaredMethod("preferences", (Class[]) null));
-                com.timepath.plaf.mac.Application app = com.timepath.plaf.mac.Application.getApplication();
+                @NotNull com.timepath.plaf.mac.Application app = com.timepath.plaf.mac.Application.getApplication();
                 app.setAboutHandler(new AboutHandler() {
                     @Override
                     public void handleAbout(AboutEvent e) {
@@ -142,7 +144,7 @@ public abstract class Application extends JFrame {
 
     protected void initComponents() {
         getContentPane().add(tools = new BlendedToolBar(), BorderLayout.PAGE_START);
-        JSplitPane rootSplit = new JSplitPane();
+        @NotNull JSplitPane rootSplit = new JSplitPane();
         rootSplit.setDividerLocation(180);
         rootSplit.setContinuousLayout(true);
         rootSplit.setOneTouchExpandable(true);
@@ -162,7 +164,7 @@ public abstract class Application extends JFrame {
         archiveRoot = new DefaultMutableTreeNode("Archives");
         fileSystemRoot = new DefaultMutableTreeNode("Projects");
         fileTree = new ProjectTree();
-        DefaultMutableTreeNode root = new DefaultMutableTreeNode();
+        @NotNull DefaultMutableTreeNode root = new DefaultMutableTreeNode();
         root.add(archiveRoot);
         root.add(fileSystemRoot);
         fileModel = fileTree.getModel();

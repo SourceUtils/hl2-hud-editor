@@ -2,6 +2,8 @@ package com.timepath.hl2.hudeditor;
 
 import com.timepath.steam.SteamID;
 import com.timepath.steam.SteamUtils;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -18,17 +20,18 @@ public abstract class BackgroundLoader {
 
     private static final Logger LOG = Logger.getLogger(BackgroundLoader.class.getName());
 
+    @Nullable
     public static Image fetch() {
-        SteamID user = SteamUtils.getUser();
+        @Nullable SteamID user = SteamUtils.getUser();
         LOG.log(Level.INFO, "Current user: {0}", user);
         if (user == null) {
             LOG.log(Level.WARNING, "Steam not found");
             return null;
         }
-        File screenshotDir = new File(SteamUtils.getUserData(), "760/remote/440/screenshots/");
+        @NotNull File screenshotDir = new File(SteamUtils.getUserData(), "760/remote/440/screenshots/");
         File[] files = screenshotDir.listFiles(new FilenameFilter() {
             @Override
-            public boolean accept(File dir, String name) {
+            public boolean accept(File dir, @NotNull String name) {
                 return name.toLowerCase().endsWith(".jpg");
             }
         });

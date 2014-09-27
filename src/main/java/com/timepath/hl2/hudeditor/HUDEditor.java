@@ -18,6 +18,8 @@ import com.timepath.vfs.SimpleVFile;
 import com.timepath.vgui.Element;
 import com.timepath.vgui.VGUIRenderer.ResourceLocator;
 import com.timepath.vgui.swing.VGUICanvas;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.HyperlinkListener;
@@ -50,9 +52,12 @@ public class HUDEditor extends Application {
     private static final Logger LOG = Logger.getLogger(HUDEditor.class.getName());
     private static final Pattern VDF_PATTERN = Pattern.compile("^\\.(vdf|pop|layout|menu|styles)");
     protected EditorMenuBar editorMenuBar;
+    @Nullable
     protected VGUICanvas canvas;
+    @Nullable
     protected File lastLoaded;
     protected JSpinner spinnerWidth, spinnerHeight;
+    @Nullable
     protected HyperlinkListener linkListener = Utils.getLinkListener();
 
     public HUDEditor() {
@@ -65,6 +70,7 @@ public class HUDEditor extends Application {
         String str = Main.prefs.get("lastLoaded", null);
         if (str != null) setLastLoaded(new File(str));
         new SwingWorker<Image, Void>() {
+            @Nullable
             @Override
             public Image doInBackground() {
                 return BackgroundLoader.fetch();
@@ -74,7 +80,7 @@ public class HUDEditor extends Application {
             public void done() {
                 try {
                     canvas.setBackgroundImage(get());
-                } catch (InterruptedException | ExecutionException e) {
+                } catch (@NotNull InterruptedException | ExecutionException e) {
                     LOG.log(Level.SEVERE, null, e);
                 }
             }
@@ -83,7 +89,7 @@ public class HUDEditor extends Application {
         GraphicsConfiguration gc = getGraphicsConfiguration();
         Rectangle screenBounds = gc.getBounds();
         Insets screenInsets = getToolkit().getScreenInsets(gc);
-        Dimension workspace = new Dimension(screenBounds.width - screenInsets.left - screenInsets.right,
+        @NotNull Dimension workspace = new Dimension(screenBounds.width - screenInsets.left - screenInsets.right,
                 screenBounds.height - screenInsets.top - screenInsets.bottom);
         setMinimumSize(new Dimension(Math.max(workspace.width / 2, 640), Math.max((3 * workspace.height) / 4, 480)));
         setPreferredSize(new Dimension((int) (workspace.getWidth() / 1.5), (int) (workspace.getHeight() / 1.5)));
@@ -91,19 +97,19 @@ public class HUDEditor extends Application {
         setLocationRelativeTo(null);
     }
 
-    static void analyze(DefaultMutableTreeNode top, boolean leaves) {
+    static void analyze(@NotNull DefaultMutableTreeNode top, boolean leaves) {
         if (!(top.getUserObject() instanceof ExtendedVFile)) return;
-        ExtendedVFile root = (ExtendedVFile) top.getUserObject();
-        for (SimpleVFile n : root.list()) {
+        @NotNull ExtendedVFile root = (ExtendedVFile) top.getUserObject();
+        for (@NotNull SimpleVFile n : root.list()) {
             LOG.log(Level.FINE, "Loading {0}", n.getName());
-            DefaultMutableTreeNode child = new DefaultMutableTreeNode(n);
+            @NotNull DefaultMutableTreeNode child = new DefaultMutableTreeNode(n);
             if (n.isDirectory()) {
                 if (n.list().size() > 0) {
                     top.add(child);
                     analyze(child, leaves);
                 }
             } else if (leaves) {
-                try (InputStream is = n.openStream()) {
+                try (@Nullable InputStream is = n.openStream()) {
                     if (VDF_PATTERN.matcher(n.getName()).matches()) {
                         child.add(VDF.load(is).toTreeNode());
                     } else if (n.getName().endsWith(".res")) {
@@ -119,7 +125,7 @@ public class HUDEditor extends Application {
         }
     }
 
-    static void recurseDirectoryToNode(ExtendedVFile ar, DefaultMutableTreeNode project) {
+    static void recurseDirectoryToNode(ExtendedVFile ar, @NotNull DefaultMutableTreeNode project) {
         project.setUserObject(ar);
         analyze(project, true);
     }
@@ -130,10 +136,10 @@ public class HUDEditor extends Application {
         fileTree.addTreeSelectionListener(new TreeSelectionListener() {
             @Override
             public void valueChanged(TreeSelectionEvent e) {
-                DefaultMutableTreeNode node = fileTree.getLastSelectedPathComponent();
+                @NotNull DefaultMutableTreeNode node = fileTree.getLastSelectedPathComponent();
                 if (node == null) return;
                 propTable.clear();
-                DefaultTableModel model = propTable.getModel();
+                @NotNull DefaultTableModel model = propTable.getModel();
                 Object nodeInfo = node.getUserObject();
                 // TODO: introspection
                 if (nodeInfo instanceof VDFNode) {
@@ -147,11 +153,11 @@ public class HUDEditor extends Application {
         canvas = new VGUICanvas() {
             @Override
             public void placed() {
-                DefaultMutableTreeNode node = fileTree.getLastSelectedPathComponent();
+                @NotNull DefaultMutableTreeNode node = fileTree.getLastSelectedPathComponent();
                 if (node == null) return;
                 Object nodeInfo = node.getUserObject();
                 if (nodeInfo instanceof Element) {
-                    Element element = (Element) nodeInfo;
+                    @NotNull Element element = (Element) nodeInfo;
                     loadProps(element);
                 }
             }
@@ -173,14 +179,14 @@ public class HUDEditor extends Application {
 
     @Override
     public void about() {
-        JEditorPane pane = new JEditorPane("text/html", "");
+        @NotNull JEditorPane pane = new JEditorPane("text/html", "");
         pane.setEditable(false);
         pane.setOpaque(false);
         pane.setBackground(new Color(0, 0, 0, 0));
         pane.addHyperlinkListener(linkListener);
-        String aboutText = "<html><h2>This is to be a What You See Is What You Get HUD Editor for TF2,</h2>";
+        @NotNull String aboutText = "<html><h2>This is to be a What You See Is What You Get HUD Editor for TF2,</h2>";
         aboutText += "for graphically editing TF2 HUDs!";
-        String p1 = aboutText;
+        @NotNull String p1 = aboutText;
         pane.setText(p1);
         info(pane, "About");
     }
@@ -198,7 +204,7 @@ public class HUDEditor extends Application {
 
     void locateHudDirectory() {
         try {
-            File[] selection = new NativeFileChooser().setParent(this)
+            @Nullable File[] selection = new NativeFileChooser().setParent(this)
                     .setTitle(Main.getString("LoadHudDir"))
                     .setDirectory(lastLoaded)
                     .setFileMode(BaseFileChooser.FileMode.DIRECTORIES_ONLY)
@@ -213,6 +219,7 @@ public class HUDEditor extends Application {
         setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
         final long start = System.currentTimeMillis();
         new SwingWorker<DefaultMutableTreeNode, Void>() {
+            @Nullable
             @Override
             public DefaultMutableTreeNode doInBackground() {
                 return load(f);
@@ -236,7 +243,8 @@ public class HUDEditor extends Application {
         }.execute();
     }
 
-    DefaultMutableTreeNode load(File root) {
+    @Nullable
+    DefaultMutableTreeNode load(@Nullable File root) {
         if (root == null) return null;
         if (!root.exists()) {
             error(new MessageFormat(Main.getString("FileAccessError")).format(new Object[]{root}));
@@ -244,9 +252,9 @@ public class HUDEditor extends Application {
         setLastLoaded(root);
         LOG.log(Level.INFO, "You have selected: {0}", root.getAbsolutePath());
         if (root.isDirectory()) {
-            File[] folders = root.listFiles();
+            @Nullable File[] folders = root.listFiles();
             boolean valid = true; // TODO: find resource and scripts if there is a parent directory
-            for (File folder : folders != null ? folders : new File[0]) {
+            for (@NotNull File folder : folders != null ? folders : new File[0]) {
                 if (folder.isDirectory() &&
                         ("resource".equalsIgnoreCase(folder.getName()) || "scripts".equalsIgnoreCase(folder.getName()))) {
                     valid = true;
@@ -258,12 +266,12 @@ public class HUDEditor extends Application {
                 locateHudDirectory();
                 return null;
             }
-            DefaultMutableTreeNode project = new DefaultMutableTreeNode(root.getName());
+            @NotNull DefaultMutableTreeNode project = new DefaultMutableTreeNode(root.getName());
             recurseDirectoryToNode(new Files(root), project);
             return project;
         }
         if (root.getName().endsWith("_dir.vpk")) {
-            DefaultMutableTreeNode project = new DefaultMutableTreeNode(root.getName());
+            @NotNull DefaultMutableTreeNode project = new DefaultMutableTreeNode(root.getName());
             recurseDirectoryToNode(VPK.loadArchive(root), project);
             return project;
         }
@@ -273,12 +281,12 @@ public class HUDEditor extends Application {
     void changeResolution() {
         spinnerWidth.setEnabled(false);
         spinnerHeight.setEnabled(false);
-        final JComboBox<String> dropDown = new JComboBox<>();
+        @NotNull final JComboBox<String> dropDown = new JComboBox<>();
         GraphicsEnvironment env = GraphicsEnvironment.getLocalGraphicsEnvironment();
-        Collection<String> listItems = new LinkedList<>();
-        for (GraphicsDevice device : env.getScreenDevices()) {
-            for (DisplayMode resolution : device.getDisplayModes()) { // TF2 has different resolutions
-                String item = resolution.getWidth() + "x" + resolution.getHeight(); // TODO: Work out aspect ratios
+        @NotNull Collection<String> listItems = new LinkedList<>();
+        for (@NotNull GraphicsDevice device : env.getScreenDevices()) {
+            for (@NotNull DisplayMode resolution : device.getDisplayModes()) { // TF2 has different resolutions
+                @NotNull String item = resolution.getWidth() + "x" + resolution.getHeight(); // TODO: Work out aspect ratios
                 if (!listItems.contains(item)) {
                     listItems.add(item);
                 }
@@ -297,16 +305,16 @@ public class HUDEditor extends Application {
                 spinnerWidth.setEnabled(!isRes);
                 spinnerHeight.setEnabled(!isRes);
                 if (isRes) {
-                    String[] xy = item.split("x");
+                    @NotNull String[] xy = item.split("x");
                     spinnerWidth.setValue(Integer.parseInt(xy[0]));
                     spinnerHeight.setValue(Integer.parseInt(xy[1]));
                 }
             }
         });
-        Object[] message = {
+        @NotNull Object[] message = {
                 "Presets: ", dropDown, "Width: ", spinnerWidth, "Height: ", spinnerHeight
         };
-        JOptionPane optionPane = new JOptionPane(message,
+        @NotNull JOptionPane optionPane = new JOptionPane(message,
                 JOptionPane.PLAIN_MESSAGE,
                 JOptionPane.OK_CANCEL_OPTION,
                 null,
@@ -326,31 +334,34 @@ public class HUDEditor extends Application {
 
     void mount(final int appID) {
         new SwingWorker<DefaultMutableTreeNode, Void>() {
+            @Nullable
             @Override
             protected DefaultMutableTreeNode doInBackground() throws Exception {
                 LOG.log(Level.INFO, "Mounting {0}", appID);
-                final ExtendedVFile a = ACF.fromManifest(appID);
+                @Nullable final ExtendedVFile a = ACF.fromManifest(appID);
                 canvas.getR().registerLocator(new ResourceLocator() {
+                    @Nullable
                     @Override
                     public InputStream locate(String path) {
                         path = path.replace('\\', '/').toLowerCase();
                         if (path.startsWith("..")) path = "vgui/" + path;
                         System.out.println("Looking for " + path);
-                        SimpleVFile file = a.query("tf/materials/" + path);
+                        @Nullable SimpleVFile file = a.query("tf/materials/" + path);
                         if (file == null) return null;
                         return file.openStream();
                     }
 
+                    @Nullable
                     @Override
-                    public Image locateImage(String name) {
-                        String vtfName = name;
+                    public Image locateImage(@NotNull String name) {
+                        @NotNull String vtfName = name;
                         if (!name.endsWith(".vtf")) { // It could be a vmt
                             vtfName += ".vtf";
-                            InputStream vmtStream = locate(name + ".vmt");
+                            @Nullable InputStream vmtStream = locate(name + ".vmt");
                             if (vmtStream != null) {
                                 try {
-                                    VMT.VMTNode vmt = VMT.load(vmtStream);
-                                    String next = (String) vmt.root.getValue("$baseTexture");
+                                    @NotNull VMT.VMTNode vmt = VMT.load(vmtStream);
+                                    @NotNull String next = (String) vmt.root.getValue("$baseTexture");
                                     if (!next.equals(name)) return locateImage(next); // Stop recursion
                                 } catch (IOException e) {
                                     LOG.log(Level.SEVERE, null, e);
@@ -358,10 +369,10 @@ public class HUDEditor extends Application {
                             }
                         }
                         // It's a vtf
-                        InputStream vtfStream = locate(vtfName);
+                        @Nullable InputStream vtfStream = locate(vtfName);
                         if (vtfStream != null) {
                             try {
-                                VTF vtf = VTF.load(vtfStream);
+                                @Nullable VTF vtf = VTF.load(vtfStream);
                                 if (vtf == null) return null;
                                 return vtf.getImage(0);
                             } catch (IOException e) {
@@ -371,7 +382,7 @@ public class HUDEditor extends Application {
                         return null;
                     }
                 });
-                DefaultMutableTreeNode child = new DefaultMutableTreeNode(a);
+                @NotNull DefaultMutableTreeNode child = new DefaultMutableTreeNode(a);
                 recurseDirectoryToNode(a, child);
                 return child;
             }
@@ -385,23 +396,23 @@ public class HUDEditor extends Application {
                         fileModel.reload(archiveRoot);
                         LOG.log(Level.INFO, "Mounted {0}", appID);
                     }
-                } catch (InterruptedException | ExecutionException ex) {
+                } catch (@NotNull InterruptedException | ExecutionException ex) {
                     LOG.log(Level.SEVERE, null, ex);
                 }
             }
         }.execute();
     }
 
-    void setLastLoaded(File root) {
+    void setLastLoaded(@Nullable File root) {
         editorMenuBar.reloadItem.setEnabled(root != null);
         if ((root == null) || !root.exists()) return;
         lastLoaded = root;
         Main.prefs.put("lastLoaded", root.getPath());
     }
 
-    void loadProps(Element element) {
+    void loadProps(@NotNull Element element) {
         propTable.clear();
-        DefaultTableModel model = propTable.getModel();
+        @NotNull DefaultTableModel model = propTable.getModel();
         if (!element.getProps().isEmpty()) {
             element.validateDisplay();
             for (int i = 0; i < element.getProps().size(); i++) {

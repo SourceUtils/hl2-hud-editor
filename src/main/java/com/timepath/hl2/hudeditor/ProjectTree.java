@@ -4,6 +4,8 @@ import com.timepath.io.utils.ViewableData;
 import com.timepath.plaf.x.filechooser.BaseFileChooser;
 import com.timepath.plaf.x.filechooser.NativeFileChooser;
 import com.timepath.steam.io.util.ExtendedVFile;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
@@ -47,7 +49,7 @@ public class ProjectTree extends JTree implements ActionListener, MouseListener 
 
     private void initComponents() {
         defaultMenu = new JPopupMenu();
-        JMenuItem nullAction = new JMenuItem();
+        @NotNull JMenuItem nullAction = new JMenuItem();
         nullAction.setText("No action");
         nullAction.setEnabled(false);
         defaultMenu.add(nullAction);
@@ -70,7 +72,7 @@ public class ProjectTree extends JTree implements ActionListener, MouseListener 
     }
 
     @Override
-    public void actionPerformed(ActionEvent e) {
+    public void actionPerformed(@NotNull ActionEvent e) {
         if (e.getSource() == extractAction) {
             extractActionActionPerformed(e);
         } else if (e.getSource() == closeAction) {
@@ -83,16 +85,17 @@ public class ProjectTree extends JTree implements ActionListener, MouseListener 
         ExtendedVFile context = archiveContext;
         LOG.log(Level.INFO, "Archive: {0}", context);
         try {
-            final File[] fs = new NativeFileChooser().setTitle("Extract")
+            @Nullable final File[] fs = new NativeFileChooser().setTitle("Extract")
                     .setDialogType(BaseFileChooser.DialogType.SAVE_DIALOG)
                     .setFileMode(BaseFileChooser.FileMode.DIRECTORIES_ONLY)
                     .choose();
             if (fs == null) return;
             LOG.log(Level.INFO, "Extracting to {0}", fs[0]);
             new SwingWorker<File, Integer>() {
+                @Nullable
                 @Override
                 protected File doInBackground() throws Exception {
-                    File ret = null;
+                    @Nullable File ret = null;
                     try {
                         directoryEntryContext.extract(fs[0]);
                         ret = new File(fs[0], directoryEntryContext.getName());
@@ -106,7 +109,7 @@ public class ProjectTree extends JTree implements ActionListener, MouseListener 
                 protected void done() {
                     try {
                         LOG.log(Level.INFO, "Extracted {0}", new Object[]{get()});
-                    } catch (InterruptedException | ExecutionException e) {
+                    } catch (@NotNull InterruptedException | ExecutionException e) {
                         LOG.log(Level.SEVERE, null, e);
                     }
                 }
@@ -121,7 +124,7 @@ public class ProjectTree extends JTree implements ActionListener, MouseListener 
     }
 
     @Override
-    public void mouseClicked(MouseEvent e) {
+    public void mouseClicked(@NotNull MouseEvent e) {
         if (e.getSource() == this) formMouseClicked(e);
     }
 
@@ -141,24 +144,26 @@ public class ProjectTree extends JTree implements ActionListener, MouseListener 
     public void mouseExited(MouseEvent e) {
     }
 
+    @NotNull
     @Override
     public DefaultTreeModel getModel() {
         return (DefaultTreeModel) super.getModel();
     }
 
+    @NotNull
     @Override
     public DefaultMutableTreeNode getLastSelectedPathComponent() {
         return (DefaultMutableTreeNode) super.getLastSelectedPathComponent();
     }
 
-    private void formMouseClicked(MouseEvent e) {
+    private void formMouseClicked(@NotNull MouseEvent e) {
         if (!SwingUtilities.isRightMouseButton(e)) return;
         int row = getClosestRowForLocation(e.getX(), e.getY());
         if (row != -1) {
             Object clicked = getPathForRow(row).getLastPathComponent();
             setSelectionRow(row);
             if (clicked instanceof DefaultMutableTreeNode) {
-                DefaultMutableTreeNode node = (DefaultMutableTreeNode) clicked;
+                @NotNull DefaultMutableTreeNode node = (DefaultMutableTreeNode) clicked;
                 Object obj = node.getUserObject();
                 if (obj instanceof ExtendedVFile) {
                     directoryEntryContext = (ExtendedVFile) obj;
@@ -197,9 +202,10 @@ public class ProjectTree extends JTree implements ActionListener, MouseListener 
          * The foreground color is set based on the selection and the icon
          * is set based on on leaf and expanded.
          */
+        @NotNull
         @Override
-        public Component getTreeCellRendererComponent(JTree tree,
-                                                      Object value,
+        public Component getTreeCellRendererComponent(@NotNull JTree tree,
+                                                      @NotNull Object value,
                                                       boolean sel,
                                                       boolean expanded,
                                                       boolean leaf,
@@ -211,11 +217,11 @@ public class ProjectTree extends JTree implements ActionListener, MouseListener 
                 if (nodeValue instanceof String) {
                     setIcon(tree, UIManager.getIcon("FileView.computerIcon"));
                 } else if (nodeValue instanceof File) {
-                    File f = (File) nodeValue;
+                    @NotNull File f = (File) nodeValue;
                     valueText = f.getName();
                     setIcon(tree, UIManager.getIcon("FileView." + (f.isDirectory() ? "directoryIcon" : "fileIcon")));
                 } else if (nodeValue instanceof ViewableData) {
-                    ViewableData v = (ViewableData) nodeValue;
+                    @NotNull ViewableData v = (ViewableData) nodeValue;
                     setIcon(tree, v.getIcon());
                 } else {
                     if (nodeValue != null) {
@@ -227,7 +233,7 @@ public class ProjectTree extends JTree implements ActionListener, MouseListener 
             String stringValue = tree.convertValueToText(valueText, sel, expanded, leaf, row, hasFocus);
             this.hasFocus = hasFocus;
             setText(stringValue);
-            Color tColor = null;
+            @Nullable Color tColor = null;
             if (tColor != null) {
                 setForeground(sel
                         ? ((tColor != newColor) ? new Color(-tColor.getRed() + 255,
@@ -243,7 +249,7 @@ public class ProjectTree extends JTree implements ActionListener, MouseListener 
             return this;
         }
 
-        private void setIcon(JTree tree, Icon icon) {
+        private void setIcon(@NotNull JTree tree, Icon icon) {
             if (tree.isEnabled()) {
                 setIcon(icon);
             } else {

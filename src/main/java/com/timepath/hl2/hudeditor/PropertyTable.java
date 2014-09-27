@@ -1,5 +1,7 @@
 package com.timepath.hl2.hudeditor;
 
+import org.jetbrains.annotations.NotNull;
+
 import javax.swing.*;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
@@ -12,7 +14,9 @@ import java.awt.*;
 @SuppressWarnings("serial")
 public class PropertyTable extends JTable {
 
+    @NotNull
     private final CustomTableCellRenderer renderer;
+    @NotNull
     private final DefaultTableModel model;
 
     public PropertyTable() {
@@ -25,6 +29,7 @@ public class PropertyTable extends JTable {
         renderer = new CustomTableCellRenderer();
     }
 
+    @NotNull
     public DefaultTableModel getModel() {
         return model;
     }
@@ -44,6 +49,7 @@ public class PropertyTable extends JTable {
         return column != 0;
     }
 
+    @NotNull
     @Override
     public TableCellRenderer getCellRenderer(int row, int column) {
         return renderer;
@@ -51,6 +57,7 @@ public class PropertyTable extends JTable {
 
     private class CustomTableCellRenderer extends DefaultTableCellRenderer {
 
+        @NotNull
         @Override
         public Component getTableCellRendererComponent(JTable table,
                                                        Object value,
@@ -60,7 +67,7 @@ public class PropertyTable extends JTable {
                                                        int column) {
             super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
             if (value instanceof ImageIcon) {
-                Icon icon = (Icon) value;
+                @NotNull Icon icon = (Icon) value;
                 setText("");
                 setIcon(icon);
                 setRowHeight(row, Math.max(icon.getIconHeight(), rowHeight));

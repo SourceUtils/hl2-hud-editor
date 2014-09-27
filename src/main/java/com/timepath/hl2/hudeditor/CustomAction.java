@@ -1,5 +1,7 @@
 package com.timepath.hl2.hudeditor;
 
+import org.jetbrains.annotations.NotNull;
+
 import javax.swing.*;
 import java.awt.event.ActionEvent;
 
@@ -8,17 +10,17 @@ import java.awt.event.ActionEvent;
  */
 public abstract class CustomAction extends AbstractAction {
 
-    CustomAction(String s, int mnemonic, KeyStroke shortcut, Icon icon) {
+    CustomAction(@NotNull String s, int mnemonic, KeyStroke shortcut, Icon icon) {
         super(Main.getString(s), icon);
         putValue(Action.MNEMONIC_KEY, mnemonic);
         putValue(Action.ACCELERATOR_KEY, shortcut);
     }
 
-    CustomAction(String s, int mnemonic, KeyStroke shortcut) {
+    CustomAction(@NotNull String s, int mnemonic, KeyStroke shortcut) {
         this(s, mnemonic, shortcut, null);
     }
 
-    CustomAction(String s, int mnemonic) {
+    CustomAction(@NotNull String s, int mnemonic) {
         this(s, mnemonic, null);
     }
 

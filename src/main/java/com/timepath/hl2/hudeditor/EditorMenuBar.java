@@ -2,6 +2,7 @@ package com.timepath.hl2.hudeditor;
 
 import com.timepath.plaf.OS;
 import com.timepath.vgui.Element;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
@@ -20,7 +21,7 @@ class EditorMenuBar extends JMenuBar {
     int mod = Toolkit.getDefaultToolkit().getMenuShortcutKeyMask();
     JMenuItem aboutItem;
 
-    EditorMenuBar(final HUDEditor hudEditor) {
+    EditorMenuBar(@NotNull final HUDEditor hudEditor) {
         this.hudEditor = hudEditor;
         add(new JMenu(Main.getString("File")) {{
             setMnemonic(KeyEvent.VK_F);
@@ -168,16 +169,16 @@ class EditorMenuBar extends JMenuBar {
                 }
             }));
             addSeparator();
-            JMenuItem viewItem1 = new JMenuItem("Main Menu");
+            @NotNull JMenuItem viewItem1 = new JMenuItem("Main Menu");
             viewItem1.setEnabled(false);
             add(viewItem1);
-            JMenuItem viewItem2 = new JMenuItem("In-game (Health and ammo)");
+            @NotNull JMenuItem viewItem2 = new JMenuItem("In-game (Health and ammo)");
             viewItem2.setEnabled(false);
             add(viewItem2);
-            JMenuItem viewItem3 = new JMenuItem("Scoreboard");
+            @NotNull JMenuItem viewItem3 = new JMenuItem("Scoreboard");
             viewItem3.setEnabled(false);
             add(viewItem3);
-            JMenuItem viewItem4 = new JMenuItem("CTF HUD");
+            @NotNull JMenuItem viewItem4 = new JMenuItem("CTF HUD");
             viewItem4.setEnabled(false);
             add(viewItem4);
         }});
