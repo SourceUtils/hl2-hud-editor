@@ -3,7 +3,7 @@ package com.timepath.hl2.hudeditor;
 import com.timepath.io.utils.ViewableData;
 import com.timepath.plaf.x.filechooser.BaseFileChooser;
 import com.timepath.plaf.x.filechooser.NativeFileChooser;
-import com.timepath.steam.io.util.ExtendedVFile;
+import com.timepath.vfs.provider.ExtendedVFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
