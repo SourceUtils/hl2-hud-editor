@@ -11,7 +11,7 @@ import com.timepath.steam.io.VDF;
 import com.timepath.steam.io.VDFNode;
 import com.timepath.steam.io.VDFNode.VDFProperty;
 import com.timepath.steam.io.storage.ACF;
-import com.timepath.vfs.provider.Files;
+import com.timepath.vfs.provider.local.LocalFileProvider;
 import com.timepath.steam.io.storage.VPK;
 import com.timepath.vfs.provider.ExtendedVFile;
 import com.timepath.vfs.SimpleVFile;
@@ -267,7 +267,7 @@ public class HUDEditor extends Application {
                 return null;
             }
             @NotNull DefaultMutableTreeNode project = new DefaultMutableTreeNode(root.getName());
-            recurseDirectoryToNode(new Files(root), project);
+            recurseDirectoryToNode(new LocalFileProvider(root), project);
             return project;
         }
         if (root.getName().endsWith("_dir.vpk")) {
