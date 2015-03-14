@@ -325,7 +325,7 @@ public class HUDEditor : Application() {
                     }
                 })
                 val child = DefaultMutableTreeNode(a)
-                recurseDirectoryToNode(a, child)
+                recurseDirectoryToNode(a!!, child)
                 return child
             }
 
