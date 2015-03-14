@@ -149,15 +149,14 @@ public class ProjectTree : JTree(), ActionListener, MouseListener {
             val clicked = getPathForRow(row).getLastPathComponent()
             setSelectionRow(row)
             if (clicked is DefaultMutableTreeNode) {
-                val node = clicked as DefaultMutableTreeNode
-                val obj = node.getUserObject()
+                val obj = clicked.getUserObject()
                 if (obj is ExtendedVFile) {
-                    directoryEntryContext = obj as ExtendedVFile
+                    directoryEntryContext = obj
                     archiveContext = directoryEntryContext!!.getRoot()
                     fileMenu!!.show(e.getComponent(), e.getX(), e.getY())
                     return
                 } else if (obj is String) {
-                    projectContext = node
+                    projectContext = clicked
                     projectMenu!!.show(e.getComponent(), e.getX(), e.getY())
                     return
                 } else {
@@ -188,16 +187,17 @@ public class ProjectTree : JTree(), ActionListener, MouseListener {
         override fun getTreeCellRendererComponent(tree: JTree, value: Any, sel: Boolean, expanded: Boolean, leaf: Boolean, row: Int, hasFocus: Boolean): Component {
             var valueText = value.toString()
             if (value is DefaultMutableTreeNode) {
-                val nodeValue = (value as DefaultMutableTreeNode).getUserObject()
+                val nodeValue = value.getUserObject()
                 if (nodeValue is String) {
                     setIcon(tree, UIManager.getIcon("FileView.computerIcon"))
                 } else if (nodeValue is File) {
-                    val f = nodeValue as File
-                    valueText = f.getName()
-                    setIcon(tree, UIManager.getIcon("FileView." + (if (f.isDirectory()) "directoryIcon" else "fileIcon")))
+                    valueText = nodeValue.getName()
+                    setIcon(tree, UIManager.getIcon("FileView." + (when {
+                        nodeValue.isDirectory() -> "directoryIcon"
+                        else -> "fileIcon"
+                    })))
                 } else if (nodeValue is ViewableData) {
-                    val v = nodeValue as ViewableData
-                    setIcon(tree, v.getIcon())
+                    setIcon(tree, nodeValue.getIcon())
                 } else {
                     if (nodeValue != null) {
                         LOG.log(Level.FINE, "Node class: {0}", nodeValue.javaClass)

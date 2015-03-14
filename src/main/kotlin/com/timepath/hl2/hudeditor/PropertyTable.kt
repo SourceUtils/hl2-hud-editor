@@ -57,12 +57,14 @@ public class PropertyTable : JTable() {
         override fun getTableCellRendererComponent(table: JTable, value: Any?, isSelected: Boolean, hasFocus: Boolean, row: Int, column: Int): Component {
             super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column)
             if (value is ImageIcon) {
-                val icon = value as Icon
                 setText("")
-                setIcon(icon)
-                setRowHeight(row, Math.max(icon.getIconHeight(), rowHeight))
+                setIcon(value)
+                setRowHeight(row, Math.max(value.getIconHeight(), rowHeight))
             } else {
-                setText(if ((value == null)) "" else value.toString())
+                setText(when (value) {
+                    null -> ""
+                    else -> value.toString()
+                })
                 setIcon(null)
             }
             return this

@@ -102,7 +102,7 @@ public class HUDEditor : Application() {
                 val nodeInfo = node.getUserObject()
                 // TODO: introspection
                 if (nodeInfo is VDFNode) {
-                    val element = Element.importVdf(nodeInfo as VDFNode)
+                    val element = Element.importVdf(nodeInfo)
                     element.file=(node.getParent().toString()) // TODO
                     loadProps(element)
                     canvas!!.r!!.load(element)
@@ -292,17 +292,17 @@ public class HUDEditor : Application() {
                         return file.openStream()
                     }
 
-                    override fun locateImage(name: String): Image? {
-                        var vtfName = name
-                        if (!name.endsWith(".vtf")) {
+                    override fun locateImage(path: String): Image? {
+                        var vtfName = path
+                        if (!path.endsWith(".vtf")) {
                             // It could be a vmt
                             vtfName += ".vtf"
-                            val vmtStream = locate(name + ".vmt")
+                            val vmtStream = locate(path + ".vmt")
                             if (vmtStream != null) {
                                 try {
                                     val vmt = VMT.load(vmtStream)
                                     val next = vmt.root.getValue("\$baseTexture") as String
-                                    if (next != name) return locateImage(next) // Stop recursion
+                                    if (next != path) return locateImage(next) // Stop recursion
                                 } catch (e: IOException) {
                                     LOG.log(Level.SEVERE, null, e)
                                 }
