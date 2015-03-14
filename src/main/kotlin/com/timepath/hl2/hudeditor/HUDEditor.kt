@@ -353,7 +353,7 @@ public class HUDEditor : Application() {
         if (!element.props.isEmpty()) {
             element.validateDisplay()
             for (i in 0..element.props.size() - 1) {
-                val entry = element.props.get(i)
+                val entry = element.props[i]
                 if ("\\n" == entry.getKey()) continue
                 model.addRow(array(entry.getKey(), entry.getValue(), entry.getInfo()))
             }
