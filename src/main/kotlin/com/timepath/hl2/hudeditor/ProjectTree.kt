@@ -152,7 +152,7 @@ public class ProjectTree : JTree(), ActionListener, MouseListener {
                 val obj = clicked.getUserObject()
                 if (obj is ExtendedVFile) {
                     directoryEntryContext = obj
-                    archiveContext = directoryEntryContext!!.getRoot()
+                    archiveContext = directoryEntryContext!!.root
                     fileMenu!!.show(e.getComponent(), e.getX(), e.getY())
                     return
                 } else if (obj is String) {

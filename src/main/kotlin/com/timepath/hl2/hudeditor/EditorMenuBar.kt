@@ -47,8 +47,8 @@ class EditorMenuBar(var hudEditor: HUDEditor) : JMenuBar() {
                 if (OS.isMac()) add(closeItem)
                 var saveItem = JMenuItem(object : CustomAction("Save", KeyEvent.VK_S, ks(KeyEvent.VK_S, mod)) {
                     override fun action(e: ActionEvent) {
-                        if (hudEditor.canvas!!.getElements().isEmpty()) return
-                        hudEditor.info(hudEditor.canvas!!.getElements().getLast().save())
+                        if (hudEditor.canvas!!.elements.isEmpty()) return
+                        hudEditor.info(hudEditor.canvas!!.elements.getLast().save())
                     }
                 })
                 add(saveItem)
@@ -111,14 +111,14 @@ class EditorMenuBar(var hudEditor: HUDEditor) : JMenuBar() {
                 pasteItem.setEnabled(false)
                 var deleteItem = JMenuItem(object : CustomAction("Delete", KeyEvent.VK_D, ks(KeyEvent.VK_DELETE)) {
                     override fun action(e: ActionEvent) {
-                        hudEditor.canvas!!.r!!.removeElements(hudEditor.canvas!!.r!!.getSelected())
+                        hudEditor.canvas!!.r!!.removeElements(hudEditor.canvas!!.r!!.selected)
                     }
                 })
                 add(deleteItem)
                 addSeparator()
                 var selectAllItem = JMenuItem(object : CustomAction("Select All", KeyEvent.VK_A, ks(KeyEvent.VK_A, mod)) {
                     override fun action(e: ActionEvent) {
-                        for (elem in hudEditor.canvas!!.getElements()) {
+                        for (elem in hudEditor.canvas!!.elements) {
                             hudEditor.canvas!!.r!!.select(elem)
                         }
                     }

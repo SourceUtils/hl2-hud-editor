@@ -42,8 +42,8 @@ import java.util.regex.Pattern
 import com.timepath.vgui.VGUIRenderer
 
 /**
-* @author TimePath
-*/
+ * @author TimePath
+ */
 public class HUDEditor : Application() {
     var editorMenuBar: EditorMenuBar
     var canvas: VGUICanvas? = null
@@ -58,7 +58,7 @@ public class HUDEditor : Application() {
     var spinnerHeight: JSpinner? = null
     var linkListener: HyperlinkListener? = Utils.getLinkListener()
 
-    ;{
+            ;{
         setIconImages(IconList("/com/timepath/hl2/hudeditor/res/Icon", "png", *intArray(16, 22, 24, 32, 40, 48, 64, 128, 512, 1024)).getIcons())
         setTitle(Main.getString("Title"))
         editorMenuBar = EditorMenuBar(this)
@@ -103,24 +103,24 @@ public class HUDEditor : Application() {
                 // TODO: introspection
                 if (nodeInfo is VDFNode) {
                     val element = Element.importVdf(nodeInfo)
-                    element.file=(node.getParent().toString()) // TODO
+                    element.file = (node.getParent().toString()) // TODO
                     loadProps(element)
                     canvas!!.r!!.load(element)
                 }
             }
         })
         canvas = VGUICanvas()
-//        canvas = object : VGUICanvas() {
-//            override fun placed() {
-//                val node = fileTree.getLastSelectedPathComponent()
-//                if (node == null) return
-//                val nodeInfo = node.getUserObject()
-//                if (nodeInfo is Element) {
-//                    val element = nodeInfo as Element
-//                    loadProps(element)
-//                }
-//            }
-//        }
+        //        canvas = object : VGUICanvas() {
+        //            override fun placed() {
+        //                val node = fileTree.getLastSelectedPathComponent()
+        //                if (node == null) return
+        //                val nodeInfo = node.getUserObject()
+        //                if (nodeInfo is Element) {
+        //                    val element = nodeInfo as Element
+        //                    loadProps(element)
+        //                }
+        //            }
+        //        }
         tabbedContent.add(Main.getString("Canvas"), object : JScrollPane(canvas) {
             {
                 //        setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
@@ -154,10 +154,11 @@ public class HUDEditor : Application() {
         loadAsync(f)
     }
 
-    override fun getDockIconImage(): Image {
-        val url = javaClass.getResource("/com/timepath/hl2/hudeditor/res/Icon.png")
-        return Toolkit.getDefaultToolkit().getImage(url)
-    }
+    override val dockIconImage: Image
+        get() {
+            val url = javaClass.getResource("/com/timepath/hl2/hudeditor/res/Icon.png")
+            return Toolkit.getDefaultToolkit().getImage(url)
+        }
 
     fun locateHudDirectory() {
         try {
@@ -355,7 +356,7 @@ public class HUDEditor : Application() {
             for (i in element.props.size().indices) {
                 val entry = element.props[i]
                 if ("\\n" == entry.getKey()) continue
-                model.addRow(array(entry.getKey(), entry.getValue(), entry.getInfo()))
+                model.addRow(array(entry.getKey(), entry.getValue(), entry.info))
             }
             model.fireTableDataChanged()
             propTable.repaint()
@@ -389,8 +390,8 @@ public class HUDEditor : Application() {
                         n.openStream()!!.use {
                             when {
                                 VDF_PATTERN.matcher(n.name).matches() -> VDF.load(it).toTreeNode()
-                                // TODO
-//                                n.name.endsWith(".res") -> RES.load(it).toTreeNode()
+                            // TODO
+                            //                                n.name.endsWith(".res") -> RES.load(it).toTreeNode()
                                 else -> null
                             }
                         }?.let {

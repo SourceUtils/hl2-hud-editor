@@ -140,7 +140,7 @@ public abstract class Application : JFrame() {
 
     public abstract fun about()
 
-    public abstract fun getDockIconImage(): Image
+    public abstract val dockIconImage: Image
 
     public abstract fun fileDropped(f: File)
 
@@ -168,7 +168,7 @@ public abstract class Application : JFrame() {
                         quit()
                     }
                 })
-                app.setDockIconImage(getDockIconImage())
+                app.setDockIconImage(dockIconImage)
             } catch (e: Exception) {
                 LOG.severe(e.toString())
             }
