@@ -352,7 +352,7 @@ public class HUDEditor : Application() {
         val model = propTable.getModel()
         if (!element.props.isEmpty()) {
             element.validateDisplay()
-            for (i in 0..element.props.size() - 1) {
+            for (i in element.props.size().indices) {
                 val entry = element.props[i]
                 if ("\\n" == entry.getKey()) continue
                 model.addRow(array(entry.getKey(), entry.getValue(), entry.getInfo()))
