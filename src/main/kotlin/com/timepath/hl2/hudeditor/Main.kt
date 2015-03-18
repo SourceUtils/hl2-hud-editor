@@ -29,7 +29,7 @@ class Main {
          */
         public val prefs: Preferences = Preferences.userRoot().node(projectName)
 
-        ;{
+                ;{
             if (OS.isLinux()) {
                 WindowToolkit.setWindowClass(projectName)
                 DesktopLauncher.create(projectName, "/com/timepath/hl2/hudeditor/res/", array("Icon.png", "Icon.svg"), projectName, projectName)
@@ -55,11 +55,9 @@ class Main {
         }
 
         public platformStatic fun main(args: Array<String>) {
-            SwingUtilities.invokeLater(object : Runnable {
-                override fun run() {
-                    HUDEditor().setVisible(true)
-                }
-            })
+            SwingUtilities.invokeLater {
+                HUDEditor().setVisible(true)
+            }
         }
     }
 }
