@@ -238,7 +238,7 @@ public class HUDEditor : Application() {
         for (device in env.getScreenDevices()) {
             for (resolution in device.getDisplayModes()) {
                 // TF2 has different resolutions
-                val item = resolution.getWidth().toString() + "x" + resolution.getHeight() // TODO: Work out aspect ratios
+                val item = "${resolution.getWidth().toString()}x${resolution.getHeight()}" // TODO: Work out aspect ratios
                 if (!listItems.contains(item)) {
                     listItems.add(item)
                 }
@@ -284,11 +284,10 @@ public class HUDEditor : Application() {
                 val a = ACF.fromManifest(appID)
                 VGUIRenderer.registerLocator(object : ResourceLocator() {
                     override fun locate(path: String): InputStream? {
-                        var path = path
-                        path = path.replace('\\', '/').toLowerCase()
-                        if (path.startsWith("..")) path = "vgui/" + path
-                        System.out.println("Looking for " + path)
-                        val file = a!!.query("tf/materials/" + path)
+                        var path = path.replace('\\', '/').toLowerCase()
+                        if (path.startsWith("..")) path = "vgui/$path"
+                        System.out.println("Looking for $path")
+                        val file = a.query("tf/materials/$path")
                         if (file == null) return null
                         return file.openStream()
                     }
@@ -298,7 +297,7 @@ public class HUDEditor : Application() {
                         if (!path.endsWith(".vtf")) {
                             // It could be a vmt
                             vtfName += ".vtf"
-                            val vmtStream = locate(path + ".vmt")
+                            val vmtStream = locate("$path.vmt")
                             if (vmtStream != null) {
                                 try {
                                     val vmt = VMT.load(vmtStream)

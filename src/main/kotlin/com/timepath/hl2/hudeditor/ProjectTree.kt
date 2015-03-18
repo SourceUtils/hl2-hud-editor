@@ -192,10 +192,10 @@ public class ProjectTree : JTree(), ActionListener, MouseListener {
                     setIcon(tree, UIManager.getIcon("FileView.computerIcon"))
                 } else if (nodeValue is File) {
                     valueText = nodeValue.getName()
-                    setIcon(tree, UIManager.getIcon("FileView." + (when {
+                    setIcon(tree, UIManager.getIcon("FileView.${when {
                         nodeValue.isDirectory() -> "directoryIcon"
                         else -> "fileIcon"
-                    })))
+                    }}"))
                 } else if (nodeValue is ViewableData) {
                     setIcon(tree, nodeValue.getIcon())
                 } else {
