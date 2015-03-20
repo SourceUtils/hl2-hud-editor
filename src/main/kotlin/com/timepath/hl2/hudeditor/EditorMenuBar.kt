@@ -21,9 +21,9 @@ class EditorMenuBar(var hudEditor: HUDEditor) : JMenuBar() {
     })
     val mod = Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()
 
-    ;{
+    init {
         add(object : JMenu(Main.getString("File")) {
-            {
+            init {
                 setMnemonic(KeyEvent.VK_F)
                 var newItem = JMenuItem(object : CustomAction(Main.getString("New"), KeyEvent.VK_N, ks(KeyEvent.VK_N, mod)) {
                     override fun action(e: ActionEvent) {
@@ -75,7 +75,7 @@ class EditorMenuBar(var hudEditor: HUDEditor) : JMenuBar() {
             }
         })
         add(object : JMenu("Edit") {
-            {
+            init {
                 setMnemonic(KeyEvent.VK_E)
                 var undoItem = JMenuItem(object : CustomAction("Undo", KeyEvent.VK_U, ks(KeyEvent.VK_Z, mod)) {
                     override fun action(e: ActionEvent) {
@@ -136,7 +136,7 @@ class EditorMenuBar(var hudEditor: HUDEditor) : JMenuBar() {
             }
         })
         add(object : JMenu("View") {
-            {
+            init {
                 setMnemonic(KeyEvent.VK_V)
                 var resolutionItem = JMenuItem(object : CustomAction("Change Resolution", KeyEvent.VK_R, ks(KeyEvent.VK_R, mod)) {
                     override fun action(e: ActionEvent) {
@@ -177,7 +177,7 @@ class EditorMenuBar(var hudEditor: HUDEditor) : JMenuBar() {
         })
         if (!OS.isMac()) {
             add(object : JMenu("Help") {
-                {
+                init {
                     setMnemonic(KeyEvent.VK_H)
                     var aboutItem = JMenuItem(object : CustomAction("About", KeyEvent.VK_A) {
                         override fun action(e: ActionEvent) {

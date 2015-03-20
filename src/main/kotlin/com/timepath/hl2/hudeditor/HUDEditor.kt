@@ -58,7 +58,7 @@ public class HUDEditor : Application() {
     var spinnerHeight: JSpinner? = null
     var linkListener: HyperlinkListener? = Utils.getLinkListener()
 
-            ;{
+    init {
         setIconImages(IconList("/com/timepath/hl2/hudeditor/res/Icon", "png", *intArray(16, 22, 24, 32, 40, 48, 64, 128, 512, 1024)).getIcons())
         setTitle(Main.getString("Title"))
         editorMenuBar = EditorMenuBar(this)
@@ -92,7 +92,7 @@ public class HUDEditor : Application() {
         setLocationRelativeTo(null)
     }
 
-    {
+    init {
         fileTree.addTreeSelectionListener(object : TreeSelectionListener {
             override fun valueChanged(e: TreeSelectionEvent) {
                 val node = fileTree.getLastSelectedPathComponent()
@@ -122,7 +122,7 @@ public class HUDEditor : Application() {
         //            }
         //        }
         tabbedContent.add(Main.getString("Canvas"), object : JScrollPane(canvas) {
-            {
+            init {
                 //        setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
                 getVerticalScrollBar().setBlockIncrement(30)
                 getVerticalScrollBar().setUnitIncrement(20)
@@ -325,7 +325,7 @@ public class HUDEditor : Application() {
                     }
                 })
                 val child = DefaultMutableTreeNode(a)
-                recurseDirectoryToNode(a!!, child)
+                recurseDirectoryToNode(a, child)
                 return child
             }
 
@@ -362,7 +362,7 @@ public class HUDEditor : Application() {
         }
     }
 
-    class object {
+    companion object {
 
         private val LOG = Logger.getLogger(javaClass<HUDEditor>().getName())
 

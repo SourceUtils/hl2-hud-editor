@@ -35,7 +35,7 @@ public class ProjectTree : JTree(), ActionListener, MouseListener {
     private var fileMenu: JPopupMenu? = null
     private var projectMenu: JPopupMenu? = null
 
-    {
+    init {
         initComponents()
         setRootVisible(false)
         setShowsRootHandles(true)
@@ -235,7 +235,7 @@ public class ProjectTree : JTree(), ActionListener, MouseListener {
         }
     }
 
-    class object {
+    companion object {
 
         private val LOG = Logger.getLogger(javaClass<ProjectTree>().getName())
     }

@@ -9,7 +9,7 @@ import java.awt.event.ActionEvent
  */
 public abstract class CustomAction(s: String, mnemonic: Int, shortcut: KeyStroke? = null, icon: Icon? = null) : AbstractAction(Main.getString(s), icon) {
 
-    {
+    init {
         putValue(Action.MNEMONIC_KEY, mnemonic)
         putValue(Action.ACCELERATOR_KEY, shortcut)
     }

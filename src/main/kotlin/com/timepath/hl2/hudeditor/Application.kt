@@ -41,7 +41,7 @@ public abstract class Application : JFrame() {
     var fileModel: DefaultTreeModel
     var propTable: PropertyTable
 
-    {
+    init {
         setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE)
         addWindowListener(object : WindowAdapter() {
             override fun windowClosing(e: WindowEvent) {
@@ -101,7 +101,7 @@ public abstract class Application : JFrame() {
         rootSplit.setContinuousLayout(true)
         rootSplit.setOneTouchExpandable(true)
         val sideSplit = object : JSplitPane() {
-            {
+            init {
                 setBorder(null)
                 setOrientation(JSplitPane.VERTICAL_SPLIT)
                 setResizeWeight(0.5)
@@ -128,7 +128,7 @@ public abstract class Application : JFrame() {
         fileModel.setRoot(root)
         fileModel.reload()
         sideSplit.setTopComponent(object : JScrollPane(fileTree) {
-            {
+            init {
                 setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS)
             }
         })
@@ -199,7 +199,7 @@ public abstract class Application : JFrame() {
         JOptionPane.showMessageDialog(this, msg, title, JOptionPane.INFORMATION_MESSAGE)
     }
 
-    class object {
+    companion object {
 
         private val LOG = Logger.getLogger(javaClass<Application>().getName())
     }

@@ -16,7 +16,7 @@ public class PropertyTable : JTable() {
     private val renderer: CustomTableCellRenderer
     private val model: DefaultTableModel
 
-    {
+    init {
         this.setSelectionMode(ListSelectionModel.SINGLE_SELECTION)
         model = DefaultTableModel()
         model.addColumn(Main.getString("Key"))
