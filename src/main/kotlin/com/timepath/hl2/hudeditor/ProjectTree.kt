@@ -29,53 +29,58 @@ public class ProjectTree : JTree(), ActionListener, MouseListener {
     private var directoryEntryContext: ExtendedVFile? = null
     private var archiveContext: ExtendedVFile? = null
     private var projectContext: DefaultMutableTreeNode? = null
-    private var closeAction: JMenuItem? = null
-    private var defaultMenu: JPopupMenu? = null
-    private var extractAction: JMenuItem? = null
-    private var fileMenu: JPopupMenu? = null
-    private var projectMenu: JPopupMenu? = null
+    private val closeAction: JMenuItem
+    private val defaultMenu: JPopupMenu
+    private val extractAction: JMenuItem
+    private val fileMenu: JPopupMenu
+    private val projectMenu: JPopupMenu
 
     init {
-        initComponents()
+        defaultMenu = JPopupMenu().let { menu ->
+            val nullAction = JMenuItem().let {
+                it.setText("No action")
+                it.setEnabled(false)
+                it
+            }
+            menu.add(nullAction)
+            menu
+        }
+        extractAction = JMenuItem().let {
+            it.setText("Extract")
+            it.addActionListener(this)
+            it
+        }
+        fileMenu = JPopupMenu().let { menu ->
+            menu.add(extractAction)
+            menu
+        }
+        closeAction = JMenuItem().let {
+            it.setText("Close")
+            it.addActionListener(this)
+            it
+        }
+        projectMenu = JPopupMenu().let { menu ->
+            menu.add(closeAction)
+            menu
+        }
+        setBorder(null)
+        setModel(DefaultTreeModel(DefaultMutableTreeNode("root")))
+        addMouseListener(this)
         setRootVisible(false)
         setShowsRootHandles(true)
         getSelectionModel().setSelectionMode(TreeSelectionModel.SINGLE_TREE_SELECTION)
         setCellRenderer(CustomTreeCellRenderer())
     }
 
-    private fun initComponents() {
-        defaultMenu = JPopupMenu()
-        val nullAction = JMenuItem()
-        nullAction.setText("No action")
-        nullAction.setEnabled(false)
-        defaultMenu!!.add(nullAction)
-
-        fileMenu = JPopupMenu()
-        extractAction = JMenuItem()
-        extractAction!!.setText("Extract")
-        extractAction!!.addActionListener(this)
-        fileMenu!!.add(extractAction)
-
-        projectMenu = JPopupMenu()
-        closeAction = JMenuItem()
-        closeAction!!.setText("Close")
-        closeAction!!.addActionListener(this)
-        projectMenu!!.add(closeAction)
-
-        setBorder(null)
-        setModel(DefaultTreeModel(DefaultMutableTreeNode("root")))
-        addMouseListener(this)
-    }
-
     override fun actionPerformed(e: ActionEvent) {
         if (e.getSource() == extractAction) {
-            extractActionActionPerformed(e)
+            extractActionActionPerformed()
         } else if (e.getSource() == closeAction) {
-            closeActionActionPerformed(e)
+            closeActionActionPerformed()
         }
     }
 
-    private fun extractActionActionPerformed(e: ActionEvent) {
+    private fun extractActionActionPerformed() {
         if (archiveContext == null) return
         val context = archiveContext
         LOG.log(Level.INFO, "Archive: {0}", context)
@@ -114,8 +119,8 @@ public class ProjectTree : JTree(), ActionListener, MouseListener {
 
     }
 
-    private fun closeActionActionPerformed(e: ActionEvent) {
-        getModel().removeNodeFromParent(projectContext)
+    private fun closeActionActionPerformed() {
+        getModel().removeNodeFromParent(projectContext!!)
     }
 
     override fun mouseClicked(e: MouseEvent) {
@@ -138,8 +143,8 @@ public class ProjectTree : JTree(), ActionListener, MouseListener {
         return super<JTree>.getModel() as DefaultTreeModel
     }
 
-    override fun getLastSelectedPathComponent(): DefaultMutableTreeNode {
-        return super<JTree>.getLastSelectedPathComponent() as DefaultMutableTreeNode
+    override fun getLastSelectedPathComponent(): DefaultMutableTreeNode? {
+        return super<JTree>.getLastSelectedPathComponent() as? DefaultMutableTreeNode
     }
 
     private fun formMouseClicked(e: MouseEvent) {
@@ -153,11 +158,11 @@ public class ProjectTree : JTree(), ActionListener, MouseListener {
                 if (obj is ExtendedVFile) {
                     directoryEntryContext = obj
                     archiveContext = directoryEntryContext!!.root
-                    fileMenu!!.show(e.getComponent(), e.getX(), e.getY())
+                    fileMenu.show(e.getComponent(), e.getX(), e.getY())
                     return
                 } else if (obj is String) {
                     projectContext = clicked
-                    projectMenu!!.show(e.getComponent(), e.getX(), e.getY())
+                    projectMenu.show(e.getComponent(), e.getX(), e.getY())
                     return
                 } else {
                     LOG.log(Level.WARNING, "Unknown user object {0}", obj.javaClass)
@@ -166,7 +171,7 @@ public class ProjectTree : JTree(), ActionListener, MouseListener {
                 LOG.log(Level.WARNING, "Unknown tree node {0}", clicked.javaClass)
             }
         }
-        defaultMenu!!.show(e.getComponent(), e.getX(), e.getY())
+        defaultMenu.show(e.getComponent(), e.getX(), e.getY())
     }
 
     private class CustomTreeCellRenderer : DefaultTreeCellRenderer() {

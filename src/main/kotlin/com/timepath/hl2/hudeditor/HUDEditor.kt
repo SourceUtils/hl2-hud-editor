@@ -98,7 +98,7 @@ public class HUDEditor : Application() {
                 val node = fileTree.getLastSelectedPathComponent()
                 if (node == null) return
                 propTable.clear()
-                val model = propTable.getModel()
+                // val model = propTable.getModel()
                 val nodeInfo = node.getUserObject()
                 // TODO: introspection
                 if (nodeInfo is VDFNode) {
@@ -223,7 +223,7 @@ public class HUDEditor : Application() {
         }
         if (root.getName().endsWith("_dir.vpk")) {
             val project = DefaultMutableTreeNode(root.getName())
-            recurseDirectoryToNode(VPK.loadArchive(root), project)
+            recurseDirectoryToNode(VPK.loadArchive(root)!!, project)
             return project
         }
         return null
@@ -284,9 +284,14 @@ public class HUDEditor : Application() {
                 val a = ACF.fromManifest(appID)
                 VGUIRenderer.registerLocator(object : ResourceLocator() {
                     override fun locate(path: String): InputStream? {
-                        var path = path.replace('\\', '/').toLowerCase()
-                        if (path.startsWith("..")) path = "vgui/$path"
-                        System.out.println("Looking for $path")
+                        [suppress("NAME_SHADOWING")]
+                        val path = path.replace('\\', '/').toLowerCase().let {
+                            when {
+                                it.startsWith("..") -> "vgui/$it"
+                                else -> it
+                            }
+                        }
+                        println("Looking for $path")
                         val file = a.query("tf/materials/$path")
                         if (file == null) return null
                         return file.openStream()
