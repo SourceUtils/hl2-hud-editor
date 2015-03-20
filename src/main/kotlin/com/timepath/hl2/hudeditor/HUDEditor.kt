@@ -239,7 +239,7 @@ public class HUDEditor : Application() {
             for (resolution in device.getDisplayModes()) {
                 // TF2 has different resolutions
                 val item = "${resolution.getWidth().toString()}x${resolution.getHeight()}" // TODO: Work out aspect ratios
-                if (!listItems.contains(item)) {
+                if (item !in listItems) {
                     listItems.add(item)
                 }
             }
@@ -252,7 +252,7 @@ public class HUDEditor : Application() {
         dropDown.addActionListener(object : ActionListener {
             override fun actionPerformed(e: ActionEvent) {
                 val item = dropDown.getSelectedItem().toString()
-                val isRes = item.contains("x")
+                val isRes = "x" in item
                 spinnerWidth?.setEnabled(!isRes)
                 spinnerHeight?.setEnabled(!isRes)
                 if (isRes) {
