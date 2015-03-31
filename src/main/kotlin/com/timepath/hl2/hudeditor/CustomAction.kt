@@ -1,8 +1,11 @@
 package com.timepath.hl2.hudeditor
 
 
-import javax.swing.*
 import java.awt.event.ActionEvent
+import javax.swing.AbstractAction
+import javax.swing.Action
+import javax.swing.Icon
+import javax.swing.KeyStroke
 
 /**
  * @author TimePath

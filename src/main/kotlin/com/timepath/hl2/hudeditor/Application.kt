@@ -5,13 +5,9 @@ import com.timepath.plaf.OS
 import com.timepath.plaf.mac.Application.*
 import com.timepath.swing.BlendedToolBar
 import com.timepath.swing.StatusBar
-
-import javax.swing.*
-import javax.swing.tree.DefaultMutableTreeNode
-import javax.swing.tree.DefaultTreeModel
-import java.awt.*
+import java.awt.BorderLayout
+import java.awt.Image
 import java.awt.datatransfer.DataFlavor
-import java.awt.datatransfer.Transferable
 import java.awt.datatransfer.UnsupportedFlavorException
 import java.awt.dnd.DnDConstants
 import java.awt.dnd.DropTarget
@@ -26,6 +22,9 @@ import java.net.URISyntaxException
 import java.util.StringTokenizer
 import java.util.logging.Level
 import java.util.logging.Logger
+import javax.swing.*
+import javax.swing.tree.DefaultMutableTreeNode
+import javax.swing.tree.DefaultTreeModel
 
 /**
  * @author TimePath

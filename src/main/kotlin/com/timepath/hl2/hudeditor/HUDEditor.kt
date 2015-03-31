@@ -1,7 +1,6 @@
 package com.timepath.hl2.hudeditor
 
 import com.timepath.Utils
-import com.timepath.hl2.io.RES
 import com.timepath.hl2.io.VMT
 import com.timepath.hl2.io.image.VTF
 import com.timepath.plaf.IconList
@@ -9,37 +8,32 @@ import com.timepath.plaf.x.filechooser.BaseFileChooser
 import com.timepath.plaf.x.filechooser.NativeFileChooser
 import com.timepath.steam.io.VDF
 import com.timepath.steam.io.VDFNode
-import com.timepath.steam.io.VDFNode.VDFProperty
 import com.timepath.steam.io.storage.ACF
-import com.timepath.vfs.provider.local.LocalFileProvider
 import com.timepath.steam.io.storage.VPK
 import com.timepath.vfs.provider.ExtendedVFile
-import com.timepath.vfs.SimpleVFile
+import com.timepath.vfs.provider.local.LocalFileProvider
 import com.timepath.vgui.Element
+import com.timepath.vgui.VGUIRenderer
 import com.timepath.vgui.VGUIRenderer.ResourceLocator
 import com.timepath.vgui.swing.VGUICanvas
-
-import javax.swing.*
-import javax.swing.event.HyperlinkListener
-import javax.swing.event.TreeSelectionEvent
-import javax.swing.event.TreeSelectionListener
-import javax.swing.table.DefaultTableModel
-import javax.swing.tree.DefaultMutableTreeNode
-import javax.swing.tree.TreePath
 import java.awt.*
 import java.awt.event.ActionEvent
 import java.awt.event.ActionListener
 import java.io.File
 import java.io.IOException
 import java.io.InputStream
-import java.net.URL
 import java.text.MessageFormat
 import java.util.LinkedList
 import java.util.concurrent.ExecutionException
 import java.util.logging.Level
 import java.util.logging.Logger
 import java.util.regex.Pattern
-import com.timepath.vgui.VGUIRenderer
+import javax.swing.*
+import javax.swing.event.HyperlinkListener
+import javax.swing.event.TreeSelectionEvent
+import javax.swing.event.TreeSelectionListener
+import javax.swing.tree.DefaultMutableTreeNode
+import javax.swing.tree.TreePath
 
 /**
  * @author TimePath

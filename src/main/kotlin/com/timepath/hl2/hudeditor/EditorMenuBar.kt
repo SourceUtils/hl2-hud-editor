@@ -1,12 +1,14 @@
 package com.timepath.hl2.hudeditor
 
 import com.timepath.plaf.OS
-import com.timepath.vgui.Element
-
-import javax.swing.*
-import java.awt.*
+import java.awt.Frame
+import java.awt.Toolkit
 import java.awt.event.ActionEvent
 import java.awt.event.KeyEvent
+import javax.swing.JMenu
+import javax.swing.JMenuBar
+import javax.swing.JMenuItem
+import javax.swing.KeyStroke
 
 /**
  * @author TimePath

@@ -1,11 +1,14 @@
 package com.timepath.hl2.hudeditor
 
 
-import javax.swing.*
+import java.awt.Component
+import java.awt.Rectangle
+import javax.swing.ImageIcon
+import javax.swing.JTable
+import javax.swing.ListSelectionModel
 import javax.swing.table.DefaultTableCellRenderer
 import javax.swing.table.DefaultTableModel
 import javax.swing.table.TableCellRenderer
-import java.awt.*
 
 /**
  * @author TimePath
