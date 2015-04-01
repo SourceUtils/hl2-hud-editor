@@ -58,7 +58,7 @@ public class HUDEditor : Application() {
         editorMenuBar = EditorMenuBar(this)
         setJMenuBar(editorMenuBar)
         val str = Main.prefs.get("lastLoaded", null)
-        if (str != null) lastLoaded = File(str)
+        str?.let { lastLoaded = File(str) }
         object : SwingWorker<Image, Void>() {
             override fun doInBackground(): Image? {
                 return BackgroundLoader.fetch()
@@ -157,7 +157,7 @@ public class HUDEditor : Application() {
     fun locateHudDirectory() {
         try {
             val selection = NativeFileChooser().setParent(this).setTitle(Main.getString("LoadHudDir")).setDirectory(lastLoaded).setFileMode(BaseFileChooser.FileMode.DIRECTORIES_ONLY).choose()
-            if (selection != null) loadAsync(selection[0])
+            selection?.let { loadAsync(it[0]) }
         } catch (ex: IOException) {
             LOG.log(Level.SEVERE, null, ex)
         }
@@ -198,9 +198,8 @@ public class HUDEditor : Application() {
         lastLoaded = root
         LOG.log(Level.INFO, "You have selected: {0}", root.getAbsolutePath())
         if (root.isDirectory()) {
-            val folders = root.listFiles()
             var valid = true // TODO: find resource and scripts if there is a parent directory
-            for (folder in if (folders != null) folders else arrayOfNulls<File>(0)) {
+            for (folder in root.listFiles() ?: arrayOfNulls<File>(0)) {
                 if (folder!!.isDirectory() && ("resource".equalsIgnoreCase(folder.getName()) || "scripts".equalsIgnoreCase(folder.getName()))) {
                     valid = true
                     break
@@ -256,15 +255,14 @@ public class HUDEditor : Application() {
                 }
             }
         })
-        val message = array<Any>("Presets: ", dropDown, "Width: ", spinnerWidth!!, "Height: ", spinnerHeight!!)
+        val message = array("Presets: ", dropDown, "Width: ", spinnerWidth!!, "Height: ", spinnerHeight!!)
         val optionPane = JOptionPane(message, JOptionPane.PLAIN_MESSAGE, JOptionPane.OK_CANCEL_OPTION, null, null)
         val dialog = optionPane.createDialog(this, "Change resolution...")
         dialog.setContentPane(optionPane)
         dialog.pack()
         dialog.setVisible(true)
-        if (optionPane.getValue() != null) {
-            val value = (optionPane.getValue() as Number).toInt()
-            if (value == JOptionPane.YES_OPTION) {
+        optionPane.getValue()?.let {
+            if (it == JOptionPane.YES_OPTION) {
                 canvas!!.setPreferredSize(Dimension(Integer.parseInt(spinnerWidth?.getValue().toString()), Integer.parseInt(spinnerHeight?.getValue().toString())))
             }
         }
@@ -296,10 +294,9 @@ public class HUDEditor : Application() {
                         if (!path.endsWith(".vtf")) {
                             // It could be a vmt
                             vtfName += ".vtf"
-                            val vmtStream = locate("$path.vmt")
-                            if (vmtStream != null) {
+                            locate("$path.vmt")?.let {
                                 try {
-                                    val vmt = VMT.load(vmtStream)
+                                    val vmt = VMT.load(it)
                                     val next = vmt.root.getValue("\$baseTexture") as String
                                     if (next != path) return locateImage(next) // Stop recursion
                                 } catch (e: IOException) {
@@ -309,10 +306,9 @@ public class HUDEditor : Application() {
                             }
                         }
                         // It's a vtf
-                        val vtfStream = locate(vtfName)
-                        if (vtfStream != null) {
+                        locate(vtfName)?.let {
                             try {
-                                val vtf = VTF.load(vtfStream)
+                                val vtf = VTF.load(it)
                                 if (vtf == null) return null
                                 return vtf.getImage(0)
                             } catch (e: IOException) {
@@ -330,9 +326,8 @@ public class HUDEditor : Application() {
 
             override fun done() {
                 try {
-                    val g = get()
-                    if (g != null) {
-                        archiveRoot.add(g)
+                    get()?.let {
+                        archiveRoot.add(it)
                         fileModel.reload(archiveRoot)
                         LOG.log(Level.INFO, "Mounted {0}", appID)
                     }

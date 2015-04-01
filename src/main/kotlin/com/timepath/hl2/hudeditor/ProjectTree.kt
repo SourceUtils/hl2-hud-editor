@@ -204,7 +204,7 @@ public class ProjectTree : JTree(), ActionListener, MouseListener {
                 } else if (nodeValue is ViewableData) {
                     setIcon(tree, nodeValue.getIcon())
                 } else {
-                    if (nodeValue != null) {
+                    nodeValue?.let {
                         LOG.log(Level.FINE, "Node class: {0}", nodeValue.javaClass)
                     }
                     setIcon(tree, null)
@@ -214,16 +214,24 @@ public class ProjectTree : JTree(), ActionListener, MouseListener {
             this.hasFocus = hasFocus
             setText(stringValue)
             val tColor: Color? = null
-            if (tColor != null) {
-                setForeground(if (sel)
-                    (if ((tColor != newColor))
-                        Color(-tColor.getRed() + 255, -tColor.getGreen() + 255, -tColor.getBlue() + 255)
-                    else
-                        tColor.brighter())
-                else
-                    tColor)
-            } else {
-                setForeground(if (sel) getTextSelectionColor() else getTextNonSelectionColor())
+            when (tColor) {
+                null -> when {
+                    sel -> getTextSelectionColor()
+                    else -> getTextNonSelectionColor()
+                }.let { setForeground(it) }
+                else -> {
+                    val color = when {
+                        sel -> when {
+                            tColor != newColor -> Color(
+                                    255 - tColor.getRed(),
+                                    255 - tColor.getGreen(),
+                                    255 - tColor.getBlue())
+                            else -> tColor.brighter()
+                        }
+                        else -> tColor
+                    }
+                    setForeground(color)
+                }
             }
             setEnabled(tree.isEnabled())
             setComponentOrientation(tree.getComponentOrientation())

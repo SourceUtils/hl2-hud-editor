@@ -29,13 +29,12 @@ public object BackgroundLoader {
                 return name.toLowerCase().endsWith(".jpg")
             }
         })
-        if (files != null) {
+        files?.let {
             try {
-                return ImageIcon(files[(Math.random() * (files.size() - 1).toDouble()).toInt()].toURI().toURL()).getImage()
+                return ImageIcon(it[(Math.random() * (it.size() - 1).toDouble()).toInt()].toURI().toURL()).getImage()
             } catch (ex: MalformedURLException) {
                 LOG.log(Level.SEVERE, null, ex)
             }
-
         }
         LOG.log(Level.INFO, "No screenshots in {0}", screenshotDir)
         return null

@@ -78,7 +78,7 @@ public abstract class Application : JFrame() {
                             }
                         }
                     }
-                    if (file != null) fileDropped(file!!)
+                    file?.let { fileDropped(it) }
                 } catch (e: ClassNotFoundException) {
                     LOG.log(Level.SEVERE, null, e)
                 } catch (e: InvalidDnDOperationException) {
