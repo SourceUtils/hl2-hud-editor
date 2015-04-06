@@ -16,7 +16,11 @@ apply plugin: 'kotlin'
 dependencies {
     compile "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
 
+    compile 'com.timepath:commons:1.0-SNAPSHOT'
     compile 'com.timepath:hl2-toolkit:1.0-SNAPSHOT'
+    compile 'com.timepath:java-vfs:1.0-SNAPSHOT'
+    compile 'com.timepath:java-xplaf:1.0-SNAPSHOT'
+    compile 'com.timepath:steam-toolkit:1.0-SNAPSHOT'
 }
 
 if (!hasProperty('mainClass')) {
