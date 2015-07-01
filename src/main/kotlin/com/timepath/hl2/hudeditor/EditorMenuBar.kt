@@ -10,9 +10,6 @@ import javax.swing.JMenuBar
 import javax.swing.JMenuItem
 import javax.swing.KeyStroke
 
-/**
- * @author TimePath
- */
 class EditorMenuBar(var hudEditor: HUDEditor) : JMenuBar() {
     var reloadItem = JMenuItem(object : CustomAction("Revert", KeyEvent.VK_R, ks(KeyEvent.VK_F5)) {
         override fun action(e: ActionEvent) {
@@ -113,7 +110,7 @@ class EditorMenuBar(var hudEditor: HUDEditor) : JMenuBar() {
                 pasteItem.setEnabled(false)
                 var deleteItem = JMenuItem(object : CustomAction("Delete", KeyEvent.VK_D, ks(KeyEvent.VK_DELETE)) {
                     override fun action(e: ActionEvent) {
-                        hudEditor.canvas!!.r!!.removeElements(hudEditor.canvas!!.r!!.selected)
+                        hudEditor.canvas!!.r.removeElements(hudEditor.canvas!!.r.selected)
                     }
                 })
                 add(deleteItem)
@@ -121,7 +118,7 @@ class EditorMenuBar(var hudEditor: HUDEditor) : JMenuBar() {
                 var selectAllItem = JMenuItem(object : CustomAction("Select All", KeyEvent.VK_A, ks(KeyEvent.VK_A, mod)) {
                     override fun action(e: ActionEvent) {
                         for (elem in hudEditor.canvas!!.elements) {
-                            hudEditor.canvas!!.r!!.select(elem)
+                            hudEditor.canvas!!.r.select(elem)
                         }
                     }
                 })

@@ -35,9 +35,6 @@ import javax.swing.event.TreeSelectionListener
 import javax.swing.tree.DefaultMutableTreeNode
 import javax.swing.tree.TreePath
 
-/**
- * @author TimePath
- */
 public class HUDEditor : Application() {
     var editorMenuBar: EditorMenuBar
     var canvas: VGUICanvas? = null
@@ -53,7 +50,7 @@ public class HUDEditor : Application() {
     var linkListener: HyperlinkListener? = Utils.getLinkListener()
 
     init {
-        setIconImages(IconList("/com/timepath/hl2/hudeditor/res/Icon", "png", *intArray(16, 22, 24, 32, 40, 48, 64, 128, 512, 1024)).getIcons())
+        setIconImages(IconList("/com/timepath/hl2/hudeditor/res/Icon", "png", *intArrayOf(16, 22, 24, 32, 40, 48, 64, 128, 512, 1024)).getIcons())
         setTitle(Main.getString("Title"))
         editorMenuBar = EditorMenuBar(this)
         setJMenuBar(editorMenuBar)
@@ -89,8 +86,7 @@ public class HUDEditor : Application() {
     init {
         fileTree.addTreeSelectionListener(object : TreeSelectionListener {
             override fun valueChanged(e: TreeSelectionEvent) {
-                val node = fileTree.getLastSelectedPathComponent()
-                if (node == null) return
+                val node = fileTree.getLastSelectedPathComponent() ?: return
                 propTable.clear()
                 // val model = propTable.getModel()
                 val nodeInfo = node.getUserObject()
@@ -99,7 +95,7 @@ public class HUDEditor : Application() {
                     val element = Element.importVdf(nodeInfo)
                     element.file = (node.getParent().toString()) // TODO
                     loadProps(element)
-                    canvas!!.r!!.load(element)
+                    canvas!!.r.load(element)
                 }
             }
         })
@@ -193,14 +189,14 @@ public class HUDEditor : Application() {
     fun load(root: File?): DefaultMutableTreeNode? {
         if (root == null) return null
         if (!root.exists()) {
-            error(MessageFormat(Main.getString("FileAccessError")).format(array<Any>(root)))
+            error(MessageFormat(Main.getString("FileAccessError")).format(arrayOf(root)))
         }
         lastLoaded = root
         LOG.log(Level.INFO, "You have selected: {0}", root.getAbsolutePath())
         if (root.isDirectory()) {
             var valid = true // TODO: find resource and scripts if there is a parent directory
             for (folder in root.listFiles() ?: arrayOfNulls<File>(0)) {
-                if (folder!!.isDirectory() && ("resource".equalsIgnoreCase(folder.getName()) || "scripts".equalsIgnoreCase(folder.getName()))) {
+                if (folder!!.isDirectory() && ("resource".equals(folder.getName(), ignoreCase = true) || "scripts".equals(folder.getName(), ignoreCase = true))) {
                     valid = true
                     break
                 }
@@ -249,13 +245,13 @@ public class HUDEditor : Application() {
                 spinnerWidth?.setEnabled(!isRes)
                 spinnerHeight?.setEnabled(!isRes)
                 if (isRes) {
-                    val xy = item.split("x")
+                    val xy = item.splitBy("x")
                     spinnerWidth?.setValue(Integer.parseInt(xy[0]))
                     spinnerHeight?.setValue(Integer.parseInt(xy[1]))
                 }
             }
         })
-        val message = array("Presets: ", dropDown, "Width: ", spinnerWidth!!, "Height: ", spinnerHeight!!)
+        val message = arrayOf("Presets: ", dropDown, "Width: ", spinnerWidth!!, "Height: ", spinnerHeight!!)
         val optionPane = JOptionPane(message, JOptionPane.PLAIN_MESSAGE, JOptionPane.OK_CANCEL_OPTION, null, null)
         val dialog = optionPane.createDialog(this, "Change resolution...")
         dialog.setContentPane(optionPane)
@@ -263,20 +259,22 @@ public class HUDEditor : Application() {
         dialog.setVisible(true)
         optionPane.getValue()?.let {
             if (it == JOptionPane.YES_OPTION) {
-                canvas!!.setPreferredSize(Dimension(Integer.parseInt(spinnerWidth?.getValue().toString()), Integer.parseInt(spinnerHeight?.getValue().toString())))
+                canvas!!.setPreferredSize(Dimension(
+                        Integer.parseInt(spinnerWidth?.getValue().toString()),
+                        Integer.parseInt(spinnerHeight?.getValue().toString())
+                ))
             }
         }
     }
 
     fun mount(appID: Int) {
         object : SwingWorker<DefaultMutableTreeNode, Void>() {
-            throws(javaClass<Exception>())
             override fun doInBackground(): DefaultMutableTreeNode? {
                 LOG.log(Level.INFO, "Mounting {0}", appID)
                 val a = ACF.fromManifest(appID)
                 VGUIRenderer.registerLocator(object : ResourceLocator() {
                     override fun locate(path: String): InputStream? {
-                        [suppress("NAME_SHADOWING")]
+                        @suppress("NAME_SHADOWING")
                         val path = path.replace('\\', '/').toLowerCase().let {
                             when {
                                 it.startsWith("..") -> "vgui/$it"
@@ -284,8 +282,7 @@ public class HUDEditor : Application() {
                             }
                         }
                         println("Looking for $path")
-                        val file = a.query("tf/materials/$path")
-                        if (file == null) return null
+                        val file = a.query("tf/materials/$path") ?: return null
                         return file.openStream()
                     }
 
@@ -308,8 +305,7 @@ public class HUDEditor : Application() {
                         // It's a vtf
                         locate(vtfName)?.let {
                             try {
-                                val vtf = VTF.load(it)
-                                if (vtf == null) return null
+                                val vtf = VTF.load(it) ?: return null
                                 return vtf.getImage(0)
                             } catch (e: IOException) {
                                 LOG.log(Level.SEVERE, null, e)
@@ -346,10 +342,9 @@ public class HUDEditor : Application() {
         val model = propTable.getModel()
         if (!element.props.isEmpty()) {
             element.validateDisplay()
-            for (i in element.props.size().indices) {
-                val entry = element.props[i]
+            for (entry in element.props) {
                 if ("\\n" == entry.getKey()) continue
-                model.addRow(array(entry.getKey(), entry.getValue(), entry.info))
+                model.addRow(arrayOf(entry.getKey(), entry.getValue(), entry.info))
             }
             model.fireTableDataChanged()
             propTable.repaint()

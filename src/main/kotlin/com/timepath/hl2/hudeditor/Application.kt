@@ -26,10 +26,6 @@ import javax.swing.*
 import javax.swing.tree.DefaultMutableTreeNode
 import javax.swing.tree.DefaultTreeModel
 
-/**
- * @author TimePath
- */
-SuppressWarnings("serial")
 public abstract class Application : JFrame() {
     var tabbedContent: JTabbedPane
     var fileSystemRoot: DefaultMutableTreeNode
@@ -185,7 +181,7 @@ public abstract class Application : JFrame() {
     }
 
     public fun error(msg: Any, title: String) {
-        LOG.log(Level.SEVERE, "{0}:{1}", array<Any>(title, msg))
+        LOG.log(Level.SEVERE, "{0}:{1}", arrayOf(title, msg))
         JOptionPane.showMessageDialog(this, msg, title, JOptionPane.ERROR_MESSAGE)
     }
 
@@ -194,7 +190,7 @@ public abstract class Application : JFrame() {
     }
 
     public fun info(msg: Any, title: String) {
-        LOG.log(Level.INFO, "{0}:{1}", array<Any>(title, msg))
+        LOG.log(Level.INFO, "{0}:{1}", arrayOf(title, msg))
         JOptionPane.showMessageDialog(this, msg, title, JOptionPane.INFORMATION_MESSAGE)
     }
 

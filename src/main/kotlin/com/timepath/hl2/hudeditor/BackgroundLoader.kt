@@ -9,9 +9,6 @@ import java.util.logging.Level
 import java.util.logging.Logger
 import javax.swing.ImageIcon
 
-/**
- * @author TimePath
- */
 public object BackgroundLoader {
 
     private val LOG = Logger.getLogger(javaClass<BackgroundLoader>().getName())

@@ -10,10 +10,6 @@ import javax.swing.table.DefaultTableCellRenderer
 import javax.swing.table.DefaultTableModel
 import javax.swing.table.TableCellRenderer
 
-/**
- * @author TimePath
- */
-SuppressWarnings("serial")
 public class PropertyTable : JTable() {
 
     private val renderer: CustomTableCellRenderer

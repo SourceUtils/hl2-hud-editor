@@ -21,10 +21,6 @@ import javax.swing.tree.DefaultTreeCellRenderer
 import javax.swing.tree.DefaultTreeModel
 import javax.swing.tree.TreeSelectionModel
 
-/**
- * @author TimePath
- */
-SuppressWarnings("serial")
 public class ProjectTree : JTree(), ActionListener, MouseListener {
     private var directoryEntryContext: ExtendedVFile? = null
     private var archiveContext: ExtendedVFile? = null
@@ -85,11 +81,13 @@ public class ProjectTree : JTree(), ActionListener, MouseListener {
         val context = archiveContext
         LOG.log(Level.INFO, "Archive: {0}", context)
         try {
-            val fs = NativeFileChooser().setTitle("Extract").setDialogType(BaseFileChooser.DialogType.SAVE_DIALOG).setFileMode(BaseFileChooser.FileMode.DIRECTORIES_ONLY).choose()
-            if (fs == null) return
+            val fs = NativeFileChooser()
+                    .setTitle("Extract")
+                    .setDialogType(BaseFileChooser.DialogType.SAVE_DIALOG)
+                    .setFileMode(BaseFileChooser.FileMode.DIRECTORIES_ONLY)
+                    .choose() ?: return
             LOG.log(Level.INFO, "Extracting to {0}", fs[0])
             object : SwingWorker<File, Int>() {
-                throws(javaClass<Exception>())
                 override fun doInBackground(): File? {
                     var ret: File? = null
                     try {
@@ -104,7 +102,7 @@ public class ProjectTree : JTree(), ActionListener, MouseListener {
 
                 override fun done() {
                     try {
-                        LOG.log(Level.INFO, "Extracted {0}", array<Any>(get()))
+                        LOG.log(Level.INFO, "Extracted {0}", arrayOf(get()))
                     } catch (e: InterruptedException) {
                         LOG.log(Level.SEVERE, null, e)
                     } catch (e: ExecutionException) {

@@ -9,9 +9,6 @@ import java.util.prefs.Preferences
 import javax.swing.SwingUtilities
 import kotlin.platform.platformStatic
 
-/**
- * @author TimePath
- */
 object Main {
 
     private val strings = ResourceBundle.getBundle("com/timepath/hl2/hudeditor/res/lang")
@@ -30,7 +27,7 @@ object Main {
     init {
         if (OS.isLinux()) {
             WindowToolkit.setWindowClass(projectName)
-            DesktopLauncher.create(projectName, "/com/timepath/hl2/hudeditor/res/", array("Icon.png", "Icon.svg"), projectName, projectName)
+            DesktopLauncher.create(projectName, "/com/timepath/hl2/hudeditor/res/", arrayOf("Icon.png", "Icon.svg"), projectName, projectName)
         } else if (OS.isMac()) {
             OSXProps.setMetal(false)
             OSXProps.setQuartz(true)

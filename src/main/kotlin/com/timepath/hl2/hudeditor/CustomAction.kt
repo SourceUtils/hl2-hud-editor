@@ -7,10 +7,8 @@ import javax.swing.Action
 import javax.swing.Icon
 import javax.swing.KeyStroke
 
-/**
- * @author TimePath
- */
-public abstract class CustomAction(s: String, mnemonic: Int, shortcut: KeyStroke? = null, icon: Icon? = null) : AbstractAction(Main.getString(s), icon) {
+public abstract class CustomAction(s: String, mnemonic: Int, shortcut: KeyStroke? = null, icon: Icon? = null)
+: AbstractAction(Main.getString(s), icon) {
 
     init {
         putValue(Action.MNEMONIC_KEY, mnemonic)
